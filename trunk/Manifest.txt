@@ -1,0 +1,2 @@
+Main-Class: kernel.BicOverlapper
+Class-Path: substance.jar core.jar .
