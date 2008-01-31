@@ -19,4 +19,4 @@ The group is interested in research related to the development and/or applicatio
 Since 2000, VisUsal has worked together with the Pharmacology department at Universidad de Salamanca pursuing several objectives that have in common the use of advanced information technology to facilitate a number of tasks of the pharmacology field. Among other projects, *NAPROC-13*, a web based database of natural producs stands out.
 
 You can freely access the database at http://c13.usal.es
-Also, you may want to have a look to this Bioinformatics paper: http://bioinformatics.oxfordjournals.org/cgi/reprint/btm516?ijkey=a9WFnKG3CH2jobi&keytype=ref 
+Also, you may want to have a look to this *_Bioinformatics_* paper: http://bioinformatics.oxfordjournals.org/cgi/reprint/btm516?ijkey=a9WFnKG3CH2jobi&keytype=ref 
