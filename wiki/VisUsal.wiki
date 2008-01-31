@@ -8,7 +8,7 @@ VisUsal is a research group at Universidad de Salamanca (Spain)
 
 = Details =
 
-The group is interested in research related to the development and/or application of highly interactive visualization techniques to different scientific field.  An incomplete list of such fields includes:
+The group is interested in research related to the development and/or application of highly interactive visualization techniques to different scientific fields.  An incomplete list of such fields includes:
   * *Bioinformatics* 
   * Paleclimatology
   * Sofware configuration management
