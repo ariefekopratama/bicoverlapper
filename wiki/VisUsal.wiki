@@ -16,12 +16,12 @@ The group is interested in research related to the development and/or applicatio
 
 = Other relevant projects related to Bicoverlapper =
 
-*Bicluster*
+==Bicluster==
 The team has been involved in the development of an R-Package for biclustering algorithms.
 The following project is maintained at this URL: 
 http://r-forge.r-project.org/projects/biclust/
 
-*NAPROC-C13*
+==NAPROC-C13==
 Since 2000, VisUsal has worked together with the Pharmacology department at Universidad de Salamanca pursuing several objectives that have in common the use of advanced information technology to facilitate a number of tasks of the pharmacology field. Among other projects, *NAPROC-13*, a web based database of natural producs stands out.
 
 You can freely access the database at http://c13.usal.es
