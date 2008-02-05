@@ -16,10 +16,15 @@ The group is interested in research related to the development and/or applicatio
 
 = Other relevant projects related to Bicoverlapper =
 
-==Bicluster==
+==Biclust==
 The team has been involved in the development of an R-Package for biclustering algorithms.
-The following project is maintained at this URL: 
+The following project is maintained at this URL:
+ 
 http://r-forge.r-project.org/projects/biclust/
+
+*Biclust* is featured in the CRAN package repository: 
+
+http://cran.r-project.org/src/contrib/PACKAGES.html
 
 ==NAPROC-C13==
 Since 2000, VisUsal has worked together with the Pharmacology department at Universidad de Salamanca pursuing several objectives that have in common the use of advanced information technology to facilitate a number of tasks of the pharmacology field. Among other projects, *NAPROC-13*, a web based database of natural producs stands out.
