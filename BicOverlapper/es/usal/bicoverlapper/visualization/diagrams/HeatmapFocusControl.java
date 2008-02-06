@@ -236,15 +236,15 @@ class HeatmapFocusControl extends FocusControl
 			String gene=(gid.get(i)).toString();
 			it=visualization.items(fieldGeneLabels,"id="+gene);//Cogemos la etiqueta de gen
 			VisualItem glabel=(VisualItem)it.next();
-			glabel.setInt("rowRank",-1);
+			glabel.setInt("rowRank",-(gid.size()-i));//the same order that puts gl.newOrder()
 			}
 
 		for(int i=0;i<cid.size();i++)
 			{
 			condition=(cid.get(i)).toString();
 			it=visualization.items(fieldConditionLabels,"id="+condition);//Cogemos la etiqueta de gen
-			VisualItem clabel=(VisualItem)it.next();
-			clabel.setInt("colRank",-1);
+			VisualItem clabel=(VisualItem)it.next();//there should be only one
+			clabel.setInt("colRank",-(gid.size()-i));
 			}
 		runActivity(visualization);
 		}

@@ -962,7 +962,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		GeneralPath gp=new GeneralPath();
 		gp=new GeneralPath();
 		Line2D.Float l;
-		if(beginVar<0 || endVar>=datos.getNumFields()-1)	System.err.println("Line out of bounds");
+		if(beginVar<0 || endVar>=datos.getNumFields())	
+			System.err.println("Line out of bounds");
 		for(int j=beginVar;j<endVar;j++)
 			{
 			l=tuplas[i][j].linea;

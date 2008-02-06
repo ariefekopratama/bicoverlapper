@@ -14,7 +14,7 @@ public class HelpPanel extends JPanel
 	{
 	super();
 	text=new JLabel("\n\nYou can find full documentation about BicOverlapper at\n");
-	link=new URLLabel(this, "http://code.google.com/p/bicoverlapper/", "http://code.google.com/p/bicoverlapper/", "_blank");
+	link=new URLLabel(this, "http://vis.usal.es/bicoverlapper", "http://vis.usal.es/bicoverlapper", "_blank");
 	this.add(text);
 	this.add(link);
 	//Create and set up the window.
@@ -30,7 +30,7 @@ public class HelpPanel extends JPanel
     //Display the window.
     //frame.add(license);
     frame.pack();
-    frame.setSize(300,100);
+    frame.setSize(320,100);
     frame.setLocation(100,100);
     frame.setVisible(true);
 	}

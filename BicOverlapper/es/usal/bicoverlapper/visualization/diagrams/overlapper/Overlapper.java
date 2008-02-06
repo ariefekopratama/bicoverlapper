@@ -1239,12 +1239,7 @@ protected void mousePressed() {
   
 	if (mouseX < this.xTopOverviewBox || mouseY > this.yTopOverviewBox)
   	  {
-	/*  if(!keyPressed)	
-		{
-		g.clearSelectedNodes();
-		g.getSelectedClusters().clear();
-		}*/
-      Iterator itMouse=g.getNodes().values().iterator();
+	  Iterator itMouse=g.getNodes().values().iterator();
 	  float xpress=mouseX+(Math.abs(xTopMagnifier-xTopOverviewBox)/overviewBoxLength)*areaInc*screenWidth;
 	  float ypress=mouseY+(Math.abs(yTopMagnifier-yTopOverviewBox)/overviewBoxHeight)*areaInc*screenHeight;
 	
@@ -1318,11 +1313,6 @@ protected void mouseReleased() {
   
   if (!move && (mouseX < this.xTopOverviewBox || mouseY > this.yTopOverviewBox) )
 	 {
-	 if(!keyPressed)	
-		{
-		g.clearSelectedNodes();
-		g.getSelectedClusters().clear();
-		}
 	  Iterator itMouse=g.getNodes().values().iterator();
 	  float xpress=mouseX+(Math.abs(xTopMagnifier-xTopOverviewBox)/overviewBoxLength)*areaInc*screenWidth;
 	  float ypress=mouseY+(Math.abs(yTopMagnifier-yTopOverviewBox)/overviewBoxHeight)*areaInc*screenHeight;
@@ -1335,6 +1325,11 @@ protected void mouseReleased() {
 		     {
 			 if(n.isFixed() && mouseButton!=RIGHT)	n.fix(false);
 			 nodeSelected=true;	
+			 if(!keyPressed)	
+				{
+				g.clearSelectedNodes();
+				g.getSelectedClusters().clear();
+				}
 			 if(n!=g.getDragNode())	g.addSelectedNode(n);
 			 }
  		}
@@ -1345,12 +1340,19 @@ protected void mouseReleased() {
 	  		MaximalCluster mc=this.getClusterInPos(i);
 	  		if(mc.hull.contains(xpress, ypress))
 	  			{
+	  			if(!keyPressed)	
+					{
+					g.clearSelectedNodes();
+					g.getSelectedClusters().clear();
+					}
+				
 	  			g.getSelectedClusters().put(mc.label, mc);
 	  			for(int j=0;j<mc.getNodes().size();j++)
 	  				g.addSelectedNode(mc.getNode(j));	
 	  			}
 	  		}
 	  	}
+		  
 	}
   move=false;
 }
