@@ -1,14 +1,14 @@
 #labels Featured
-How to get started using the library in your projects.
+How to get started using BicOverlapper.
 
-= Details =
+= Using BicOverlapper =
 
-Add your content here.
+BicOverlapper is a Java-based software and thus no installation is reuired. However, if you experience difficluties executing BicOverlapper, you may want to take a llok to this user guide.
 
+= Understanding BicOverlapper =
 
-= Details =
+If you want to know the inner details of BicOverlapper then you can start by reading this Technichal Report
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+= Developing BicOverlapper =
+
+BicOverlapper is a Java-based software and thus no installation is reuired. However, if 
