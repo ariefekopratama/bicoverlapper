@@ -9,7 +9,7 @@ The same video with subtitles.
 
 * *NOTE: These videos need TechSmith codec.* 
 
-* A video representing the biggest 25 biclusters of Bimax for a yeast example (9.4 MB, 1280x1024) 
+* A video representing the biggest 25 biclusters from Bimax for a yeast example (9.4 MB, 1280x1024) 
 
 * A video representing OPSM biclusters for the same yeast example (13.7 MB, 1280x1024) 
 
