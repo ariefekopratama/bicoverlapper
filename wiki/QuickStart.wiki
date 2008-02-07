@@ -11,4 +11,4 @@ If you want to know the inner details of BicOverlapper then you can start by rea
 
 = Developing BicOverlapper =
 
-BicOverlapper is a Java-based software and thus no installation is reuired. However, if 
+BicOverlapper is a Java-based software and thus no installation is required. However, if 
