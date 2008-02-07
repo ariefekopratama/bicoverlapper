@@ -11,7 +11,7 @@ The [http://carpex.usal.es/~visusal/bicoverlapper/videos/overlapperSubtitled.avi
 
 * A [http://carpex.usal.es/~visusal/bicoverlapper/videos/bimax.avi video] representing the biggest 25 biclusters from Bimax for a yeast example (9.4 MB, 1280x1024) 
 
-* A [ http://carpex.usal.es/~visusal/bicoverlapper/videos/opsm.avi video] representing OPSM biclusters for the same yeast example (13.7 MB, 1280x1024) 
+* A [http://carpex.usal.es/~visusal/bicoverlapper/videos/opsm.avi video] representing OPSM biclusters for the same yeast example (13.7 MB, 1280x1024) 
 
 More videos will be available shortly
 
