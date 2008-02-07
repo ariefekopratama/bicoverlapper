@@ -3,7 +3,7 @@ How to get started using BicOverlapper.
 
 = Using BicOverlapper =
 
-BicOverlapper is a Java-based software and thus no installation is required. However, if you experience difficulties executing BicOverlapper, you may want to take a look to this [http://bicoverlapper.googlecode.com/files/userGuide.pdf User Guide]
+If you just want to use BicOverlapper right now, you may want to visit our non-development [http://bicoverlapper.googlecode.com/files/userGuide.pdf web page], with full information for end users (download, install, etc.)
 
 = Understanding BicOverlapper =
 
