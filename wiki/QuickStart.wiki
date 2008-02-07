@@ -3,7 +3,7 @@ How to get started using BicOverlapper.
 
 = Using BicOverlapper =
 
-If you just want to use BicOverlapper right now, you may want to visit our non-development [http://bicoverlapper.googlecode.com/files/userGuide.pdf web page], with full information for end users (download, install, etc.)
+If you just want to use BicOverlapper right now, you may want to visit our non-development [http://vis.usal.es/bicoverlapper web page], with full information for end users (download, install, etc.)
 
 = Understanding BicOverlapper =
 
