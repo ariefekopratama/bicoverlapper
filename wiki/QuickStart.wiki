@@ -7,7 +7,7 @@ BicOverlapper is a Java-based software and thus no installation is reuired. Howe
 
 = Understanding BicOverlapper =
 
-If you want to know the inner details of BicOverlapper then you can start by reading this  Technical Report: http://bicoverlapper.googlecode.com/files/technicalReport.pdf
+If you want to know the inner details of BicOverlapper then you can start by reading this  Technical Report: [techrep]http://bicoverlapper.googlecode.com/files/technicalReport.pdf
 
 
 
