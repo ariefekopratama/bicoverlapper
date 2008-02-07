@@ -13,4 +13,4 @@ If you want to know the inner details of BicOverlapper then you can start by rea
 
 = Developing BicOverlapper =
 
-BicOverlapper is a Java-based software and thus no installation is required. However, if 
+BicOverlapper is available as an open source project. If you want to contribute, or just use or adapt it to your applications, your cand find useful the java documentation (http://bicoverlapper.googlecode.com/svn/BicOverlapper/doc/index.html) and a small developer's guide with detailed explanation of Bicoverlapper Structure (http://bicoverlapper.googlecode.com/files/developerGuide.pdf)
