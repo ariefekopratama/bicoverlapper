@@ -10,19 +10,18 @@ VisUsal is a research group at Universidad de Salamanca (Spain)
 
 The group is interested in research related to the development and/or application of highly interactive visualization techniques to different scientific fields.  An incomplete list of such fields includes:
   * *Bioinformatics* 
-  * Paleclimatology
+  * Paleoclimatology
   * Sofware configuration management
   * ...
 
 = Other relevant projects related to Bicoverlapper =
 
 ==Biclust==
-The team has been involved in the development of an R-Package for biclustering algorithms.
-The following project is maintained at this URL:
+The team has collaborated in the development of *biclust*, an R-Package for biclustering algorithms, maintained at this URL:
  
 http://r-forge.r-project.org/projects/biclust/
 
-*Biclust* is featured in the CRAN package repository: 
+*biclust* is featured in the CRAN package repository: 
 
 http://cran.r-project.org/src/contrib/PACKAGES.html
 
