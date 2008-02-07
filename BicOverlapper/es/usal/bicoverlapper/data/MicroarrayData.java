@@ -101,7 +101,7 @@ public class MicroarrayData
 		//jop.showMessageDialog(v,"Nº of genes: "+numGenes+" \nNº of conditions: "+numConditions,null,JOptionPane.INFORMATION_MESSAGE);		
 		//jop.showInternalMessageDialog(v,"Nº of genes: "+numGenes+" \nNº of conditions: "+numConditions);
 		//jop.setValue(10);
-		System.out.println("Microarray matrtix with "+numGenes+" genes and "+numConditions+" conditions");
+		System.out.println("Microarray matrix with "+numGenes+" genes and "+numConditions+" conditions");
 		
 		try{
 		//Leemos la primera fila, que tiene los nombres de los genes
@@ -148,6 +148,7 @@ public class MicroarrayData
 				}
 			else	for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString();
 			}
+		//if(numGenes>0 && numConditions>0)
 		
 		}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); System.exit(1);}
 		//System.out.println("número de genes\t"+numGenes+" número de condiciones\t"+numConditions);

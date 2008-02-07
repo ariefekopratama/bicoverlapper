@@ -54,9 +54,6 @@ public class FileStructure implements GenericFileStructure
 		return n;
 		}
 	
-	/**
-	 * @see es.usal.bicoverlapper.data.files.GenericFileStructure
-	 */
 	public String read(String fich, int fila, int columna)
 		{
 		String devolver="";
@@ -145,9 +142,6 @@ public class FileStructure implements GenericFileStructure
 		return devolver;
 		}
 
-	/**
-	 * @see es.usal.bicoverlapper.data.files.GenericFileStructure.write
-	 */
 	public void write(String fich, int row, int column, String value)
 		{
 		try{
@@ -156,16 +150,9 @@ public class FileStructure implements GenericFileStructure
 		}catch(Exception e){System.err.println(e.getMessage());}
 		}
 	
-	/**
-	 * @see es.usal.bicoverlapper.data.files.GenericFileStructure.write
-	 */
 	public void write(String file, int row, int column, int  value){}
-	/**
-	 * @see es.usal.bicoverlapper.data.files.GenericFileStructure.write
-	 */
+
 	public void write(String file, int row, int column, double value){}
-	/**
-	 * @see es.usal.bicoverlapper.data.files.GenericFileStructure.write
-	 */
+
 	public void write(String file, int row, int column, float value){}
 	}

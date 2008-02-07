@@ -491,13 +491,11 @@ public class FileMenuManager implements ActionListener {
 //	private void leerBicluster(String path, String fichero,Session sesion) throws FileNotFoundException,IOException 
 	private void leerBicluster(String path, String fichero,Session sesion) throws Exception 
 		{
-		//sesion.setBiclusterDataFile(path+"\\"+fichero);
-		sesion.setBiclusterDataFile(getPath(path+"\\"+fichero));
-		
 		//Creamos los datos que necesitarán las burbujas
-		//BubbleData bd=new BubbleData(path+"\\"+fichero); 
 		BubbleData bd=new BubbleData(getPath(path+"\\"+fichero)); 
 		sesion.setBubbleData(bd);
+		
+		sesion.setBiclusterDataFile(getPath(path+"\\"+fichero));
 		
 		sesion.setMicroarrayDataLoaded(false);
 		sesion.setBubbleDataLoaded(true);//TODO para que sea true de verdad

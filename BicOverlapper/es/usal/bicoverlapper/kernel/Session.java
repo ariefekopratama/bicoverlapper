@@ -1019,7 +1019,7 @@ public class Session {
 
 	/**
 	 * Sets the selection color 
-	 * @param hoverColor	color for selected elements
+	 * @param selectionColor	color for selected elements
 	 */
 	public void setSelectionColor(Color selectionColor) {
 		this.selectionColor = selectionColor;

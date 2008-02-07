@@ -133,9 +133,13 @@ public class BubbleData
 			}
 	//	System.out.println("Número de genes "+genes.size()+" y cond "+conditions.size());
 		//Ahora tenemos que hacer la proyección
-		doProjection();
-		buildGraphFromProjection();
-		g=new Graph(nodes,false);
+		if(bubbles.size()>0)
+			{
+			doProjection();
+			buildGraphFromProjection();
+			g=new Graph(nodes,false);
+			}
+		else	throw new IOException("No biclusters found");
 		}
 	
 	//Assigns points in the space to each bubble. By now, only by average, not MDS projections
