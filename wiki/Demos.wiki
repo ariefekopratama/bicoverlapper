@@ -3,7 +3,7 @@ A collection of video demos and snapshots of the tool in action
 
 = Videos =
 
-* A video demo explaining interaction with the Overlapper is available here (18.8 MB, 1280x1024 resolution).
+* A video demo explaining interaction with the Overlapper is available [http://carpex.usal.es/~visusal/bicoverlapper/videos/overlapper.avi here] (18.8 MB, 1280x1024 resolution).
 
 The same video with subtitles.
 
