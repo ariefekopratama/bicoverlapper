@@ -13,4 +13,4 @@ If you want to know the inner details of BicOverlapper then you can start by rea
 
 = Developing BicOverlapper =
 
-BicOverlapper is available as an open source project. If you want to contribute, or just use or adapt it to your applications, your cand find useful the [http://bicoverlapper.googlecode.com/svn/BicOverlapper/doc/index.html javadoc] (note that if you access the javadoc using the google code browser, you won´t be able to navigate the documentation) and a small [http://bicoverlapper.googlecode.com/files/developersGuide.pdf developer's guide] with detailed explanation of Bicoverlapper architecture 
+BicOverlapper is available as an open source project. If you want to contribute, or just use or adapt it to your applications, you may find useful the [http://bicoverlapper.googlecode.com/svn/BicOverlapper/doc/index.html javadoc] (note that if you access the javadoc using the google code browser, you won´t be able to navigate the documentation) and a small [http://bicoverlapper.googlecode.com/files/developersGuide.pdf developer's guide] with detailed explanation of Bicoverlapper architecture 
