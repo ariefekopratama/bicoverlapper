@@ -24,4 +24,4 @@ We have collected some images of the tool with different examples.
   * OPSM on yeast 
   * Biclustering Mix, Preliminary Results 
  
-All these images with corresponding explanations can be accessed from [this page http://carpex.usal.es/~visusal/bicoverlapper/snapshots.htm]
+All these images with corresponding explanations can be accessed from [http://carpex.usal.es/~visusal/bicoverlapper/snapshots.htm this page]
