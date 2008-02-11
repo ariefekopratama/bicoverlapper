@@ -5,7 +5,6 @@ people currently involved in the development of BicOverlapper
 
 Bicoverlapper started as a personal project that dealt with the general problem of visualizing overlapping groups of entities. Later, the approach has proven to fit to the more specific problem of microarray analysis. Now, we are taking another step that seems like a reasonable idea today, and -who knows what the future holds- we are moving towards creating an open-source framework for bicluster analysis.
 
-We are inviting skilled professionals who want to contribute their time into creating the open source collaboration platform for education
 
 = List of collaborators and institutions =
 
