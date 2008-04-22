@@ -101,7 +101,10 @@ public void buildEdges()
 	  	{
 		Node m = (Node)clusterNodes.get(i);
 		SpringEdge e = new SpringEdge(centerNode,m);
+		e.setStiffness(clusterNodes.size());
 		myResultSet.myGraph.addEdge(e);
+		//e = new SpringEdge(m, centerNode);
+		//myResultSet.myGraph.addEdge(e);
        	}
 	}
 

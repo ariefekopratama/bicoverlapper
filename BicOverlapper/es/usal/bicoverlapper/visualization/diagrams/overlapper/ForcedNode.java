@@ -1,5 +1,9 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 
 /**
@@ -111,7 +115,9 @@ public class ForcedNode extends Node {
   public void draw() 
   	{
     Overlapper p=(Overlapper)g.getApplet();
-    if(!p.isDrawNodes() || this.isDrawn() || p.nodeThreshold>this.clusters.size())	return;
+    if(!p.isDrawNodes() || this.isDrawn())
+    	if(!centerNode && p.nodeThreshold>this.clusters.size())
+    		return;
     
     int factor=1;
     if(p.isSizeRelevant())    	factor=this.clusters.size();
@@ -121,11 +127,22 @@ public class ForcedNode extends Node {
 
  	p.noFill();
     p.stroke(255,255,255,128);
-  	p.rectMode(Overlapper.CENTER);
+ 	/*if(p.isDrawTopography() && this.clusters.size()>p.getGraph().maxZones*.75)	{
+ 					int lum=255/this.clusters.size();
+ 					p.stroke(lum,lum,lum,128);
+ 					}
+ 	else						p.stroke(255,255,255,128);*/
+    p.rectMode(Overlapper.CENTER);
 
-	if(isGene())	p.ellipse((float) getX(), (float) getY(), width*factor, height*factor);
+   	if(isGene())	p.ellipse((float) getX(), (float) getY(), width*factor, height*factor);
 	else			p.rect((float) getX(), (float) getY(), width*factor, height*factor);
-     
+
+  	//p.stroke(0,0,0);
+  	//if(isGene())	p.ellipse((float) getX()-1, (float) getY()-1, width*factor+2, height*factor+2);
+	//else			p.rect((float) getX()-1, (float) getY()-1, width*factor+2, height*factor+2);
+    
+  	
+  	
     p.fill(100,100,100,100);
     if(image.length()>0)
     	{
@@ -163,4 +180,77 @@ public class ForcedNode extends Node {
     
     this.setDrawn(true);
   }
+  
+  //Método mejorado para dibujar piecharts
+  public void drawPie()
+	{
+	Overlapper bv=(Overlapper)g.getApplet();
+	final float env = 1.3f;
+	float ns=bv.getNodeSize();
+	
+	if(!isDrawnAsPiechart() && shownClusters.size()>=bv.nodeThreshold)
+		{
+		float x=(float)getX();
+        float y=(float)getY();
+        float s=getSize();
+        float senv=s*env;
+        float dif=(senv-getSize())/2;
+		 
+        
+        //Para saber qué porción de círculo toca;
+        float step = Overlapper.TWO_PI / shownClusters.size();
+	    //Para hacer un sector por grupo al que pertenece
+        int inter=0;
+        if(bv.isOnlyIntersecting())	inter=1;
+        if(shownClusters.size()>inter)
+	        {
+	        Iterator<Cluster> itDraw=shownClusters.values().iterator();
+	        ArrayList<CustomColor> colors=new ArrayList<CustomColor>();
+	        ArrayList<Integer> sizes=new ArrayList<Integer>();
+	        for (int j=0; itDraw.hasNext(); j++)	//Tomamos el tamaño de las porciones por cada color
+	           	{
+	        	MaximalCluster c=(MaximalCluster)itDraw.next();
+		    	ClusterSet r = c.myResultSet;
+		    	CustomColor col = r.myColor;
+		    	if(!colors.contains(col))
+		    		{
+		    		colors.add(col);
+		    		sizes.add(1);
+		    		}
+		    	else
+		    		{
+		    		int ind=colors.indexOf(col);
+		    		int tam=sizes.get(ind);
+		    		sizes.set(ind, tam+1);
+		    		}
+	           	}
+	        
+	        float init=0;
+	        for(int i=0;i<colors.size();i++)
+	        	{
+	        	CustomColor col=colors.get(i);
+	        	bv.rectMode(JProcessingPanel.CENTER);
+	        	bv.fill(col.getR(), col.getG(), col.getB(),150);
+	        	bv.noStroke();
+	        	
+		        float end=init+step*sizes.get(i);
+		        if(label.equals("E3A"))
+		        	System.out.println("");
+		        
+		       bv.arc(x+1, y+1, senv, senv, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
+		        
+		        bv.stroke(255,255,255,255);
+		        bv.strokeWeight(1);
+		        for(int j=0;j<sizes.get(i);j++)
+			        {
+				   	bv.line(x, y, (float)(x+ ns/2*Math.cos(init)), (float)(y+ ns/2*Math.sin(init)));
+				   	init+=step;
+			        }
+				bv.fill(0,0,0,255);
+		    	}
+		  	}
+        setDrawnAsPiechart(true);
+		}//if(no ha sido ya pintada la piechart)
+	}
+
 }

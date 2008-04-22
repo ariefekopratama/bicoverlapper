@@ -12,7 +12,7 @@ public class FileStructure implements GenericFileStructure
 	
 	private char delimitador;
 	private String nombreFichero=null;
-	private LinkedList fichero=null;
+	private LinkedList<String> fichero=null;
 	
 	/**
 	 * Builds the FileStructure
@@ -59,7 +59,7 @@ public class FileStructure implements GenericFileStructure
 		String devolver="";
 		try{
 		//*Utilizamos el ejercicio tres de clases para almacenar el fichero en una lista enlazada.	
-		LinkedList fichero=CompleteFileManager.readFile(fich);
+		LinkedList<String> fichero=CompleteFileManager.readFile(fich);
 	        
 		//*Utilizamos el ejercicio tres de clases para tomar el campo.
 		devolver=CompleteFileManager.readString(fichero, fila, columna, delimitador);

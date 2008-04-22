@@ -21,10 +21,10 @@ public class SimpleFileManager {
 	 * @param	fileName	path of the file to read
 	 * @return	a LinkedList with strings corresponding to each line of the file read
 	 */
-	static LinkedList readFile(String fileName) throws Exception
+	static LinkedList<String> readFile(String fileName) throws Exception
 	{
 	String temp;
-	LinkedList ficheroLeido=new LinkedList();
+	LinkedList<String> ficheroLeido=new LinkedList<String>();
 	FileReader in=new FileReader(fileName);
 	BufferedReader fichero=new BufferedReader(in);
 
@@ -44,7 +44,7 @@ public class SimpleFileManager {
 	 * @param	fileName	path of the file to write
 	 * @param lines	LinkedList with strings for each line of the file
 	 */
-	public static void writeFile(String fileName, LinkedList lines) throws Exception
+	public static void writeFile(String fileName, LinkedList<String> lines) throws Exception
 	{
 	FileWriter out=new FileWriter(fileName);
 	BufferedWriter fichero=new BufferedWriter(out);

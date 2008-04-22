@@ -14,6 +14,7 @@ class MicroGridLayout extends Layout {
     private double cellHeight;
     private double cellWidth;
     private int n;//total number of genes and conditions
+    private int ntot;
     private int m;
    // private static final int maxLines=2000;
     
@@ -34,6 +35,8 @@ class MicroGridLayout extends Layout {
     private double height;
     private double width;
     
+    public String name;
+    
     /**
      * Constructs the layout
      * @param group		group in which VisualItems are
@@ -48,18 +51,21 @@ class MicroGridLayout extends Layout {
      * @param mx		factor for distortion of width	
      * @param my		factor for distortion of height
      */
-    public MicroGridLayout(String group, int numRows, int numCols, double height, double width, String rowName, String colName, int xMargin, int yMargin, double mx, double my) 
+    public MicroGridLayout(String group, int numRows, int numTotRows, int numCols, double height, double width, String rowName, String colName, int xMargin, int yMargin, double mx, double my, String name) 
         {
         grupo=group;
         n=numRows;
         m=numCols;
+        ntot=numTotRows;
         cellHeight=height/n;	//No influyen, son determinados por el ERenderer
         cellWidth=width/m;
         this.height=height;
         this.width=width;
-        geneOrder=new int[n];
+       // geneOrder=new int[n];
+        geneOrder=new int[ntot];
         conditionOrder=new int[m];
-        for(int i=0;i<n;i++)	geneOrder[i]=i;
+        //for(int i=0;i<n;i++)	geneOrder[i]=i;
+        for(int i=0;i<ntot;i++)	geneOrder[i]=i;
         for(int i=0;i<m;i++)	conditionOrder[i]=i;
         colField=colName;
         rowField=rowName;
@@ -69,7 +75,8 @@ class MicroGridLayout extends Layout {
         colSelected=0;
         this.mx=mx;
         this.my=my;
-      //  System.out.println("Altura maxima "+height);
+        System.out.println("MGL construido "+name);
+        this.name=name;
     	}
     
     /**
@@ -171,28 +178,34 @@ class MicroGridLayout extends Layout {
 	        	VisualItem item = (VisualItem)iter.next();
 	        	int i=geneOrder[item.getInt(rowField)];
 	            int j=conditionOrder[item.getInt(colField)];
-	            int icont=item.getInt(rowField);
+	           // int icont=item.getInt(rowField);
+	            int icont=item.getInt("rowId");
 	            int jcont=item.getInt(colField);
+	            if(item.getString("gene").equals("368") && item.getString("condition").equals("DLCL-0001"))
+	            	System.out.println("Orden de este elemento: "+i+", "+j);
 	            
 	        	double h=0;
 	        	double w=0;
-	        	if(i>=rowSelected)	h=minih;
-	        	else		   		h=distortedh;
+	        	if(i>=rowSelected)	
+	        		h=minih;
+	        	else		   		
+	        		h=distortedh;
 	        	
 	        	if(colSelected==0 || colSelected==m-1)//we have selected gene profiles only
 	        		w=normalw;
 	        	else
 	        		{
 	        		if(j>=colSelected)	w=miniw;
-	        		else			w=distortedw;
+	        		else				w=distortedw;
 	        		}
 	        	
 	        	
 	        	ExpressionRenderer er=(ExpressionRenderer)item.getRenderer();
-	        	er.setHeight(h, icont);
+	        	er.setHeight(h, icont);//TODO: Error: icont tiene que hacer referencia a un nº en 0-200-> actualIdRow!!
 	            er.setWidth(w, jcont);
 	            
-	            if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(i-rowSelected)*minih;
+	           // if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(i-rowSelected)*minih;
+	            if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(icont-rowSelected)*minih;//SPARSE
 	        	else				y=yMargin+i*distortedh;
 	        	
 	        	if(colSelected==m-1)//we have selected gene profiles only (all conditions selected)
@@ -205,6 +218,7 @@ class MicroGridLayout extends Layout {
 		        	
 	        	setX(item, null, x);
 	            setY(item, null, y);
+	           // if(i<rowSelected) System.out.println("Colocando "+item.getString("gene")+", "+item.getString("condition")+" en "+x+", "+y+" con tamaño "+w+", "+h);
 	            }
 	        
 	        //Rectangle surrounding the selection

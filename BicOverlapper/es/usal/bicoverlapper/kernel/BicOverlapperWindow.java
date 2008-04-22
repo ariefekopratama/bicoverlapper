@@ -84,6 +84,7 @@ public class BicOverlapperWindow extends JFrame{
 		this.setVisible(true);
 		
 		//---------- double buffering
+		/*
 		this.createBufferStrategy(2);
 		BufferStrategy strategy=this.getBufferStrategy();
 //		 Render single frame
@@ -106,12 +107,14 @@ public class BicOverlapperWindow extends JFrame{
 	         } while (strategy.contentsRestored());
 
 	         // Display the buffer
-	         strategy.show();
+	         strategy.show();	//NOTA: Creo que esto será difícil de hacer en el caso de que haya un contentsLost, que creo que es el problema que da a veces
+	         					//No entiendo mucho la necesidad de hacer un doble buffer aqui al principio, así que de momento esto va a quedar comentado sin más.
 
 	         // Repeat the rendering if the drawing buffer was lost
 	     } while (strategy.contentsLost());
 		//__________-
-	
+		 System.out.println("Terminada la historia esta");
+		 */
 	}
 	
 	private void initDesktop(){

@@ -35,27 +35,6 @@ class HeatmapFocusControl extends FocusControl
     private String fieldConditionLabels;
     private MicroGridLayout gl;
     
-	/*public HeatmapFocusControl(Session session, String activity, 
- 		   String group, String field, String fieldGeneLabels, String fieldConditionLabels, 
- 		   MicroGridLayout mgl, Visualization v, Layout[] lays)
-    	{
-    	super(group, 1, activity);
-		this.activity=activity;
-		this.group=group;
-		enabled=true;
-		this.sesion=session;
-		genesSeleccionados=new LinkedList<Integer>();
-		condicionesSeleccionadas=new LinkedList<Integer>();
-		visualization=v;
-		this.field=field;
-		this.fieldGeneLabels=fieldGeneLabels;
-		this.fieldConditionLabels=fieldConditionLabels;
-		n=visualization.getGroup(fieldGeneLabels).getTupleCount();
-		m=visualization.getGroup(fieldConditionLabels).getTupleCount();
-		gl=mgl;
-		layouts=lays;
-    	}
-    */
     /**
      * Session constructor
      * @param session Session to which this controller has to listen/update for changes
@@ -216,7 +195,7 @@ class HeatmapFocusControl extends FocusControl
 	 * en id (en los dos primeros casos) o en rowId y colId con algún elemento de gid y cid
 	 * TODO: esta es la que funciona bien!
 	 */
-	void addItems(LinkedList gid, LinkedList cid)
+	void addItems(LinkedList<Integer> gid, LinkedList<Integer> cid)
 		{
 		//System.out.println("Cambiando los rangos");
 		int [] genes=null;
@@ -233,8 +212,8 @@ class HeatmapFocusControl extends FocusControl
 		//Cambiamos las etiquetas de los genes y condiciones para que estén los primeros los seleccionados
 		for(int i=0;i<gid.size();i++)
 			{
-			String gene=(gid.get(i)).toString();
-			it=visualization.items(fieldGeneLabels,"id="+gene);//Cogemos la etiqueta de gen
+			//it=visualization.items(fieldGeneLabels,"id="+gid.get(i));//Cogemos la etiqueta de gen
+			it=visualization.items(fieldGeneLabels,"actualId="+gid.get(i));//Cogemos la etiqueta de gen, en el caso de sparse tiene que ser por el actualId!
 			VisualItem glabel=(VisualItem)it.next();
 			glabel.setInt("rowRank",-(gid.size()-i));//the same order that puts gl.newOrder()
 			}
@@ -247,6 +226,7 @@ class HeatmapFocusControl extends FocusControl
 			clabel.setInt("colRank",-(gid.size()-i));
 			}
 		runActivity(visualization);
+		//runActivity("color");
 		}
 	
 	//Añade todos los niveles de expresión que tengan un gen con ese id
@@ -297,7 +277,11 @@ class HeatmapFocusControl extends FocusControl
 	
     private void runActivity(Visualization vis) 
     	{
-        if ( activity != null )          vis.run(activity);
+        if ( activity != null )        
+        	{
+        	vis.run(activity);
+        	vis.run("color");
+        	}
     	}
 
 

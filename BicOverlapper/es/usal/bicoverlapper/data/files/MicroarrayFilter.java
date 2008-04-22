@@ -6,11 +6,9 @@ import javax.swing.filechooser.FileFilter;
 
 /**
  * Microarray file format filter for JFileChooser
- * @author Rodrigo	Santamaría
+ * @author Rodrigo	Santamaria
  */
 public class MicroarrayFilter extends FileFilter{
-	   //Accept all directories and all gif, jpg, tiff, or png files.
-	
     static final String getExtension(File f) {
         String ext = null;
         String s = f.getName();

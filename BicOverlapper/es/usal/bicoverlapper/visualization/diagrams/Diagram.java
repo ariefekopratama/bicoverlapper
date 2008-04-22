@@ -403,6 +403,46 @@ public abstract class Diagram extends JPanel {
 	}
 	
 	/**
+	 * As above, but also sets the tabbed pane to be selected by default
+	 * 
+	 * @param panelPaleta <code>JPanel</code> con la interfaz de configuracion de la paleta de colores.
+	 * @param panelAnclajes <code>JPanel</code> con la interfaz de configuracion de los anclajes.
+	 * @param panelParametros <code>JPanel</code> con la interfaz de configuracion de los parametros.
+	 * @param panelBotones <code>JPanel</code> con la interfaz para aceptar y cancelar la configuracion establecida.
+	 * @param select panel index to get selected by default
+	 */
+	void initPanelConfig(JPanel panelPaleta, JPanel panelAnclajes, JPanel panelParametros, JPanel panelBotones, int select)
+		{
+		JTabbedPane tabbedPane = new JTabbedPane();
+		
+		if(panelPaleta != null)
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s31"), panelPaleta);
+		
+		if(panelAnclajes != null)
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s23"), panelAnclajes);
+		
+		if(panelParametros != null){
+			this.panelParametros = panelParametros;
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s8"), panelParametros);
+		}
+		
+		tabbedPane.setSelectedIndex(select);
+		
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.gridx = 0;
+		constraints.gridy = 0;
+		constraints.weightx = 1.0;
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(tabbedPane,constraints);
+		constraints.weightx = 0.0;
+		constraints.gridy = 1;
+		panel.add(panelBotones,constraints);
+		ventanaConfig.setContentPane(panel);
+		}
+	
+	/**
 	 * Returns the diagram id
 	 * 
 	 * @return <code>int</code> diagram id

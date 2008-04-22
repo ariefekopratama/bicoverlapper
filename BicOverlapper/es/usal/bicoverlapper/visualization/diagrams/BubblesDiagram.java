@@ -239,7 +239,7 @@ public class BubblesDiagram extends Diagram {
 
 		nodeColor=new DataColorAction("graph.nodes", "resultType", Constants.NOMINAL, VisualItem.FILLCOLOR,paletaTipos);//Pasarle homogeneidad
 			
-		Iterator it=v.items("graph.nodes");
+		//Iterator it=v.items("graph.nodes");
 		//System.out.println("Despues del colorAction, ya tenemos color: "+((VisualItem)it.next()).getString("_fillColor"));
 		ItemAction nodeShape=new NodeShapeAction("graph.nodes", Constants.SHAPE_ELLIPSE);
 		ItemAction nodeSize=new NodeSizeAction("graph.nodes", "size",100, Constants.LINEAR_SCALE);//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos

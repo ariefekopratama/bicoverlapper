@@ -3,13 +3,19 @@ package es.usal.bicoverlapper.data;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
 
+import javax.swing.JProgressBar;
+import javax.swing.ProgressMonitorInputStream;
+
 import prefuse.data.Table;
 import prefuse.data.Tuple;
+import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.io.DelimitedTextTableReader;
+import prefuse.data.util.Sort;
 
 /**
  * Class with data of Microarray expression levels, using Prefuse Tables
@@ -52,9 +58,10 @@ public class MicroarrayData
 	{
 	Table levels;//Expresion levels as usual matrix
 	Table expressions;//Expresion levels, each one as tuple (gene, condition, level)
+	float matrix[][];//matrix with expression levels replicated, to quicken some arithmetic operations
 	Table geneLabels;//Expresion levels, each one as tuple (gene, condition, level)
 	Table conditionLabels;//Expresion levels, each one as tuple (gene, condition, level)
-	int maxGenes=2000;//A partir de 200
+	int maxGenes=200;//A partir de 200
 	Table sparseExpressions;//As above, but sparse (only a maximum number of genes are shown)
 	Table sparseGeneLabels;
 	//Table sparseConditionLabels;//unnecesary by now, always show all conditions
@@ -73,19 +80,16 @@ public class MicroarrayData
 	 */
 	public MicroarrayData(String path, boolean invert, int rowHeader, int colHeader) throws Exception
 		{
-		//ProgressBarDemo jop=new ProgressBarDemo();
-				
+	//	ProgressMonitorInputStream pmis=new BufferedInputStream(
+	//				ProgressMonitorInputStream();	
 		double t1=System.currentTimeMillis();
 		DelimitedTextTableReader tr=new DelimitedTextTableReader("\t");
 		System.out.println(path);
 		tr.setHasHeader(true);
 		Table levelsi=null;
-		//	try{
-			levelsi=tr.readTable(new FileInputStream(path));
-		//	System.out.println(levelsi.get(0,0).getClass()+" "+levelsi.get(0,1).getClass());
-		//	System.out.println(levelsi.getColumnCount()+", "+levelsi.getRowCount());
-		//	System.out.println(levelsi.get(0,0)+" "+levelsi.get(0,3));
-		//	}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); System.exit(1);}
+		
+		levelsi=tr.readTable(new FileInputStream(path));
+		//InputStream is=new InputStream(new ProgressMonitorInputStream(,"Reading "+path,new FileInputStream(path))));
 		if(invert)
 			{
 			numGenes=levelsi.getColumnCount();//Al revés te lo digo para que me entiendas
@@ -98,9 +102,7 @@ public class MicroarrayData
 			}
 		conditionNames=new String[numConditions];
 		geneNames=new String[numGenes];
-		//jop.showMessageDialog(v,"Nº of genes: "+numGenes+" \nNº of conditions: "+numConditions,null,JOptionPane.INFORMATION_MESSAGE);		
-		//jop.showInternalMessageDialog(v,"Nº of genes: "+numGenes+" \nNº of conditions: "+numConditions);
-		//jop.setValue(10);
+		
 		System.out.println("Microarray matrix with "+numGenes+" genes and "+numConditions+" conditions");
 		
 		try{
@@ -148,30 +150,23 @@ public class MicroarrayData
 				}
 			else	for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString();
 			}
-		//if(numGenes>0 && numConditions>0)
-		
 		}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); System.exit(1);}
-		//System.out.println("número de genes\t"+numGenes+" número de condiciones\t"+numConditions);
-		//System.out.println("GENES");
-		//for(int i=0;i<numGenes;i++)	System.out.println(geneNames[i]);
-		//System.out.println("CONDICIONES");
-		//for(int i=0;i<numConditions;i++)	System.out.println(conditionNames[i]);
 		double t2=System.currentTimeMillis();
 		if(numGenes<=maxGenes)	maxGenes=1;
 		
-		//System.out.println("T1) "+(t2-t1)/1000);
+		System.out.println("T1) Nombres "+(t2-t1)/1000);
 		
 		if(invert)	levels=invert(levelsi);	//OJO: Para el caso de que estén invertidos (SynTReN por ejemplo)
 		else		levels=levelsi;
 		
 		t1=System.currentTimeMillis();
-		//System.out.println("T2) inversión "+(t1-t2)/1000);
+		System.out.println("T2) inversión "+(t1-t2)/1000);
 		
 		//System.out.println(levels.get(0,3));
 		expressions=convert(levels, colHeader);
 		
 		t2=System.currentTimeMillis();
-		//System.out.println("T3) conversión "+(t2-t1)/1000);
+		System.out.println("T3) conversión "+(t2-t1)/1000);
 		
 		sparseGeneLabels=new Table();
 		sparseGeneLabels.addColumn("name", String.class);
@@ -218,10 +213,10 @@ public class MicroarrayData
 			conditionLabels.setString(row, "name", conditionNames[i]);
 			conditionLabels.setInt(row, "id", i);
 			conditionLabels.setInt(row, "colRank", i);
-			row++;
+			row++;//esto en principio no es necesario
 			}
 		t1=System.currentTimeMillis();
-		//System.out.println("T4) creación de tablas "+(t1-t2)/1000);
+		System.out.println("T4) creación de tablas "+(t1-t2)/1000);
 		//System.out.println(numConditions+"x"+numGenes);
 		//System.out.println("Número de filas de las etiquetas: "+conditionLabels.getRowCount()+" "+geneLabels.getRowCount());
 		}
@@ -251,6 +246,7 @@ public class MicroarrayData
 		sparseExpressions.addColumn("rowRank", int.class);//Para la reordenación de filas y columnas
 		sparseExpressions.addColumn("colRank", int.class);
 		sparseExpressions.addColumn("rowId", int.class);//Para la selección de filas y columnas
+		sparseExpressions.addColumn("actualRowId", int.class);//Para la selección de filas y columnas
 		sparseExpressions.addColumn("colId", int.class);
 	//	System.out.println("SkipColumns "+skipColumns);
 		int row=0;
@@ -258,6 +254,8 @@ public class MicroarrayData
 		int contGene=0;
 		int step=1;
 		if(numGenes>maxGenes)	step=numGenes/maxGenes;
+		matrix=new float[numGenes][numConditions];
+		
 		for(int i=0;i<numGenes;i++)
 			{
 			for(int j=0;j<numConditions;j++)
@@ -267,13 +265,20 @@ public class MicroarrayData
 				ret.setString(row, "condition", conditionNames[j]);
 				
 				//System.out.println(row+" "+i+" "+j+" "+conditionNames[j]+" "+geneNames[i]);
-				if(matriz.canGet(conditionNames[j],Double.class))	ret.setDouble(row, "level", ((Double)matriz.get(i,j+skipColumns)).doubleValue());
+				if(matriz.canGet(conditionNames[j],Double.class))	
+					{
+					double value=((Double)matriz.get(i,j+skipColumns)).doubleValue();
+					ret.setDouble(row, "level", ((Double)matriz.get(i,j+skipColumns)).doubleValue());
+					matrix[i][j]=(float)value;
+					}
 				else												
 					{
 					if(matriz.canGet(conditionNames[j],Integer.class))
 						{
 					//	System.out.println(matriz.get(i,j+skipColumns));
-						ret.setDouble(row, "level", ((Integer)matriz.get(i,j+skipColumns)).doubleValue());
+						double value=((Integer)matriz.get(i,j+skipColumns)).doubleValue();
+						ret.setDouble(row, "level", value);
+						matrix[i][j]=(float)value;
 						}
 					}
 				ret.setInt(row, "rowId", i);
@@ -301,9 +306,12 @@ public class MicroarrayData
 					//sparseExpressions.setInt(sparseRow, "rowId", i);
 					//sparseExpressions.setInt(sparseRow, "rowRank", i);
 					sparseExpressions.setInt(sparseRow, "rowId", contGene);
+					//sparseGeneLabels.setInt(sparseRow, "id", sparseRow);
+					sparseExpressions.setInt(sparseRow, "actualRowId", i);
 					sparseExpressions.setInt(sparseRow, "rowRank", contGene);
 					sparseExpressions.setInt(sparseRow, "colId", j);
 					sparseExpressions.setInt(sparseRow, "colRank", j);
+					//System.out.println("Añadiendo: |"+geneNames[i]+"|\t"+contGene+"\t"+i+"\t"+contGene+"\t"+j+"\t"+j+":\t"+matriz.get(i,j+skipColumns));
 					sparseRow++;
 					}
 				}
@@ -339,22 +347,39 @@ public class MicroarrayData
 		return ret;
 		}
 
-	void buildSparse(LinkedList<Integer> genes)
+	public void buildSparse(LinkedList<Integer> genes)
 		{
 	
 		for(int i=0;i<genes.size();i++)
 			{
-			Tuple t=geneLabels.getTuple(genes.get(i));
-			if(!sparseGeneLabels.containsTuple(t))	//si no está, tenemos que incluirla quitando una ue no esté en genes
+			//Tuple t=geneLabels.getTuple(genes.get(i));
+			Table t=sparseGeneLabels.select(ExpressionParser.predicate("actualId = "+genes.get(i)+""), new Sort());
+			if(t==null || t.getRowCount()==0)
+			//if(!sparseGeneLabels.containsTuple(t))	//si no está, tenemos que incluirla quitando una ue no esté en genes
 				{
 				int j=0;
 				while(genes.contains(sparseGeneLabels.getTuple(j).getInt("actualId")))	j++;//mientras esté en genes, probamos con la sig.
-				
 				sparseGeneLabels.setString(j, "name", geneNames[genes.get(i)]);//Nuevo nombre e id para él, el resto no cambia
+				System.out.println("Añadiendo expresiones para gen "+geneNames[genes.get(i)]);
 				sparseGeneLabels.setInt(j, "actualId", genes.get(i));
+				int id=sparseGeneLabels.getInt(j, "id");
+				int actualId=genes.get(i);
+				int cont=j*numConditions;
 				//TODO: también cambian las expresiones correspondientes claro
+				for(int k=0;k<this.numConditions;k++)
+					{
+					this.sparseExpressions.setInt(cont+k, "actualRowId",actualId);
+					this.sparseExpressions.setInt(cont+k, "rowId",id);
+					//this.sparseExpressions.setInt(cont+k, "colId",);//En principio los datos de condiciones están bien
+					//this.sparseExpressions.setString(cont+k, "condition",);
+					this.sparseExpressions.setString(cont+k, "gene",geneNames[actualId]);
+					this.sparseExpressions.setDouble(cont+k, "level",this.matrix[actualId][k]);
+					System.out.println("Añadiendo expresión a columna "+this.sparseExpressions.getInt(cont+k, "colId")+" de condición "+this.sparseExpressions.getString(cont+k, "condition"));
+					System.out.println("gene: "+geneNames[actualId]+"\tlevel: "+matrix[actualId][k]);
+					}
 				}
 			}
+		return;
 		}
 
 
@@ -452,6 +477,62 @@ public class MicroarrayData
 		}
 	
 	/**
+	 * Returns the constance by rows, columns or both, for a subset and genes and/or conditions
+	 * The subset of genes and the subset of conditions may be null, but not both of them. If one 
+	 * of them is null, all gene/condition profile is considered.
+	 * @param genes - subgroup of genes
+	 * @param conditions - subgroup of conditions 
+	 * @param type - type of constance, by rows (0), by columns (1) or by both rows and columns (2)
+	 * @return the constance value for the subgroup
+	 */
+	public float getConstance(ArrayList<String> genes, ArrayList<String> conditions, int type)
+		{
+		float constance=0;
+		float matrixBic[][]=new float[genes.size()][conditions.size()];
+		//1) Recuperamos la matriz sobre la que calcular la constancia
+		for(int i=0;i<genes.size();i++)
+			{
+				String gene=genes.get(i);
+			int row=getGeneId(gene);
+			for(int j=0;j<conditions.size();j++)
+				{
+				String cond=conditions.get(j);
+				int col=getConditionId(cond);
+				//Table t=expressions.select(ExpressionParser.predicate("gene = '"+gene+"' and condition ='"+cond+"'"), new Sort());
+				//TODO: Quizás convendría tener una matriz en memoria cargada, aunque puede ser mucho peso.
+				matrixBic[i][j]=matrix[row][col];
+			//	System.out.print(matrix[i][j]+"\t");
+				}
+		//	System.out.println();
+			}
+		//2) Calculamos la constancia
+		float sum=0;
+		float sd=0;
+		int num=0;
+		switch(type)
+			{
+			case 0:
+				num=genes.size();
+				break;
+			case 1:
+				num=conditions.size();
+				break;
+			case 2:
+				num=genes.size()*conditions.size();
+				for(int i=0;i<genes.size();i++)
+					for(int j=0;j<conditions.size();j++)
+						sum+=matrix[i][j];
+				for(int i=0;i<genes.size();i++)
+					for(int j=0;j<conditions.size();j++)
+						sd+=Math.abs(matrix[i][j]-sum);
+				break;
+			}
+		
+		constance=sd/num;
+		return constance;
+		}
+	
+	/**
 	 * Returns a list of gene and condition names from two lists with genes and conditions ids
 	 * @param lg	list of gene ids 
 	 * @param lc	list of condition ids 
@@ -489,15 +570,15 @@ public class MicroarrayData
 		}
 	
 	//Sparse tables: IN DEVELOPMENT
-	Table getSparseExpressions() {
+	public Table getSparseExpressions() {
 		return sparseExpressions;
 	}
 
-	void setSparseExpressions(Table sparseExpressions) {
+	public void setSparseExpressions(Table sparseExpressions) {
 		this.sparseExpressions = sparseExpressions;
 	}
 
-	Table getSparseGeneLabels() {
+	public Table getSparseGeneLabels() {
 		return sparseGeneLabels;
 	}
 
@@ -505,7 +586,7 @@ public class MicroarrayData
 		this.sparseGeneLabels = sparseGeneLabels;
 	}
 
-	int getNumSparseGenes() {
+	public int getNumSparseGenes() {
 		return numSparseGenes;
 	}
 

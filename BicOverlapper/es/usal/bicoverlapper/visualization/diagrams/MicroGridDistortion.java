@@ -103,7 +103,7 @@ class MicroGridDistortion extends Layout {
     	n=numRows;
     	m=numCols;
         rowField="rowId";
-        colField="colId";
+    	colField="colId";
         
         s=session;
         mgl=micro;
@@ -172,9 +172,8 @@ class MicroGridDistortion extends Layout {
             	{
             	item=(VisualItem)iter.next();
             
-            	//int i=item.getInt(rowField);//NOTA: Esto no funciona si se hace recolocación!
-            	//int j=item.getInt(colField);
             	int i=mgl.geneOrder[item.getInt(rowField)];
+            	//int i=mgl.geneOrder[item.getInt("actualRowId")];//sparse
             	int j=mgl.conditionOrder[item.getInt(colField)];
             	
             	h=normalh;
@@ -251,18 +250,23 @@ class MicroGridDistortion extends Layout {
         	int ii=item.getInt(rowField);
         	int jj=item.getInt(colField);
         	int i=mgl.geneOrder[item.getInt(rowField)];
+        	int icont=mgl.geneOrder[item.getInt("actualRowId")];//SPARSE
         	int j=mgl.conditionOrder[item.getInt(colField)];
+        	//   if(item.getString("gene").equals("368") && item.getString("condition").equals("DLCL-0001"))
+	          //  	System.out.println("Orden de este elemento: "+i+", "+j+" en MGL "+mgl.name);
         	
-        	
-        	if(i!=conty)	h=minih;
+        	//if(i!=conty)	
+        	if(ii!=conty)	//SPARSE
+            		h=minih;
         	else			h=distortedh;
         	
         	if(j!=contx)	w=miniw;
         	else			w=distortedw;
 		
         	//distortion
-        	if(sb!=null && sb.getGenes().contains(ii))//alteramos h
-        		h=distortedh;
+        //	if(sb!=null && sb.getGenes().contains(ii))//alteramos h
+        	if(sb!=null && sb.getGenes().contains(item.getInt("actualRowId")))//alteramos h	//SPARSE
+            	h=distortedh;
         	if(sb!=null && sb.getConditions().contains(jj))//alteramos w
                 w=distortedw;
         	if(sb!=null && (colSelected==0 || colSelected==m-1))//we have selected gene profiles only
@@ -278,8 +282,10 @@ class MicroGridDistortion extends Layout {
             	{
             	if(j<=contx)	x=xMargin+j*miniw;
                 else			x=xMargin+(j-1)*miniw+distortedw;
-                if(i<=conty)	y=yMargin+i*minih;
-                else			y=yMargin+(i-1)*minih+distortedh;
+                //if(i<=conty)	y=yMargin+i*minih;
+                //else			y=yMargin+(i-1)*minih+distortedh;
+                if(ii<=conty)	y=yMargin+ii*minih;				//SPARSE
+                else			y=yMargin+(ii-1)*minih+distortedh;	//SPARSE
             	}
             
             else
@@ -298,15 +304,29 @@ class MicroGridDistortion extends Layout {
 	            			}
 	            		}
             		}
-              	if(i<sb.getGenes().size())	y=yMargin+i*distortedh;
+            	
+ 	           // if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(i-rowSelected)*minih;
+	          //  if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(icont-rowSelected)*minih;//SPARSE
+
+              	//if(i<sb.getGenes().size())	y=yMargin+i*distortedh;
+            	if(ii<sb.getGenes().size())	y=yMargin+ii*distortedh;//SPARSE
             	else
             		{
-            		if(i<=conty)	y=yMargin+sb.getGenes().size()*distortedh+(i-sb.getGenes().size())*minih;
+            		//TODO: no funciona la distorsión de la y en SPARSE
+            		/*if(i<=conty)	y=yMargin+sb.getGenes().size()*distortedh+(i-sb.getGenes().size())*minih;
             		else		
             			{
             			if(conty<sb.getGenes().size())	y=yMargin+(sb.getGenes().size())*distortedh+(i-sb.getGenes().size()-1)*minih;
             			else							y=yMargin+(sb.getGenes().size()+1)*distortedh+(i-sb.getGenes().size()-1)*minih;
+            			}*/
+            		//---sparse
+            		if(ii<=conty)	y=yMargin+sb.getGenes().size()*distortedh+(ii-sb.getGenes().size())*minih;
+            		else		
+            			{
+            			if(conty<sb.getGenes().size())	y=yMargin+(sb.getGenes().size())*distortedh+(ii-sb.getGenes().size()-1)*minih;
+            			else							y=yMargin+(sb.getGenes().size()+1)*distortedh+(ii-sb.getGenes().size()-1)*minih;
             			}
+            		//---
             		}
             	}
             

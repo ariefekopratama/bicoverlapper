@@ -183,8 +183,11 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 						py[i]=((Float)(poligonY.get(i))).intValue();
 						}
 					gr.fillPolygon(px,py,px.length);
-					gr.setColor(strokeColor);
-					gr.drawPolygon(px,py,px.length);
+					if(drawStroke)
+						{
+						gr.setColor(strokeColor);
+						gr.drawPolygon(px,py,px.length);
+						}
 					gr.setColor(temp);
 					return new Polygon(px,py,px.length);
 					}
@@ -195,22 +198,28 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 						double p[]=new double[poligonX.size()*3];
 						for(int i=0;i<poligonX.size();i++)
 							{
-							p[i*3]=((Float)(poligonX.get(i))).intValue();
-							p[i*3+1]=((Float)(poligonY.get(i))).intValue();
-							p[i*3+2]=0;
+							p[i*3]=poligonX.get(i);
+							p[i*3+1]=poligonY.get(i);
 							}
 							
-						double ps[]=SplineFactory.createCatmullRom(p, 7);
+						double ps[]=SplineFactory.createCatmullRom(p, 5);
+						//double ps2[]=SplineFactory.createCatmullRom(p, 7);
+						//double ps[]=SplineFactory.removeClosePoints(ps2);
 						int px[]=new int[ps.length/3];
 						int py[]=new int[ps.length/3];
 						for(int i=0;i<ps.length/3;i++)
 							{
 							px[i]=(int)ps[i*3];
 							py[i]=(int)ps[i*3+1];
+							//gr.setColor(strokeColor);
+							//gr.fillOval(px[i], py[i], 2, 2);
 							}
 						gr.fillPolygon(px,py,px.length);
-						gr.setColor(strokeColor);
-						gr.drawPolygon(px,py,px.length);
+						if(drawStroke)
+							{
+							gr.setColor(strokeColor);
+							gr.drawPolygon(px,py,px.length);
+							}
 						gr.setColor(temp);
 						return new Polygon(px,py,px.length);
 						}
@@ -256,10 +265,13 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 		float startd=fixDegrees(start);
 		float stopd=fixDegrees(stop);
 		Color temp=gr.getColor();
-		gr.fillArc((int)xd,(int)yd,(int)w,(int)h,(int)startd, (int)(startd-stopd));
-		gr.setColor(strokeColor);
-		gr.drawArc((int)xd,(int)yd,(int)w,(int)h,(int)startd, (int)(startd-stopd));
-		gr.setColor(temp);
+		gr.fillArc((int)xd,(int)yd,(int)w,(int)h,(int)startd, (int)Math.abs(startd-stopd));
+		if(drawStroke)
+			{
+			gr.setColor(strokeColor);
+			gr.drawArc((int)xd,(int)yd,(int)w,(int)h,(int)startd, (int)Math.abs(startd-stopd));
+			gr.setColor(temp);
+			}
 		}
 	
 	public float fixDegrees(float quant)

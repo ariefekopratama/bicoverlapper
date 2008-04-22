@@ -190,13 +190,22 @@ public class CustomColor {
    * @param n Identifier of the color to obtain
    * @return the corresponding color
    */
+  
+  /*
+   * NOTE: the best color from Ware1999 are
+   * Red, Green, Yellow, Blue, Black, White
+   * Pink, Cyan, Gray, Orange, Brown, Purple
+   * The first set of six must be chosen prior to the
+   * second set.
+   */
   public static Color getGoodColor(int n)
   	{
 	  int max=14;
 	  int  colors[][]  = {
+			//  {254,127,13},//orange
+			  {200,0,0},//orange
 			  {153,74,237},//morado
-			  {254,127,13},//orange
-			  {100,227,195},//spidrift
+				  {100,227,195},//spidrift
 			 	{244,238,224},//honeydew
 	           	  {200,100,255},//azul cielo
 			  {153,74,237},//morado

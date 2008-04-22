@@ -16,7 +16,10 @@ import java.util.Vector;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.ProgressMonitor;
+import javax.swing.plaf.basic.BasicProgressBarUI;
 
 
 
@@ -26,12 +29,17 @@ import es.usal.bicoverlapper.data.Field;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.data.TRNData;
+import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
 import es.usal.bicoverlapper.data.files.MicroarrayFilter;
 import es.usal.bicoverlapper.data.files.TRNFilter;
 import es.usal.bicoverlapper.kernel.BicOverlapperWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
+import es.usal.bicoverlapper.utils.HelpPanel;
+import es.usal.bicoverlapper.utils.ProgressMonitorDemo;
+import es.usal.bicoverlapper.utils.ProgressBarDemo;
+import es.usal.bicoverlapper.utils.ProgressPanel;
 import es.usal.bicoverlapper.utils.Translator;
 
 /**
@@ -87,8 +95,6 @@ public class FileMenuManager implements ActionListener {
 		boolean error=false;
 		String defaultPath="";
 		try{
-			//pathReader=new BufferedReader(new FileReader("data\\path.txt"));
-			//pathReader=new BufferedReader(new FileReader(getPath("es\\usal\\bicoverlapper\\data\\path.txt")));
 			pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
 			defaultPath=pathReader.readLine();
 			}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
@@ -207,9 +213,19 @@ public class FileMenuManager implements ActionListener {
 				(Component)e.getSource(),"Open Microarray");
 		 
 		if(returnval == JFileChooser.APPROVE_OPTION) {
+			/*ProgressMonitorDemo pmd=new ProgressMonitorDemo();
+			this.ventana.add(pmd);
+			pmd.setVisible(true);
+			pmd.run();*/
+				ProgressPanel pp=new ProgressPanel("Loading data...", this);//Lo que quiera que se cuente en la barra tengo que hacerlo dentro del task!
+			//pp.run();
+			//ProgressBarDemo pp=new ProgressBarDemo();
+			//pmd.createAndShowGUI();			
+			
 			//ProgressMonitor pm=new ProgressMonitor(this.ventana,"Loading microarray data... ","",0,100);
-			//ProgressBar pm=new ProgressBar(0,100);
+			//ProgressBar pm=new ProgressBar();
 			//pm.setProgress(0);
+			//this.ventana.add(pm);
 			//BasicProgressBarUI bpb=new BasicProgressBarUI();
 			//bpb.installUI(this.ventana.getDesktop());
 			
@@ -228,7 +244,7 @@ public class FileMenuManager implements ActionListener {
 				addVista=true;
 				sesion = new Session(desktop);
 				}
-				
+			//--esto dentro del Task de progress panel	
 			try {
 				leerMicroarray(path, fichero,sesion);
 			} catch (FileNotFoundException e1) {
@@ -249,6 +265,7 @@ public class FileMenuManager implements ActionListener {
 		                "Error",JOptionPane.ERROR_MESSAGE);
 				error=true;
 				}
+			//---
 			if(!error)
 				{
 				// Actualizar las ventanas activas		
@@ -256,7 +273,6 @@ public class FileMenuManager implements ActionListener {
 				sesion.updateData();
 				
 				try{
-				//pathWriter=new BufferedWriter(new FileWriter("es\\usal\\bicoverlapper\\data\\path.txt"));
 				pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/path.txt"));
 				pathWriter.write(path);
 				pathWriter.close();
@@ -278,7 +294,7 @@ public class FileMenuManager implements ActionListener {
 	else if(e.getActionCommand().equals("Open Biclustering Results"))
 		{
 		JFileChooser selecFile = new JFileChooser();
-		selecFile.addChoosableFileFilter(microFilter);
+		selecFile.addChoosableFileFilter(new BiclusterResultsFilter());
 		selecFile.setCurrentDirectory(new File(defaultPath));
 		
 		int returnval = selecFile.showDialog(
@@ -444,7 +460,7 @@ public class FileMenuManager implements ActionListener {
 	 * Lee un microarray y lo guarda tanto a la estructura de Prefuse en MicroarrayData como en DatosFile y DatosVar
 	 */
 	//private void leerMicroarray(String path, File fichero,Session sesion) throws FileNotFoundException,IOException 
-	private void leerMicroarray(String path, File fichero,Session sesion) throws Exception 
+	public void leerMicroarray(String path, File fichero,Session sesion) throws Exception 
 		{
 		int skipColumns=1;
 		int skipRows=1;
@@ -482,13 +498,11 @@ public class FileMenuManager implements ActionListener {
 			{
 			in.close();
 			in2.close();
-			//TRNData trnd=new TRNData(path+"\\"+fichero.getName());//caso 2)			
 			TRNData trnd=new TRNData(getPath(path+"\\"+fichero.getName()));//caso 2)			
 			sesion.setTRNData(trnd);	
 			}
 		}
 	
-//	private void leerBicluster(String path, String fichero,Session sesion) throws FileNotFoundException,IOException 
 	private void leerBicluster(String path, String fichero,Session sesion) throws Exception 
 		{
 		//Creamos los datos que necesitarán las burbujas

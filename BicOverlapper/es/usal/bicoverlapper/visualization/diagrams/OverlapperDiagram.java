@@ -1,9 +1,16 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.ComponentOrientation;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -14,14 +21,20 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.beans.PropertyVetoException;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Vector;
 
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -30,9 +43,12 @@ import javax.swing.JToolBar;
 
 import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
 import es.usal.bicoverlapper.utils.Translator;
+//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestorAñadirAnclaje;
+//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestorEliminarAnclaje;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Overlapper;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Graph;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Node;
@@ -95,6 +111,13 @@ private static final long serialVersionUID = 1L;
 	JRadioButton forPersons;
 	boolean configurando=false;
 	
+	int thresholdOption=0;
+	float thresholdValue=0;
+	boolean thresholdChanged=false;
+	JTextField value, step;
+	ButtonGroup cg; 
+	JRadioButton constancet;
+	
 	/**
 	 * Default constructor
 	 */
@@ -147,7 +170,7 @@ private static final long serialVersionUID = 1L;
 			bv.setup(ancho,alto);//, sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
 			bv.buildGraph();
-			bv.init();	//TODO: Probando a controlarlo desde el panel
+			bv.init();	
 			
 			JToolBar jtb=new JToolBar();
 			addButtons(jtb);
@@ -229,6 +252,12 @@ private static final long serialVersionUID = 1L;
 	                                  "Decrease threshold");
 	    toolBar.add(button);
 	    
+	    //decrease Threshold
+	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/threshold.png", "set threshold",
+	                                  "Set threshold",
+	                                  "Set threshold");
+	    toolBar.add(button);
+	  
 	    //increase Threshold
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/Up24.gif", "increase threshold",
 	                                  "Increase threshold",
@@ -458,6 +487,33 @@ private static final long serialVersionUID = 1L;
 		return new ImageIcon(Toolkit.getDefaultToolkit().getImage(imgURL));
 		}
 	
+	
+	private class GestorConfiguracion implements ActionListener{
+		public GestorConfiguracion(){}
+		
+		public void actionPerformed(ActionEvent e)
+		{
+			int temp=thresholdOption;
+		if ("overlap".equals(e.getActionCommand()))		thresholdOption=0;
+		else if("size".equals(e.getActionCommand()))	thresholdOption=1;
+		else if("constance".equals(e.getActionCommand()))	
+			{
+		/*	if(sesion.getMicroarrayData()==null)
+				{
+				JOptionPane.showMessageDialog(null,"This threshold can only be set if Microarray Data are loaded","Error",JOptionPane.INFORMATION_MESSAGE);
+				Enumeration en=cg.getElements();
+				for(int i=0;i<cg.getButtonCount();i++)
+					{
+					JRadioButton b=(JRadioButton)en.nextElement();
+					if(i==temp)	b.setSelected(true);
+					else		b.setSelected(false);
+					}
+				}
+			else	*/thresholdOption=2;
+			}
+		if(temp!=thresholdOption)	thresholdChanged=true;
+		}
+	}
 	/**
 	 * Esta clase implementa un gestor para añadir un anclaje a través del panel correspondiente en la ventana de configuracion.
 	 * 
@@ -477,13 +533,13 @@ private static final long serialVersionUID = 1L;
 					
 			if(!bv.isPauseSimulation())//No estaba en pausa, va a pasar a estarlo, cambiamos la imagen a play
 				{
-				b.setIcon(loadIcon("images/play24.gif"));
+				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/Play24.gif"));
 				b.setToolTipText("Restore simulation");
 				}
 			else	//Volvemos a poner el de pause
 				{
 				//b.setIcon(new ImageIcon("images/pause24.gif"));
-				b.setIcon(loadIcon("images/pause24.gif"));
+				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/Pause24.gif"));
 				b.setToolTipText("Pause simulation");
 				}
 			bv.pause();
@@ -505,13 +561,17 @@ private static final long serialVersionUID = 1L;
 	        }
 		else if("increase threshold".equals(e.getActionCommand()))
 			{
-			bv.increaseNodeThreshold();
-			//bv.increaseOverlapThreshold();
-			}			
+			bv.modifyThreshold(bv.getStep());
+			thresholdValue=bv.getThresholdValue();
+			}		
+		 else if("set threshold".equals(e.getActionCommand()))
+			{
+	    	configure(1);
+			}
 		else if("decrease threshold".equals(e.getActionCommand()))
 			{
-			bv.decreaseNodeThreshold();
-			//bv.decreaseOverlapThreshold();
+			bv.modifyThreshold(-bv.getStep());
+			thresholdValue=bv.getThresholdValue();
 			}			
 		else if("change model".equals(e.getActionCommand()))
 			{
@@ -520,13 +580,13 @@ private static final long serialVersionUID = 1L;
 				JButton b=(JButton)e.getSource();
 						
 				bv.radial2complete();
-				b.setIcon(loadIcon("images/radial.gif"));
+				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/radial.gif"));
 				}
 			else	//Volvemos a poner el de pause
 				{
 				JButton b=(JButton)e.getSource();
 				bv.complete2radial();
-				b.setIcon(loadIcon("images/complete.gif"));
+				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/complete.gif"));
 				b.setToolTipText("Change to complete model");
 				}
 			
@@ -548,12 +608,12 @@ private static final long serialVersionUID = 1L;
 	    	JButton b=(JButton)e.getSource();
 	    	if(bv.isAbsoluteLabelSize())	
 	    		{
-	    		b.setIcon(loadIcon("images/absoluteSize.gif"));
+	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/absoluteSize.gif"));
 	    		b.setToolTipText("Absolute label size");
 	    		}
 	    	else
 	    		{
-	    		b.setIcon(loadIcon("images/relativeSize.gif"));
+	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/relativeSize.gif"));
 	    		b.setToolTipText("Relative label size");
 	    		}
 			bv.setAbsoluteLabelSize(!bv.isAbsoluteLabelSize());
@@ -575,12 +635,12 @@ private static final long serialVersionUID = 1L;
 	    	JButton b=(JButton)e.getSource();
 	    	if(bv.isDrawHull())	
 	    		{
-	    		b.setIcon(loadIcon("images/withHull.png"));
+	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/withHull.png"));
 	    		b.setToolTipText("Draw zones");
 	    		}
 	    	else				
 	    		{
-	    		b.setIcon(loadIcon("images/withoutHull.png"));
+	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/withoutHull.png"));
 	    		b.setToolTipText("Hide zones");
 	    		}
 	    	bv.setDrawHull(!bv.isDrawHull());
@@ -631,7 +691,7 @@ private static final long serialVersionUID = 1L;
 			}
 	    else if("color".equals(e.getActionCommand()))
 			{
-	    	configure();
+	    	configure(0);
 			}
 	   /* else if("show legend".equals(e.getActionCommand()))
 			{
@@ -671,7 +731,7 @@ private static final long serialVersionUID = 1L;
 		}
 	}
 		
-	public void configure()
+	public void configure(int sel)
 		{
 		if(!configurando)
 		{
@@ -686,12 +746,12 @@ private static final long serialVersionUID = 1L;
 		
 		JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
 		JPanel panelAnclajes = this.getPanelAnclajes(sesion, gestor);
-		JPanel panelParametros = this.getPanelParametros();
+		JPanel panelParametros = this.getThresholdParams();
 		JPanel panelBotones = this.getPanelBotones(gestor);
 		
 		// Configuramos la ventana de configuracion
 		//this.initPanelConfig(panelColor, panelAnclajes, panelParametros, panelBotones);
-		this.initPanelConfig(panelColor, null, null, panelBotones);
+		this.initPanelConfig(panelColor, null, panelParametros, panelBotones, sel);
 					
 		// Mostramos la ventana de configuracion
 		ventanaConfig.setLocation(this.getWidth()/2, this.getHeight()/2);
@@ -707,8 +767,120 @@ private static final long serialVersionUID = 1L;
 		ventanaConfig.setVisible(true);
 		}	
 	}		
+	
+	private JPanel getThresholdParams()
+		{
+		if(this.getPanelParametros()!=null)
+			{
+			if(!constancet.isEnabled() && sesion.getMicroarrayData()!=null)
+				{
+				constancet.setEnabled(true);
+				constancet.setText("Constance threshold");
+				bv.setMicroarrayData(sesion.getMicroarrayData());//TODO: Esto de duplicar todo el microarray es regulero
+				}
+			value.setText(""+bv.getThresholdValue());
+			return this.getPanelParametros();
+			}
+			
+		JPanel panelP = new JPanel();
 		
+        panelP.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.HORIZONTAL;
+		
+		panelP.setBackground(Color.LIGHT_GRAY);
+		
+		JRadioButton sizet=new JRadioButton("Size threshold");
+		JRadioButton overlapt=new JRadioButton("Overlap threshold");
+		constancet=new JRadioButton("Constance threshold");
+		sizet.setToolTipText("Only biclusters with more genes+conditions than 'value' will be shown");
+		overlapt.setToolTipText("Only nodes within more biclusters than 'value' will be shown");
+		constancet.setToolTipText("Only biclusters with less standard deviation than 'value' will be shown");
+		overlapt.setSelected(true);
+		sizet.setActionCommand("size");
+		overlapt.setActionCommand("overlap");
+		constancet.setActionCommand("constance");
+		if(sesion.getMicroarrayData()!=null && bv.getMicroarrayData()==null)	bv.setMicroarrayData(sesion.getMicroarrayData());//TODO: Esto de duplicar todo el microarray es regulero
+		GestorConfiguracion gconf=new GestorConfiguracion();
+		sizet.addActionListener(gconf);
+		overlapt.addActionListener(gconf);
+		constancet.addActionListener(gconf);
+		
+		cg=new ButtonGroup();
+		cg.add(sizet);
+		cg.add(overlapt);
+		cg.add(constancet);
+		
+		//------
+		JPanel radioPanel=new JPanel(new GridLayout(3,0));
+		radioPanel.add(sizet);
+		radioPanel.add(overlapt);
+		radioPanel.add(constancet);
+		//-----
+		
+		value=new JTextField(""+bv.getThresholdValue());
+		value.setToolTipText("Value to be compared with the threshold criterion");
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 6;
+		panelP.add(radioPanel,c);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = 1;
+		c.gridx = 3;
+		c.gridy = 1;
+		c.insets=new Insets(10,0,0,0);
+		panelP.add(new JLabel("value   "),c);
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = GridBagConstraints.RELATIVE;
+		c.gridy = 1;
+		c.ipadx = 10;
+		panelP.add(value,c);
+		
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridwidth = 1;
+		c.gridx = 3;
+		c.gridy = 2;
+		c.insets=new Insets(10,0,0,0);
+		panelP.add(new JLabel("step   "),c);
+		step=new JTextField(""+bv.getStep());
+		step.setToolTipText("Step by which threshold is to be modified by means of '^' and 'V' buttons");
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.gridx = GridBagConstraints.RELATIVE;
+		c.gridy = 2;
+		c.ipadx = 10;
+		panelP.add(step,c);
+		
+		/*panelP.add(radioPanel);
+		panelP.add(new JLabel("value"));
+		panelP.add(value);*/
+		
+		if(this.sesion.getMicroarrayData()==null)	
+			{
+			constancet.setText("Constance threshold (microarray data required)");
+			constancet.setEnabled(false);
+			}
+		this.setPanelParametros(panelP);
+		return this.getPanelParametros();
+		}
+	
+	
 	public void endConfig(){
+		
+		System.out.println("Opción "+thresholdOption+", "+value.getText());
+		float temp=new Float(value.getText()).floatValue();
+		if(temp!=thresholdValue)
+			{
+			thresholdChanged=true;
+			thresholdValue=temp;
+			}
+		
+		if(thresholdChanged)
+			{
+			bv.setThreshold(thresholdOption, thresholdValue);
+			}
+		bv.setStep(new Float(step.getText()).floatValue());
+		
 		sesion.setSelectionColor(paleta[OverlapperDiagram.selectionColor]);
 		sesion.setSearchColor(paleta[OverlapperDiagram.searchColor]);
 		sesion.setHoverColor(paleta[OverlapperDiagram.hoverColor]);
@@ -734,12 +906,6 @@ private static final long serialVersionUID = 1L;
 		
 		}
 	
-	/*private void crearPanelParametros(){
-		JPanel panel = new JPanel();
-		
-		this.setPanelParametros(panel);
-	}*/
-		
 	private class GestorMouse implements MouseListener{
 		
 		public GestorMouse(){}
@@ -750,10 +916,10 @@ private static final long serialVersionUID = 1L;
 			LinkedList<Integer> genes=new LinkedList<Integer>();
 			 LinkedList<Integer> conditions=new LinkedList<Integer>();
 			 Map<String, Node> map=g.getSelectedNodes();
-			 Iterator itg=map.values().iterator();
+			 Iterator<Node> itg=map.values().iterator();
 			 while(itg.hasNext())
 				 {
-				 Node n=(Node)itg.next();
+				 Node n=itg.next();
 				 int id=0;
 				 if(sesion.getMicroarrayData()!=null)
 					 {
@@ -776,33 +942,6 @@ private static final long serialVersionUID = 1L;
 			// System.out.println("Seleccionados "+genes.size()+" genes y "+conditions.size()+" conditions");
 			 sesion.setSelectedBiclusters(bs, "lapper");
 			
-			/*
-			if(e.getClickCount()==2)//Pinchamos dos 
-				{
-				if(bv.isAdditionMode())
-					{
-					utils.CustomColor c=new utils.CustomColor();
-					c=c.getGoodColor(sesion.getNumVentanas()+sesion.getNumColores()-2);
-					sesion.setNumColores(sesion.getNumColores()+1);
-					bv.setLastColor(c);
-					}
-				bv.expandNode(e.getPoint().x, e.getPoint().y);
-				}
-				*/
-			/*if(e.isControlDown())
-				{
-				String page=bv.getPage(e.getPoint().x, e.getPoint().y);
-				
-				Dimension dim = new Dimension(200,400);
-				PanelHTMLInfo panelInfo = new PanelHTMLInfo(sesion, dim, page);
-				VentanaPanel ventana = new VentanaPanel(sesion,sesion.getDesktop(),panelInfo);
-				panelInfo.setVentana(ventana);
-				sesion.setHTMLInfo(ventana);
-				
-				//panel.create();
-				//panel.run();
-				}
-				*/
 			}
 		public void mouseEntered(MouseEvent e){}
 		public void mousePressed(MouseEvent e){}

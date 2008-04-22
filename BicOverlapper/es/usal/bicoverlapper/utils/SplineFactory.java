@@ -1,5 +1,7 @@
 package es.usal.bicoverlapper.utils;
 
+import java.util.ArrayList;
+
 /**
  * A spline factory instance.
  * 
@@ -58,13 +60,65 @@ public class SplineFactory
   }
 
 
+  public static double[] removeClosePoints(double[] curve)
+  	{
+	double x=0;
+	double y=0;
+	double xant=curve[0];
+	double yant=curve[1];
+	ArrayList<Double> sx=new ArrayList<Double>();
+	ArrayList<Double> sy=new ArrayList<Double>();
+	double[] c;
+	Line lant=null;
+	
+	for(int i=1;i<curve.length/3;i++)
+		{
+		x=curve[i*3];
+		y=curve[i*3+1];
+		Line l=new Line(xant, yant,x,y);
+		double dist=Math.sqrt((x-xant)*(x-xant)+(y-yant)*(y-yant));
+		if(dist>2)
+			{
+			/*if(lant!=null && Math.abs(lant.slope-l.slope)<0.2)
+				{
+				sx.add(x);
+				sy.add(y);
+				}*/
+			//else if(lant==null)
+				{
+				sx.add(x);
+				sy.add(y);
+				}
+			}
+		else
+			{
+			if(sx.size()>0)
+				{
+				sx.remove(sx.size()-1);
+				sy.remove(sy.size()-1);
+				}
+			}
+		lant=new Line(xant, yant, x,y);
+		xant=x;
+		yant=y;
+		}
+	c=new double[sx.size()*3];
+	for(int i=0;i<c.length/3;i++)
+		{
+		c[i*3]=sx.get(i);
+		c[i*3+1]=sy.get(i);
+		c[i*3+2]=0;
+		}
+	System.out.println("Quito "+(curve.length-c.length)/3);
+	return c;
+	}
   
   /**
    * Testing the spline package.
    * 
    * @param args  Not used.
    */
-  public static void main (String[] args)
+  /*public static void main (String[] args)
   {
     double[] c = new double[12];
     c[0]  =   0.0;  // x0
@@ -98,7 +152,7 @@ public class SplineFactory
     System.out.println ("-- Catmull-Rom");
     for (int i = 0; i < spline3.length; i+=3)
       System.out.println (spline3[i] + "," + spline3[i+1] + "," + spline3[i+2]);
-  }
+  }*/
 }
 
 

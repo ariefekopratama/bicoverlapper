@@ -76,9 +76,10 @@ public class SpringEdge extends Edge {
 	    double dy = dY();
 	    double l = Math.sqrt((float) (dx*dx + dy*dy));
 	    k = bv.getStiffness();//TODO: mejor que cuando cambie se reactualice en todas las aristas y así no haya que rebuscarlo siempre con llamadas no?
-	    k=k*kt;
+	  //  System.out.println("Stiffness: "+k);
+    	 k=k*kt;
 	    
-		//nl = bv.getEdgeLength();//El nl se cambia con el handle, y así no vamos a permitir el cambio!
+		nl = bv.getEdgeLength();//El nl se cambia con el handle, y así no vamos a permitir el cambio!
 	      	    
 	    double f = k*(l-nl);
 	    
@@ -104,15 +105,67 @@ public class SpringEdge extends Edge {
 	    Overlapper bv=(Overlapper)g.getApplet();
 	    
 	    k = bv.getStiffness();
+	//    System.out.println("Stiffness: "+k);
+    	
 	    k=k*kf;
-	   //nl = bv.getEdgeLength();
+	    nl = bv.getEdgeLength();
 		double f = k*(l-nl);
-	    
-		forceFrom.setX(f*dx/l);
-		forceFrom.setY(f*dy/l);
+
+		if(l>0)
+			{
+			forceFrom.setX(f*dx/l);
+			forceFrom.setY(f*dy/l);
+			}
+		else
+			{
+			forceFrom.setX(0);
+			forceFrom.setY(0);
+			System.out.println("l es cero!!!----------------------");
+			}
+		//forceFrom.setX(f*dx/l);
+		//forceFrom.setY(f*dy/l);
+		
 		return forceFrom;
 	  }
 
+    /**
+     * Returns the force applied by the edge to the source dual node 
+     * (it will have the same magnitude an opposite direction
+     * to the force applied to the target node)
+     * It is identical to getForceFrom, but now nl and k are not checked from Overlapper natural lenght /stiffness constant value, so it must be
+     * set to each dual edge.
+     * @return	The point in which the node should be if only this force is applied to it
+     */
+      public GraphPoint2D getDualForceFrom() 
+  	  	{  
+  		double dx = dX();
+  	    double dy = dY();
+  	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+
+  	    Overlapper bv=(Overlapper)g.getApplet();
+  	    
+  	   // k = bv.getStiffness();
+  	  	
+  	    k=k*kf;
+  	   // nl = bv.getEdgeLength();
+  		double f = k*(l-nl);
+
+  		if(l>0)
+  			{
+  			forceFrom.setX(f*dx/l);
+  			forceFrom.setY(f*dy/l);
+  			}
+  		else
+  			{
+  			forceFrom.setX(0);
+  			forceFrom.setY(0);
+  			System.out.println("l es cero!!!----------------------");
+  			}
+  		
+  		return forceFrom;
+  	  }
+
+    
     /**
      * @deprecated
      * @return length factor

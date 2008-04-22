@@ -1,10 +1,12 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
 import java.awt.Image;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 
 
@@ -39,9 +41,11 @@ public class Node {
 	  
 	  
 	  protected boolean fixed=false;
-	  
+	  public boolean centerNode=false;
+
 	  
 	  Map<String,Cluster> clusters;//Lists of clusters where this node is
+	  Map<String,Cluster> shownClusters;//Lists of clusters where this node is that are being shown
 	  Map<String,Node>	mates;//List of nodes connected to this node
 	  int[] roles=null;//TODO: quitar nº mágico, mirar lo de los oscars
 
@@ -52,6 +56,7 @@ public class Node {
 	  public Node() {
 	    position= new GraphPoint2D();
 	    clusters=new TreeMap<String,Cluster>();	
+	    shownClusters=new TreeMap<String,Cluster>();	
 	    mates=new TreeMap<String,Node>();
 	  }
 	  
@@ -62,6 +67,7 @@ public class Node {
 	  public Node(GraphPoint2D v) {
 		  	position = new GraphPoint2D(v.getX(), v.getY());
 		    clusters=new TreeMap<String,Cluster>();	
+		    shownClusters=new TreeMap<String,Cluster>();	
 		    mates=new TreeMap<String,Node>();
 		  }
 
@@ -75,6 +81,7 @@ public class Node {
 		    g=gr;
 		   // clusters=new TreeMap<String,MaximalCluster>();	
 		    clusters=new TreeMap<String,Cluster>();	
+		    shownClusters=new TreeMap<String,Cluster>();	
 		    mates=new TreeMap<String,Node>();
 		  }
 
@@ -91,13 +98,15 @@ public class Node {
 	   * Adds a Cluster to the lists of clusters (groups) in which this node is in
 	   * @param c	a Cluster in which the node will be
 	   */
-	  public void addCluster(Cluster c) {
-				  clusters.put(c.getLabel(), c);
-		  for(int i=0;i<c.getNodes().size();i++)
+	  public void addCluster(Cluster c) 
+	  	{
+		clusters.put(c.getLabel(), c);
+		shownClusters.put(c.getLabel(), c);
+		for(int i=0;i<c.getNodes().size();i++)
 		  	{
-			mates.put(c.getNode(i).getLabel(), c.getNode(i));
+			if(!mates.containsKey(c.getNode(i).getLabel()))	mates.put(c.getNode(i).getLabel(), c.getNode(i));
 		  	}
-		  }
+		}
 	  
 	  /**
 	   * Returns true if node n is in some of the clusters in which this node is
@@ -161,14 +170,28 @@ public class Node {
 	   * @param v	GraphPoint2D with the (x,y) coordinates for the node
 	   */
 	  public void setPosition(GraphPoint2D v) {
-	   if(!fixed)	position = v;
+	   if(!fixed)	
+		   position = v;
+	  }
+	  
+	  /**
+	   * Sets the position of this node in the graph
+	   * @param x0	x coordinate of the new position
+	   * @param y0	y coordinate of the new position
+	   */
+	  public void setPosition(float x0, float y0) {
+	   if(!fixed)	
+		   {
+		   position.setX(x0);
+		   position.setY(y0);
+		   }
 	  }
 	  
 	  /**
 	   * Sets the x coordinate
 	   * @param p x coordinate
 	   */
-	  public void setX(float p)
+	  public void setX(double p)
 	  	{
 		if(!fixed)	position.setX(p);
 	  	}
@@ -177,7 +200,7 @@ public class Node {
 	   * Sets the y coordinate
 	   * @param p y coordinate
 	   */
-	  public void setY(float p)
+	  public void setY(double p)
 	  	{
 		if(!fixed)	position.setY(p);
 	  	}
@@ -207,9 +230,12 @@ public class Node {
 		if(p.nodeThreshold<=this.clusters.size())
 			{
 			p.stroke(0);
-		    p.fill(255);
-		    p.ellipse((float) getX(), (float) getY(), height, width);
-		   
+		   // p.fill(255);
+			 p.fill(0);
+			 p.ellipse((float) getX(), (float) getY(), height, width);
+			 p.fill(255);
+			 p.ellipse((float) getX()-1, (float) getY()-1, height+2, width+2);
+			   
 		    drawn=true;
 			}
 	  }

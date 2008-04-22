@@ -49,6 +49,7 @@ import prefuse.visual.VisualItem;
 
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MultidimensionalData;
+import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
@@ -104,6 +105,7 @@ private static final long serialVersionUID = 1L;
 //	private HeatmapFocusControl currentGenes;
 	private HeatmapFocusControl currentLevels;
 	
+	int contName=0;
 //	int geneMargin=0;
 	int geneMargin=100;
 	int conditionMargin=50;
@@ -116,6 +118,8 @@ private static final long serialVersionUID = 1L;
 	MicroGridLayout gl;
 	ItemAction exprColor, strokeColor;
 	ColorAction rectangleStrokeColor;
+	
+	BiclusterSelection bicAnt=null;//para evitar bucles infinitos create-update
 	
 	/**
 	 * Default constructor
@@ -153,6 +157,7 @@ private static final long serialVersionUID = 1L;
 	 */
 	public void create(Table expressions, Table genes, Table conditions)
 		{
+		cancelAllActions();
 		v = new Visualization();
 		v.addTable("matrix", expressions);					//Le añadimos nuestra tabla
 		v.addTable("geneLabels", genes);				//Le añadimos nuestra tabla
@@ -167,11 +172,12 @@ private static final long serialVersionUID = 1L;
 	public void create()
 		{
 		//--------------------------- visualization -----------------------
+		cancelAllActions();
 		v = new Visualization();
-		v.addTable("matrix", md.getExpressions());					//Le añadimos nuestra tabla
-		v.addTable("geneLabels", md.getGeneLabels());				//Le añadimos nuestra tabla
-		//v.addTable("matrix", md.getSparseExpressions());			//SPARSE
-		//v.addTable("geneLabels", md.getSparseGeneLabels());		//SPARSE
+		//v.addTable("matrix", md.getExpressions());					//Le añadimos nuestra tabla
+		//v.addTable("geneLabels", md.getGeneLabels());				//Le añadimos nuestra tabla
+		v.addTable("matrix", md.getSparseExpressions());		//SPARSE
+		v.addTable("geneLabels", md.getSparseGeneLabels());		//SPARSE
 		v.addTable("conditionLabels", md.getConditionLabels());		//Le añadimos nuestra tabla
 		
 		generateRest();
@@ -207,8 +213,8 @@ private static final long serialVersionUID = 1L;
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
 		
 		
-		final int ng=md.getNumGenes();
-		//final int ng=md.getNumSparseGenes(); //SPARSE
+		final int ngtot=md.getNumGenes();
+		final int ng=md.getNumSparseGenes(); //SPARSE
 		final int nc=md.getNumConditions();
 		
         v.setRendererFactory(new RendererFactory() {
@@ -290,8 +296,10 @@ private static final long serialVersionUID = 1L;
         HorizontalLineLayout xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,m_scale);
         xlabels.setLayoutBounds(rc);
 
-        gl=new MicroGridLayout("matrix",ng,  nc, 
-        		alto-conditionMargin, ancho-geneMargin, "rowId", "colId",geneMargin, conditionMargin, m_scale, m_scale);
+        gl=new MicroGridLayout("matrix",ng,  ngtot, nc, 
+        	//	alto-conditionMargin, ancho-geneMargin, "rowId", "colId",geneMargin, conditionMargin, m_scale, m_scale);
+        		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin, m_scale, m_scale, "MicroTal construido "+contName);//sparse
+        contName++;
         xlabels.setLayoutAnchor(new Point2D.Double(geneMargin, conditionMargin));//TODO: No podrían funcionar dos AxisLayout?
 		gl.setLayoutBounds(rdata);
 		
@@ -308,10 +316,8 @@ private static final long serialVersionUID = 1L;
 
 		//---------------
 		ActionList distortion = new ActionList();
-		//BifocalDistortion2 fd=new BifocalDistortion2(1.0/md.getNumConditions(),m_scale,1.0/ng,m_scale);
 		MicroGridDistortion fd=new MicroGridDistortion(1.0/md.getNumConditions(),m_scale,1.0/ng,m_scale, rdata,ng,nc, "matrix", this.sesion, gl);
 		
-		//BifocalDistortion fd=new BifocalDistortion(1.0/md.getNumConditions(),m_scale,1.0/ng,m_scale);
 		fd.setLayoutBounds(rdata);
 		fd.setGroup("matrix");
 		distortion.add(fd);
@@ -324,7 +330,6 @@ private static final long serialVersionUID = 1L;
 		
 		
 		BifocalDistortion fdg=new BifocalDistortion(0,0,1.0/ng,m_scale);
-		//fdg.setLayoutBounds(rdata);
 		fdg.setLayoutBounds(rg);
 		fdg.setGroup("geneLabels");
 		distortion.add(fdg);
@@ -347,7 +352,6 @@ private static final long serialVersionUID = 1L;
 		d.addControlListener(new ConfigurationControl()); // zoom with vertical right-drag
 		
 		AnchorUpdateControl auc=new AnchorUpdateControl(new Layout[]{fd, fdg,fdc},"distortion");
-		//HoverActionControl hac=new AnchorUpdateControl(new Layout[]{fd, fdg,fdc},"distortion");
 		
 		d.addControlListener(auc);
 
@@ -367,9 +371,6 @@ private static final long serialVersionUID = 1L;
         UILib.setColor(this, BACKGROUND, FOREGROUND);
         this.getWindow().setContentPane(this);
 		this.getWindow().pack();           // layout components in window
-		
-		//System.out.println("Tiempo tardado en la creación: "+(System.currentTimeMillis()-ts)/1000);
-
 		}
 	
 	public int getId(){
@@ -382,7 +383,6 @@ private static final long serialVersionUID = 1L;
 	 */
 	public void run()
 		{
-		double t1=System.currentTimeMillis();
 		this.getWindow().setVisible(true);
 		
 		v.run("colorRectangle");
@@ -391,22 +391,66 @@ private static final long serialVersionUID = 1L;
 		v.run("layout"); // start up the animated layout
 		v.runAfter("layout","color");
 		v.runAfter("color", "colorRectangle");
-		//v.runAfter("colorRectangle", "color");
-	//	System.out.println("Tiempo tardado en el run: "+(System.currentTimeMillis()-t1)/1000);
+		}
+	
+	void cancelAllActions()
+		{
+		if(v!=null)
+			{
+			v.cancel("colorRectangle");
+			v.cancel("color");
+			v.cancel("distortion");
+			v.cancel("layout");
+			}
+		if(d!=null)
+			{
+			d.removeAll();
+			d.invalidate();
+			this.getWindow().remove(d);
+			}
 		}
 	
 	/**
 	 * Updates the diagram with selections done in the session layer
 	 */
-	public void update() 
+/*	public void update() 
 		{
 	//	System.out.println("Estamos repintando PanelHeatmap");
 		this.repaint();
 		}
-	
+	*/
+	public void update() 
+		{
+		if(v!=null && sesion!=null)
+			{
+			//Tenemos un bicluster seleccionado
+			if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster()!=bicAnt)
+				{
+				//System.out.println("HEATMAP: Tenemos un bicluster seleccionado");
+				//Quitamos todos los que estuvieran antes en el bicluster
+				//bicAnt=sesion.getSelectedBicluster();
+				if(md.getNumGenes()>md.getNumSparseGenes())//TODO: sparse
+					{
+	//				TODO: construir nuevas tablas sparse y llamar a create(tablas)
+					md.buildSparse(sesion.getSelectedBicluster().getGenes());
+					create(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+					}
+				
+				currentLevels.clear();
+				LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
+				LinkedList<Integer> lc=sesion.getSelectedConditionsBicluster();
+				if(lg.size()>0 || lc.size()>0)			currentLevels.addItems(lg, lc);
+				
+				}
+			}
+		//this.run();
+		this.repaint();
+		}
+
 	/**
 	 * Repaints the diagram
 	 */
+	/*
 	public void repaint()
 	{
 	//System.out.println("REPINTAMOS Heatmap");
@@ -415,24 +459,25 @@ private static final long serialVersionUID = 1L;
 	if(v!=null && sesion!=null)
 		{
 		//Tenemos un bicluster seleccionado
-		if(sesion.getSelectedBicluster()!=null)
+		if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster()!=bicAnt)
 			{
 			//System.out.println("HEATMAP: Tenemos un bicluster seleccionado");
 			//Quitamos todos los que estuvieran antes en el bicluster
-			/*if(md.getNumGenes()>md.getNumSparseGenes())//TODO: sparse
+			bicAnt=sesion.getSelectedBicluster();
+			if(md.getNumGenes()>md.getNumSparseGenes())//TODO: sparse
 				{
 //				TODO: construir nuevas tablas sparse y llamar a create(tablas)
 				md.buildSparse(sesion.getSelectedBicluster().getGenes());
 				create(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
-				}*/
+				}
 			currentLevels.clear();
 			
-			LinkedList lg=sesion.getSelectedGenesBicluster();
-			LinkedList lc=sesion.getSelectedConditionsBicluster();
+			LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
+			LinkedList<Integer> lc=sesion.getSelectedConditionsBicluster();
 			if(lg.size()>0 || lc.size()>0)			currentLevels.addItems(lg, lc);
 			}
 		}
-	}
+	}*/
 	
 	public void updateConfig(){
 		paleta[HeatmapDiagram.selectionColor]=sesion.getSelectionColor();
