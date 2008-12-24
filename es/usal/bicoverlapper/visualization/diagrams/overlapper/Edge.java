@@ -1,13 +1,18 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
 
+
+
+
 /**
  * Edge class connects two nodes by a directed edge.
  * @author Roberto Therón & Rodrigo Santamaría
  *
  */
 public class Edge {
+  //Destination node
   Node to;
+  //Origin node
   Node from;
   Graph g;
   int width=0;
