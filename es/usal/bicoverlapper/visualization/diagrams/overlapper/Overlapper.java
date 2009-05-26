@@ -1,29 +1,23 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -31,6 +25,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
+import prefuse.data.Table;
 import es.usal.bicoverlapper.data.GeneAnnotation;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
@@ -38,10 +33,6 @@ import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 import es.usal.bicoverlapper.utils.geneticAlgorithms.GraphGeneticAlgorithm;
-
-
-import prefuse.data.Table;
-
 
 /**
  * This class visualizes biclusters as overlapping hulls on a force-directed graph layout. 
@@ -57,20 +48,20 @@ public class Overlapper extends JProcessingPanel {
 /**
  * Screen height of the drawing area in pixels
  */
-int screenHeight = 700;//1500
-int screenWidth = 1000;//2000
+int screenHeight = 1200;//1500
+int screenWidth = 1500;//2000
 int nNodes;
-private int nodeSize = 17;
-public int labelSize = 5;
+private int nodeSize = 10;  // 17
+public int labelSize = 10;  // 5
 public int maxLabelSize=20;
 private int labelClusterSize=labelSize*2;//antes *3
 public int minLabelClusterSize=(int)Math.round(labelSize*1.5);
 
-private double initialEdgeLength = 100;
+private double initialEdgeLength = 200; //100
 private double edgeLengthFactor=1;
 double stepEdgeLength = 0.1;
 
-double G = 10; //Gravity (basic)
+double G = 10;//initial = 10; //Gravity (basic)
 //double G = 15; //Gravity (test for lastfm)
 double stepG = 0.5;
 
@@ -78,9 +69,9 @@ double D = 2.0; //Depth of the well
 double K = D/100000;//Para pelis parece que este funciona
 double stepK = 0.00005;
 
-private double initialStiffness = 0.01;//Basic
+private double initialStiffness = 0.1;//Basic 0.01
 //private double initialStiffness = 0.03;//Test for lastfm
-private double stiffnessFactor=1;
+private double stiffnessFactor=1.0; //initial =1.0
 double stepStiffness = 0.1;
 private double closeness = nodeSize; 
 
@@ -992,6 +983,11 @@ public synchronized void doLayout()
 		    	{
 		    	SpringEdge e=(SpringEdge)ie.next();
 		    	GraphPoint2D f = e.getForceFrom();
+		    	if (n.getLabel().contains("rock") ||
+		    			n.getLabel().contains("metal")) 
+		    	{
+		    		e.setStiffness(initialStiffness *0.1);
+		    	}
 		    	n.applyForce(f);
 		    	ForcedNode m=(ForcedNode)e.getTo();
 		    	f.invert();
@@ -1360,6 +1356,28 @@ void increaseOverview(double f)
 	offsetY = (yTopOverviewBox - yTopMagnifier) * (zoomFactor / factor); 
 	}
 
+
+//-------------- files save------------------------
+public String[] saveStrings(String fileName, ArrayList<String> posInfo)
+	{
+	//ArrayList <String>lista=new ArrayList<String>();
+	try{
+        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+		
+		Iterator<String> it = posInfo.iterator();
+		while (it.hasNext())
+		{
+			writer.write(it.next());
+			writer.newLine();
+		}
+		if (writer != null) {
+	         writer.flush();
+	         writer.close();
+	         }
+	}catch(Exception e){e.printStackTrace();}
+	return null;
+	}
+
 //----------------------------- INTERACTIVE CONTROLS ---------------------------
 /**
  * This function is called when a key is pressed
@@ -1386,14 +1404,17 @@ protected void keyPressed() {
 	case 't':
 		drawTitle=!drawTitle;
 		break;
+	case '3':
+		this.saveFile2d();
+		break;	
 	case '4':
 		additionMode=!additionMode;
 		break;	
 	case '5':
-		labelSize--;
+		g.decreaseNodeSize();
 		break;	
 	case '6':
-		labelSize++;;
+		g.increaseNodeSize();
 		break;	
 		
 	//Change of node labels (relevance)
@@ -1661,6 +1682,8 @@ public void pause()
 	 	{
 	    pauseSimulation = true;
 	    println("*** Pause ***");
+	    //save the positions in .2d
+		saveFile2d();
 	 	}
 	}
 
@@ -1804,7 +1827,7 @@ protected void mousePressed() {
 	movingMagnifier = true;
 	return;
   	}
-  
+ 
   //Sólo funciona fuera del área de overview
   //lo pasamos al release
   
@@ -1831,7 +1854,10 @@ protected void mousePressed() {
 		selectionArea.moveTo(xpress,ypress);
 		}
    	}
+	
+	
 }
+
 
 /**
  * This function is called each time that the mouse is moved, to check node hovering,
@@ -1985,8 +2011,8 @@ protected void mouseReleased() {
 	  //-------- RIGHT BUTTON----------------> Search for details
 	  else if(mouseButton==RIGHT)
 	  	{
-		 //System.out.println("Retrieving details");
-		 Node ns=null;
+		  //System.out.println("Retrieving details");
+		 /*Node ns=null;
 		 while(itMouse.hasNext())
 	 		{
 			 Node n=(Node)itMouse.next();
@@ -2011,7 +2037,7 @@ protected void mouseReleased() {
 								"No annotations", JOptionPane.INFORMATION_MESSAGE);
 					 
 			 	}
-			 }
+			 }*/
 		 /************* 	PARSEO HTML NCBI ********************
 		 try{
 		 //URL entrez=new URL("http://www.ncbi.nlm.nih.gov/sites/entrez?db=gene");
@@ -2174,6 +2200,7 @@ protected void mouseReleased() {
   move=false;
 }
 
+
 private String getAHref(String cad)
 	{
 	String str=cad.substring(cad.indexOf("<a href"));
@@ -2217,16 +2244,36 @@ protected void mouseDragged() {
 		move=true;
 		float xpress=(mouseX-offsetX)/zoomFactor;
 		float ypress=(mouseY-offsetY)/zoomFactor;
-		if(g.getDragNode()!=null)
+		if(g.getSelectedNodes()!=null && g.getSelectedNodes().size()>0)	//selected nodes
 			{
-			 System.out.println("Posición anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
-			 g.getDragNode().setX(xpress);
-			 g.getDragNode().setY(ypress);
+			Iterator<Node> it=g.getSelectedNodes().values().iterator();
+			double mainX=-1;
+			double mainY=-1;
+			while(it.hasNext())
+				{	
+				Node n=it.next();
+				if(mainX<0)
+					{
+					mainX=n.getX();
+					mainY=n.getY();
+					}
+				n.setX(n.getX()-mainX+xpress);
+				n.setY(n.getY()-mainY+ypress);
+				}
 			}
-		else	//Selección de área
+		else	//drag node or selection line
 			{
-		//	System.out.println("Modificando área");
-			selectionArea.lineTo(xpress, ypress);
+			if(g.getDragNode()!=null)
+				{
+				 System.out.println("Posición anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
+				 g.getDragNode().setX(xpress);
+				 g.getDragNode().setY(ypress);
+				}
+			else	//Selección de área
+				{
+			//	System.out.println("Modificando área");
+				selectionArea.lineTo(xpress, ypress);
+				}
 			}
 	 	}
 }
@@ -2335,6 +2382,55 @@ private int[][] similarityMatrix()
 	return sm;
 	}
 
+private void saveFile2d()
+{
+	ArrayList<String> posInfo= new ArrayList<String> ();
+	ArrayList<String> tagName= new ArrayList<String> ();
+	if(positionFile!=null)
+	{	
+		String pos[] = loadStrings(positionFile);
+		if(pos!=null)
+			for(int i=0;i<pos.length;i++)
+				{
+				String token[]=pos[i].split(";");
+				if(token.length>0 && (!token.equals("time")))
+					tagName.add(token[0]);
+				}
+		else	
+			{
+			System.err.println("Warning: there's no associated position file");
+			positionFile=null;
+			}
+		
+		Iterator<Node> it=g.getNodes().values().iterator();
+		double subX = Double.MAX_VALUE, subY = Double.MAX_VALUE;
+		for (int i=0; i<g.getNodes().size(); i++) //look for the top-left node
+	  	{
+		ForcedNode n=(ForcedNode)it.next();
+		if (n.getX()< subX)
+			subX = n.getX();
+		if (n.getY()< subY)
+			subY = n.getY();
+		}
+		System.out.println("subX,subY:"+subX+","+subY);
+		
+		it=g.getNodes().values().iterator();
+		for (int i=0; i<g.getNodes().size(); i++) //record the position-subValue
+		  	{
+			ForcedNode n=(ForcedNode)it.next();
+			double x = n.getX()-subX;
+			double y = n.getY()-subY;
+			String tmp = n.getLabel()+";"+ x +";" + y;
+			//System.out.println(tmp);
+			posInfo.add(tmp);
+			}
+		
+		saveStrings(positionFile, posInfo);
+		//System.out.println("g.getNodes().size():"+g.getNodes().size());
+		//System.out.println("tagName.size():"+tagName.size());
+	}
+}
+
 private void readClusters()
 	{
 	numClusters=numClusters();
@@ -2344,8 +2440,8 @@ private void readClusters()
 	int cont=0;
 	if(positionFile!=null)
 		{	
-		//this.pauseSimulation=true;
-		//this.paused=true;
+		this.pauseSimulation=true;
+		this.paused=true;
 		this.initPos=new HashMap<String, Point2D.Double>();
 		String pos[] = loadStrings(positionFile);
 		if(pos!=null)
@@ -2353,8 +2449,8 @@ private void readClusters()
 				{
 				String token[]=pos[i].split(";");
 				if(token.length==3)
-					initPos.put(token[0], new Point2D.Double(new Double(token[1]).doubleValue()*600, 
-						new Double(token[2]).doubleValue()*400));
+					initPos.put(token[0], new Point2D.Double(new Double(token[1]).doubleValue(), 
+						new Double(token[2]).doubleValue()));
 				}
 		else	
 			{
@@ -3517,11 +3613,8 @@ Graph buildCompleteGraph()
 				y+=cellHeight;
 				}
 			
-			c = new MaximalCluster(r, "cluster"+new Integer(clusterCount).toString());
-			c.setLabel(groupNames[clusterCount]);
+			c = new MaximalCluster(r, groupNames[clusterCount]);
 			double crel=0;
-			if(groupNames!=null)	
-				c.setLabel(groupNames[clusterCount]);
 			for (int k = 0; k < clusters.get(groupNames[clusterCount]).size(); k++) //Para cada nodo en el cluster
 				{
 			   String nodeLabel =(String)clusters.get(groupNames[clusterCount]).get(k);
@@ -3532,6 +3625,7 @@ Graph buildCompleteGraph()
 				  if(this.initPos==null)	n = new ForcedNode(new GraphPoint2D(x -cellWidth/2+random((float)cellWidth),y-cellHeight/2+random((float)cellHeight)));
 				  else		
 				  	{
+					System.out.println("label:"+nodeLabel);
 					Point2D.Double p=initPos.get(nodeLabel);
 					n = new ForcedNode(new GraphPoint2D(p.x,p.y));		
 				  	}
@@ -3549,7 +3643,11 @@ Graph buildCompleteGraph()
 				  g.addNode(n);
 				  nNodes++;
 				  }
-			   else	       n=(ForcedNode)g.getNodes().get(nodeLabel);
+			   else	      
+				   {
+				   n=(ForcedNode)g.getNodes().get(nodeLabel);
+				   crel+=n.getRelevance();
+				   }
 		        
 			  c.addNode(n);
 			  }//each node in cluster
