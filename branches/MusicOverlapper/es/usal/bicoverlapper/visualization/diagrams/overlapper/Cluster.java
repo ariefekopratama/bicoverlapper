@@ -750,9 +750,10 @@ public abstract class Cluster
 	void drawHullLabels()
 		{
 		Overlapper bv=(Overlapper) myGraph.getApplet();
-		  
+		
 		int lcs=0;
-		if(relevance>0)	lcs=Math.max(bv.minLabelClusterSize, (int)Math.round(bv.getLabelClusterSize()*relevance));
+		if(relevance>0)	
+			lcs=(int)Math.round(bv.getLabelClusterSize()*relevance)+bv.minLabelClusterSize-1;
 		else			lcs=bv.getLabelClusterSize()+this.getNodes().size();
 		float meanx=0;
 		float meany=0;
@@ -855,13 +856,10 @@ public abstract class Cluster
 		Color cc=bv.paleta[Overlapper.conditionLabelColor];
 		Color cb=bv.paleta[Overlapper.nodeLabelBackgroundColor];
     	
-    	
-		
 		for(int i=0;i<clusterNodes.size();i++)
 		    {
 			Node n=clusterNodes.get(i);
-			
-			if(!n.isDrawnAsLabel())
+			if(!n.isDrawnAsLabel() && (!bv.isDrawClusterLabels() || n.mates.size()>1))
 			{
 			if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
 			{

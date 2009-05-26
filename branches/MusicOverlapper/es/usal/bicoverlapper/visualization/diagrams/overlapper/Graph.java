@@ -1777,6 +1777,28 @@ public void drawHoverHull()
   public void setApplet(Overlapper applet) {
   	this.applet = applet;
   }
+  
+  public void decreaseNodeSize()
+  	{
+	Iterator<Node> it=this.nodes.values().iterator();
+	while(it.hasNext())
+		{
+		Node n=it.next();
+		n.height--;
+		n.width--;
+		}
+  	}
+  
+  public void increaseNodeSize()
+	{
+	Iterator<Node> it=this.nodes.values().iterator();
+	while(it.hasNext())
+		{
+		Node n=it.next();
+		n.height++;
+		n.width++;
+		}
+	}
 
   /**
    * Sets the complete group of nodes that will be in this graph

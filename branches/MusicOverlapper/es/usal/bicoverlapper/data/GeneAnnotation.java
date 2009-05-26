@@ -45,12 +45,26 @@ public class GeneAnnotation {
 		if(type!=null && type.length()>0)				form=form.concat("Type:  "+type+"\n");
 		if(locus!=null && locus.length()>0)				form=form.concat("Loc.:  "+locus+"\n");
 		if(organism!=null && organism.length()>0)		form=form.concat("Org.:   "+organism+"\n");
-		if(description!=null && description.length()>0)	form=form.concat("Desc:  "+description+"\n");
 		if(aliases!=null && aliases.size()>0)
 			{
 			String al="";
 			for(int i=0;i<aliases.size();i++)	al=al.concat(aliases.get(i)+", ");
 			form=form.concat("Aka:     "+al.substring(0, al.length()-2));	
+			}
+		if(description!=null && description.length()>0)	
+			{
+			//form=form.concat("Desc:  "+description+"\n");
+			String[] tok=description.split(" ");
+			int cont=0;
+			for(int i=0;i<tok.length;i++)
+				{
+				form=form.concat(tok[i]+" ");
+				if(cont++>=5)	
+					{
+					form=form.concat("\n");
+					cont=0;
+					}
+				}
 			}
 		return form;
 		}
