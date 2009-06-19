@@ -258,6 +258,40 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 			gr.setColor(temp);
 			}
 		}
+	
+	public void roundRect(float x, float y, float w, float h, float aw, float ah)
+	{
+	int xd=fixCoordinate((int)x,(int)w);
+	int yd=fixCoordinate((int)y,(int)h);
+	
+	gr.fillRect(xd,yd,(int)w,(int)h);
+	if(drawStroke)
+		{
+		Color temp=gr.getColor();
+		gr.setColor(strokeColor);
+		gr.drawRoundRect(xd, yd, (int)w, (int)h, (int)aw, (int)ah);
+		gr.setColor(temp);
+		}
+	}
+	
+	public void diamond(float x, float y, float w, float h)
+		{
+		int xd=fixCoordinate((int)x,(int)w);
+		int yd=fixCoordinate((int)y,(int)h);
+		
+		if(drawStroke)
+			{
+			Color temp=gr.getColor();
+			gr.setColor(strokeColor);
+			beginShape();
+			this.vertex(x+w/2, y);
+			this.vertex(x+w, y+h/2);
+			this.vertex(x+w/2, y+h);
+			this.vertex(x, y+h/2);
+			endShape(this.CLOSE);
+			gr.setColor(temp);
+			}
+		}
 //	-------------- arcs -------------------------
 	public void arc(float x, float y, float w, float h, float start, float stop)
 		{//stop es en processing absoluto, y en graphics2d se refiere a la distancia desde start

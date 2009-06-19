@@ -24,12 +24,15 @@ class MicroGridLayout extends Layout {
     public int[] geneOrder;//order in which genes and conditions must be laid out
     //public HashMap<Integer, Integer> geneOrder;
     public int[] conditionOrder;
+    public int[] hoverGenes, hoverConditions;
     private String colField;//prefuse table colum field names for row and column ids
     private String rowField;
     private int xMargin;//margin to start layout
     private int yMargin;
     private int rowSelected;//number of rows/columns selected
     private int colSelected;
+    private int rowHovered;//number of rows/columns hovered
+    private int colHovered;
     private double mx;//distortion factors
     private double my;
     private double height;
@@ -71,6 +74,8 @@ class MicroGridLayout extends Layout {
         this.yMargin=yMargin;
         rowSelected=0;
         colSelected=0;
+        rowHovered=0;
+        colHovered=0;
         this.mx=mx;
         this.my=my;
         System.out.println("MGL construido "+name);
@@ -141,20 +146,48 @@ class MicroGridLayout extends Layout {
     	return;
     	}
     
+    /**
+     * Sets the elemnts that are hovered at a moment
+     * @param genesFirst	genes that come first in the matrix
+     * @param conditionsFirst	conditions that come first in the matrix
+     */
+    void newHover(int[] genes, int[] conditions)
+    	{
+    	if(genes!=null)
+    		{
+	    	hoverGenes=new int[genes.length];
+	    	for(int i=0;i<hoverGenes.length;i++)	hoverGenes[i]=geneOrder[genes[i]];
+    		}
+    	else			hoverGenes=null;
+    	hoverConditions=conditions;
+    	if(conditions!=null)	for(int i=0;i<hoverConditions.length;i++)	hoverConditions[i]=conditionOrder[hoverConditions[i]];
+    	if(hoverConditions!=null)	colHovered=hoverConditions.length;
+    	else						colHovered=0;
+    	if(hoverGenes!=null)	rowHovered=hoverGenes.length;
+    	else					rowHovered=0;
+    	}
+
     void initialOrder()
     	{
     	for(int i=0;i<n;i++)	geneOrder[i]=i;
     	for(int i=0;i<m;i++)	conditionOrder[i]=i;
     	}
-    
+    boolean contained(int c, int[] vector, int max)
+    	{
+    	for(int i=0;i<vector.length;i++)
+    		{
+    		if(i>=max)	break;
+    		if(vector[i]==c)	return true;
+    		}
+    	
+    	return false;
+    	}
     //NOTA: OJO, sólo se toca al principio, y con cada selecci'on en otras vistas
     /**
      * @see prefuse.action.Action#run(double)
      */
     public void run(double frac) 
     	{
-    	//System.out.println("*************** MICROGRIDLAYOUT.RUN *********************");
-    	double t1=System.currentTimeMillis();
     	TupleSet ts=getVisualization().getGroup(grupo);
  	    Iterator iter=ts.tuples();
         double x=0;
@@ -166,11 +199,101 @@ class MicroGridLayout extends Layout {
         double distortedw=normalw*mx;
         double distortedh=normalh*my;
         
-        double miniw=(this.getLayoutBounds().getWidth()-distortedw*colSelected)/(m-colSelected);
-        double minih=(this.getLayoutBounds().getHeight()-distortedh*rowSelected)/(n-rowSelected);
+        double miniw, minih;
+        
+        if(rowSelected>0 || colSelected>0 || rowHovered>0 || colHovered>0)//In case there are something selected and/or hovered it is distorted
+        {
+        int numRows, numCols;
+        if(rowHovered>0 && (rowSelected==0 || hoverGenes[0]>rowSelected))  	numRows=rowSelected+rowHovered;
+        else								        	numRows=rowSelected;//hovering coincides with a selection
+        if(colHovered>0 && (colSelected==0 || hoverConditions[0]>colSelected))  numCols=colSelected+colHovered;
+        else        										numCols=colSelected;//hovering coincides with a selection
+        
+        
+    	miniw=(this.getLayoutBounds().getWidth()-distortedw*numCols)/(m-numCols);
+        minih=(this.getLayoutBounds().getHeight()-distortedh*numRows)/(n-numRows);
 
-        if(rowSelected>0 || colSelected>0)//In case there are something selected it is distorted
+        if(numCols>0 && distortedw*numCols>maxDistortion*width)
+	    	{
+	    	distortedw=maxDistortion*width/numCols;
+	    	miniw=(this.getLayoutBounds().getWidth()-distortedw*numCols)/(m-numCols);
+	        }
+	    if(numRows>0 && distortedh*numRows>maxDistortion*height)
+        	{
+	    	distortedh=maxDistortion*height/numRows;
+	    	minih=(this.getLayoutBounds().getHeight()-distortedh*numRows)/(n-numRows);
+	        }
+        while(iter.hasNext())
+        	{
+        	VisualItem item = (VisualItem)iter.next();
+        	int i=geneOrder[item.getInt("rowId")];//Con esto sale todo bien menos el que se selecciona
+            int j=conditionOrder[item.getInt(colField)];
+            int icont=item.getInt("rowId");//Sparse
+            int jcont=item.getInt(colField);
+            
+        	double h=0;
+        	double w=0;
+        	if(i>=rowSelected)	
+        		{
+        		h=minih;//not selected... hovered?
+        		if(hoverGenes!=null)	
+        			for(int k:hoverGenes)	
+        				if(k==i)	
+        					{
+        					h=distortedh;//hovered one 
+        					break;
+        					}	
+    	        }
+        	else		   		h=distortedh;//selected one
+        	
+        	if((colSelected==0 && colHovered==0) || colSelected==m || (colSelected==0 && colHovered==m))//we have selected gene profiles only
+        		w=normalw;
+        	else
+        		{
+        		if(j>=colSelected)	
+        			{
+        			w=miniw;//non selected... hovered?
+        			if(hoverConditions!=null)	for(int k:hoverConditions)	if(k==j)	{w=distortedw; break;}	//hovered one
+    	        	}
+            	else				w=distortedw;//selected one
+        		}
+        	
+        	ExpressionRenderer er=(ExpressionRenderer)item.getRenderer();
+        	er.setHeight(h, icont);
+            er.setWidth(w, jcont);
+           
+           if(i>=rowSelected)	
+        	   {
+        	   if(hoverGenes!=null && hoverGenes[0]>=rowSelected  && i>hoverGenes[0])   y=yMargin+(rowSelected+1)*distortedh+(i-rowSelected-1)*minih;
+        	   else				   	 y=yMargin+(rowSelected)*distortedh+(i-rowSelected)*minih;
+        	   }
+	       else					y=yMargin+i*distortedh;
+        	
+        	if(colSelected==m || (colSelected==0 && colHovered==m))//we have selected/hovered gene profiles only (all conditions selected)
+        		x=xMargin+j*normalw;
+        	else
+        		{
+	        	if(j>=colSelected)	
+	        		{
+	        		if(hoverConditions!=null && hoverConditions[0]>=colSelected && j>hoverConditions[0])	x=xMargin+(colSelected+1)*distortedw+(j-colSelected-1)*miniw;
+	        		else						x=xMargin+colSelected*distortedw+(j-colSelected)*miniw;
+	        		}
+	        	else				x=xMargin+j*distortedw;
+        		}
+	        	
+        	setX(item, null, x);
+            setY(item, null, y);
+            }
+         }
+
+        
+        //SELECTED NODES ----------------------
+        //Distortion of several nodes on the top left
+        /*if(rowSelected>0 || colSelected>0)//In case there are something selected it is distorted
 	        {
+        	miniw=(this.getLayoutBounds().getWidth()-distortedw*colSelected)/(m-colSelected);
+            minih=(this.getLayoutBounds().getHeight()-distortedh*rowSelected)/(n-rowSelected);
+
 	        if(colSelected>0 && distortedw*colSelected>maxDistortion*width)
 		    	{
 		    	distortedw=maxDistortion*width/colSelected;
@@ -184,7 +307,6 @@ class MicroGridLayout extends Layout {
 	        while(iter.hasNext())
 	        	{
 	        	VisualItem item = (VisualItem)iter.next();
-	        	//int i=geneOrder[item.getInt(rowField)];
 	        	int i=geneOrder[item.getInt("rowId")];//Con esto sale todo bien menos el que se selecciona
 	             int j=conditionOrder[item.getInt(colField)];
 	           // int icont=item.getInt(rowField);
@@ -198,7 +320,7 @@ class MicroGridLayout extends Layout {
 	        	else		   		
 	        		h=distortedh;
 	        	
-	        	if(colSelected==0 || colSelected==m-1)//we have selected gene profiles only
+	        	if(colSelected==0 || colSelected==m)//we have selected gene profiles only
 	        		w=normalw;
 	        	else
 	        		{
@@ -212,11 +334,9 @@ class MicroGridLayout extends Layout {
 	            er.setWidth(w, jcont);
 	            
 	           if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(i-rowSelected)*minih;//Esto no vale en esparse porque esta mal el order!!
-		    //      if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(icont-rowSelected)*minih;//SPARSE	//TODO: error aquí, se come uno o más al poner horizontales
-		   //       if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(icont)*minih;//SPARSE	//TODO: error aquí, se come uno o más al poner horizontales
-	                else				y=yMargin+i*distortedh;
+		            else				y=yMargin+i*distortedh;
 	        	
-	        	if(colSelected==m-1)//we have selected gene profiles only (all conditions selected)
+	        	if(colSelected==m)//we have selected gene profiles only (all conditions selected)
 	        		x=xMargin+j*normalw;
 	        	else
 	        		{
@@ -226,23 +346,80 @@ class MicroGridLayout extends Layout {
 		        	
 	        	setX(item, null, x);
 	            setY(item, null, y);
-	           // if(i<rowSelected) System.out.println("Colocando "+item.getString("gene")+", "+item.getString("condition")+" en "+x+", "+y+" con tamaño "+w+", "+h);
 	            }
-	        
-	        //Rectangle surrounding the selection
-	       /* VisualItem rect=(VisualItem)this.getVisualization().getGroup("rectangle").tuples().next();
-	        setX(rect,null, xMargin);
-	        setY(rect,null, yMargin);
-	        ExpressionRenderer sr=(ExpressionRenderer)rect.getRenderer();
-	        int hc=(int)(distortedh*rowSelected);
-	        int wc=(int)(distortedw*colSelected);
-	        if(colSelected==m-1)	wc=(int)width;
-	        sr.setHeight(hc, 0);
-	        sr.setWidth(wc, 0);*/
 	         }
+        //HOVER GENES----------------------------------------
+        //Distortion of a single element anywhere
+        else if((hoverGenes!=null && hoverGenes.length>0) || (hoverConditions!=null && hoverConditions.length>0) )
+        	{
+        	miniw=(this.getLayoutBounds().getWidth()-distortedw*colHovered)/(m-colHovered);
+            minih=(this.getLayoutBounds().getHeight()-distortedh*rowHovered)/(n-rowHovered);
+
+        	try{
+        	
+        	if(colHovered>0 && distortedw*colHovered>maxDistortion*width)
+        		{
+		    	distortedw=maxDistortion*width/colHovered;
+		    	miniw=(this.getLayoutBounds().getWidth()-distortedw*colHovered)/(m-colHovered);
+		        }
+		    if(rowHovered>0 && distortedh*rowHovered>maxDistortion*height)
+	        	{
+		    	distortedh=maxDistortion*height/rowHovered;
+		    	minih=(this.getLayoutBounds().getHeight()-distortedh*rowHovered)/(n-rowHovered);
+		        }
+	        while(iter.hasNext())
+	        	{
+	        	VisualItem item = (VisualItem)iter.next();
+	        	int i=item.getInt("rowId");//Con esto sale todo bien menos el que se selecciona
+	            int j=item.getInt(colField);
+	            int icont=item.getInt("rowId");//Sparse
+	            int jcont=item.getInt(colField);
+	            
+	        	double h=0;
+	        	double w=0;
+	        	if(hoverGenes==null)	h=normalh;
+	        	else
+	        		{
+	        		h=minih;
+	        		for(int k:hoverGenes)	if(k==i)	{h=distortedh; break;}
+		        	}
+	        	
+	        	if(colHovered==m)       		w=normalw;
+	        	else
+	        		{
+	        		w=miniw;
+	        		for(int k:hoverConditions)	if(k==j)	{w=distortedw; break;}	
+		        	}
+	        	
+	        	ExpressionRenderer er=(ExpressionRenderer)item.getRenderer();
+	        	er.setHeight(h, icont);
+	            er.setWidth(w, jcont);
+	            
+	            if(hoverGenes==null)
+	        		y=yMargin+i*normalh;
+	            else
+	            	{
+	            	if(i<=hoverGenes[0])	y=yMargin+i*minih;
+	            	else					y=yMargin+(i-1)*minih+distortedh;
+	            	}
+                
+	        	if(hoverConditions==null || colHovered==m)//we have selected gene profiles only (all conditions selected)
+	        		x=xMargin+j*normalw;
+	        	else
+	        		{
+		        	if(j<=hoverConditions[0])	x=xMargin+j*miniw;
+		        	else						x=xMargin+(j-1)*miniw+distortedw;
+	        		}
+		        	
+	        	setX(item, null, x);
+	            setY(item, null, y);
+	            }
+        	}catch(Exception e){e.printStackTrace();}
+        	}*/
+        //-------------------- NON DISTORTED BUILD ---------------------
         else
         	{//otherwise, it is built as normal
-	        x=xMargin;
+        	x=xMargin;
 	        y=yMargin;
 	        
 	    	ts=getVisualization().getGroup(grupo);
@@ -258,7 +435,6 @@ class MicroGridLayout extends Layout {
 	        	int ri=item.getInt("rowId");
 	        	double w=er.getWidth(ci);
 	        	double h=er.getHeight(ri);
-	        	
 	            x=xMargin+conditionOrder[ci]*w;
 	            y=yMargin+geneOrder[ri]*h;
 	            
@@ -275,7 +451,6 @@ class MicroGridLayout extends Layout {
 	        //sr.setBaseWidth(0, 0);*/
 
 	        }
-    //    System.out.println("Tiempo tardado en MicroGridLayout.run(): "+(System.currentTimeMillis()-t1)/1000);
       }
 } // end of inner class MicroGridLayout
 

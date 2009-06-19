@@ -9,7 +9,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 public class URLLabel extends JLabel  {
- private JComponent applet;
+ /**
+	 * 
+	 */
+	private static final long serialVersionUID = -7796533770130230112L;
+private JComponent applet;
  private URL url;
  private String target = "";
  private Color unvisitedURL = Color.blue;
@@ -58,7 +62,20 @@ public class URLLabel extends JLabel  {
   // applet.getAppletContext().showDocument(url, target);
   try{
 	//  Runtime.getRuntime().exec("explorer " + target);
-	  Desktop.getDesktop().browse(new URI(url.toString()));
+	//  Desktop.getDesktop().browse(new URI(url.toString()));
+	  String os=System.getProperty("os.name");
+	  if(os.contains("Win"))
+	  	{
+		Runtime.getRuntime().exec("explorer " + target); 
+	  	}
+	  else if(os.contains("Linux"))
+	  	{
+		  
+	  	}
+	  else if(os.contains("Mac"))
+	  	{
+		  
+	  	}
 	  
   }catch(Exception e){e.printStackTrace();}
   }

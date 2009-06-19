@@ -1,5 +1,7 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
+import java.awt.Color;
+
 
 /**
  * Edge class connects two nodes by a directed edge.
@@ -10,6 +12,9 @@ public class Edge {
   Node to;
   Node from;
   Graph g;
+  int width=0;
+  
+  public Edge()	{}
   
   /**
    * Builds an edge
@@ -35,8 +40,11 @@ public class Edge {
    */
   public void draw() {
 	Overlapper p=g.getApplet();
-    p.stroke(255);
-    p.strokeWeight(1);
+	Color c=p.paleta[Overlapper.foregroundColor];
+	p.stroke(c.getRed(),c.getGreen(),c.getBlue(),128);
+  //p.stroke(255);
+    if(width<0)	width=0;
+    p.strokeWeight(width);
     p.line((float) from.getX(), (float) from.getY(), (float) to.getX(), (float) to.getY());
   }
   
@@ -73,7 +81,7 @@ public class Edge {
   }
   
   /**
-   * Gets the distantce in x axis between the source and the targed node, that is, the x length of the edge
+   * Gets the distantce in x axis between the source and the target node, that is, the x length of the edge
    * @return	the distance in x axis between the connected nodes
    */
   public double dX() {
@@ -81,11 +89,18 @@ public class Edge {
   }
   
   /**
-   * Gets the distantce in y axis between the source and the targed node, that is, the y length of the edge
+   * Gets the distantce in y axis between the source and the target node, that is, the y length of the edge
    * @return	the distance in y axis between the connected nodes
    */
   public double dY() {
     return (float) (to.getY() - from.getY());
   }
+  
+  public double length()
+  	{
+	  double dy=dY();
+	  double dx=dX();
+	  return(Math.sqrt(dx*dx+dy*dy));
+  	}
     
 }

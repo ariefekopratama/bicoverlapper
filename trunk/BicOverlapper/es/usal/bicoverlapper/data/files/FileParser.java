@@ -2,9 +2,12 @@ package es.usal.bicoverlapper.data.files;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.ArrayList;
+
+import javax.swing.JOptionPane;
 
 /**
  * Singleton for file parsing utilities
@@ -41,7 +44,8 @@ public class FileParser {
 			out.write("Synthetic_Biclusters|Size_"+size);
 			out.newLine();
 			
-			int numNodes=numBic*size/degree;
+			//int numNodes=numBic*size/degree;
+			int numNodes=numBic*size-(degree+1);
 			System.out.println("Utilizando "+numNodes+" nodos");
 			
 			ArrayList<String> listaGenes=new ArrayList<String>();
@@ -80,6 +84,65 @@ public class FileParser {
 			}catch(Exception e){e.printStackTrace();}
 			System.out.println("Finished!");
 		}
+
+	/**
+	 * Test if matrix is valid
+	 * 
+	 * @param inPath	input path for Overlapper bicluster file
+	 */
+	public static int checkFileMatrix(String inPath)
+		{
+		try{
+			BufferedReader in =	new BufferedReader(new FileReader(inPath));
+
+			String cad="";
+			int cont=0;
+			System.out.println("Checking matrix format...");
+			while((cad=in.readLine())!=null)
+				{
+				if(cad.contains("\t\t"))	
+					{
+					JOptionPane.showMessageDialog(null,
+							"Empty field at line: "+cont, 
+							"Wrong format", JOptionPane.ERROR_MESSAGE);
+					return 1;
+					}
+				cont++;
+				}
+			}catch(Exception e){e.printStackTrace();}
+		return 0;
+		}
+	
+	/**
+	 * Remove empty fields
+	 * 
+	 * @param inPath	input path for Overlapper bicluster file
+	 */
+	public static void removeEmptyFields(String inPath, String outPath)
+		{
+		try{
+		BufferedReader in =	new BufferedReader(new FileReader(inPath));
+		BufferedWriter out =new BufferedWriter(new FileWriter(outPath));
+
+		String cad="";
+		int cont=0;
+		System.out.println("CONVERTER...");
+		while((cad=in.readLine())!=null)
+			{
+			while(cad.contains("\t\t"))	
+				{
+				System.out.println("Cad con campos vacios!"+cont);
+				cad=cad.replace("\t\t", "\t");
+				}
+			out.write(cad);
+			out.newLine();
+			cont++;
+			}
+		out.close();
+		}catch(Exception e){e.printStackTrace();}
+	}
+
+	
 	/**
 	 * Converts overlapper format for biclusters to bivoc format. 
 	 * Bivoc sofware and format is available at https://bioinformatics.cs.vt.edu/~ggrothau/BiVoC/
@@ -134,6 +197,36 @@ public class FileParser {
 		}
 	
 	/**
+	 * @param inPath	input path for Overlapper bicluster file
+	 * @param outPath	output path for Bivoc file
+	 */
+/*	public static void convertToRealGeneNames(String inPath, String outPath)
+		{
+		try{
+		BufferedReader in =	new BufferedReader(new FileReader(inPath));
+		BufferedWriter out =new BufferedWriter(new FileWriter(outPath));
+
+		String cad="";
+		out.write(in.readLine());//header
+		out.newLine();
+		
+		int cont=0;
+		System.out.println("CONVERTER...");
+		while((cad=in.readLine())!=null)
+			{
+			String text[]=cad.split("\t");
+			String geneName=text[1];
+			//SOAP search by Warehouse
+			
+			out.write(entry);
+			out.newLine();
+			}
+		out.close();
+		}catch(Exception e){e.printStackTrace();}
+		System.out.println("Finished!");
+		}
+	*/
+	/**
 	 * Replaces each missing value in the input (represented as two consecutive tabs) by a zero value, and saves it to outPath 
 	 * @param inPath	input path for matrix with missing values
 	 * @param outPath	output path with matrix with zeros in missing values
@@ -158,4 +251,19 @@ public class FileParser {
 			}catch(Exception e){e.printStackTrace();}
 			System.out.println("Finished!");
 		}
+	
+	public static void deleteFiles( String directory, String extension ) {
+	    ExtensionFilter filter = new ExtensionFilter(extension);
+	    File dir = new File(directory);
+
+	    String[] list = dir.list(filter);
+	    File file;
+	    if (list.length == 0) return;
+
+	    for (int i = 0; i < list.length; i++) {
+	      file = new File(directory, list[i]);
+	      System.out.println(file + "  deleted : " + file.delete());
+	    }
+	   }
+
 	}

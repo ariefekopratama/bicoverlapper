@@ -4,9 +4,13 @@ import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 /**
- * Class that contains Bubble information
+ * Class that contains Bubble information. A bubble is considered as a group of genes
+ * and conditions from a gene expression matrix. Bubble display properties such as
+ * position, size, color or transparency should be defined by the user, but are
+ * expected to be defined depending on elements grouped, number of elements, nature
+ * and homogeneity, respectively. 
  * 
- * @author Rodrigo
+ * @author Rodrigo Santamaria (rodri@usal.es)
  *
  */
 public class Bubble 
@@ -34,7 +38,7 @@ public class Bubble
 	public int size;
 	
 	/**
-	 * Homogeneity of exrpession levels in the bubble
+	 * Homogeneity of expression levels in the bubble
 	 * STILL IN DEVELOPMENT
 	 */
 	public double homogeneity;

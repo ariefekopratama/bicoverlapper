@@ -35,6 +35,8 @@ class HeatmapFocusControl extends FocusControl
     private String fieldGeneLabels;
     private String fieldConditionLabels;
     private MicroGridLayout gl;
+    private HeatmapDiagram.VerticalLineLayout2 vl2;
+    private HeatmapDiagram.HorizontalLineLayout hl;
     
     /**
      * Session constructor
@@ -49,7 +51,7 @@ class HeatmapFocusControl extends FocusControl
      */
     public HeatmapFocusControl(Session session, String activity, 
 		   String group, String expressionsGroup, String geneNamesGroup, String conditionNamesGroup, 
-		   MicroGridLayout mgl, Visualization v)
+		   MicroGridLayout mgl,  HeatmapDiagram.VerticalLineLayout2 vl2, HeatmapDiagram.HorizontalLineLayout hl, Visualization v)
 		{
 		super(group, 1, activity);
 		this.activity=activity;
@@ -64,6 +66,8 @@ class HeatmapFocusControl extends FocusControl
 		this.fieldGeneLabels=geneNamesGroup;
 		this.fieldConditionLabels=conditionNamesGroup;
 		gl=mgl;
+		this.vl2=vl2;
+		this.hl=hl;
 		}
 
     /**
@@ -81,11 +85,10 @@ class HeatmapFocusControl extends FocusControl
 //  -- Actions performed on VisualItems ------------------------------------
 
     /**
-     * Checks for mouse events, changing Session status if necessary
+     * Checks for mouse clicks, changing Session status if necessary
      */
     public void itemClicked(VisualItem item, MouseEvent e)
      	{
-    	//TODO: Acciones cuando se pincha en un gen
         if ( !filterCheck(item) ) return;
         if ( UILib.isButtonPressed(e, button) &&
              e.getClickCount() == ccount )
@@ -93,27 +96,14 @@ class HeatmapFocusControl extends FocusControl
             if ( item != curFocus ) //Añadimos al foco uno que no es el último añadido
             	{
                 Visualization vis = item.getVisualization();
-                //TupleSet ts = vis.getFocusGroup(group);
                 
                 boolean genSeleccionado=false;
                 boolean condicionSeleccionada=false;
                 boolean expresionSeleccionada=false;
                 
-                if(item.getGroup().equals(field))	
-                	{
-                	//System.out.println("Expresión: Añadimos foco a "+item.getString("gene")+", "+item.getString("condition"));
-                	expresionSeleccionada=true;
-                	}
-                else if(item.getGroup().equals(fieldGeneLabels))	
-	            	{
-	            	//System.out.println("Gen: Añadimos foco a "+item.getString("name"));
-	            	genSeleccionado=true;
-	            	}
-                else if(item.getGroup().equals(fieldConditionLabels))	
-	            	{
-	            	///System.out.println("Condición: Añadimos foco a "+item.getString("name"));
-	            	condicionSeleccionada=true;
-	            	}
+                if(item.getGroup().equals(field))               	expresionSeleccionada=true;
+                else if(item.getGroup().equals(fieldGeneLabels))   	genSeleccionado=true;
+                else if(item.getGroup().equals(fieldConditionLabels))  	condicionSeleccionada=true;
                 
                 boolean ctrl = e.isControlDown();
                 if ( !ctrl ) //Este es el único que estará en el focus
@@ -124,18 +114,9 @@ class HeatmapFocusControl extends FocusControl
                 
                 if(genSeleccionado)			
                 	{
-                	//Añadimos como punto seleccionado en las visualizaciones tradicionales
-	            	Field ejeX, ejeY;//Los ejes que sean nos dan un poco igual, siempre que sea alguna de las condiciones
-					ejeX = sesion.getDataLayer().getXaxis();
-					ejeY = sesion.getDataLayer().getYaxis();
-					//System.out.println("Nuestros nombres son "+ejeX.getNombre()+" y "+ejeY.getNombre());
-	            	TupleSelection puntosSelec = new TupleSelection(ejeX.getName(),ejeY.getName(),ejeX.size());
-	            	puntosSelec.setX(item.getInt("id"), true);
-					sesion.setSelectedPoints(puntosSelec, "Heatmap");
-					
-					//Añadimos como gene seleccionado a las visualizaciones nuevas
-					genesSeleccionados.add(item.getInt("id"));
-					for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
+                	System.out.println("Añadiendo gen "+item.getInt("id")+" "+item.getString("name"));
+                	genesSeleccionados.add(item.getInt("actualId"));
+                	for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
 						{
 						condicionesSeleccionadas.add((Integer)i);
 						//TODO: añadir todos los items a esta
@@ -148,21 +129,11 @@ class HeatmapFocusControl extends FocusControl
                 	}
                 if(expresionSeleccionada)
                 	{
-                	/*Field ejeX, ejeY;//Los ejes que sean nos dan un poco igual, siempre que sea alguna de las condiciones
-					ejeX = sesion.getDataLayer().getXaxis();
-					ejeY = sesion.getDataLayer().getYaxis();
-					TupleSelection puntosSelec = new TupleSelection(ejeX.getName(),ejeY.getName(),ejeX.size());
-	            //	puntosSelec.setX(item.getInt("rowId"), true);
-					puntosSelec.setX(item.getInt("actualRowId"), true);//Sparse
-					sesion.setSelectedPoints(puntosSelec, "Heatmap");
-	        */
-					//genesSparseSeleccionados.add(item.getInt("rowId"));
-					genesSeleccionados.add(item.getInt("actualRowId"));//Sparse
+                	genesSeleccionados.add(item.getInt("actualRowId"));//Sparse
                 	condicionesSeleccionadas.add(item.getInt("colId"));
                 	}
                 
                 this.addItems(genesSeleccionados, condicionesSeleccionadas);
-                //this.addItems(genesSparseSeleccionados, condicionesSeleccionadas);
             	sesion.setSelectedBiclusters(new BiclusterSelection(genesSeleccionados, condicionesSeleccionadas), "Heatmap");
         
             runActivity(vis);
@@ -195,9 +166,52 @@ class HeatmapFocusControl extends FocusControl
 		for(int i=0;i<item.length;i++)	addItem(item[i]);
 		}
 	
+	
 	/**
-	 * Pone el rowRank, colRank a -1 en todos los "geneLabels", "conditionLabels" y "matrix" que coincidan
-	 * en id (en los dos primeros casos) o en rowId y colId con algún elemento de gid y cid
+	 * Like addItems, but it only for hovering. That is, the position is not changed, they are only distorted
+	 */
+	void addItemsForHover(LinkedList<Integer> gid, LinkedList<Integer> cid)
+		{
+		int [] genes=null;
+		int [] conds=null;
+		if(gid.size()>0)	genes= new int[gid.size()];
+		if(cid.size()>0)	conds=new int[cid.size()];
+
+		for(int i=0;i<gid.size();i++)	
+			genes[i]=sesion.getMicroarrayData().getSparseGeneId(gid.get(i));
+	
+		for(int i=0;i<cid.size();i++)	
+			conds[i]=(new Integer((cid.get(i)).toString())).intValue();
+		//gl.newOrder(genes, conds);
+		//vl2.newOrder(genes);
+		
+		gl.newHover(genes, conds);
+		Iterator it;
+		String condition;
+		
+		//Cambiamos las etiquetas de los genes y condiciones para que estén los primeros los seleccionados
+		for(int i=0;i<gid.size();i++)
+			{
+			//it=visualization.items(fieldGeneLabels,"id="+gid.get(i));//Cogemos la etiqueta de gen
+			it=visualization.items(fieldGeneLabels,"actualId="+gid.get(i));//Cogemos la etiqueta de gen, en el caso de sparse tiene que ser por el actualId!
+			VisualItem glabel=(VisualItem)it.next();
+			glabel.setInt("rowRank",-(gid.size()-i));//the same order that puts gl.newOrder()
+			}
+
+		for(int i=0;i<cid.size();i++)
+			{
+			condition=(cid.get(i)).toString();
+			it=visualization.items(fieldConditionLabels,"id="+condition);//Cogemos la etiqueta de gen
+			VisualItem clabel=(VisualItem)it.next();//there should be only one
+			clabel.setInt("colRank",-(gid.size()-i));
+			}
+		runActivity(visualization);
+		//runActivity("color");
+		}
+
+	/**
+	 * Changes rowRank, colRank to -1 in "geneLabels", "conditionLabels" y "matrix" elements which
+	 *  "id" (two first cases) or "rowId" and "colId" coincide with gid and cid.
 	 * Deben pasársele rowIds, no actualRowIds!
 	 */
 	void addItems(LinkedList<Integer> gid, LinkedList<Integer> cid)
@@ -216,6 +230,8 @@ class HeatmapFocusControl extends FocusControl
 			}
 		for(int i=0;i<cid.size();i++)	conds[i]=(new Integer((cid.get(i)).toString())).intValue();
 		gl.newOrder(genes, conds);
+		vl2.newOrder(genes);
+		hl.newOrder(conds);
 		Iterator it;
 		String condition;
 		
@@ -251,7 +267,6 @@ class HeatmapFocusControl extends FocusControl
 	
 	void clear()
 		{
-	//	System.out.println("HM: Vamos a borrar lo que hubiera");
 		//Y de la etiqueta
 		Iterator it2=visualization.items(fieldGeneLabels, "rowRank<0");
 		while(it2.hasNext())

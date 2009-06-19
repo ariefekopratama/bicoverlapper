@@ -4,20 +4,14 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.Path2D;
+//import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -26,16 +20,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
+import es.usal.bicoverlapper.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
+import es.usal.bicoverlapper.data.GOTerm;
 import es.usal.bicoverlapper.data.GeneAnnotation;
+import es.usal.bicoverlapper.data.GeneRequester;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
+import es.usal.bicoverlapper.visualization.diagrams.Diagram;
 
 
 import prefuse.data.Table;
@@ -47,7 +44,7 @@ import prefuse.data.Table;
  * @author Roberto Therón & Rodrigo Santamaría
  *
  */
-public class Overlapper extends JProcessingPanel {
+public class Overlapper extends JProcessingPanel implements GeneRequester {
 
 	private static final long serialVersionUID = 1L;
 
@@ -62,27 +59,31 @@ private int nodeSize = 17;
 private int labelSize = 5;//antes 5
 private int maxLabelSize=20;
 private int labelClusterSize=labelSize*2;//antes *3
-private double edgeLength = 80;
+private double edgeLength = 100;
 double stepEdgeLength = 2;
+double G = 10; //Gravity (clusters de ~20 nodos)
 //double G = 10; //Gravity (clusters de 200+ nodos)
-double G = 10; //Gravity (clusters de 200+ nodos)
 double stepG = 0.5;
 double D = 2.0; //Depth of the well
 double K = D/100000;//Para pelis parece que este funciona
 double stepK = 0.00005;
 //private double stiffness = 0.001;//Clusters >200 nodos
-private double stiffness = 0.001;//Clusters >200 nodos
+private double stiffness = 0.001;//Clusters >20 nodos
+//private double stiffness = 0.3;//Sugiyama
 double stepStiffness = 0.0005;
 private double closeness = nodeSize; 
 
-//protected ArrayList<Point2D.Double> selectionArea = null;
-protected Path2D.Double selectionArea = null;
+protected ArrayList<Point2D.Double> selectionArea = null;
+//protected Path2D.Double selectionArea = null;
 
 boolean move=false;
 //Data file information
 private String dataFile;
 //private String titleFile=null;//Names for each clusters, just if necesary.
 String delimiter=" ";
+String groupDelimiter=null;
+String posDelimiter="|";
+int headerLines=0;
 
 MicroarrayData microarrayData=null;
 
@@ -90,7 +91,8 @@ MicroarrayData microarrayData=null;
 Map<String,ArrayList<String>> clusters;
 ArrayList<Integer> resultSets;
 ArrayList<String> resultLabels;
-String [] titles=null;
+String [] groupNames=null;
+Point2D.Double [] initPos=null;
 String [] movies=null;
 int numClusters;
 int numResultSets;
@@ -190,7 +192,7 @@ boolean additionMode=false;
 boolean drawAwarded=true;		//Se le puede hacer un toggle
 boolean drawGlyphs=true;		//Se le puede hacer un toggle
 boolean fullDrawing=false;		//Para imprimir la imagen entera sin ceñirnos a los márgenes de la ventana (para fotos)
-int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT, Graph.ERROR, Graph.DUAL, Graph.TOPOGRAPHY};
+int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.ZONE, Graph.PIECHART, Graph.NODE, Graph.SELECT, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.ERROR, Graph.DUAL, Graph.SURFACE};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT, Graph.ERROR, Graph.DUAL};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT, Graph.ERROR};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT};
@@ -211,7 +213,7 @@ boolean movie=true;
 boolean movieButActors=false;
 boolean sizeRelevant=true;
 boolean drawContour=true;
-boolean drawPlateau=false;
+boolean drawZones=false;
 
 boolean onlyConditions=false;
 boolean onlyGenes=false;
@@ -246,12 +248,22 @@ static final int geneLabelColor=6;
 static final int conditionLabelColor=7;
 static final int bicLabelColor=8;
 static final int backgroundColor=9;
+static final int foregroundColor=10;
+static final int nodeLabelBackgroundColor=11;
+static final int hoverNodeLabelColor=12;
+
 
 java.awt.Color[] paleta = new Color[10];
 JTextField[] muestraColor = new JTextField[paleta.length];
 
 boolean repaintingAll=false;
 int drawCount=0;
+
+public boolean sugiyama=false;
+
+private Node rightButtonNode;
+
+
 
 /**
  * Default constructor
@@ -417,7 +429,7 @@ public void resize(int w, int h)
  * Drawing method for BiclusVis
  * @param g Graphics in which the visualization is to be drawn
  */
-public void paintComponent(Graphics g)
+public synchronized void paintComponent(Graphics g)
 	{
 	long ts=System.currentTimeMillis();
 	gfinal=(Graphics2D)g;
@@ -461,12 +473,6 @@ public void paintComponent(Graphics g)
             gr.setColor(fg);
 			
            
-        long start=System.currentTimeMillis();
-  	   // if (!pauseSimulation)		  
-		//  doLayout();
-  	    long end=System.currentTimeMillis();
-  	   // System.out.println("Tarda en el layout "+(end-start));
-		
 		refreshTime=0;
 
    	    this.setBackground(paleta[this.backgroundColor]);
@@ -483,9 +489,7 @@ public void paintComponent(Graphics g)
   	    popMatrix();
   	    iteracion++;
   	    
-  	    //checkImprovement();
-  	    
-        if(showOverview)	  	    drawOverview();
+  	    if(showOverview)	  	    drawOverview();
 	   
 	   if(img != null)
 	  	{
@@ -499,8 +503,6 @@ public void paintComponent(Graphics g)
 	    gfinal.drawImage(backBuffer,0,0,this);
 		}
 	}
-//	System.out.println("Tarda en paintComponent "+(System.currentTimeMillis()-ts));
-	//pause();//fotograma a fotograma
 	return;
 }
 
@@ -508,20 +510,38 @@ public void paintComponent(Graphics g)
 public void run()
 {
 int delay = 0; //milliseconds
+
 ActionListener taskPerformerLayout = new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
     	  long ts=System.currentTimeMillis();
-    	  if(!pauseSimulation)	doLayout();
+    	  if(!pauseSimulation)
+    	  	{
+    		  if(!sugiyama)	doLayout();
+    		  else			doSugiyamaLayout();
+    	  	}
+    	  		
     	//System.out.println("Tarda en doLayout "+(System.currentTimeMillis()-ts));
       }
   };
 new Timer(delay, taskPerformerLayout).start();
+
 ActionListener taskPerformer = new ActionListener() {
     public void actionPerformed(ActionEvent evt) {
   	  repaint();
     }
 };
 new Timer(delay, taskPerformer).start();
+/*
+try{
+	this.doLinLogLayout();
+	ActionListener taskPerformer = new ActionListener() {
+		public void actionPerformed(ActionEvent evt) {
+			repaint();
+		}
+	};
+new Timer(delay, taskPerformer).start();
+	}catch(Exception e){e.printStackTrace();}
+	*/
 }
 
 /**
@@ -656,7 +676,9 @@ void drawOverview()
 {  
 	this.rectMode(JProcessingPanel.CORNER);
 	drawingOverview=true;//To tell if all the graph must be printed or only what is in screen
-	fill(0);
+	Color bg=this.paleta[Overlapper.backgroundColor];
+	Color fg=this.paleta[Overlapper.foregroundColor];
+	fill(bg.getRed(), bg.getGreen(), bg.getBlue());
 	noStroke();
 	rect(screenWidth-overviewBoxLength,0,overviewBoxLength, overviewBoxHeight);//To avoid main graph painting in overview
 	
@@ -680,7 +702,8 @@ void drawOverview()
   
   popMatrix();
   
-  stroke(255);
+  stroke(fg.getRed(), fg.getGreen(), fg.getBlue());
+//stroke(255);
   noFill();
   rect(xTopOverviewBox, yTopOverviewBox, overviewBoxLength, overviewBoxHeight);
   
@@ -934,7 +957,6 @@ public synchronized void doLayout()
 //han aplicado, pero quiero ver si eso afecta sustancialmente, ya que si no lo hace en una iteración lo hace para la
 //siguiente, ganamos tiempo (la ganancia es poco importante no obstante) y, sobre todo, tengo todo preparado para aplicar 
 //métricas de manera particular
-
 public synchronized void doLayout() 
 	{
 	if(computeDualLayout && g.dualNodes!=null && g.dualNodes.size()>0)	{doDualLayout(); return;}
@@ -985,44 +1007,210 @@ public synchronized void doLayout()
 			    	}
 		    	
 			}
-		//-----------------------
-		boolean zoomed=false;
-		
-		if (n != g.getDragNode() && !n.isFixed())	    
-			{
-	    	while(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	
-	    		n.setForce(nullVector);
-	    	if(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	n.fix(true);
-	    	n.getPosition().add(n.getForce());
-	    	}
-		if(areaInc>=maxArea)
-			{
-			if(n.getX()<100)	n.setX(100);
-			if(n.getY()<100)	n.setY(100);
-			if(n.getX()>totalWidth-100)		n.setX(totalWidth-100);
-			if(n.getY()>totalHeight-100)	n.setY(totalHeight-100);
-			}
-		
-	    if(!zoomed)
-	    	{
-	    	if(areaInc<maxArea && (n.getPosition().getX()>totalWidth || n.getPosition().getY()>totalHeight ||
-	    		n.getPosition().getX()<0 || n.getPosition().getY()<0 )) 
-	    		{
-	    		increaseOverview(2);
-		    	zoomed=true;
-		    	}
-	    	}
-    	n.setForce(nullVector);	//una vez cambiada la posición, estas fuerzas ya no actúan sobre el nodo
-    	if(g.dualNodes!=null && g.dualNodes.size()>0)	{g.refreshDualPositions();}
-    	
+		applyLayout(n);
 	   }//for (each node)
+//	System.out.println("LinLog energy: "+g.getLinLogEnergy()+" minimum possible: "+g.getMinimalLinLogEnergy());
+	}
+
+private void applyLayout(ForcedNode n)
+	{
+	//-----------------------
+	boolean zoomed=false;
+	
+	if (n != g.getDragNode() && !n.isFixed())	    
+		{
+    	while(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	
+    		n.setForce(nullVector);
+    	if(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	n.fix(true);
+    	n.getPosition().add(n.getForce());
+    	}
+	if(areaInc>=maxArea)
+		{
+		if(n.getX()<100)	n.setX(100);
+		if(n.getY()<100)	n.setY(100);
+		if(n.getX()>totalWidth-100)		n.setX(totalWidth-100);
+		if(n.getY()>totalHeight-100)	n.setY(totalHeight-100);
+		}
+	
+    if(!zoomed)
+    	{
+    	if(areaInc<maxArea && (n.getPosition().getX()>totalWidth || n.getPosition().getY()>totalHeight ||
+    		n.getPosition().getX()<0 || n.getPosition().getY()<0 )) 
+    		{
+    		increaseOverview(2);
+	    	zoomed=true;
+	    	}
+    	}
+	n.setForce(nullVector);	//una vez cambiada la posición, estas fuerzas ya no actúan sobre el nodo
+	if(g.dualNodes!=null && g.dualNodes.size()>0)	{g.refreshDualPositions();}
 	}
 	
+//Variación del anterior.
+//Ahora en está mal hecho, ya que se aplican las fuerzas antes de asegurar que todas las fuerzas se le 
+//han aplicado, pero quiero ver si eso afecta sustancialmente, ya que si no lo hace en una iteración lo hace para la
+//siguiente, ganamos tiempo (la ganancia es poco importante no obstante) y, sobre todo, tengo todo preparado para aplicar 
+//métricas de manera particular
+public synchronized void doSugiyamaLayout() 
+	{
+	Iterator<ClusterSet> itGraph=g.getResults().values().iterator();//Hull drawing
+	
+	for (int i=0; i<g.getResults().size(); i++) 
+	  	{
+	    ClusterSet r = (ClusterSet)itGraph.next();
+	    for(int j=0;j<r.getClusters().size();j++)
+	      	{
+	    	SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);
+	    	
+	    	//---------------- SPRING FORCES S5, S7, S8
+	    	//1) apply forces to the vertical and horizontal axes (S7, S8)
+	    	SpringEdge e=null;
+	    	GraphPoint2D f=null;
+	    	e=(SpringEdge)c.getHorizontal();
+	    	f = e.getSugiyamaForceS7();
+	    	((ForcedNode)e.getFrom()).applyForce(f);
+	    	f.invert();
+	    	((ForcedNode)e.getTo()).applyForce(f);
+	    	
+	    	
+	    	e=(SpringEdge)c.getVertical();
+	    	f = e.getSugiyamaForceS8();
+	    	((ForcedNode)e.getFrom()).applyForce(f);
+	    	f.invert();
+	    	((ForcedNode)e.getTo()).applyForce(f);
+	    	
+	    	//2) apply spring forces to the radial edges (S5)
+	    	for(int k=0;k<c.getRadials().size();k++)
+	    		{
+	    		e=(SpringEdge)c.getRadials().get(k);
+	    		f = e.getSugiyamaForceS5();
+	    		((ForcedNode)e.getFrom()).applyForce(f);
+		    	f.invert();
+		    	((ForcedNode)e.getTo()).applyForce(f);
+	    		}
+	    	//2.5) and to the axial edges (between the center and the vertices (not specified, i use S5)
+	    	for(int k=0;k<c.axials.size();k++)
+	    		{
+	    		e=(SpringEdge)c.axials.get(k);
+	    		f = e.getSugiyamaForceS5();
+	    		((ForcedNode)e.getFrom()).applyForce(f);
+		    	f.invert();
+		    	((ForcedNode)e.getTo()).applyForce(f);
+	    		}
+	    	
+	    	//--------------- ATTRACTIVE FORCES (A1, A2)
+	    	//3) apply attraction to the peripheral edges
+	    	for(int k=0;k<c.getPeripherals().size();k++)
+	    		{
+	    		e=(SpringEdge)c.getPeripherals().get(k);
+	    		f = e.getSugiyamaForceA1();
+	    		((ForcedNode)e.getFrom()).applyForce(f);
+		    	f.invert();
+		    	((ForcedNode)e.getTo()).applyForce(f);
+	    		}
+	    
+	    	//3.7) Repulsion between center nodes of non-overlapped clusters
+	    	Iterator<ClusterSet> itGraph2=g.getResults().values().iterator();//Hull drawing
+	    	for (int k=0; k<g.getResults().size(); k++) 
+		  	{
+		    ClusterSet r2 = (ClusterSet)itGraph2.next();
+		    for(int m=0;m<r2.getClusters().size();m++)
+		      	{
+		    	SugiyamaCluster c2=(SugiyamaCluster)r.getClusters().get(j);
+		    	if(c2!=c && c2.nodesInCommon(c)==0)
+		    		{
+		    		double dx = c2.getCenter().getX() - c.getCenter().getX();
+				    double dy = c2.getCenter().getY() - c.getCenter().getY();
+				    double d = Math.sqrt((float) (dx*dx + dy*dy));
+				    double lr=c.getNodes().size()*c2.getNodes().size();
+				    if(d<lr)
+			           	{
+				    	double Cs=0.3*(3/g.getNodes().size());
+					    double fr = -Cs*d;
+			       		vf.setX(dx*fr);
+			       		vf.setY(dy*fr);
+			       		c.getCenter().applyForce(vf); 
+				    	vf.invert();
+				    	c2.getCenter().applyForce(vf);
+			           	}
+		    		}
+	    		}
+	      	}
+	    	}
+	  	}
+	//4) Repulsive force among all nodes (normal and dummy centers) if unrelated
+	//4a) Nodes in different groups
+	Iterator<Node> it1=g.getNodes().values().iterator();
+	for(int k=0;k<g.getNodes().size();k++)//for each node in the cluster
+		{
+		ForcedNode n=(ForcedNode)it1.next();
+		Iterator<Node> it=g.getNodes().values().iterator();
+		int cont=0;
+		while(cont++<=k)	it.next();
+		while(it.hasNext())	//for each node in the graph not already computed
+    		{
+    		ForcedNode n2=(ForcedNode)it.next();
+    		//if(!n.mates.containsValue(n2))	//if not in the same group
+    			{//apply repulsion allways
+    			
+    			double dx = n2.getX() - n.getX();
+			    double dy = n2.getY() - n.getY();
+			    double d = Math.sqrt((float) (dx*dx + dy*dy));
+			    double lr=this.edgeLength;//+n.mates.size()+n2.mates.size();
+			    if(d<lr)
+		           	{
+			    	double Cs=0.3*(3/g.getNodes().size());
+				    double fr = -Cs*d;
+		       		vf.setX(dx*fr);
+		       		vf.setY(dy*fr);
+		       		n.applyForce(vf); 
+			    	vf.invert();
+			    	n2.applyForce(vf);
+		           	}
+	        	}
+    		}
+		}
+	//5) Relocate nodes upon the applied forces
+	it1=g.getNodes().values().iterator();
+	while(it1.hasNext())
+		{
+		applyLayout((ForcedNode)it1.next());
+		}
+	itGraph=g.getResults().values().iterator();//Hull drawing
+	for (int i=0; i<g.getResults().size(); i++) 
+		{
+		ClusterSet r = (ClusterSet)itGraph.next();
+		for(int j=0;j<r.getClusters().size();j++)
+		  	{
+			SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);
+			applyLayout(c.getCenter());
+			applyLayout(c.getTop());
+			applyLayout(c.getBottom());
+			applyLayout(c.getLeft());
+			applyLayout(c.getRight());
+		  	}
+		}
+	}
+
+public synchronized void doLinLogLayout()
+	{
+	int numPop=50;
+	int numParents=(int)(0.10*numPop);
+	//int numMutant=(int)(0.8*numPop);//un 80% de los grafos mutan en 1 nodo (muy poco!)
+	int numMutant=(int)(0.6*numPop*g.getNodes().size()*2);//un 40% de los nodos de todos los individuos de la población mutan, en x o en y (el *2)
+	int mutFactor=20;//la variación es de un valor aleatorio en [-10,10] pixeles
+	GraphGeneticAlgorithm gag=new GraphGeneticAlgorithm(numPop,numParents,numMutant,mutFactor,0,0,0,this.g);
+	System.out.println("Error antes de GA "+g.getLinLogEnergy());
+	gag.ejecutar(1000, g.getMinimalLinLogEnergy());
+	System.out.println("Error tras GA "+g.getLinLogEnergy());
+	//paintComponent(this.getGraphics());
+	
+	}
 /**
  * As doLayout, but now applied to dual nodes and edges. As there are much less edges, spring and expansion constants must change
  */
 public synchronized void doDualLayout()
 	{	
+	this.stiffness=1;
 	Iterator<DualNode> it=g.dualNodes.values().iterator();
 	for (int i=0; i<g.dualNodes.size(); i++) //N(N-1)/2 complexity
 	  	{
@@ -1031,8 +1219,8 @@ public synchronized void doDualLayout()
 		for(int j=0;j<ed.size();j++)//----------------- spring force
 			{
 			SpringEdge e=(SpringEdge)ed.get(j);
-			GraphPoint2D f = e.getForceFrom();
-			//GraphPoint2D f = e.getDualForceFrom();
+			//GraphPoint2D f = e.getForceFrom();
+			GraphPoint2D f = e.getDualForceFrom();
 	    	n.applyForce(f);
 	    	}
 		//System.out.println("Fuerza de spring para "+n.label+": "+n.getForce().getX()+", "+n.getForce().getY());
@@ -1163,7 +1351,7 @@ protected void keyPressed() {
 	int temp=0;
 		
 	switch(c){
-	case  '1'://radial2complete
+	/*case  '1'://radial2complete
 		if(radial)
 			{
 			g.radial2complete();
@@ -1176,12 +1364,22 @@ protected void keyPressed() {
 			g.complete2radial();
 			radial=true;
 			}
+		break;*/
+	case '1':
+		decreaseG();
+		break;
+	case '2':
+		increaseG();
+		break;
+	case '3':
+		decreaseStiffness();
 		break;
 	case 't':
 		drawTitle=!drawTitle;
 		break;
 	case '4':
-		additionMode=!additionMode;
+		//additionMode=!additionMode;
+		increaseStiffness();
 		break;	
 	case '5':
 		labelSize--;
@@ -1271,21 +1469,11 @@ protected void keyPressed() {
        case 'q': if (closeness >= 0.5) 
                  closeness-= 0.5;
                  break; 
-        /*         
-       case 'x': scaleFactor += 1;
-                 nodeSize += 1;
-                 break;
-
-       case 'z': if (scaleFactor >= 2){ 
-    	           scaleFactor-= 1;
-                   nodeSize -= 1;}
-                 break;
-                 */
-       case 'z':
+       case 'x':
     	   drawContour=!drawContour;
     	   break;
-       case 'x':
-    	   drawPlateau=!drawPlateau;
+       case 'z':
+    	   drawZones=!drawZones;
     	   break;
 
 	   case 'v': showOverview=!showOverview;
@@ -1296,6 +1484,11 @@ protected void keyPressed() {
 		break;
 	   case 'j': computeDualLayout=!computeDualLayout;
 		break;
+	   case '.': increaseLabelClusterSize();
+	   	break;
+	   case ',': 
+		   decreaseLabelClusterSize();
+		   break;
 	   case CODED:
 	   		switch(keyCode)
 	   			{
@@ -1563,7 +1756,7 @@ public void increaseLabelSize()
  */
 public void decreaseLabelSize()
 	{
-	labelSize--;
+	if(labelSize>1)	labelSize--;
 	}
 
 /**
@@ -1580,7 +1773,7 @@ public void increaseLabelClusterSize()
  */
 public void decreaseLabelClusterSize()
 	{
-	labelClusterSize--;
+	if(labelClusterSize>5)	labelClusterSize--;
 	}
 
 
@@ -1607,14 +1800,12 @@ protected void mousePressed() {
   
 	if (mouseX < this.xTopOverviewBox || mouseY > this.yTopOverviewBox)
   	  {
-	  Iterator itMouse=g.getNodes().values().iterator();
 	  float xpress=mouseX+(Math.abs(xTopMagnifier-xTopOverviewBox)/overviewBoxLength)*areaInc*screenWidth;
 	  float ypress=mouseY+(Math.abs(yTopMagnifier-yTopOverviewBox)/overviewBoxHeight)*areaInc*screenHeight;
 	
-	  while(itMouse.hasNext())
-   		{
-		 Node n=(Node)itMouse.next();
-		 if (n.containsPoint(xpress, ypress)) 
+	  for(Node n : g.getNodes().values())
+	  	{
+	    if (n.containsPoint(xpress, ypress)) 
 		     {
 			 if(n.isFixed() && mouseButton!=RIGHT)	n.fix(false);
 			 g.setDragNode(n);
@@ -1623,9 +1814,10 @@ protected void mousePressed() {
    		}
 	  if(g.getDragNode()==null)//Hemos pinchado fuera de un nodo
 	  	{
-		//  System.out.println("Seleccionando área");
-		selectionArea = new Path2D.Double();
-		selectionArea.moveTo(xpress,ypress);
+		//selectionArea = new Path2D.Double();
+		//selectionArea.moveTo(xpress,ypress);
+		selectionArea = new ArrayList<Point2D.Double>();
+		selectionArea.add(new Point2D.Double(xpress,ypress));
 		}
    	}
 }
@@ -1639,20 +1831,37 @@ protected void mouseMoved() {
 
   if (g.getDragNode() == null) 
   	{
-    Iterator<Node> itMM=g.getNodes().values().iterator();
-	float xpress=(mouseX-offsetX)/zoomFactor;
+    float xpress=(mouseX-offsetX)/zoomFactor;
 	float ypress=(mouseY-offsetY)/zoomFactor;
-    for(int i=0; i<g.getNodes().size(); i++) 
-    	{
-	    Node n = (Node)itMM.next();
-	    if (n.containsPoint(xpress, ypress)) 
-	      	{
-	        g.setHoverNode(n);
-	        break;
-	      	}
-    	}
-    if(!itMM.hasNext())	g.setHoverNode(null);
-
+	if(!this.drawDual)
+		{
+		Iterator<Node> itMM=g.getNodes().values().iterator();
+		for(int i=0; i<g.getNodes().size(); i++) 
+	    	{
+		    Node n = (Node)itMM.next();
+		    if (n.containsPoint(xpress, ypress)) 
+		      	{
+		        g.setHoverNode(n);
+		        break;
+		      	}
+	    	}
+	    if(!itMM.hasNext())	g.setHoverNode(null);
+		}
+	else	//hover, but for dual nodes
+		{
+		Iterator<DualNode> itMM=g.dualNodes.values().iterator();
+		
+		 for(int i=0; i<g.dualNodes.size(); i++) 
+	    	{
+			DualNode n = (DualNode)itMM.next();
+		    if (n.containsPoint(xpress, ypress)) 
+		      	{
+		        g.setHoverNode(n);
+		        break;
+		      	}
+	    	}
+	    if(!itMM.hasNext())	g.setHoverNode(null);
+		}
 	g.getHoverClusters().clear();
     if(g.getHoverNode()==null && this.drawHull==true)//Search for hover hull
     	{
@@ -1679,6 +1888,18 @@ protected void mouseMoved() {
   }
 }
 
+public void receiveGOTerms(ArrayList<GOTerm> got)
+	{
+	
+	}
+
+public void receiveGeneAnnotations(ArrayList<GeneAnnotation> ga)
+	{
+	if(rightButtonNode!=null && ga.size()==1)
+		{
+		rightButtonNode.setDetails(ga.get(0).getDetailedForm());
+		}
+	}
 /**
  * This function is called when the mouse is released, to stop dragging nodes.
  */
@@ -1693,9 +1914,7 @@ protected void mouseReleased() {
 		  {
 		  g.getDragNode().fix(true);
 		  }
-	  //System.out.println("nueva posición del nodo: "+g.getDragNode().getX()+", "+g.getDragNode().getY());
 	  g.setDragNode(null);
-	 // System.out.println(iteracion+": Tasa de error: "+this.g.getFailedPositionMetric());
 	  }
   else
   	{
@@ -1707,7 +1926,11 @@ protected void mouseReleased() {
 		while(it.hasNext())
 			{
 			Node n=it.next();
-			if(selectionArea.contains(n.getX(),n.getY()))
+			
+			Polygon pol=new Polygon();
+			for(Point2D.Double p: selectionArea)	pol.addPoint((int)p.x, (int)p.y);
+			if(pol.contains(n.getX(), n.getY()))
+			//if(selectionArea.contains(n.getX(),n.getY()))
 				{
 				g.addSelectedNode(n);
 				nodeSelected=true;
@@ -1742,7 +1965,7 @@ protected void mouseReleased() {
 				 if(n!=g.getDragNode())	g.addSelectedNode(n);
 				 }
 	 		}
-		  if(!nodeSelected)	//---------- group selection
+		  if(!nodeSelected && this.drawHull)	//---------- group selection
 		  	{
 			for(int i=0;i<this.numClusters;i++)
 		  		{
@@ -1766,200 +1989,32 @@ protected void mouseReleased() {
 	  else if(mouseButton==RIGHT)
 	  	{
 		 //System.out.println("Retrieving details");
-		 Node ns=null;
+		 rightButtonNode=null;
 		 while(itMouse.hasNext())
 	 		{
 			 Node n=(Node)itMouse.next();
-			 if (n.containsPoint(xpress, ypress))	ns=n; 
+			 if (n.containsPoint(xpress, ypress))	
+				 {
+				 rightButtonNode=n;
+				 break;
+				 }
 	 		}
-		 if(ns==null)	return;
-		 //********** OBTENCIÓN DE GENE ANNOTATION
-		 if(ns.details.length() > 0)	ns.details="";
+		 if(rightButtonNode==null)	return;
+		 if(rightButtonNode.details.length() > 0)	rightButtonNode.details="";
 		 else
 			 {
-			 GeneAnnotation ga=this.getMicroarrayData().getGeneAnnotations().get(this.getMicroarrayData().getGeneId(ns.label));
-			 if(ga!=null)	ns.setDetails(ga.getDetailedForm());
-			 else		
+			 if(this.getMicroarrayData()==null)	{System.err.println("Error: Microarray data are not loaded, impossible to retrieve additional info about genes"); return;}
+			 if(rightButtonNode.isGene())
 			 	{
-				 if(!getMicroarrayData().isAnnotationsRetrieved())
-					 JOptionPane.showMessageDialog(null,
-								"Retrieving annotations from database, please wait...", 
-								"Wait for annotations", JOptionPane.INFORMATION_MESSAGE);
-				 else	
-					 JOptionPane.showMessageDialog(null,
-								"No annotations found for gene "+ns.label, 
-								"No annotations", JOptionPane.INFORMATION_MESSAGE);
-					 
+				 if(this.getParent()==null)	this.getMicroarrayData().getGeneAnnotation(rightButtonNode.label, this, null);
+				 else						this.getMicroarrayData().getGeneAnnotation(rightButtonNode.label, this, ((Diagram)(this.getParent())).getLocation());
 			 	}
 			 }
-		 /************* 	PARSEO HTML NCBI ********************
-		 try{
-		 //URL entrez=new URL("http://www.ncbi.nlm.nih.gov/sites/entrez?db=gene");
-		  URL entrez=new URL("http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=search&amp;db=gene&amp;term="+ns.label);//Esto funciona
-		  URLConnection entrezConnection=entrez.openConnection();
-			
-		  entrezConnection.setDoInput(true);
-		  entrezConnection.setDoOutput(true);
-		  entrezConnection.setUseCaches(true);
-		  entrezConnection.setRequestProperty ("Content-Type", "application/x-www-form-urlencoded");
-		  DataInputStream input=new DataInputStream(entrezConnection.getInputStream());
-
-		  String str;
-		  String details="";
-		  String name=ns.getLabel();
-		  
-		  String number="";
-		  String nameAlone="";
-		  //1) Búsqueda en el motor de la dirección propia del gen
-		  String dir=null;
-		  while(null != (str=input.readLine()))	
-		  	{
-			  System.out.println(str);
-			//if(str.contains("var Menu"))//TODO: De momento, tomamos el segundo (!) resultado como el que buscamos
-			if(str.contains("- begin Results -"))//TODO: De momento, tomamos el primer resultado como el que buscamos
-				{
-				while(null != (str=input.readLine()))	
-					{
-					if(str.contains("<a href="))
-						{
-						int pos=str.indexOf("<a href=\"")+9;
-						dir=str.substring(pos);
-						int posf=dir.indexOf("\">");
-						dir=dir.substring(0, posf);
-						dir="http://www.ncbi.nlm.nih.gov"+dir;
-						System.out.println("La dirección del bicho es esta: ");
-						System.out.println(dir);
-						break;
-						}
-					}	
-				}
-			if(dir!=null)	break;
-			}
-		  
-		  //2) Búsqueda de los datos de GO y otros en la página del gen
-		  if(dir!=null)
-		  	{
-			details="";
-			entrez=new URL(dir);
-			entrezConnection=entrez.openConnection();
-			
- 		    entrezConnection.setDoInput(true);
-		    entrezConnection.setDoOutput(true);
-		    entrezConnection.setUseCaches(true);
-		    entrezConnection.setRequestProperty ("Content-Type", "application/x-www-form-urlencoded");
-			DataInputStream input2=new DataInputStream(entrezConnection.getInputStream());
-			while(null != (str=input2.readLine()))	//Recogida de datos
-			  	{
-				if(str.contains(">Gene name<"))	
-					{
-					str=input2.readLine();
-					details="Name: "+str.substring(str.indexOf("<dd>")+4, str.indexOf("</dd>"));
-					//System.out.println("Gene Name: "+details);
-					}
-				if(str.contains(">Locus tag<"))	
-					{
-					str=input2.readLine();
-					if(str.contains("href"))
-						{
-						str=str.substring(str.indexOf("<a href"));
-						str=str.substring(str.indexOf(">")+1);
-						details=details+"\nLoc.: "+str.substring(0, str.indexOf("<"));
-						}
-					else
-						{
-						details=details+"\nLoc: "+str.substring(str.indexOf("<dd>")+4, str.indexOf("</dd>"));
-						}
-					}
-				if(str.contains(">Gene type<"))
-					{
-					str=input2.readLine();
-					details=details+"\nType: "+str.substring(str.indexOf("<dd>")+4, str.indexOf("</dd>"));
-					}
-				if(str.contains(">Organism<"))	
-					{
-					str=input2.readLine();
-					str=str.substring(str.indexOf("<a href"));
-					str=str.substring(str.indexOf(">")+1);
-					details=details+"\nOrg.: "+str.substring(0, str.indexOf("<"));
-					}
-				if(str.contains(">Also known as<"))	
-					{
-					str=input2.readLine();
-					details=details+"\nAka: "+str.substring(str.indexOf("<dd>")+4, str.indexOf("</dd>"));
-					}
-				if(str.contains(">GeneOntology<"))
-					{//Pasar a la siguiente línea y pillar todo lo que haya en hrefs hasta llegar a un /div
-					while((str=input2.readLine())!=null)
-						{
-						if(str.contains("<a href"))			
-							details=details+"\nGO: "+getAHref(str);
-						if(str.contains("</div>"))	break;
-						}
-						
-					}
-			//	System.out.println(details);
-				ns.setDetails(details);
-			
-				}
-			}*/
-		  /****************** PARSEO HTML AFFYMETRIX ***********************
-		  URL affy=new URL("https://www.affymetrix.com/analysis/netaffx/xmlquery.affx?netaffx=netaffx4_annot");
-		  URLConnection affyConnection=affy.openConnection();
-		  affyConnection.setDoInput(true);
-		  affyConnection.setDoOutput(true);
-		  affyConnection.setUseCaches(true);
-		  affyConnection.setRequestProperty ("Content-Type", "application/x-www-form-urlencoded");
-		  DataInputStream input=new DataInputStream(affyConnection.getInputStream());
-
-		  String str;
-		  String details="";
-		  String name=ns.getLabel();
-		  
-		  String number="";
-		  String nameAlone="";
-		  //1) Búsqueda en el motor de la dirección propia del gen
-		  String dir=null;
-		  //TODO: hace falta hacer una query vía javascript, y ahí creo q va a ser donde nos quedemos atascados
-		  while(null != (str=input.readLine()))	
-		  	{
-			  System.out.println(str);
-			//if(str.contains("var Menu"))//TODO: De momento, tomamos el segundo (!) resultado como el que buscamos
-			if(str.contains("- begin Results -"))//TODO: De momento, tomamos el primer resultado como el que buscamos
-				{
-				while(null != (str=input.readLine()))	
-					{
-					if(str.contains("<a href="))
-						{
-						int pos=str.indexOf("<a href=\"")+9;
-						dir=str.substring(pos);
-						int posf=dir.indexOf("\">");
-						dir=dir.substring(0, posf);
-						dir="http://www.ncbi.nlm.nih.gov"+dir;
-						System.out.println("La dirección del bicho es esta: ");
-						System.out.println(dir);
-						break;
-						}
-					}	
-				}
-			if(dir!=null)	break;
-			}
-		  
-		 }catch(MalformedURLException e){ System.err.println(e.getStackTrace());}
-		  catch(IOException e){ System.err.println(e.getStackTrace());}	  	
-		  catch(Exception e){ System.err.println(e.getStackTrace());}
-		  */
-		  
 	  	}//end if(rigth button)
 	 }//if !move
   move=false;
 }
 
-private String getAHref(String cad)
-	{
-	String str=cad.substring(cad.indexOf("<a href"));
-	str=str.substring(str.indexOf(">")+1);
-	return str.substring(0, str.indexOf("<"));
-	}
 
 /**
  * This function is called when the mouse is dragging moving the selected node (if any) or
@@ -1992,7 +2047,7 @@ protected void mouseDragged() {
 				}
 			}	    
 		}
-	 if(!navigate)
+	/* if(!navigate)
 	 	{
 		move=true;
 		float xpress=(mouseX-offsetX)/zoomFactor;
@@ -2008,44 +2063,44 @@ protected void mouseDragged() {
 		//	System.out.println("Modificando área");
 			selectionArea.lineTo(xpress, ypress);
 			}
-	 	}
-	
-  /*
-	if (g.getDragNode() != null) 
-		{
-		 float xpress=(mouseX-offsetX)/zoomFactor;
-		 float ypress=(mouseY-offsetY)/zoomFactor;
-
-		 g.getDragNode().setX(xpress);
-		 g.getDragNode().setY(ypress);
-		}
-	else if (showOverview)
-		{
-		if((mouseX > xTopOverviewBox) && 
-		   (mouseX < xTopOverviewBox + overviewBoxLength) &&
-		   (mouseY > yTopOverviewBox) && 
-		   (mouseY < yTopOverviewBox + overviewBoxHeight)
-		   )
+	 	}*/
+	 if(!navigate)
+	 	{
+		move=true;
+		float xpress=(mouseX-offsetX)/zoomFactor;
+		float ypress=(mouseY-offsetY)/zoomFactor;
+	/*	if(g.getSelectedNodes()!=null && g.getSelectedNodes().size()>0)	// drag selected nodes
 			{
-			if(movingMagnifier)
-				{
-				xTopMagnifier=mouseX-magnifierLength/2;
-				if (xTopMagnifier <= screenWidth - overviewBoxLength)
-				      xTopMagnifier = (screenWidth - overviewBoxLength);
-			   
-				yTopMagnifier=mouseY-magnifierHeight/2;
-				if (yTopMagnifier <= 0)
-				      yTopMagnifier = 0;
-			   
-			   //Factor applied to calculate the offset in the real graph
-				offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor*zoomFactor); 
-				offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor*zoomFactor); 
+			Iterator<Node> it=g.getSelectedNodes().values().iterator();
+			double mainX=-1;
+			double mainY=-1;
+			while(it.hasNext())
+				{	
+				Node n=it.next();
+				if(mainX<0)
+					{
+					mainX=n.getX();
+					mainY=n.getY();
+					}
+				n.setX(n.getX()-mainX+xpress);
+				n.setY(n.getY()-mainY+ypress);
 				}
-			}	    
-		}
-  
-	for(int i=0; i<handleNum; i++)       handles[i].update();
-	*/
+			}
+		else	*///drag node or selection line
+			{
+			if(g.getDragNode()!=null)
+				{
+				 System.out.println("Posición anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
+				 g.getDragNode().setX(xpress);
+				 g.getDragNode().setY(ypress);
+				}
+			else	//Selección de área
+				{
+				//selectionArea.lineTo(xpress, ypress);
+				selectionArea.add(new Point2D.Double(xpress, ypress));
+				}
+			}
+	 	}
 }
 
 private void moveMagnifier(float newX, float newY)
@@ -2079,10 +2134,8 @@ public int search(String text, boolean searchInGroups)
 		g.clearSearchNodes();
 		if(!searchInGroups)		//person search
 			{
-			Iterator itSearch=g.getNodes().values().iterator();
-			while(itSearch.hasNext())
+			for(Node n : g.getNodes().values())
 				{
-				Node n=(Node)itSearch.next();
 				if(n.getLabel().contains(text))
 					g.addSearchNode(n);
 				}
@@ -2100,11 +2153,9 @@ public int search(String text, boolean searchInGroups)
 			}
 		else			//group search
 			{
-			Iterator itSearch=g.getResults().values().iterator();
 			num=0;
-			while(itSearch.hasNext())
+			for(ClusterSet r: g.getResults().values())
 				{
-				ClusterSet r=(ClusterSet)itSearch.next();
 				for(int i=0;i<r.getClusters().size();i++)
 					{
 					MaximalCluster c=(MaximalCluster)r.getClusters().get(i);
@@ -2140,14 +2191,14 @@ public int search(String text, boolean searchInGroups)
 private int[][] similarityMatrix()
 	{
 	int[][] sm=new int[numClusters][numClusters];
-	Iterator it1=clusters.values().iterator();
+	Iterator<ArrayList<String>> it1=clusters.values().iterator();
 	for(int i=0;i<numClusters-1;i++)
 		{
-		ArrayList a=(ArrayList)it1.next();
-		Iterator it3=clusters.values().iterator();
+		ArrayList<String> a=(ArrayList<String>)it1.next();
+		Iterator<ArrayList<String>> it3=clusters.values().iterator();
 		for(int j=0;j<=i;j++)	it3.next();
 		for(int j=i+1;j<numClusters;j++)
-			sm[i][j]=sm[j][i]=ArrayUtils.intersect(a,(ArrayList)it3.next());
+			sm[i][j]=sm[j][i]=ArrayUtils.intersect(a,it3.next());
 		}
 	return sm;
 	}
@@ -2156,35 +2207,113 @@ private void readClusters()
 	{
 	numClusters=numClusters();
 	String data[] = loadStrings(getDataFile());
-
-	String [] dataToken = data[0].split(delimiter);
-	if (dataToken.length > 1)		 exit();
-	
-	clusters=null;
 	clusters= new TreeMap<String,ArrayList<String>>();
+	groupNames=new String[numClusters];
 	int cont=0;
-	for (int l = 1; l < data.length; l++)
-	  	{
-		dataToken = data[l].split(delimiter);  
-		if (dataToken.length >1)
+	
+	if(groupDelimiter==null)
+		{
+		String [] dataToken = data[0].split(delimiter);
+		if (dataToken.length > 1)		 exit();
+		
+		for (int l = headerLines; l < data.length; l++)
+		  	{
+			dataToken = data[l].split(delimiter);  
+			if (dataToken.length >1)
+				{
+				ArrayList<String> lista=new ArrayList<String>(dataToken.length);
+				for(int i=0;i<dataToken.length;i++)
+					lista.add(dataToken[i]);
+				groupNames[cont]="cluster"+cont;
+				clusters.put("cluster"+cont, lista);
+				cont++;
+				}
+		  	}
+		}
+	else
+		{
+		String [] prevDataToken = null;//For nested groups
+		String [] dataToken = data[0].split(delimiter);
+		int mainGroup=0;
+		int hierarchy=0;
+		
+		if(this.posDelimiter!=null)
 			{
-			ArrayList<String> lista=new ArrayList<String>(dataToken.length);
-			for(int i=0;i<dataToken.length;i++)
-				lista.add(dataToken[i]);
-			clusters.put("cluster"+cont, lista);
-			cont++;
+			this.initPos=new Point2D.Double[numClusters];
 			}
-	  	}	
+		if (dataToken.length > 1)		 exit();
+		else if(dataToken[0].split(groupDelimiter).length > 1)	exit();
+			
+		for (int l = headerLines; l < data.length; l++)
+		  	{
+			if(l>headerLines)	prevDataToken=dataToken;
+			if(data[l].startsWith("\t"))
+				{
+				hierarchy=data[l].split("\t").length-1;
+				System.out.println("Empieza con tab");
+				}
+			else
+				{
+				mainGroup=cont;
+				hierarchy=0;
+				}
+			dataToken = data[l].split(groupDelimiter);  
+			if (dataToken.length ==2 )//First field has group name and field two elements
+				{
+				String groupName=dataToken[0];
+				String[] elements=dataToken[1].split(delimiter);
+				ArrayList<String> lista=new ArrayList<String>(elements.length);
+				for(int i=0;i<elements.length;i++)
+					{
+					String element=null;
+					
+					if(posDelimiter!=null)
+						{
+						String[] elementToken=elements[i].split(this.posDelimiter);
+						if(elementToken.length==3)
+							{
+							element=elementToken[0];
+							initPos[cont]=new Point2D.Double();
+							initPos[cont].x=new Double(elementToken[1]).doubleValue();
+							initPos[cont].y=new Double(elementToken[2]).doubleValue();
+							}
+						else
+							System.err.println("Format Error: there are no three fields for each element");
+						}
+					else	element=elements[i];
+					if(hierarchy>0)	
+						{
+						for(int j=0;j<hierarchy;j++)
+							((ArrayList<String>)clusters.get(groupNames[mainGroup+j])).add(elements[i]);
+						}
+					lista.add(elements[i]);
+					}
+				groupNames[cont]=groupName;
+				clusters.put(groupName, lista);
+				cont++;
+				}
+			}
+		}
+	return;
 	}
 
-//Read of clusters from a BicAT format
+
+/** Read of clusters from a BicAT format, this is:
+	number_of_biclusters
+	nameClusterSet
+	numRows	numCols
+	row1	row2	row3	...	rowN
+	col1	col2	col3	...	colM
+ * 
+ */
 private void readClustersBicat()
 	{
 	String data[] = loadStrings(getDataFile());
 	
 	String [] dataToken = data[0].split(delimiter);
 	if (dataToken.length > 1)		 exit();
-	
+	else	groupNames=new String[new Integer(dataToken[0]).intValue()];
+
 	clusters=null;
 	clusters= new TreeMap<String,ArrayList<String>>();
 	int cont=0;
@@ -2194,6 +2323,10 @@ private void readClustersBicat()
 	for (int l = 2; l < data.length; l++)
 	  	{
 		dataToken = data[l].split(delimiter);//Filas
+		String groupName="cluster"+cont;
+		if(groupDelimiter!=null && data[l].contains(groupDelimiter))
+			groupName=dataToken[0].split(groupDelimiter)[0];
+		
 		if (dataToken.length >1)
 			{
 			l++;
@@ -2219,13 +2352,14 @@ private void readClustersBicat()
 						if(!conditionNames.contains(dataToken[i]))	conditionNames.add(dataToken[i]);
 						}
 					}
-				clusters.put("cluster"+cont, lista);
+				groupNames[cont]=groupName;
+				clusters.put(groupNames[cont], lista);
 				this.numClusters++;
 				cont++;
 				}
 			}
 		}
-	this.numClusters--;
+	//this.numClusters--;
 	}
 
 
@@ -2238,45 +2372,79 @@ public int numClusters()
 	{
 	int n=0;
 	String data[] = loadStrings(getDataFile());
-
-	String [] dataToken = data[0].split(delimiter);
-	if (dataToken.length > 1)		 exit();
-		
-	for (int l = 1; l < data.length; l++)
-	  	{
-		dataToken = data[l].split(delimiter);  
-		if (dataToken.length > 1)		n++;
+	if(groupDelimiter==null)
+		{
+		String [] dataToken = data[0].split(delimiter);
+		if (dataToken.length > 1)		 exit();
+			
+		for (int l = 1; l < data.length; l++)
+		  	{
+			dataToken = data[l].split(delimiter);  
+			if (dataToken.length > 1)		n++;
+			}
+		}
+	else
+		{
+		String [] dataToken = data[0].split(delimiter);
+		if (dataToken.length > 1)		 exit();
+		else if(dataToken[0].split(groupDelimiter).length > 1)	exit();
+			
+		for (int l = 1; l < data.length; l++)
+		  	{
+			dataToken = data[l].split(groupDelimiter);  
+			if (dataToken.length > 1)		n++;
+			}
 		}
 	return n;
 	}
 
 /**
- * Read the different sets of groups available in dataFile
- *
+ * Adds just one resultSet with all the clusters
  */
- void readResultSets()
+ void readResultSet()
 	{
 	int n=0;
 	resultSets=new ArrayList<Integer>();
 	resultLabels=new ArrayList<String>();
 	String data[] = loadStrings(getDataFile());
 	
-	String [] dataToken = data[0].split(delimiter);
-	if (dataToken.length > 1)		 exit();
-		
-	for (int l = 1; l < data.length; l++)
-	  	{
-		dataToken = data[l].split(delimiter);  
-		if (dataToken.length == 1)		
-			{
-			resultLabels.add(dataToken[0]);
-			//n=Integer.valueOf(data[++l].split(delimiter)dataToken[0]).intValue();
-			if(n!=0)	resultSets.add(n); 
-			n=0;
+	if(groupDelimiter==null)	//In the case there's no group delimiter, groups of 1 element are not allowed, lines with just one element are treated as separators of sets of groups
+		{
+		String [] dataToken = data[0].split(delimiter);
+		if (dataToken.length > 1)		 exit();
+			
+		for (int l = 1; l < data.length; l++)
+		  	{
+			dataToken = data[l].split(delimiter);  
+			if (dataToken.length == 1)		
+				{
+				resultLabels.add(dataToken[0]);
+				if(n!=0)	resultSets.add(n); 
+				n=0;
+				}
+			if (dataToken.length > 1)		n++;
 			}
-		if (dataToken.length > 1)		n++;
+		resultSets.add(n);
 		}
-	resultSets.add(n);
+	else
+		{
+		String [] dataToken = data[0].split(delimiter);
+		if (dataToken.length > 1)		 exit();
+		else if(dataToken[0].split(groupDelimiter).length > 1)	exit();
+			
+		for (int l = 1; l < data.length; l++)
+		  	{
+			dataToken = data[l].split(groupDelimiter);  
+			if (dataToken.length == 1)		
+				{
+				resultLabels.add(dataToken[0]);
+				if(n!=0)	resultSets.add(n); 
+				n=0;
+				}
+			if (dataToken.length > 1)		n++;
+			}
+		resultSets.add(n);
+		}
 	}
 
 private void readResultSetsBicat()
@@ -2286,7 +2454,7 @@ resultSets=new ArrayList<Integer>();
 resultLabels=new ArrayList<String>();
 String data[] = loadStrings(getDataFile());
 
-String [] dataToken = data[0].split(delimiter);
+String [] dataToken = data[0].split(delimiter);//This first one has the number of biclusters
 if (dataToken.length > 1)		 exit();
 	
 for (int l = 1; l < data.length; l++)
@@ -2312,16 +2480,42 @@ private void readResultSets(String[] movies)
 	{
 	resultSets=new ArrayList<Integer>();
 	resultLabels=new ArrayList<String>();
-	resultLabels.add("Selected Films");
+	resultLabels.add("ResultSet");
 	if(movies!=null)	resultSets.add(movies.length);
 	}
 
 
- void readFile()
+/**
+ * Reads a file with groups entered with the following structure:
+ * element1 element2 ... elementN
+ * It´s equivalent to call to readFile(" ", null)
+ * 
+ * @param groupDelimiter
+ * @param delimiter
+ */
+void readFile()
 	{
-	readResultSets();
+	readResultSet();
 	readClusters();
 	}
+ /**
+  * Reads a file with groups entered with the following structure:
+  * groupName|groupDelimiter|element1|delimiter|element2|delimiter|...|elementN
+  * 
+  * That is, if groupDelimiter is ":" and delimiter is ", " then
+  * 2:alternative, alternative rock, alternative metal
+  * could be an entry of the file
+  * @param groupDelimiter
+  * @param delimiter
+  */
+ void readFile(String groupDelimiter, String delimiter, String posDelimiter, int headerLines)
+ 	{
+	this.delimiter=delimiter;
+	this.groupDelimiter=groupDelimiter;
+	this.headerLines=headerLines;
+	this.posDelimiter=posDelimiter;
+	readFile();
+ 	}
 
 Graph buildRandomGraph() {
   Graph g;
@@ -2992,7 +3186,7 @@ void restoreClusters()
 	    	if(ret==null)	ret=(SpringEdge)g.getEdges().get(e.getFrom().getLabel()+"->"+e.getTo().getLabel());//O en el otro
 	    	if(ret!=null)	
 	    		{
-	    		ret.setLengthFactor(ret.getLengthFactor()*0.8);
+	    		ret.setNaturalLength(ret.getNaturalLength()*0.8);
 	    		}
 	    	else			
 	    		{
@@ -3017,8 +3211,12 @@ public void buildGraph()
 	//this.drawHull=false;
 	
 	//Preliminary reading of biclusters and ordering
+	groupDelimiter=":";
 	readResultSetsBicat();
 	readClustersBicat();
+	//readFile();
+	//readFile(":", ", ", null, 2);//Yaxi's format
+	//readFile(":", ", ", "|",2);//Yaxi's format
 
 	if(initialOrdering && radial)	g=buildOrderedRadialGraph();
 	else
@@ -3028,6 +3226,8 @@ public void buildGraph()
 			{
 			if(radial)		g=buildRadialGraph();
 			else			g=buildCompleteGraph();
+			//else			g=buildSugiyamaGraph();
+			//this.sugiyama=true;
 			}
 		}
 	
@@ -3078,8 +3278,6 @@ Graph buildCompleteGraph()
 	  x=-cellWidth/2;
 	  y=cellHeight/2;
 	  
-	 // if(titles==null && getTitleFile()!=null)	titles=loadStrings(getTitleFile());
-	  
 	  //El contador de nodos usados en lugar de filas por columnas 
 	  nNodes = 0;
 	  int color = Overlapper.bicColor1;
@@ -3107,21 +3305,20 @@ Graph buildCompleteGraph()
 				}
 			
 			c = new MaximalCluster(r, "cluster"+new Integer(clusterCount).toString());
-			c.setLabel("cluster"+clusterCount);
-			if(titles!=null)	
-				c.setLabel(titles[clusterCount]);
-		//	System.out.println("Buscando cluster "+clusterCount+" de un total de "+this.numClusters);
-			for (int k = 0; k < clusters.get("cluster"+clusterCount).size(); k++) //Para cada nodo en el cluster
-			   {
-			   String nodeLabel =(String)clusters.get("cluster"+clusterCount).get(k);
+			c.setLabel(groupNames[clusterCount]);
+			
+			if(groupNames!=null)	
+				c.setLabel(groupNames[clusterCount]);
+			for (int k = 0; k < clusters.get(groupNames[clusterCount]).size(); k++) //Para cada nodo en el cluster
+				{
+			   String nodeLabel =(String)clusters.get(groupNames[clusterCount]).get(k);
 			   ForcedNode n;
-			   //System.out.println(nodeLabel);
 			
 			   if(!alreadyInGraph(g,nodeLabel))
 			   	  {
 				  n = new ForcedNode(new GraphPoint2D(x -cellWidth/2+random((float)cellWidth),y-cellHeight/2+random((float)cellHeight)));
 				  n.setLabel(nodeLabel);
-				  if(conditionNames.contains(nodeLabel))	n.setGene(false);
+				  if(conditionNames!=null && conditionNames.contains(nodeLabel))	n.setGene(false);
 				  else										n.setGene(true);
 				  n.setMass(1.0);
 				  n.setSize(nodeSize);
@@ -3144,6 +3341,92 @@ Graph buildCompleteGraph()
 	  
 	  return g;
 	}
+
+/**
+ * Método para crear un caso de resultados de biclustering
+ * @return	
+ */
+Graph buildSugiyamaGraph() 
+	{
+	  Graph g;
+	  ClusterSet r = null;
+	  SugiyamaCluster c = null;
+	  g = new Graph(this);
+	  
+	  //Uniform distribution of clusters
+	  double cellWidth, cellHeight;//Screen initial areas for each cluster
+	  cellWidth=screenWidth/Math.sqrt(numClusters);
+	  cellHeight=screenHeight/Math.sqrt(numClusters);
+	  double x,y;
+	  x=-cellWidth/2;
+	  y=cellHeight/2;
+	  
+	  //El contador de nodos usados en lugar de filas por columnas 
+	  nNodes = 0;
+	  int color = Overlapper.bicColor1;
+	  int clusterCount=0;
+
+		
+	  for(int i=0;i<resultSets.size();i++)//Para cada result set
+	  	{
+		//New ClusterSet
+		r = new ClusterSet();
+		r.setLabel((String)resultLabels.get(i));
+		
+		r.setColor(new CustomColor(paleta[color++]));
+		
+		r.setGraph(g);
+		g.addClusterSet(r);
+		for(int j=0;j<resultSets.get(i);j++)//Para cada cluster en el resultset
+			{
+			//Uniform position
+			x+=cellWidth;
+			if(x>=screenWidth)	
+				{
+				x=cellWidth/2;
+				y+=cellHeight;
+				}
+			
+			c = new SugiyamaCluster(r, "cluster"+new Integer(clusterCount).toString());
+			c.setLabel("cluster"+clusterCount);
+			if(groupNames!=null)	
+				c.setLabel(groupNames[clusterCount]);
+		//	System.out.println("Buscando cluster "+clusterCount+" de un total de "+this.numClusters);
+			for (int k = 0; k < clusters.get("cluster"+clusterCount).size(); k++) //Para cada nodo en el cluster
+			   {
+			   String nodeLabel =(String)clusters.get("cluster"+clusterCount).get(k);
+			   ForcedNode n;
+			   //System.out.println(nodeLabel);
+			
+			   if(!alreadyInGraph(g,nodeLabel))
+			   	  {
+				  n = new ForcedNode(new GraphPoint2D(x -cellWidth/2+random((float)cellWidth),y-cellHeight/2+random((float)cellHeight)));
+				  n.setLabel(nodeLabel);
+				  n.setGene(true);
+				  n.setMass(1.0);
+				  n.setSize(nodeSize);
+				  g.addNode(n);
+				  nNodes++;
+				  }
+			   else	       n=(ForcedNode)g.getNodes().get(nodeLabel);
+		        
+			  c.addNode(n);
+			  }//each node in cluster
+			c.notifyNodesInCluster();
+			r.addCluster(c);
+		    clusterCount++;
+			}//each cluster in resultSet
+	    // And the last ResultSet must also be added to the graph
+	    g.addClusterSet(r);
+	  	}//each resultSet
+	  
+	  g.buildSugiyamaStructure();
+	  
+	  println("Number of nodes: "+g.getNumNodes()+", central nodes: "+g.getNumCenterNodes()+", edges: "+g.getNumEdges());
+	  
+	  return g;
+	}
+
 
 //----------------------------- GETTERS AND SETTERS ------------------------------
 /*
@@ -3795,11 +4078,11 @@ public boolean isDrawContour() {
 public void setDrawContour(boolean drawContour) {
 	this.drawContour = drawContour;
 }
-public boolean isDrawPlateau() {
-	return drawPlateau;
+public boolean isDrawZones() {
+	return drawZones;
 }
 public void setDrawPlateau(boolean drawPlateau) {
-	this.drawPlateau = drawPlateau;
+	this.drawZones = drawPlateau;
 }
 public int getMaxLabelSize() {
 	return maxLabelSize;

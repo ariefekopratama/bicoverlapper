@@ -200,25 +200,56 @@ public class CustomColor {
    */
   public static Color getGoodColor(int n)
   	{
-	  int max=14;
-	  int  colors[][]  = {
+	  int max=12;
+	 /* int  colors[][]  = {		//The exact ones from Ware2004
+				  {240,78,82},//red
+				  {247,230,92},//yellow
+					  {55,53,53},//black
+				 	{113,192,97},//green
+		           	  {54,100,173},//blue
+				  {255,255,255},//white
+				  
+				  {242,150,178},//pink
+	              {158, 162, 152},//grey
+		             {179, 71, 64},//dark red
+		             {133, 209, 210},//spindrift blue
+	                  {248,161,98},//orange
+	              {162,75,150},//purple
+	                        };
+		  */
+	 /* int  colors[][]  = {
 			//  {254,127,13},//orange
 			  {200,0,0},//orange
 			  {153,74,237},//morado
-				  {100,227,195},//spidrift
+		       {0, 0, 200},//blue
+			      	  {100,227,195},//spidrift
 			 	{244,238,224},//honeydew
 	           	  {200,100,255},//azul cielo
 			  {153,74,237},//morado
 			  {240,189,139},//marrón claro
               {200, 0, 0},//red
-	             {0, 0, 200},//blue
 	             {0, 200, 0},//green
                   {255,199,38},//yellow
               {170,177,206},//malva
               {199,30,199}, //fucsia
            	{255,168,251}, //pink
-                        };
+                        };*/
 	  
+	  //Exact colors from Ware2004
+	  int colors[][]={
+			  {162,75,150},//purple
+			 	{113,192,97},//green
+			  	{48,161,98},//orange
+			 	{54,100,173},//blue
+			 	{179, 71, 64},//dark red
+			 	{242,150,178},//pink
+			 	{158, 162, 152},//grey
+			 	{133, 209, 210},//spindrift blue
+			 	{55,53,53},//black
+		    	{255,255,255},//white
+		    	{247,230,92},//yellow
+				{240,78,82}};//red
+		    	
 	  
 	  int r = colors[n%max][0];
 	  int g = colors[n%max][1];

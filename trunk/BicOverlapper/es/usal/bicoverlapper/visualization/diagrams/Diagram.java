@@ -49,21 +49,21 @@ public abstract class Diagram extends JPanel {
 
 	private boolean personas;
 	
-	private static final int tamañoMuestra = 15;
+	private static final int tamMuestra = 15;
 	
 	//------------------------- Elementos para doble buffering y repintados selectivos ------------------
 	/** Imagen necesaria para realizar un rendering con doble buffer */
 	protected Image backBuffer = null;
 	
-	/** Contexto gráfico necesario para realizar un rendering con doble buffer */	
+	/** Contexto grï¿½fico necesario para realizar un rendering con doble buffer */	
 	protected Graphics2D gbBuffer = null;
 	
-	/** Imagen que mantiene el estado estable de la gráfica de coordenadas paralelas */
+	/** Imagen que mantiene el estado estable de la grï¿½fica de coordenadas paralelas */
 	protected Image img = null;
 	
 	
 		
-	/** Variable que indica si se ha producido un cambio que implica repintar la gráfica al completo */
+	/** Variable que indica si se ha producido un cambio que implica repintar la grï¿½fica al completo */
 	boolean repaintAll = true;
 	//
 	
@@ -182,7 +182,7 @@ public abstract class Diagram extends JPanel {
 		for(int i = 0; i < paleta.length; i++){
 			boton[i] = new JButton();
 			etiqueta[i] = new JLabel(textoLabel[i]);
-			muestra[i] = new JTextField(Diagram.tamañoMuestra);
+			muestra[i] = new JTextField(Diagram.tamMuestra);
 			muestra[i].setEditable(false);
 			muestra[i].setBackground(paleta[i]);
 			boton[i].setText(Translator.instance.configureLabels.getString("s7"));
@@ -235,10 +235,10 @@ public abstract class Diagram extends JPanel {
 			listaAnclajes[i] = nombresVentanas.elementAt(i);
 		
 		panelAnclajes.add(new JLabel(Translator.instance.configureLabels.getString("s24")));
-		JComboBox menuAñadir = new JComboBox(listaAnclajes);
-		menuAñadir.addActionListener(new GestorAñadirAnclaje(gestor,ventanasH));
-		menuAñadir.setSelectedIndex(0);
-		panelAnclajes.add(menuAñadir);
+		JComboBox addMenu = new JComboBox(listaAnclajes);
+		addMenu.addActionListener(new AddHookManager(gestor,ventanasH));
+		addMenu.setSelectedIndex(0);
+		panelAnclajes.add(addMenu);
 				
 		final Vector<String> anclajes = this.getWindow().getHooks();
 		if((anclajes != null) && !anclajes.isEmpty()){
@@ -513,16 +513,16 @@ public abstract class Diagram extends JPanel {
 	public void updateConfig(){};
 	
 	/**
-	 * Esta clase implementa un gestor para añadir un anclaje a través del panel correspondiente en la ventana de configuracion.
+	 * Esta clase implementa un gestor para aï¿½adir un anclaje a travï¿½s del panel correspondiente en la ventana de configuracion.
 	 * 
 	 */
-	private class GestorAñadirAnclaje implements ActionListener{
+	private class AddHookManager implements ActionListener{
 		
 		private ConfigurationMenuManager gestor;
 		private Vector<DiagramWindow> ventanasH;
-		private DiagramWindow itemAñadir;
+		private DiagramWindow itemToAdd;
 		
-		public GestorAñadirAnclaje(ConfigurationMenuManager gestor, Vector<DiagramWindow> ventanasH){
+		public AddHookManager(ConfigurationMenuManager gestor, Vector<DiagramWindow> ventanasH){
 			this.gestor = gestor;
 			this.ventanasH = ventanasH;
 		}
@@ -538,17 +538,17 @@ public abstract class Diagram extends JPanel {
 						break;
 					}
 				}
-				itemAñadir = ventanasH.elementAt(index);
+				itemToAdd = ventanasH.elementAt(index);
 			}
 			else
-				itemAñadir = null;
+				itemToAdd = null;
 			
-			gestor.setAddItem(itemAñadir);
+			gestor.setAddItem(itemToAdd);
 		}		
 	}
 	
 	/**
-	 * Esta clase implementa un gestor para eliminar un anclaje a través del panel correspondiente en la ventana de configuracion.
+	 * Esta clase implementa un gestor para eliminar un anclaje a travï¿½s del panel correspondiente en la ventana de configuracion.
 	 * 
 	 * @author Javier Molpeceres Ortego
 	 *

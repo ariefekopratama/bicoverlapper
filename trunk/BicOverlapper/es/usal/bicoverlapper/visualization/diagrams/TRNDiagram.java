@@ -106,7 +106,7 @@ public class TRNDiagram extends Diagram {
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	private MultidimensionalData datos;  //  @jve:decl-index=0:
+	//private MultidimensionalData datos;  //  @jve:decl-index=0:
 	private int alto;
 	private int ancho;
 	private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
@@ -135,12 +135,7 @@ public class TRNDiagram extends Diagram {
 	private static final int discretizationLevels = 0;
 	private int[] parameters = {128};
 	private String[] parameterText = {"Discretization Levels"};
-
 	
-	// atributos de configuracion anclajes
-	
-	private DiagramWindow itemAñadir, itemEliminar;
-
 	//-------------- Información propia de nuestra representación
 	Visualization v; //Visualization
 	Display d;		//Display
@@ -148,7 +143,9 @@ public class TRNDiagram extends Diagram {
 	TRNData trnd;  //  @jve:decl-index=0:
 	TRNFocusControl currentGenes;  //  @jve:decl-index=0:
 	ItemAction expressionColor;
+	ItemAction noFillColor;
 	ItemAction nodeColor;
+	ActionList color;
 	DataColorAction eFill, edges;
 	int[] palette = new int[]{ ColorLib.gray(0,0)};
 	
@@ -183,7 +180,7 @@ public class TRNDiagram extends Diagram {
 		int num = session.getNumTRNDiagrams();
 		this.setName("Transcription Network "+num);
 		this.sesion = session;
-		this.datos = session.getData();
+		//this.datos = session.getData();
 		this.trnd = session.getTRNData();
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
@@ -232,15 +229,26 @@ public class TRNDiagram extends Diagram {
 		v.add("graph", trnd.getGraph());		//Le añadimos el grafo
 		//v.addFocusGroup("ingroup('_bicluster_')");//Grupo de biclusters
 		v.getGroup("graph.nodes").addColumn("expressionLevel", double.class);
-
+		Iterator it;
+		/*if(this.sesion.getMicroarrayData()!=null)
+			{
+			it=v.items("graph.nodes");
+			while(it.hasNext())
+				{
+				VisualItem item=(VisualItem)it.next();
+				item.setDouble("expressionLevel",sesion.getMicroarrayData().average);
+				}
+			}
+		*/
 		//Hacemos más gruesos los bordes para poderlos utilizar en la interacción
 		TupleSet ts=v.getGroup("graph.nodes");
-		Iterator it=ts.tuples();
+		it=ts.tuples();
 		BasicStroke bs=new BasicStroke(3);
 		while(it.hasNext())
 			{
 			VisualItem vi=(VisualItem)it.next();
 			vi.setStroke(bs);
+			
 			}
 		
         //Forma de los nodos (etiquetados por nombre, redondeados)
@@ -264,7 +272,7 @@ public class TRNDiagram extends Diagram {
 		//Item action (colores de los nodos y sus etiquetas bajo distintas circunstancias)
 		nodeColor=new NodeColorAction("graph.nodes", VisualItem.STROKECOLOR, sesion.getHoverColor().darker(), sesion.getSearchColor(), sesion.getSelectionColor());
 		ItemAction textColor=new TextColorAction("graph.nodes");
-
+		
 		//	 map nominal data values to colors using our provided palette
 		ColorAction text = new ColorAction("graph.nodes",
 		    VisualItem.TEXTCOLOR, ColorLib.gray(0));
@@ -277,26 +285,31 @@ public class TRNDiagram extends Diagram {
 			    Constants.NOMINAL, VisualItem.FILLCOLOR, ePalette);
 	
 		//palette=ColorLib.getCoolPalette();
-		int paletteTemp[]=ColorLib.getInterpolatedPalette(ColorLib.rgb(0,255,0), ColorLib.rgb(0, 0, 0));
-		int paletteTemp2[]=ColorLib.getInterpolatedPalette(ColorLib.rgb(0,0,0), ColorLib.rgb(255, 0, 0));
+		Color h=sesion.hiExpColor;
+		Color l=sesion.lowExpColor;
+		Color m=sesion.avgExpColor;
+		int paletteTemp[]=ColorLib.getInterpolatedPalette(ColorLib.rgb(l.getRed(),l.getGreen(),l.getBlue()), ColorLib.rgb(m.getRed(), m.getGreen(), m.getBlue()));
+		int paletteTemp2[]=ColorLib.getInterpolatedPalette(ColorLib.rgb(m.getRed(),m.getGreen(),m.getBlue()), ColorLib.rgb(h.getRed(),h.getGreen(),h.getBlue()));
 		palette=new int[100];
 		for(int i=0;i<50;i++)	palette[i]=paletteTemp[i];
 		for(int i=50;i<100;i++)	palette[i]=paletteTemp2[i-50];
 		
-		for(int i=0;i<palette.length;i++)	palette[i]=ColorLib.setAlpha(palette[i], 100);
+		for(int i=0;i<palette.length;i++)	palette[i]=ColorLib.setAlpha(palette[i], 200);
 		palette[palette.length-1]=ColorLib.setAlpha(palette[palette.length-1],0);
 		expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", palette);
-		
+		noFillColor=new ColorAction("graph.nodes", VisualItem.FILLCOLOR, ColorLib.rgba(255,255,255,200));
 		//	create an action list containing all color assignments
-		ActionList color = new ActionList();
+		color = new ActionList();
 		color.add(text);
 		color.add(edges);
 		color.add(eFill);
 		
+		
 		color.add(nodeColor);
 		color.add(textColor);
 		
-		color.add(expressionColor);
+		//color.add(expressionColor);
+		color.add(noFillColor);
 		
 		color.add(new RepaintAction());
 		v.putAction("color", color);
@@ -468,9 +481,20 @@ public class TRNDiagram extends Diagram {
 					{
 					VisualItem item=(VisualItem)it.next();
 					item.setDouble("expressionLevel", vect.get(i));
+					
 					//item.setInt("_color", )
 					}
+				color.remove(noFillColor);
+				color.add(expressionColor);
 				}
+			else
+				{
+				color.add(noFillColor);
+				color.remove(expressionColor);
+				}
+			v.removeGroup("color");
+			v.putAction("color", color);
+			
 			v.cancel("animatePaint");
 			v.run("color");
 			v.run("animatePaint");
@@ -482,8 +506,7 @@ public class TRNDiagram extends Diagram {
 	 */
 	public void update() 
 		{
-	//	System.out.println("Repintamos PanelTRN");
-		this.repaint();
+		synchronized(this){	this.repaint();}
 		}
 	
 	public void updateConfig(){
@@ -509,10 +532,10 @@ public class TRNDiagram extends Diagram {
         ActionList animate = (ActionList)v.getAction("layout");
         animate.setDuration(0);
         
-        
+        synchronized(this){
 		run();
 		this.repaint();
-		this.configurando = false;
+		this.configurando = false;}
 	}
 
 	/*

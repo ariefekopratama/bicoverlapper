@@ -114,7 +114,7 @@ public class FileStructure implements GenericFileStructure
 			try{
 			numero=CompleteFileManager.readInt(fichero, row, columna++, delimitador);
 			}catch(Exception e){e.printStackTrace();}
-			if(numero>0) devolver.add(numero-1);//OJO!!!: Apaño provisional porque R me trae listas en 1,n y yo quiero en 0,n-1 teniendo en cuenta como lee el GraphMLReader
+			if(numero>0) devolver.add(numero-1);//OJO!!!: Arreglo provisional porque R me trae listas en 1,n y yo quiero en 0,n-1 teniendo en cuenta como lee el GraphMLReader
 			else		fin=true;
 			}
 		return devolver;

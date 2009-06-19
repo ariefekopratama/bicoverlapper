@@ -8,6 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
@@ -28,7 +29,6 @@ import java.util.LinkedList;
 import javax.swing.ImageIcon;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -36,9 +36,7 @@ import javax.swing.JTextField;
 
 
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
-import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.TupleSelection;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
@@ -48,7 +46,7 @@ import es.usal.bicoverlapper.utils.Translator;
  * This diagram represents Parallel Coordinates where each coordinate is a condition of the microarray matrix
  * and each line is a gene profile.
  * It implements threshold scrolling  and axes swapping.
- * @author Rodrigo Santamaria and Javier Molpeceres
+ * @author Rodrigo Santamaria (rodri@usal.es) and Javier Molpeceres
  *
  */
 public class ParallelCoordinatesDiagram extends Diagram {
@@ -59,7 +57,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	//private MultidimensionalData datos;
 	private MicroarrayData datos;
 	int numC=0; //Número de coordenadas
 	int numG=0; //Número de líneas
@@ -68,9 +65,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
 		
 	// definicion de margenes del diagrama
-	final int margenDer = 40;
+	final int margenDer = 15;
 	final int margenIzq = 80;
-	final int margenSup = 40;
+	final int margenSup = 20;
 	final int margenInf = 100;
 	final int margenDiagrama = 10; // porcentaje de exceso en intervalo de representacion del diagrama
 	
@@ -81,8 +78,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	
 	private int[] seleccionPuntos = {es.usal.bicoverlapper.kernel.Configuration.PARALLEL_COORDINATES_ID};// kernel.Configuration.DiagramaPuntosId, kernel.Configuration.BubbleGraphId,
-	//private int[] seleccionPuntos = {kernel.Configuracion.DiagramaPuntosId, kernel.Configuracion.BubbleGraphId,
-											//kernel.Configuration.TreeMapId,  kernel.Configuration.CloudId};
 
 	// configuracion de color
 	private static final int colorEtiquetaVar = 0;
@@ -111,21 +106,25 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	"Bicluster Color"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 	
-	// atributos de configuracion anclajes
-	private DiagramWindow itemAñadir, itemEliminar;
 	
 	// atributos propios de la representacion del diagrama
 	private int longEjeX;
 	private int longEjeY;
 	private double intervaloVar;//, anchoTextoCuota;
 	private double[] ratio;
-	private double[] maxVar;
-	private double[] minVar;
+	private double[] maxVar;//Highest expression level for each condition (relative indices) or for all conditions (absolute indices)
+	private double[] minVar;//Lowest expression level for each condition (relative indices) or for all conditions (absolute indices)
+	private double[] max;//Highest expression level for each condition
+	private double[] min;//Lowest expression level for each condition
+	private double[] mean;
+	private double[] sd;
 	private double[] maxText;
 	private double[] minText;
 	private double[] currentTextInf;
 	private double[] currentTextSup;
-	private boolean ejesRelativos = true, scrollFijado = false;
+	//private boolean ejesRelativos = true; 
+	private boolean ejesRelativos = false; 
+	private boolean scrollFijado = false;
 	double anchoTextoCuota;
 	
 	// atributos usados para la gestion del intercambio de variables
@@ -161,7 +160,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	//en cuenta a la hora de selecciones, filtrados, etc.
 	
     // parametros del menu de configuracion
-	
 	private static final int isEjesRelativos = 0;
 	private String[] textoParametros = {Translator.instance.configureLabels.getString("s28")+": "};
 	private Object[] parametros = {new Boolean(true)};
@@ -185,10 +183,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		paleta[ParallelCoordinatesDiagram.colorVarSelec]=sesion.getSelectionColor().darker();
 		paleta[ParallelCoordinatesDiagram.colorBicluster]=sesion.getSelectionColor().brighter();
 	
-		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up.png";
-		iconoScrollDown = "es/usal/bicoverlapper/resources/images/down.png";
-		iconoScrollSelecUp = "es/usal/bicoverlapper/resources/images/upSelec.png";
-		iconoScrollSelecDown = "es/usal/bicoverlapper/resources/images/downSelec.png";
+		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up3.png";
+		iconoScrollDown = "es/usal/bicoverlapper/resources/images/down3.png";
+		iconoScrollSelecUp = "es/usal/bicoverlapper/resources/images/upSelec2.png";
+		iconoScrollSelecDown = "es/usal/bicoverlapper/resources/images/downSelec2.png";
 
 		String nombre;
 		nombre = Translator.instance.menuLabels.getString("s8")+" "+num;
@@ -200,18 +198,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.sesion = sesion;
 		this.setSession(sesion);
 
-	//	this.datos = sesion.getData();
 		this.datos=sesion.getMicroarrayData();
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho,alto));
 		this.setSize(ancho,alto);
 		
-		es.usal.bicoverlapper.utils.CustomColor c=new es.usal.bicoverlapper.utils.CustomColor();
-		
 		// Inicializamos los atributos si al iniciar el diagrama hay datos cargados
-		//if(sesion.dataLoaded())
-				this.iniciarAtributos();		
+		this.iniciarAtributos();		
 		
 		// registramos el gestor que permite seleccionar tuplas
 		GestorSeleccionarTupla gestor1 = new GestorSeleccionarTupla();
@@ -239,7 +233,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * Paints this diagram
 	 * @param g	Graphics where the parallel coordinates are painted
 	 */
-	public void paintComponent(Graphics g) 
+	public synchronized void paintComponent(Graphics g) 
 	{
 		//		 Invalidamos la imagen antigua
 		if(backBuffer != null){
@@ -267,7 +261,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	    ((Graphics2D)g).setRenderingHints(qualityHints);
 	if(repaintAll)	//Repintamos toda la pantalla
 		{
-		drawFondo(gbBuffer);	
+		drawFondo((Graphics2D)g);
 		//if(sesion.dataLoaded())
 		if(sesion.areMicroarrayDataLoaded())
 			{
@@ -278,18 +272,19 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 		//		 Se ha creado la gráfica completa ya no se debe hacer otro repintado
 		repaintAll = false;
-		if(img != null){
-		   img.flush();
-		   img = null;
-		}
+		if(img != null)
+			{
+		    img.flush();
+		    img = null;
+			}
 
-		 // Almaceno la imagen actual como una imagen estable sobre la que hacer los pequeños cambios (sólo las líneas están en dicha imagen)
-		 img  = createImage(backBuffer.getSource());
-		 // Intercambio la imagen (rendering de doble buffer)
-		 g.drawImage(backBuffer,0,0,this);	  
+		// Almaceno la imagen actual como una imagen estable sobre la que hacer los pequeños cambios (sólo las líneas están en dicha imagen)
+		img  = createImage(backBuffer.getSource());
+		// Intercambio la imagen (rendering de doble buffer)
+		g.drawImage(backBuffer,0,0,this);	  
 		
-		drawEjes((Graphics2D)g);
 		drawScrolls((Graphics2D)g);
+		drawEjes((Graphics2D)g);
 		drawEtiquetas((Graphics2D)g);
 		}
 	else	//Son cambios menores, no hace falta repintar todo
@@ -298,9 +293,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
      	gbBuffer.drawImage(img,0,0,this);
      	//ahora dibujo todo lo demás, que no es necesario meterlo en la imagen
      	//(además, si meto los scrols, por ejemplo, luego se me duplicarían al moverlos)
+     	drawScrolls(gbBuffer);
 		drawEjes(gbBuffer);
 		drawEtiquetas(gbBuffer);
-		drawScrolls(gbBuffer);
 		g.drawImage(backBuffer, 0,0,this);
 		scrollMoved=false;
 		}
@@ -328,10 +323,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		
 		this.maxVar = new double[numC];
 		this.minVar = new double[numC];
+		this.max = new double[numC];
+		this.min = new double[numC];
 		this.maxText = new double[numC];
 		this.minText = new double[numC];
 		this.ratio = new double[numC];
-		
+		this.mean= new double[numC];
+		this.sd= new double[numC];
 		this.currentTextInf = new double[numC];
 		this.currentTextSup = new double[numC];
 		this.valorInf = new double[numC];
@@ -365,7 +363,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		scrollDown = loadIcon(this.iconoScrollDown).getImage();
 		scrollSelecUp = loadIcon(this.iconoScrollSelecUp).getImage();
 		scrollSelecDown = loadIcon(this.iconoScrollSelecDown).getImage();
-		
 		altoScroll = scrollUp.getHeight(null)-1;
 		anchoScroll = scrollUp.getWidth(null)-1;
 		
@@ -384,7 +381,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			cotaSup[i] = margenSup-margenScroll;
 			cotaInf[i] = alto-margenInf+margenScroll;
 		}
-		
 		atributosIniciados = true;
 	}
 	
@@ -401,38 +397,40 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 */
 	private void calcularAtributos(){
 		
-		//if(sesion.dataLoaded()){
 		if(sesion.areMicroarrayDataLoaded()){
 				longEjeX = ancho-margenIzq-margenDer;
 			longEjeY = alto-margenSup-margenInf;
 			intervaloVar = longEjeX/(numC-1);
 					
-			for(int i = 0; i < numC; i++){
-				
-				//maxVar[i] = datos.fieldAt(ordenVars[i]).getData(0);
-				//minVar[i] = datos.fieldAt(ordenVars[i]).getData(0);
+			for(int i = 0; i < numC; i++)
+				{
 				maxVar[i] = datos.getExpressionAt(0, ordenVars[i]);
-				minVar[i] = datos.getExpressionAt(0, ordenVars[i]);
-				
-				for(int j = 0; j < numG; j++){
-					
-					//if(datos.fieldAt(ordenVars[i]).getData(j) < minVar[i])
-					if(datos.getExpressionAt(j, ordenVars[i]) < minVar[i])
-						{
-						//minVar[i] = datos.fieldAt(ordenVars[i]).getData(j);
-						minVar[i] = datos.getExpressionAt(j, ordenVars[i]);
-						}
-					
-					//if(datos.fieldAt(ordenVars[i]).getData(j) > maxVar[i])
-					//maxVar[i] = datos.fieldAt(ordenVars[i]).getData(j);
-					if(datos.getExpressionAt(j, ordenVars[i]) > maxVar[i])
-						maxVar[i] = datos.getExpressionAt(j, ordenVars[i]);
-				}			
-			}
+				minVar[i] = maxVar[i];
+				mean[i]= maxVar[i];
+				for(int j = 1; j < numG; j++)
+					{
+					double exp=datos.getExpressionAt(j, ordenVars[i]);
+					if(exp < minVar[i])
+						minVar[i] = exp;
+					if(exp > maxVar[i])
+						maxVar[i] = exp;
+					mean[i]+=exp;
+					}
+				mean[i]/=numG;
+				sd[i]=0;
+				for(int j = 0; j < numG; j++)
+					{
+					double exp=datos.getExpressionAt(j, ordenVars[i]);
+					sd[i]+=Math.abs(mean[i]-exp);
+					}
+				sd[i]/=numG;
+				}
 				
 			for(int i=0;i<numC;i++)
 				{
-			//	System.out.println("Variable "+i+" en ["+minText[i]+", "+maxText[i]+"]");
+				min[i]=minVar[i];
+				max[i]=maxVar[i];
+				
 				maxText[i]=maxVar[i];
 				minText[i]=minVar[i];
 				currentTextSup[i]=maxText[i];
@@ -444,33 +442,43 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				double margen = (maxVar[i] - minVar[i])*((double)margenDiagrama/100);
 				maxVar[i] += margen;
 				minVar[i] -= margen;
-				ratio[i] = longEjeY/(maxVar[i]-minVar[i]);
+				double dif=maxVar[i]-minVar[i];
+				if(dif>0)
+					{
+					if(dif<1)	dif++;
+					ratio[i] = longEjeY/(dif);
+					}
+				else		ratio[i] = 1;
 				}
 			
 			
-			if(!ejesRelativos){
-				
+			if(!ejesRelativos)//si los ejes son absolutos, maxVar es para todos la mayor y minVar igual en cuanto a tamaños
+				{
 				double max = maxVar[0], min = minVar[0];
-				for(int i = 0; i < numC; i++){
-					if(maxVar[i] > max)
-						max = maxVar[i];
-					
-					if(minVar[i] < min)
-						min = minVar[i];
-				}
+				for(int i = 0; i < numC; i++)
+					{
+					if(maxVar[i] > max)			max = maxVar[i];
+					if(minVar[i] < min)			min = minVar[i];
+					}
 				
-				for(int i = 0; i < numC; i++){
+				for(int i = 0; i < numC; i++)
+					{
 					maxVar[i] = max;
 					minVar[i] = min;
-					ratio[i] = longEjeY / (max - min);
+					double dif=(max-min);
+					if(dif>0)
+						{
+						if(dif<1)	dif++;
+						ratio[i] = longEjeY / (dif);
+						}
+					else		ratio[i] = 1;
+					}
 				}
-			}
 		actualizarTuplas=true;
 		}
 	}
 	
 	private void trasladarScrolls(){
-		//if(sesion.dataLoaded()){
 		if(sesion.areMicroarrayDataLoaded()){
 				for(int i = 0; i < numC; i++){
 				
@@ -510,21 +518,23 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		double anchoTexto;
 		
 		// representamos la cota asociada con el scroll fijado
-		if(scrollFijado && (varScroll != -1)){
+		if(scrollFijado && (varScroll != -1))
+			{
 			double posX = 0, posY = 0, valor = 0.0;
-			if(scrollPos == Sup){
-				
+			if(scrollPos == Sup)
+				{
 				posX = scrollSup[varScroll].getX();
 				posY = scrollSup[varScroll].getY();
 				valor = maxVar[varScroll]-(nuevaCota-margenSup+margenScroll)/ratio[varScroll];
 				currentTextSup[varScroll]=valor;
-			}else if(scrollPos == Inf){
+				}
+			else if(scrollPos == Inf)
+				{
 				posX = scrollInf[varScroll].getX();
 				posY = scrollInf[varScroll].getY();
 				valor = maxVar[varScroll]-(nuevaCota-margenSup-margenScroll)/ratio[varScroll];
 				currentTextInf[varScroll]=valor;
-				
-			}
+				}
 			Font oldFont = g2.getFont();
 			g2.setFont(new Font("Arial",Font.BOLD,9));
 			g2.setPaint(paleta[colorCotas]);
@@ -537,108 +547,119 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			cota.draw(g2,(float)(posX-anchoTexto),(float)(posY+(altoScroll-altoTexto)/2+altoTexto));
 			g2.setFont(oldFont);
 			anchoTextoCuota = anchoTexto;
-		}
+			}
+		//El cambio nos viene de fuera --> se hace más abajo en el código
+		else if(sesion.getSelectedBicluster()!=null)
+			{
+			/*for(int i=0;i<this.numC;i++)
+				{
+				double valor = 0.0;
+				valor = maxVar[i]-(nuevaCota-margenSup+margenScroll)/ratio[i];
+				currentTextSup[i]=valor;
+				valor = maxVar[i]-(nuevaCota-margenSup-margenScroll)/ratio[i];
+				currentTextInf[i]=valor;
+				}*/
+			}
 
 		// imprimimos el número de elementos seleccionados
-		if(sesion.getDataLayer().getPointSelection()!=null)
+		TextLayout sele=null;
+		if(sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)	
 			{
-			//TextLayout sele = new TextLayout("selected:" +new Integer(sesion.getDataLayer().getPointSelection().getNumSelected(this.getDataLayer().getFilterPoints())).toString(), g2.getFont(), g2.getFontRenderContext());
-			TextLayout sele = new TextLayout("selected: "+sesion.getSelectedBicluster().getGenes().size(), g2.getFont(), g2.getFontRenderContext());
-			altoTexto = sele.getBounds().getHeight();
-			anchoTexto = sele.getBounds().getWidth();
-			sele.draw(g2,(float)(ancho-anchoTexto-10), (float)(10));
+			String cad="selected: "+sesion.getSelectedBicluster().getGenes().size();
+			String ids="";
+			for(int i=0;i<4;i++)
+				{
+				if(i<sesion.getSelectedGenesBicluster().size())
+					ids=ids+sesion.getMicroarrayData().geneNames[sesion.getSelectedGenesBicluster().get(i)]+", ";
+				}
+			if(sesion.getSelectedGenesBicluster().size()>=4)	ids=ids+"...  ";
+			cad=cad+" ("+ids.substring(0, ids.length()-2)+")";
+			sele = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 			}
+		else			sele = new TextLayout("selected: 0", g2.getFont(), g2.getFontRenderContext());	
+		altoTexto = sele.getBounds().getHeight();
+		anchoTexto = sele.getBounds().getWidth();
+		sele.draw(g2,(float)(ancho-anchoTexto-10), (float)(10));
 		
 		// representamos los valores de referencia de la escala
-		{
-			g2.setPaint(paleta[colorCotas]);
-			Font oldFont = g2.getFont();
-			g2.setFont(new Font("Arial",Font.BOLD,9));			
+		g2.setPaint(paleta[colorCotas]);
+		Font oldFont = g2.getFont();
+		g2.setFont(new Font("Arial",Font.BOLD,9));			
 
-			
-			double valor =maxText[0];
-			String cad=datos.format(valor, 0);
-			
-			TextLayout maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-			altoTexto = maximo.getBounds().getHeight();
-			anchoTexto = maximo.getBounds().getWidth();
-			//maximo.draw(g2,(float)((margenIzq-anchoTexto-5)),(float)(margenSup+altoTexto));
-			
-			valor = minText[0];
-			cad=datos.format(valor, 0);
-			//TextLayout minimo = new TextLayout(new Double(valor).toString(), g2.getFont(), g2.getFontRenderContext());
-			TextLayout minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-			altoTexto = minimo.getBounds().getHeight();
-			anchoTexto = minimo.getBounds().getWidth();
-			//minimo.draw(g2,(float)((margenIzq-anchoTexto-5)),(float)(alto-margenInf));
-			
-			//Valores ahora
-			//valor=Math.rint(currentTextSup[0]*nc)/nc;
-			valor = currentTextSup[0];
-			cad=datos.format(valor, 0);
+		double valor;
+		String cad;
+		TextLayout minimo, maximo;
+		/*double valor =maxText[0];
+		String cad=datos.format(valor, 0);
+		
+		TextLayout maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+		altoTexto = maximo.getBounds().getHeight();
+		anchoTexto = maximo.getBounds().getWidth();
+		
+		valor = minText[0];
+		cad=datos.format(valor, 0);
+		TextLayout minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+		altoTexto = minimo.getBounds().getHeight();
+		anchoTexto = minimo.getBounds().getWidth();
+		*/
+		//Valores ahora
+		valor = currentTextSup[0];
+		cad=datos.format(valor, 0);
+
+		maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+		altoTexto = maximo.getBounds().getHeight();
+		anchoTexto = maximo.getBounds().getWidth();
+		maximo.draw(g2,(float)(margenIzq+5),(float)(margenSup+altoTexto));
+		
+		
+		valor = currentTextInf[0];
+		cad=datos.format(valor, 0);
+
+		minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+		altoTexto = minimo.getBounds().getHeight();
+		anchoTexto = minimo.getBounds().getWidth();
+		minimo.draw(g2,(float)(margenIzq+5),(float)(alto-margenInf));
+
+		for(int i = 1; i < numC; i++)
+			{
+			/*valor = maxText[i];
+			cad=datos.format(valor, i);
 
 			maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 			altoTexto = maximo.getBounds().getHeight();
 			anchoTexto = maximo.getBounds().getWidth();
-			maximo.draw(g2,(float)(margenIzq+5),(float)(margenSup+altoTexto));
 			
-			
-			valor = currentTextInf[0];
-			cad=datos.format(valor, 0);
-
+			valor=minText[i];
+			cad=datos.format(valor, i);
 			minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 			altoTexto = minimo.getBounds().getHeight();
 			anchoTexto = minimo.getBounds().getWidth();
-			minimo.draw(g2,(float)(margenIzq+5),(float)(alto-margenInf));
+			 */
+			//Valores ahora
+			valor=currentTextSup[i];
+			
+			cad=datos.format(valor, i);
 
-			if(ejesRelativos)
-				{
-				for(int i = 1; i < numC; i++)
-					{
-					valor = maxText[i];
-					cad=datos.format(valor, i);
-
-					maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-					altoTexto = maximo.getBounds().getHeight();
-					anchoTexto = maximo.getBounds().getWidth();
-					//maximo.draw(g2,(float)((margenIzq-anchoTexto-5+i*intervaloVar)),(float)(margenSup+altoTexto));
-					
-					valor=minText[i];
-					cad=datos.format(valor, i);
-					minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-					altoTexto = minimo.getBounds().getHeight();
-					anchoTexto = minimo.getBounds().getWidth();
-					//minimo.draw(g2,(float)((margenIzq-anchoTexto-5+i*intervaloVar)),(float)(alto-margenInf));
-
-					//Valores ahora
-					valor=currentTextSup[i];
-
-					cad=datos.format(valor, i);
-
-					maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-					altoTexto = maximo.getBounds().getHeight();
-					anchoTexto = maximo.getBounds().getWidth();
-					maximo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(margenSup+altoTexto));
-					
-					valor = currentTextInf[i];
-					cad=datos.format(valor, i);
-					minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-					altoTexto = minimo.getBounds().getHeight();
-					anchoTexto = minimo.getBounds().getWidth();
-					minimo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(alto-margenInf));
-					}
-				}
-				
-			g2.setFont(oldFont);
-		}
-		
-
-		
+			maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+			altoTexto = maximo.getBounds().getHeight();
+			anchoTexto = maximo.getBounds().getWidth();
+			maximo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(margenSup+altoTexto));
+			
+			valor = currentTextInf[i];
+			cad=datos.format(valor, i);
+			minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+			altoTexto = minimo.getBounds().getHeight();
+			anchoTexto = minimo.getBounds().getWidth();
+			minimo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(alto-margenInf));
+			}
+			
+		g2.setFont(oldFont);
+	
 		// representamos las etiquetas de las variables
 		g2.setPaint(paleta[colorEtiquetaVar]);
 		
-		for(int i = 0; i < numC; i++){
-			//TextLayout texto = new TextLayout(datos.fieldAt(ordenVars[i]).getName(), g2.getFont(), 
+		for(int i = 0; i < numC; i++)
+			{
 			TextLayout texto = new TextLayout(datos.getConditionName(ordenVars[i]), g2.getFont(), 
 												  g2.getFontRenderContext());
 			altoTexto = texto.getBounds().getHeight();
@@ -649,11 +670,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			else
 				g2.setPaint(paleta[colorEtiquetaVar]);
 			
-			//Sin rotación
-			//texto.draw(g2,(float)(margenIzq+i*intervaloVar-anchoTexto/2),
-			//	  (float)(alto-(margenInf-altoScroll-altoTexto)/2));
-
-			
 			//con rotación
 			AffineTransform old=g2.getTransform();
 			g2.translate((float)(margenIzq+i*intervaloVar-anchoTexto*Math.cos(Math.toRadians(45))+5),
@@ -663,17 +679,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			texto.draw(g2,0,0);
 			
 			g2.setTransform(old);
-			
-		}
+			}
 		
 		// representamos las etiquetas de la tupla seleccionada
-		
 		int margenEtiq = 2, margenRecuadro = 2;
 		
-		if(tuplaSeleccionada != -1){
-			for(int i = 0; i < numC; i++){
-			//	double valor = datos.fieldAt(ordenVars[i]).getData(tuplaSeleccionada);
-				double valor = datos.getExpressionAt(tuplaSeleccionada, ordenVars[i]);
+		if(tuplaSeleccionada != -1)
+			{
+			for(int i = 0; i < numC; i++)
+				{
+				valor = datos.getExpressionAt(tuplaSeleccionada, ordenVars[i]);
 				valor = Math.rint(valor*100)/100;
 				TextLayout etiqValor = new TextLayout(new Double(valor).toString(),g2.getFont(),
 																 g2.getFontRenderContext());
@@ -690,9 +705,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				g2.draw(recuadroEtiq);
 				etiqValor.draw(g2,(float)(intervaloVar*i+margenIzq+margenRecuadro),
 							      (float)((maxVar[i] - valor)*ratio[i]+margenSup-margenEtiq-margenRecuadro));				
+				}
 			}
 		}
-	}
 
 	boolean lineaInLimites(int i)
 	{
@@ -752,15 +767,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				for(int j = 0; j < (numC-1); j++)
 					{
 					puntoInicio.setLocation(margenIzq+(intervaloVar*j),
-								//(maxVar[j]-datos.fieldAt(ordenVars[j]).getData(i))*ratio[j]+margenSup);
 							(maxVar[j]-datos.getExpressionAt(i, ordenVars[j]))*ratio[j]+margenSup);
 					puntoFin.setLocation(puntoInicio.getX()+intervaloVar,
-							//(maxVar[j+1]-datos.fieldAt(ordenVars[j+1]).getData(i))*ratio[j+1]+margenSup);
 							(maxVar[j+1]-datos.getExpressionAt(i, ordenVars[j+1]))*ratio[j+1]+margenSup);
 							
-				//	System.out.println(datos.varAt(ordenVars[j]).datoAt(i)+" "+ i+", "+j);
 					Line2D.Float linea = new Line2D.Float(puntoInicio,puntoFin);
-									
 					Linea lineaTupla = new Linea(linea,i);				
 					tuplas[i][j] = lineaTupla;											
 					}
@@ -770,29 +781,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		t2=System.currentTimeMillis();
 		
 		BiclusterSelection selecBic = this.sesion.getSelectedBicluster();
-		/*TupleSelection selecPuntos = this.getDataLayer().getPointSelection();
-		TupleSelection filterPuntos = this.getDataLayer().getFilterPoints();
-		int ejeSelecX = -1;
-		int ejeSelecY = -1;
-		
-		if(selecPuntos != null)
-			{
-			for(int i = 0; i < numC; i++)
-				{
-				//if(datos.fieldAt(ordenVars[i]).getName() == selecPuntos.getVarX())
-				if(datos.getConditionName(ordenVars[i]) == selecPuntos.getVarX())
-					ejeSelecX = i;
-				//else if(datos.fieldAt(ordenVars[i]).getName() == selecPuntos.getVarY())
-				else if(datos.getConditionName(ordenVars[i]) == selecPuntos.getVarY())
-						ejeSelecY = i;
-				}			
-			}*/
+		float maxSelecY[]=new float[numC];
+		float minSelecY[]=new float[numC];
 		
 		//------------------------------- preparación de las líneas con el gp
-		
 		int step=1;
 		int numLineasFondo=0;
 		if(numG>maxLineas)	step=numG/maxLineas;
+		boolean[] first=new boolean[numC];
+		for(int i=0;i<numC;i++)		first[i]=true;
 		//System.out.println("step es "+step);
 		for(int i=0;i<numG;i++)
 			{
@@ -800,30 +797,43 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				{
 				if(tuplaSeleccionada!=i)
 					{
-					//if(selecPuntos!=null && selecPuntos.getNumTuples()>0 && (selecPuntos.isSelectedX(i) || selecPuntos.getElementY(i)) )
 					if(selecBic!=null && selecBic.getGenes().contains(i) )
 						{
-						/*if(selecBic==null)
+						int nc=selecBic.getConditions().size();
+						if(nc<numC-1)
 							{
-							gpLineasSelec.append(getLine(i), false);
+							gpLineasSelecBic.append(getLine(i,0, nc-1),false);
+							int init=nc-1;
+							if(init<0)	init=0;
+							gpLineasSelec.append(getLine(i,init, numC-1), false);
 							}
-						else*/
+						else
 							{
-							int nc=selecBic.getConditions().size();
-							if(nc<numC-1)
+							for(int j = 0; j < numC-1; j++)
 								{
-								gpLineasSelecBic.append(getLine(i,0, nc-1),false);
-								int init=nc-1;
-								if(init<0)	init=0;
-								gpLineasSelec.append(getLine(i,init, numC-1), false);
-								}
-							else
-								{
-								for(int j = 0; j < numC-1; j++)
+								if(j==0)	
+									gpLineasSelecBic.moveTo((float)tuplas[i][j].linea.getX1(), (float)tuplas[i][j].linea.getY1());
+								gpLineasSelecBic.lineTo((float)tuplas[i][j].linea.getX2(), (float)tuplas[i][j].linea.getY2());
+								if(first[j])
 									{
-									if(j==0)	
-										gpLineasSelecBic.moveTo((float)tuplas[i][j].linea.getX1(), (float)tuplas[i][j].linea.getY1());
-									gpLineasSelecBic.lineTo((float)tuplas[i][j].linea.getX2(), (float)tuplas[i][j].linea.getY2());
+									maxSelecY[j]=(float)tuplas[i][j].linea.getY1();
+									minSelecY[j]=(float)tuplas[i][j].linea.getY1();
+									if(j==numC-2)
+										{
+										maxSelecY[j+1]=(float)tuplas[i][j].linea.getY2();	
+										minSelecY[j+1]=(float)tuplas[i][j].linea.getY2();
+										}
+									first[j]=false;
+									}
+								else
+									{
+									if(tuplas[i][j].linea.getY1()>maxSelecY[j]) maxSelecY[j]=(float)tuplas[i][j].linea.getY1();	
+									if(tuplas[i][j].linea.getY1()<minSelecY[j]) minSelecY[j]=(float)tuplas[i][j].linea.getY1();
+									if(j==numC-2)
+										{
+										if(tuplas[i][j].linea.getY2()>maxSelecY[j+1]) maxSelecY[j+1]=(float)tuplas[i][j].linea.getY2();	
+										if(tuplas[i][j].linea.getY2()<minSelecY[j+1]) minSelecY[j+1]=(float)tuplas[i][j].linea.getY2();
+										}
 									}
 								}
 							}
@@ -837,8 +847,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				}//if(filtro)
 			}
 		
+		//------------------ BACKGROUND------------------------
 		t1=System.currentTimeMillis();
-		if(computeFondo)
+		if(computeFondo)	//draw sd variations
 			{
 			imgFondo = createImage(ancho, alto);
 			Graphics2D gbTemp = ((Graphics2D)imgFondo.getGraphics());
@@ -847,28 +858,103 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			    qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 			    gbTemp.setRenderingHints(qualityHints);   
 			drawFondo(gbTemp);
-			if(step>1)
+			for(int s=0;s<4;s++)
 				{
 				int []px=new int[numC*2];
 				int []py=new int[numC*2];
-				for(int i=0;i<numC;i++)
+				for(int i=0;i<numC;i++)	//upper points
 					{
-					py[i]=(int)(margenSup+maxVar[i]);
+					py[i]=(int)(Math.max(margenSup+(maxVar[i]-(mean[i]+sd[i]*(s+1)))*ratio[i], margenSup));
 					px[i]=(int)(margenIzq+intervaloVar*i);
 					}
-				int cont=numC;
-				for(int i=(numC)*2-1;i>=numC;i--)
+				for(int i=0;i<numC;i++)	//lower points
 					{
-					py[i]=(int)(margenSup+longEjeY+minVar[i-(numC-1)-1]);
-					px[cont++]=(int)(margenIzq+intervaloVar*(i-(numC)));
+					int c=numC-i-1;
+					py[i+numC]=(int)(Math.min(margenSup+(maxVar[c]-(mean[c]-sd[c]*(s+1)))*ratio[c], margenSup+this.longEjeY));
+					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
 					}
-				gbTemp.setPaint(new Color(220,220,220));
+				gbTemp.setPaint(new Color(220,220,220, 80));
+				gbTemp.fillPolygon(px,py,px.length);
+				}
+			}
+		
+		if(computeFondo)	//draw mean, max, min
+			{
+			imgFondo = createImage(ancho, alto);
+			Graphics2D gbTemp = ((Graphics2D)imgFondo.getGraphics());
+			 RenderingHints qualityHints = new RenderingHints(null);
+			    qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			    qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+			    gbTemp.setRenderingHints(qualityHints);   
+			drawFondo(gbTemp);
+			int maxFold=2;
+			for(int s=maxFold;s>=0;s--)
+				{
+				int []px=new int[numC*2];
+				int []py=new int[numC*2];
+				for(int i=0;i<numC;i++)	//upper points
+					{
+					double val=Math.min(mean[i]+sd[i]*(s+1), max[i]);
+					py[i]=(int)(Math.max(margenSup+(maxVar[i]-val)*ratio[i], margenSup));
+					px[i]=(int)(margenIzq+intervaloVar*i);
+					}
+				for(int i=0;i<numC;i++)	//lower points
+					{
+					int c=numC-i-1;
+					double val=Math.max(mean[c]-sd[c]*(s+1), min[c]);
+					py[i+numC]=(int)(Math.min(margenSup+(maxVar[c]-val)*ratio[c], margenSup+this.longEjeY));
+					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
+					}
+				int grey=220-40*(maxFold-s);
+				gbTemp.setPaint(new Color(grey,grey,grey));
 				gbTemp.fillPolygon(px,py,px.length);
 				}
 			
-			gbTemp.setPaint(paleta[colorLineaOut]);
-			gbTemp.draw(gpLineasFondo);
+			if(min!=null && max!=null)
+				{
+				int []linex=new int[numC];
+				int []upy=new int[numC];
+				int []doy=new int[numC];
+				int []meany=new int[numC];
+				int grey=170;
+				for(int i=0;i<numC;i++)
+					{
+					upy[i]=(int)(Math.max(margenSup+(maxVar[i]-max[i])*ratio[i], margenSup));
+					linex[i]=(int)(margenIzq+intervaloVar*i);
+					doy[i]=(int)(Math.min(margenSup+(maxVar[i]-min[i])*ratio[i], margenSup+this.longEjeY));
+					meany[i]=(int)(Math.min(margenSup+(maxVar[i]-mean[i])*ratio[i], margenSup+this.longEjeY));
+					}
+				gbTemp.setPaint(new Color(grey,grey,grey));
+				gbTemp.drawPolyline(linex,upy,linex.length);
+				gbTemp.drawPolyline(linex,doy,linex.length);
+				gbTemp.setPaint(new Color(240,240,240));
+				gbTemp.drawPolyline(linex,meany,linex.length);
+				}
+			
+			if(selecBic!=null && selecBic.getGenes().size()>this.maxLineas)
+				{
+				int []px=new int[numC*2];
+				int []py=new int[numC*2];
+				for(int i=0;i<numC;i++)	//upper points
+					{
+					py[i]=(int)maxSelecY[i];
+					//py[i]=(int)(Math.max(margenSup+(maxVar[i]-maxSelecY[i])*ratio[i], margenSup));
+					px[i]=(int)(margenIzq+intervaloVar*i);
+					}
+				for(int i=0;i<numC;i++)	//lower points
+					{
+					int c=numC-i-1;
+					py[i+numC]=(int)minSelecY[c];
+					//py[i+numC]=(int)(Math.max(margenSup+(maxVar[c]-minSelecY[c])*ratio[c], margenSup));
+					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
+					}
+				Color c=sesion.getSelectionColor();
+				Color sc=new Color(c.getRed(), c.getGreen(), c.getBlue(), 100);
+				gbTemp.setPaint(sc);
+				gbTemp.fillPolygon(px,py,px.length);
+				}
 			}
+		
 		g2.drawImage(imgFondo,0,0,this);
 		t2=System.currentTimeMillis();
 
@@ -883,20 +969,23 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		else
 			{
 			//lines of genes of the bicluster but not of conditions in the bicluster
-			if(this.getDataLayer().getSelectionColor()!=null)
+			if(selecBic.getGenes().size()<this.maxLineas)
 				{
-				g2.setPaint(this.sesion.getSelectionColor().darker());
-				g2.draw(gpLineasSelec);
-				
-				g2.setPaint(this.sesion.getSelectionColor().brighter());
-				g2.draw(gpLineasSelecBic);
-				}
-			else									
-				{
-				g2.setPaint(paleta[colorBicluster].darker().darker());
-				g2.draw(gpLineasSelec);
-				g2.setPaint(paleta[colorBicluster].brighter().brighter());
-				g2.draw(gpLineasSelecBic);
+				if(this.getDataLayer().getSelectionColor()!=null)
+					{
+					g2.setPaint(this.sesion.getSelectionColor().darker());
+					g2.draw(gpLineasSelec);
+					
+					g2.setPaint(this.sesion.getSelectionColor().brighter());
+					g2.draw(gpLineasSelecBic);
+					}
+				else									
+					{
+					g2.setPaint(paleta[colorBicluster].darker().darker());
+					g2.draw(gpLineasSelec);
+					g2.setPaint(paleta[colorBicluster].brighter().brighter());
+					g2.draw(gpLineasSelecBic);
+					}
 				}
 			}
 		
@@ -920,8 +1009,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			{
 			l=tuplas[i][j].linea;
 			if(j==0)
-				gp.moveTo(l.getX1(), l.getY1());
-			gp.lineTo(l.getX2(), l.getY2());
+				//gp.moveTo(l.getX1(), l.getY1());
+				gp.moveTo((float)l.getX1(), (float)l.getY1());
+			//gp.lineTo(l.getX2(), l.getY2());
+			gp.lineTo((float)l.getX2(), (float)l.getY2());
 			}
 		return gp;
 		}
@@ -937,8 +1028,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			{
 			l=tuplas[i][j].linea;
 			if(j==beginVar)
-				gp.moveTo(l.getX1(), l.getY1());
-			gp.lineTo(l.getX2(), l.getY2());
+			//	gp.moveTo(l.getX1(), l.getY1());
+				gp.moveTo((float)l.getX1(), (float)l.getY1());
+			//gp.lineTo(l.getX2(), l.getY2());
+			gp.lineTo((float)l.getX2(), (float)l.getY2());
 			}
 		return gp;
 		}
@@ -989,13 +1082,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		return this.paleta;
 	}
 	
-	DiagramWindow getItemAñadir(){
-		return this.itemAñadir;
-	}
 	
-	DiagramWindow getItemEliminar(){
-		return this.itemEliminar;
-	}
 	
 	public void setHeight(int alto){
 		this.alto = alto;
@@ -1010,6 +1097,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 */
 	public void update() {
 		repaintAll=true;
+		gpLineasFondo=null;
+		
 		fitScrolls();
 		this.repaint();
 	}
@@ -1017,8 +1106,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	 void fitScrolls()
 		{
-		//TupleSelection selecPuntos = this.getDataLayer().getPointSelection();
-		//TupleSelection filterPuntos = this.getDataLayer().getFilterPoints();
 		double maxLineas[]=new double[numC];
 		double minLineas[]=new double[numC];
 		for(int i=0;i<numC;i++)		maxLineas[i]=minLineas[i]=-111;
@@ -1062,10 +1149,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				cotaSup[i]=scrollSup[i].y+altoScroll;
 				cotaInf[i]=scrollInf[i].y;
 				
-				
-				double valor = maxVar[i]-(cotaSup[i]-margenSup+margenScroll)/ratio[i];
+				double valor = maxVar[i]-(cotaSup[i]-margenSup)/ratio[i];
 				currentTextSup[i]=valor;
-				valor = maxVar[i]-(cotaInf[i]-margenSup-margenScroll)/ratio[i];
+				valor = maxVar[i]-(cotaInf[i]-margenSup)/ratio[i];
 				currentTextInf[i]=valor;
 				}
 			
@@ -1101,22 +1187,20 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					scrollSup[posCib].y = auxYSup;
 					scrollInf[i].y = scrollInf[posCib].y;
 					scrollInf[posCib].y = auxYInf;
-					calcularAtributos();
+				//	calcularAtributos();//Parece que este calcular atributos estropeaba los currentText cuando se seleccionaba algo fuera y aparte de eso no aporta nada ni estropea nada el quitarlo...
 					
 					actualizarTuplas=true;
 					}
 				}
-					
 			}
-			
 		}
 
 	public void resize(){
 		atributosIniciados = false;
-		//datos = sesion.getData();
 		datos = sesion.getMicroarrayData();
-		this.calcularAtributos();
-		this.trasladarScrolls();
+		calcularAtributos();
+		trasladarScrolls();
+		fitScrolls();
 		gpLineasFondo=null;
 		atributosIniciados = true;
 		repaintAll=true;
@@ -1352,10 +1436,17 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				}
 				ejeReferencia = null;
 				varSeleccionada = -1;
-								
+					
+				gpLineasFondo=null;
+				
+				atributosIniciados = false;
 				calcularAtributos();
-				fitScrolls();
-				update();
+				//trasladarScrolls();
+				atributosIniciados = true;
+				//update();
+				repaintAll=true;
+				repaint();
+				
 			}
 
 		}
@@ -1523,22 +1614,26 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					{
 					if(selec.isSelectedX(i))	genes.add(Integer.valueOf(i));
 					}
-				for(int j=0;j<(numC-1);j++)
-					{
+				//for(int j=0;j<(numC-1);j++)
+				for(int j=0;j<(numC);j++)
+						{
 					conditions.add(Integer.valueOf(j));
 					}
 				
 				int maxLines=200;
-				if(genes.size()>maxLines)	
+				/*if(genes.size()>maxLines)	
 					{
 					JOptionPane.showMessageDialog(null,
 							genes.size()+" lines selected, please select up to "+maxLines+" lines" , "Too much lines", JOptionPane.INFORMATION_MESSAGE);
 					//fitScrolls();
 					}
-				else
+				else*/
 					{
-					sesion.setSelectedBiclusters(new BiclusterSelection(genes,conditions), "arallel");
-					getWindow().update(seleccionPuntos);
+					//if(genes.size()<=maxLines)
+						{
+						sesion.setSelectedBiclusters(new BiclusterSelection(genes,conditions), "arallel");
+						getWindow().update(seleccionPuntos);
+						}
 					}
 				
 			}
@@ -1597,6 +1692,19 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	// clase gestora de la imagen del cursor
 	private class GestorCursor implements MouseMotionListener {
 
+		Point p0=null;
+		//Selection by slope
+		public void mousePressed(MouseEvent e)
+			{
+			p0=e.getPoint();
+			}
+		public void mouseReleased(MouseEvent e)
+			{
+			Point p1=e.getPoint();
+			double slope=(p1.getY()-p0.getY())/(p1.getX()-p0.getX());
+			//TODO: mirar entre qué coordenadas anda, para todos los seleccionados, subseleccionar por esto o seleccionar de nuevo
+			}
+		
 		public void mouseDragged(MouseEvent e) 
 			{
 			

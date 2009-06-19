@@ -230,11 +230,10 @@ public class Node {
 		if(p.nodeThreshold<=this.clusters.size())
 			{
 			p.stroke(0);
-		   // p.fill(255);
-			 p.fill(0);
-			 p.ellipse((float) getX(), (float) getY(), height, width);
-			 p.fill(255);
-			 p.ellipse((float) getX()-1, (float) getY()-1, height+2, width+2);
+			p.fill(0);
+			p.ellipse((float) getX(), (float) getY(), height, width);
+			p.fill(255);
+			p.ellipse((float) getX()-1, (float) getY()-1, height+2, width+2);
 			   
 		    drawn=true;
 			}

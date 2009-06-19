@@ -1,13 +1,12 @@
 package es.usal.bicoverlapper.data;
 
-
-//Data
 import prefuse.data.Graph;
 import prefuse.data.Table;
 
 
 //Parsing
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
@@ -20,7 +19,7 @@ import es.usal.bicoverlapper.data.files.FileStructure;
 
 
 /**
- * Class with data of Bubbles representing biclsuters, using Prefuse Tables. 
+ * Class with data of Bubbles representing biclusters, using Prefuse Tables. 
  * Each bubble is an entry in a Prefuse table with the following fields: 	
  *<p>
  * 	"id" -unique identifier for the bubble (int)-,	
@@ -46,7 +45,7 @@ import es.usal.bicoverlapper.data.files.FileStructure;
 
 public class BubbleData 
 	{
-	private Graph g = null;		//Data
+	private Graph g = null;		
 	private Table nodes = null;
 	private Table edges = null;
 	private FileStructure fsg = null;
@@ -57,6 +56,8 @@ public class BubbleData
 	private HashMap<String,Integer> genes=new HashMap<String,Integer>();
 	private HashMap<String,Integer> conditions=new HashMap<String,Integer>();
 	private ArrayList<Bubble>	bubbles=new ArrayList<Bubble>();
+	private double maxHomogeneity;
+	private double minHomogeneity;
 
 	/**
 	 * Default constructor
@@ -67,10 +68,15 @@ public class BubbleData
 		}
 	
 	/**
-	 * File constructor. It starts with the bicluster results file, as used in Overlapper,
-	 * and a kind of projection (now, by default, only handmade projection)
+	 * File constructor. A bubble is generated for each bicluster in the required file.
+	 * Size is the product of the number of genes and the number of columns.
+	 * TODO: homogeneity right now is set to 0.5 for every bubble. 
+	 * TODO: add the kind of projection (now, by default, a hand-made projection is used)
+	 * 
+	 * @param filePath Bicluster results file in the corresponding format
+	 * 
 	 */
-	public BubbleData(String filePath) throws IOException
+	public BubbleData(String filePath, MicroarrayData md) throws IOException
 		{
 		//Hashmaps with gene and condition names and their positions 
 		FileReader fr=new FileReader(filePath);
@@ -82,9 +88,12 @@ public class BubbleData
 		int contc=0;
 		Bubble b=null;
 		
+		maxHomogeneity=-1;
+		minHomogeneity=-1;
 		boolean areGenes=true;
 		boolean isSize=true;
 		cad=br.readLine();//First line does not matter
+		
 		while((cad=br.readLine())!=null)
 			{
 			StringTokenizer st=new StringTokenizer(cad," ");
@@ -95,8 +104,8 @@ public class BubbleData
 				}
 			else
 				{
-				if(isSize)//Info del tamaño, no interesa	
-					{//TODO: Ojo, estamos considerando que no hay biclusters con sólo 
+				if(isSize)//size info, no interesa	
+					{ 
 					isSize=false;
 					b=new Bubble();
 					}
@@ -120,9 +129,24 @@ public class BubbleData
 							if(!conditions.containsKey(c))	conditions.put(c, contc++);
 							}
 						b.size=b.genes.size()*b.conditions.size();
-						b.homogeneity=0.5;
+						if(md==null)	b.homogeneity=0.5;
+						else
+							{
+							String[] s=genes.keySet().toArray(new String[0]);
+							ArrayList<String> gl=new ArrayList<String>();
+							for(int i=0;i<s.length;i++)			gl.add(s[i]);
+							s=conditions.keySet().toArray(new String[0]);
+							ArrayList<String> cl=new ArrayList<String>();
+							for(int i=0;i<s.length;i++)			cl.add(s[i]);
+							b.homogeneity=md.getConstance(gl, cl, 0);
+							if(maxHomogeneity==-1)	maxHomogeneity=minHomogeneity=b.homogeneity;
+							else
+								{
+								if(b.homogeneity>maxHomogeneity)		maxHomogeneity=b.homogeneity;
+								if(b.homogeneity<minHomogeneity)		minHomogeneity=b.homogeneity;
+								}
+							}
 						b.method=method;
-					//	System.out.println("Añadimos burbuja de tam "+b.size+" y método "+b.method);
 						bubbles.add(b);
 						isSize=true;//para el siguiente
 						}
@@ -131,7 +155,6 @@ public class BubbleData
 				}
 			cont++;
 			}
-	//	System.out.println("Número de genes "+genes.size()+" y cond "+conditions.size());
 		//Ahora tenemos que hacer la proyección
 		if(bubbles.size()>0)
 			{
@@ -142,7 +165,10 @@ public class BubbleData
 		else	throw new IOException("No biclusters found");
 		}
 	
-	//Assigns points in the space to each bubble. By now, only by average, not MDS projections
+	/**
+	 * Assigns points in the space to each bubble. By now, only by average, not MDS projections
+	 * 
+	 */
 	void doProjection()
 		{
 		for(int i=0;i<bubbles.size();i++)
@@ -167,7 +193,6 @@ public class BubbleData
 			
 			b.position.x=x;
 			b.position.y=y;
-			//System.out.println("posición de la burbuja es "+x+", "+y);
 			}
 		}
 	
@@ -180,6 +205,8 @@ public class BubbleData
 		nodes.addColumn("genes", ArrayList.class);
 		nodes.addColumn("conditions", ArrayList.class);
 		nodes.addColumn("size", int.class);
+		nodes.addColumn("height", int.class);
+		nodes.addColumn("width", int.class);
 		nodes.addColumn("x", float.class);
 		nodes.addColumn("y", float.class);
 		nodes.addColumn("goodness", float.class);//De momento paso de esto un poco
@@ -202,9 +229,12 @@ public class BubbleData
 			nodes.set(i,"genes", b.genes);//En principio son listas de enteros!
 			nodes.set(i,"conditions", b.conditions);
 			nodes.set(row, "size", b.size);
+			nodes.set(row, "width", b.conditions.size());
+			nodes.set(row, "height", b.genes.size());
 			nodes.set(row, "x", b.position.x);
 			nodes.set(row, "y", b.position.y);
-			nodes.set(row, "homogeneity", b.homogeneity);
+			nodes.set(row, "homogeneity", (b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
+			System.out.println("Bic de tam "+b.genes.size()+"x"+b.conditions.size()+" con homog "+b.homogeneity+"\t"+(b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
 			nodes.set(row, "resultType", b.method);
 			}
 		}
@@ -228,18 +258,15 @@ public class BubbleData
 			{
 			row=nodes.addRow();
 			nodes.setInt(row,"id", row+1);
-			//nodes.set(row,"genes", listag);
-			//nodes.set(row,"conditions", listac);
 			nodes.set(row, "x", fsg.readFloat(row, 0));
 			nodes.set(row, "y", fsg.readFloat(row, 1));
 			nodes.set(row, "size", fsg.readInt(row, 2));
 			nodes.set(row, "homogeneity", fsg.readFloat(row, 3));
-		//	System.out.println("El nodo "+row+" está en ("+fsg.readFloat(row, 0)+", "+fsg.readFloat(row, 1)+" de tamaño "+fsg.readInt(row, 2)+" y homogeneidad "+fsg.readFloat(row, 3));
 			row++;
 			}
 		}
 	
-	/*
+	/**
 	 * Construye los datos de Tuplas de Prefuse a partir de fichero de burbujas y de dos ficheros con los genes y condiciones de cada burbuja
 	 */
 	void buildNodeTable(String bubbles, String genes, String conditions)
@@ -254,13 +281,10 @@ public class BubbleData
 		nodes.addColumn("y", float.class);
 		nodes.addColumn("goodness", float.class);//De momento paso de esto un poco
 		nodes.addColumn("homogeneity", float.class);//De momento paso de esto un poco
-		nodes.addColumn("resultType", String.class);//De momento paso de esto un poco
+		nodes.addColumn("resultType", String.class);
 
 		int row=0;
 		int n=fsg.numberOfRows();
-	//	System.out.println("Construimos la tabla de nodos");
-	//	System.out.println("filas: "+fsc.numberOfRows()+","+fsg.numberOfRows()+","+fsgn.numberOfRows());
-	//	System.out.println("cols: "+fsc.numberOfCols()+","+fsg.numberOfCols()+","+fsgn.numberOfCols());
 		if(n!=fsc.numberOfRows() || n!=fsgn.numberOfRows())
 			{
 			System.err.println("Error: files not coherent");
@@ -285,17 +309,13 @@ public class BubbleData
 				nodes.set(row, "homogeneity", fsgn.readFloat(row, 3));
 				nodes.set(row, "resultType", "type"+fsgn.readInt(row,4));
 				
-				/*listagn.addFirst("Init");//Tengo que añadir al principio porque el primero no me lo coge!
-				System.out.println("Añadiendo lista "+row+" de tamaño "+listagn.size());
-				nodes.set(row++,"geneNames", listagn);
-				System.out.println("Añadida");*/
 				row++;
 				}
 			}
 		numberOfMethods++;
 		}
 	
-	/*
+	/**
 	 * Añade nuevas filas, correspondientes a otros ficheros de resultados. Se distinguen unos de otros mediante la condición "resultType"
 	 */
 	void addResults(String bubbles, String genes, String conditions)
@@ -306,9 +326,6 @@ public class BubbleData
 		
 		int row=0;
 		int n=fsg.numberOfRows();
-		//System.out.println("Añadimos nuevos nodos");
-		//System.out.println("filas: "+fsc.numberOfRows()+","+fsg.numberOfRows()+","+fsgn.numberOfRows());
-		//System.out.println("cols: "+fsc.numberOfCols()+","+fsg.numberOfCols()+","+fsgn.numberOfCols());
 		if(n!=fsc.numberOfRows() || n!=fsgn.numberOfRows())
 			{
 			System.err.println("Error: files not coherent");
@@ -317,27 +334,24 @@ public class BubbleData
 		
 		for(int i=0;i<n;i++)
 			{
-			LinkedList listag=fsg.readIntRow(i);
-			LinkedList listac=fsc.readIntRow(i);
+			LinkedList<Integer> listag=fsg.readIntRow(i);
+			LinkedList<Integer> listac=fsc.readIntRow(i);
 			if(listag!=null && listag.size()>0 && listac!=null && listac.size()>0)
 				{
 				row=nodes.addRow();
 				nodes.setInt(row,"id", row+1);
-				listag.addFirst("0");//Tengo que añadir al principio porque el primero no me lo coge!
-				listac.addFirst("0");
+				listag.addFirst(0);//Tengo que añadir al principio porque el primero no me lo coge!
+				listac.addFirst(0);
 				nodes.set(row,"genes", listag);
 				nodes.set(row,"conditions", listac);
 				nodes.set(row, "size", listag.size()*listac.size());
 				nodes.set(row, "x", fsgn.readFloat(row, 0));
 				nodes.set(row, "y", fsgn.readFloat(row, 1));
-				nodes.set(row, "homogeneity", fsgn.readFloat(row, 3));
+				double hom=fsgn.readFloat(row, 3);
+				nodes.set(row, "homogeneity", hom);
 				//nodes.set(row, "resultType", "type"+numberOfMethods);
 				nodes.set(row, "resultType", "type"+fsgn.readInt(row,4));
 				
-				/*listagn.addFirst("Init");//Tengo que añadir al principio porque el primero no me lo coge!
-				System.out.println("Añadiendo lista "+row+" de tamaño "+listagn.size());
-				nodes.set(row++,"geneNames", listagn);
-				System.out.println("Añadida");*/
 				row++;
 				}
 			}
@@ -357,8 +371,8 @@ public class BubbleData
 		int n=fsg.numberOfRows();
 		for(int i=0;i<n;i++)
 			{
-			LinkedList listag=fsg.readIntRow(i);
-			LinkedList listac=fsc.readIntRow(i);
+			LinkedList<Integer> listag=fsg.readIntRow(i);
+			LinkedList<Integer> listac=fsc.readIntRow(i);
 			if(i==0)	
 				{
 				for(int j=0;j<listag.size();j++)	System.out.print(listag.get(j)+" ");
@@ -368,8 +382,8 @@ public class BubbleData
 				{
 				row=nodes.addRow();
 				nodes.setInt(row,"id", row+1);
-				listag.addFirst("-444");//Tengo que añadir al principio porque el primero no me lo coge!
-				listac.addFirst("-444");
+				listag.addFirst(-444);//Tengo que añadir al principio porque el primero no me lo coge!
+				listac.addFirst(-444);
 				nodes.set(row,"genes", listag);
 				nodes.set(row,"conditions", listac);
 				nodes.set(row, "size", listag.size()*listac.size());

@@ -78,9 +78,10 @@ public class MaximalCluster extends Cluster {
 					
 					if(e!=null)
 						{
-						if(e.getLengthFactor()<1)	
+						if(e.getNaturalLength()<((Overlapper)myGraph.getApplet()).getEdgeLength())	
 							{
-							e.setLengthFactor(e.getLengthFactor()/0.8);
+							//e.setLengthFactor(e.getLengthFactor()/0.8);
+							e.setNaturalLength(e.getNaturalLength()/0.8);
 							ret.add(e);//La metemos para que la restaure luego
 							}
 						else		

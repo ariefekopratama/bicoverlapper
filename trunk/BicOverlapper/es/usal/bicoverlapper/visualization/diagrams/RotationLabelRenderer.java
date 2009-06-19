@@ -39,21 +39,23 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
 
     protected ImageFactory m_images = null;
     protected String m_delim = "\n";
-    
+    private Rectangle2D m_rect = new Rectangle2D.Double();
+
     protected String m_labelName = "label";
     protected String m_imageName = null;
     
-    protected int m_xAlign = Constants.CENTER;
-    protected int m_yAlign = Constants.CENTER;
+   protected int m_xAlign = Constants.CENTER;
+   // protected int m_xAlign = Constants.LEFT;
+    protected int m_yAlign = Constants.CENTER;//no afecta cambiar a left/bottom en vez de center/center
     protected int m_hTextAlign = Constants.CENTER;
     protected int m_vTextAlign = Constants.CENTER;
     protected int m_hImageAlign = Constants.CENTER;
     protected int m_vImageAlign = Constants.CENTER;
     protected int m_imagePos = Constants.LEFT;
     
-    protected int m_horizBorder = 2;
+    protected int m_horizBorder = 0;//2
     protected int m_vertBorder  = 0;
-    protected int m_imageMargin = 2;
+    protected int m_imageMargin = 0;//2
     protected int m_arcWidth    = 0;
     protected int m_arcHeight   = 0;
 
@@ -112,6 +114,17 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
     public RotationLabelRenderer(String textField, double rotation) {
         this.setTextField(textField);
         this.itemRotation=rotation;
+    	setVerticalPadding(0);
+		setHorizontalPadding(0);
+		
+		/*this.setVerticalTextAlignment(Constants.BOTTOM);
+		this.setVerticalImageAlignment(Constants.BOTTOM);
+		this.setVerticalAlignment(Constants.BOTTOM);*/
+		
+		//setHorizontalAlignment(Constants.LEFT);
+    	//this.setHorizontalImageAlignment(Constants.LEFT);
+		setHorizontalTextAlignment(Constants.LEFT);
+ 	
     }
     
     /**
@@ -311,6 +324,34 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
         return str==null ? text : str.toString();
     }
     
+    protected int getTextWidth(VisualItem item)
+		{
+		m_text = getText(item);
+	    double size = item.getSize();
+	    
+	    // get text dimensions
+	    if ( m_text != null ) 
+	    	{
+	        m_text = computeTextDimensions(item, m_text, size);
+	        return m_textDim.width;   
+	    	}
+	    return -1;
+		}
+    protected int getTextHeight(VisualItem item)
+		{
+		m_text = getText(item);
+	    double size = item.getSize();
+	    
+	    // get text dimensions
+	    if ( m_text != null ) 
+	    	{
+	        m_text = computeTextDimensions(item, m_text, size);
+	        return m_textDim.height;   
+	    	}
+	    return -1;
+		}
+
+  
     /**
      * @see prefuse.render.AbstractShapeRenderer#getRawShape(prefuse.visual.VisualItem)
      */
@@ -340,6 +381,7 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
             tw = m_textDim.width;   
         }
         
+        
         // get bounding box dimensions
         double w=0, h=0;
         switch ( m_imagePos ) {
@@ -368,8 +410,13 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
             rr.setRoundRect(m_pt.getX(), m_pt.getY(), w, h,
                             size*m_arcWidth, size*m_arcHeight);
         } else {
-            m_bbox.setFrame(m_pt.getX(), m_pt.getY(), w, h);
-        }
+        	double r=((RotationLabelRenderer)item.getRenderer()).itemRotation;
+        	double rc=r-90;
+        	r*=Math.PI/180;//conversion to radians
+        	rc*=Math.PI/180;
+        	
+        	m_bbox.setFrame(m_pt.getX(), m_pt.getY(), w, h);
+        	}
         
         itemCacheRow = item.getRow();
         itemRawShape = m_bbox;
@@ -408,7 +455,6 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
     public void render(Graphics2D g, VisualItem item) {
     	RectangularShape shape = (RectangularShape)getRawShape(item);
         if ( shape == null ) return;
-        
         // now render the image and text
         String text = m_text;
         Image  img  = getImage(item);
@@ -423,7 +469,6 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
         double y = shape.getMinY() + size*m_vertBorder;
         
         // CMC rotate before drawing; rotation in degrees
-        //double rotation = 0;
         double rotation = this.itemRotation;
         if (item.canGetDouble("rotation")) 
             rotation = item.getDouble("rotation");
@@ -434,14 +479,17 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
         if ((rotation > 90) && (rotation < 270)) 
             rotation += 180;
         if (rotation != 0)
-        	g.rotate(rotation* 2*Math.PI/360, shape.getCenterX(), shape.getCenterY());
+        	g.rotate(rotation* 2*Math.PI/360, shape.getX(), shape.getY()+shape.getHeight());//bottom-left
         
         // fill the shape, if requested
         int type = getRenderType(item);
         if ( type==RENDER_TYPE_FILL || type==RENDER_TYPE_DRAW_AND_FILL )
             GraphicsLib.paint(g, item, shape, getStroke(item), RENDER_TYPE_FILL);
         
-        // render image
+        item.setBounds(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight());
+        //lo mismo que lo de arriba pero de otro modo      //item.set(VisualItem.BOUNDS, new Rectangle2D.Double(shape.getX(), shape.getY(), shape.getWidth(), shape.getHeight()));
+        
+             // render image
         if ( img != null ) {            
             double w = size * img.getWidth(null);
             double h = size * img.getHeight(null);
@@ -559,13 +607,14 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
             }
             drawString(g, fm, text.substring(start), useInt, x, y, tw, item.getBounds().getCenterX(),item.getBounds().getCenterY(), 0);
         }
-    
         // draw border
         if (type==RENDER_TYPE_DRAW || type==RENDER_TYPE_DRAW_AND_FILL) {
             GraphicsLib.paint(g,item,shape,getStroke(item),RENDER_TYPE_DRAW);
         }
         g.setTransform(oldTrans);
         
+ 	   //TODO: tests
+      //  g.drawRect((int)item.getBounds().getX(), (int)item.getBounds().getY(), (int)item.getBounds().getWidth(), (int)item.getBounds().getHeight());
     }
     
     /**
@@ -583,14 +632,14 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
         
         // assume shape has just been calculated and stored
         itemRawShape = (RectangularShape)getRawShape(item);
-        //itemRotation = item.getDouble("rotation");
-        
     	
     	itemTransform.setToIdentity();
+    	
     	if ((itemRotation > 90) && (itemRotation < 270)) 
     		itemRotation += 180;
-    	itemTransform.rotate(itemRotation* 2*Math.PI/360, itemRawShape.getCenterX(), itemRawShape.getCenterY());
-    	return itemTransform;
+    	
+    	itemTransform.rotate(itemRotation* 2*Math.PI/360, itemRawShape.getX(), itemRawShape.getY()+itemRawShape.getHeight());
+        return itemTransform;
     }
     
     private final void drawString(Graphics2D g, FontMetrics fm, String text,
@@ -624,7 +673,7 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
         	} else {
         		g.drawString(text, (float)tx, (float)y);
         	}
-        
+         
         	g.setTransform(oldTrans);
         } else {
         	if ( useInt ) {

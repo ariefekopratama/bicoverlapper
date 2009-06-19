@@ -19,6 +19,8 @@ import org.jvnet.lafwidget.tabbed.DefaultTabPreviewPainter;
 import org.jvnet.substance.SubstanceLookAndFeel;
 import org.jvnet.substance.TabCloseListener;
 
+import es.usal.bicoverlapper.data.files.FileParser;
+import es.usal.bicoverlapper.kernel.managers.AnalysisMenuManager;
 import es.usal.bicoverlapper.kernel.managers.FileMenuManager;
 import es.usal.bicoverlapper.kernel.managers.HelpMenuManager;
 import es.usal.bicoverlapper.kernel.managers.ViewMenuManager;
@@ -71,6 +73,8 @@ public class BicOverlapperWindow extends JFrame{
 	 */
 	public JMenuItem menuViewCloud;
 	
+	public JMenu analysisMenu, viewMenu;
+	
 	/**
 	 * Default constructor
 	 *
@@ -90,6 +94,12 @@ public class BicOverlapperWindow extends JFrame{
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setSize(config.getApplicationSize());
 		this.setVisible(true);
+		this.addWindowListener(new java.awt.event.WindowAdapter() {
+		    public void windowClosing(java.awt.event.WindowEvent e) {
+		    	FileParser.deleteFiles(".", "tmp");
+		    }
+		});
+
 	}
 	
 	private void initDesktop(){
@@ -139,54 +149,55 @@ public class BicOverlapperWindow extends JFrame{
 	private JMenuBar crearMenu(Configuration config){
 		
 		// Creamos menu "Archivo"
-		JMenu menuArchivo = new JMenu(Translator.instance.menuLabels.getString("s1"));
+		JMenu fileMenu = new JMenu(Translator.instance.menuLabels.getString("s1"));
 			
 		
 			//Añadimos item "Abrir Microarray" al menu "Archivo"
 		JMenuItem menuArchivoAbrirMicroarray = 
 			new JMenuItem("Open Microarray");		
-		menuArchivo.add(menuArchivoAbrirMicroarray);
+		fileMenu.add(menuArchivoAbrirMicroarray);
 		
+		// Añadimos item "Abrir Bicluster" al menu "Archivo"
+		JMenuItem menuArchivoAbrirBicluster = 
+			new JMenuItem("Open Biclusters");		
+		fileMenu.add(menuArchivoAbrirBicluster);
+
 		// Añadimos item "Abrir TRN" al menu "Archivo"
 		JMenuItem menuArchivoAbrirTRN = 
 			new JMenuItem("Open TRN");		
-		menuArchivo.add(menuArchivoAbrirTRN);
+		fileMenu.add(menuArchivoAbrirTRN);
 		// 
 	
-		// Añadimos item "Abrir Bicluster" al menu "Archivo"
-		JMenuItem menuArchivoAbrirBicluster = 
-			new JMenuItem("Open Biclustering Results");		
-		menuArchivo.add(menuArchivoAbrirBicluster);
-
+	
 		
 		// Añadimos separador al menu
-		menuArchivo.addSeparator();
+		fileMenu.addSeparator();
 
 		menuArchivoExportSelection = 
 			new JMenuItem("Export Selection");		
-		menuArchivo.add(menuArchivoExportSelection);
+		fileMenu.add(menuArchivoExportSelection);
 
 		
 		// Añadimos separador al menu
-		menuArchivo.addSeparator();
+		fileMenu.addSeparator();
 		
 		// Añadimos item "Cargar Configuracion" al menu "Archivo"
 		JMenuItem menuArchivoCargarConfig =
 			new JMenuItem(Translator.instance.menuLabels.getString("s17"));
-		menuArchivo.add(menuArchivoCargarConfig);
+		fileMenu.add(menuArchivoCargarConfig);
 		
 		// Añadimos item "Guardar Configuracion" al menu "Archivo"
 		JMenuItem menuArchivoGuardarConfig =
 			new JMenuItem(Translator.instance.menuLabels.getString("s18"));
-		menuArchivo.add(menuArchivoGuardarConfig);
+		fileMenu.add(menuArchivoGuardarConfig);
 		
 		// Añadimos separador al menu
-		menuArchivo.addSeparator();
+		fileMenu.addSeparator();
 		
 		// Añadimos item "Salir" al menu "Archivo"
 		JMenuItem menuArchivoSalir = 
 			new JMenuItem(Translator.instance.menuLabels.getString("s19"));		
-		menuArchivo.add(menuArchivoSalir);
+		fileMenu.add(menuArchivoSalir);
 		
 		// Añadimos el gestor de eventos a los items del menu "Archivo"
 		FileMenuManager gestorMenuArchivo = new FileMenuManager(this);
@@ -204,9 +215,32 @@ public class BicOverlapperWindow extends JFrame{
 		menuArchivoCargarConfig.addActionListener(gestorMenuArchivo);
 
 		menuArchivoSalir.addActionListener(gestorMenuArchivo);
-				
+		
+		//Create menu "Analysis"
+		AnalysisMenuManager amm = new AnalysisMenuManager(this);
+		analysisMenu=new JMenu(Translator.instance.menuLabels.getString("analysis"));
+		analysisMenu.setEnabled(false);
+		JMenuItem menuAnalysisBimax =
+			new JMenuItem(Translator.instance.menuLabels.getString("bimax"));
+		JMenuItem menuAnalysisPlaid =
+			new JMenuItem(Translator.instance.menuLabels.getString("plaid"));
+		JMenuItem menuAnalysisXMotifs =
+			new JMenuItem(Translator.instance.menuLabels.getString("xmotifs"));
+		JMenuItem menuAnalysisCChurch =
+			new JMenuItem(Translator.instance.menuLabels.getString("cc"));
+		
+		analysisMenu.add(menuAnalysisBimax);
+		analysisMenu.add(menuAnalysisPlaid);
+		analysisMenu.add(menuAnalysisXMotifs);
+		analysisMenu.add(menuAnalysisCChurch);
+		menuAnalysisBimax.addActionListener(amm);
+		menuAnalysisPlaid.addActionListener(amm);
+		menuAnalysisXMotifs.addActionListener(amm);
+		menuAnalysisCChurch.addActionListener(amm);
+		
 		// Creamos menu "Ver"
-		JMenu menuVer = new JMenu(Translator.instance.menuLabels.getString("s2"));
+		viewMenu = new JMenu(Translator.instance.menuLabels.getString("s2"));
+		viewMenu.setEnabled(false);
 		/*
 		// Añadimos item "Diagrama Puntos" al menu "Ver"
 		JMenuItem menuVerDiagPuntos =
@@ -230,13 +264,13 @@ public class BicOverlapperWindow extends JFrame{
 		menuViewParallelCoordinates =
 			new JMenuItem(Translator.instance.menuLabels.getString("s8"));
 		
-		menuVer.add(menuViewParallelCoordinates);
+		viewMenu.add(menuViewParallelCoordinates);
 
 		// Añadimos item "Microarray Heatmap" al menu "Ver"
 		menuViewHeatmap =
 			new JMenuItem("Microarray Heatmap");
 		
-		menuVer.add(menuViewHeatmap);
+		viewMenu.add(menuViewHeatmap);
 		/*
 		// Añadimos item "Dendrograma" al menu "Ver"
 		JMenuItem menuVerDendrograma =
@@ -244,46 +278,34 @@ public class BicOverlapperWindow extends JFrame{
 		
 		menuVer.add(menuVerDendrograma);
 		*/
-		// Añadimos separador al menu
-		menuVer.addSeparator();
-
-		// Añadimos item "Transcription Network" al menu "Ver"
-		menuViewTRN =
-			new JMenuItem("Transcription Network");
-		
-		menuVer.add(menuViewTRN);
 
 		// Añadimos separador al menu
-		menuVer.addSeparator();
+		viewMenu.addSeparator();
 
 		// Añadimos item "Bubbles" al menu "Ver"
-		menuViewBubbles =
-			new JMenuItem("Bubble Map");
+		menuViewBubbles =new JMenuItem("Bubble Map");
 		
-		menuVer.add(menuViewBubbles);
+		viewMenu.add(menuViewBubbles);
 		
 		
 //		 Añadimos item "Microarray Heatmap" al menu "Ver"
-		menuViewOverlapper =
-			new JMenuItem(Translator.instance.menuLabels.getString("s10"));
+		menuViewOverlapper =new JMenuItem(Translator.instance.menuLabels.getString("s10"));
 
 		
-		menuVer.add(menuViewOverlapper);
+		viewMenu.add(menuViewOverlapper);
 
-	/*	//		 Añadimos item "TreeMap" al menu "Ver"
-		JMenuItem menuVerTreeMap =
-			new JMenuItem(Translator.instance.menuLabels.getString("s11"));
-		menuVer.add(menuVerTreeMap);
+		// Añadimos separador al menu
+		viewMenu.addSeparator();
 
-		//		 Añadimos item "TreeMap" al menu "Ver"
-		JMenuItem menuVerDetails =
-			new JMenuItem(Translator.instance.menuLabels.getString("s12"));
-		menuVer.add(menuVerDetails);
-		*/
 		//		 Añadimos item "WordCloud" al menu "Ver"
-		menuViewCloud =
-			new JMenuItem(Translator.instance.menuLabels.getString("s13"));
-		menuVer.add(menuViewCloud);
+		menuViewCloud =	new JMenuItem(Translator.instance.menuLabels.getString("s13"));
+		viewMenu.add(menuViewCloud);
+
+		// Añadimos item "Transcription Network" al menu "Ver"
+		menuViewTRN =new JMenuItem("Transcription Network");
+		
+		viewMenu.add(menuViewTRN);
+
 
 		
 		// Añadimos el gestor de eventos a los items del menu "Ver"
@@ -341,7 +363,7 @@ public class BicOverlapperWindow extends JFrame{
 		*/
 
 //		 Creamos menu Ayuda
-		JMenu menuAyuda =  new JMenu(Translator.instance.menuLabels.getString("s23"));
+		JMenu helpMenu =  new JMenu(Translator.instance.menuLabels.getString("s23"));
 		HelpMenuManager gestorMenuAyuda = new HelpMenuManager(this);
 
 		
@@ -350,8 +372,8 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("s24"));		
 		JMenuItem menuAyudaContents = 
 			new JMenuItem(Translator.instance.menuLabels.getString("s25"));		
-		menuAyuda.add(menuAyudaContents);
-		menuAyuda.add(menuAyudaAcercaDe);
+		helpMenu.add(menuAyudaContents);
+		helpMenu.add(menuAyudaAcercaDe);
 		
 		menuAyudaContents.addActionListener(gestorMenuAyuda);
 		menuAyudaAcercaDe.addActionListener(gestorMenuAyuda);
@@ -359,9 +381,10 @@ public class BicOverlapperWindow extends JFrame{
 		// Creamos una barra de menu a la que añadimos los menus
 		JMenuBar menu = new JMenuBar();
 		
-		menu.add(menuArchivo);
-		menu.add(menuVer);
-		menu.add(menuAyuda);
+		menu.add(fileMenu);
+		menu.add(analysisMenu);
+		menu.add(viewMenu);
+		menu.add(helpMenu);
 		
 		
 		//Inicialmente, todas las vistas están deshabilitadas en lo que no se carguen los ficheros adecuados
@@ -374,7 +397,7 @@ public class BicOverlapperWindow extends JFrame{
 
 		menuViewBubbles.setEnabled(false);
 		menuViewOverlapper.setEnabled(false);
-		menuViewCloud.setEnabled(false);
+	//	menuViewCloud.setEnabled(false);
 		
 		//TODO: Además, para una versión oficial, de momento deshabilitamos el resto también
 		//menuArchivoAbrirTRN.setEnabled(false);
