@@ -4,7 +4,7 @@
  * Created on 24 de noviembre de 2004, 11:13
  */
 
-package es.usal.bicoverlapper.utils.geneticAlgorithms;
+package es.usal.bicoverlapper.analysis.geneticAlgorithms;
 
 /**
  *
