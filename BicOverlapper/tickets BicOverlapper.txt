@@ -1,0 +1,99 @@
+S=Solved
+D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
+->=Important
+
+
+->44	OV	Zoom: arreglar o quitar
+->67	Opt	Chequear la disponibilidad de las opciones de menú en todos los casos. Bien, salvo que a veces cuando falla la carga no cierra el cuadro de carga, ni permite cerrarlo
+			->Al cargar un nuevo microarray, deberían deshabilitarse hasta que esté cargado (se habilitan porque corre el hilo de manera asíncrona y error es siempre true!
+->73	Bic	Chequeo completo del análisis de biclustering
+				Format error al leer los que se guardan de xmotifs
+				S Interfaz de filtrado en todos
+74	Data	Tratamiento de NAs?
+S 75	WC		Escalas <0.1 -> Arreglado, aunque va un poco lento y lo saca un poco mal
+76	WC	Chequear lo que tarda en hacer la recuperación por red frente a por R
+			Para 80 genes tarda 80s, más menos a gen por segundo, mientras en R tenemos, con la mejora,
+			185 genes en 10s, vamos, un ration de 1gen/s en red y 18genes/s en R. 
+			Quizás se pueda acelerar a través de biomaRt...
+77	Search	Búsqueda por cualquier cosa que ya esté recogida: términos go, definición, etc.
+78	TRN		Limitar la visualización a unos cuantos vecinos de los genes seleccionados
+79	GOterms	Cada término una vez aunque aparezca muchas en la bd! -> no se hace al menos en R			
+				
+
+68	PC	Error en scrolls al modificar tamaño de ventana
+			Es al modificar en vertical, si se añade horizontal al final queda bien
+			No es siempre, así que parece un tema de actualización desincronizada
+->47	PC	Actualizaciones en general, chequeo completo
+17	PC	Slopes para selección?
+71	HM	Tras seleccionar bicluster: 
+			Al hover de condiciones q no están en el bicluster (con las etiqauetas) -> muchas veces se seleccionan 2
+			Al hover de expresiones-> como hover de condiciones
+			S Al hover un gen no distorsiona las columnas seleccionadas
+			
+56	HM	Recuadritos para los niveles de expresión?
+57	HM	Search aquí o en PC de genes?
+70	BM	Hacer el layout un poco más pequeño que la ventana para evitar que algunos queden cortados
+		Actualizar como HM para evitar reseteos del zoom/layout con nuevas selecciones
+69	WC	La barra de progreso no sale en su sitio si he movido la ventana general
+->72	WC	Multiples selecciones simultáneas, cortar una si no se ha acabado cuando se hace la siguiente (p.ej. PC+WC). Probablemente lo suyo es tb que no intente recuperar si son más de 100 o 200, o cuando se cierra la ventana
+			S Por qué no hay un mget en vez de un get???-> Arreglado, se reduce el tiempo de 16s a 3 para una búsqueda de 54 genes, y de 54 a 10s para una búsqueda de 185 genes
+			
+60	OV	Seleccionar clusters cuando se ha filtrado
+65	OV	Etiquetas siempre encima (selecciones)
+		S Mejorar legilibilidad de hover node -> He incrementado su anchura a 2, mientras que para seleccionados está a 3.
+		Revisar threshold limits
+16	Cfg	Salvar ficheros de datos además de ventanas?
+		Ventanas proporcionales al tamaño de pantalla?
+
+55	Gen	Retirar del todo el tema MultidimensionalData
+61	Layers	Selección PC+Navegación OV, con BM abierto. PC deja de marcar la selección
+62	R	Adquisición de R... a veces no lo coge aunque debería tenerlo?
+63	Hist	Histórico de modificaciones, ctrl z, etc.
+64	Load	Botón de cerrar o cierre automático de la ventana de progreso
+66	Err	Gestión y explicación de errores durante la carga de microarrays/biclusters/trns
+		Cargas fallidas de R cuando sí que está correctamente instalado
+		Wrong format: empty sample name(s)
+		
+		
+S/D 12	HM	Chequeo exaustivo
+		Etiquetas diagonales
+			S a) Que queden encima de cada condición. Hecho! Lo suyo ha costado, hay que sumarle a cada una la anchura de su bounds, y colocarlas según esten los items de los niveles de expresión
+			S b) Que se puedan seleccionar bien:esto era problema de que el item rotation de getTransform(item) se hacía sobre el centro
+				y el de la etiqueta sobre el left-bottom.
+				El cuadrado parece que salía mal pero salía bien, pues se estaba pintando después de rotar y restaurar la rotación, con lo cual salía girado 90º de más
+			S/D c) Que queden bien al distorsionar -> parece que también le falta la suma de la anchura del bounds...
+			   Hago modificaciones para que esto no dependa de posiciones sino de identificadores, para evitar problemas en posiciones muy fronterizas y adquirir un mayor control
+			   cambio el BifocalDistortion por un HeatmapHoverControl y comunicacion con MicroGridLayout, etc.
+			   Las modificaciones hacen que el hovering quede mejor, pero aún hay varios temas:
+			   	S c.1)	La distorsión de las etiquetas es distinta de la de los cuadrados de expresión, la mínima queda un poco más pequeña y a la larga las etiquetas ocupan menos que los cuadrados
+			   			Ocurría en hover porque utilizaba el número de genes/cond seleccionadas en vez de el número de genes/cond sobrepasadas
+			    D    c.2)	Extraño efecto al hover la primera etiqueta de condicion, que se va para adentro
+			    D/S   c.3)	Ahora mismo, o hover o selección, si está hecha una selección no se permite el hover. Hecho pero:
+			    		* S Con una columna seleccionada, paso del hover de la primera columna a la segunda (igual con filas)
+			    		* S Distorsión de etiquetas cuando hover tras selección. Hecho para genes y condiciones
+			    			S - Selección de la primera condición no seleccionada cuando hay una condición seleccionada sale mal (distorsiona a una dimensión mayor de la máxima la anchura)
+			    		* S Hover del gen seleccionado distorsiona otro distinto!
+			     		* D Rayicas blancas que a veces salen
+		  S d) Cuando se seleccionan/hoverean solo genes, las etiquetas quedan más pequeñas que las expresiones.
+			 
+		S Abrir HM cuando hay una selección hecha no funciona
+		S Resetear selecciones anteriores
+		S Reseteo del tamaño de ventana y layout con nuevas selecciones
+
+S 29	BM	Transparencia? Homogeneity! MD tiene getConstance, etc!
+		Hecho, hay que controlar si está bien hecho y parece que tarda en hacerlo
+S 23WC	Repintado y actualizaciones: chequeo exhaustivo: muchas partes solucionadas en FilmOverlapper2
+		S Quitar ocurrences
+		S Hypergeometric test saca dos ventanucas -> porque le llama dos veces al hacer la selección!-> linea 200 de WCdiagram
+		S Definition por ejemplo en el de vasculogenesis en GEOD-1572 da regular (sale muy arriba y tapada)
+		S Actualización de la barra: no se actualiza al seleccionar en otras vistas. En addWords, pongo un menuCloud.setVisible y menuCloud.repaint, despues de repintar el wc
+		S Chequear q funciona el arreglo de Postcapital->parece que sí
+		S Test hipergeométrico doble->por setSelectedIndex para poner que es BP sobre lo que se hace, vuelve a repetirlo, solucionado con la vble doNOTupdate
+		S cullin(1) al seleccionar el gen malo de GEOD1527, p.ej. creo q no tengo en cuenta los paréntesis para la anchura de las palabras; aparte si lo muevo se cuelga
+				Era problema de que no se comprobaba que el maxAncho no se pasara del tamaño de ventana.
+		S test hipergeométrico si no es bp...
+		
+S 53	PC	Movimiento scrolls!		Había un error por actualizar antes de almacenar la selección en la sesión. 
+S 58	PC	S Etiqueta de seleccionados cuando en PC cuando viene de otro sitio.
+		S Etiquetas de valores cuando hay una selección que viene de fuera
+S 59	BM	Repintado tras selección en otra vista (en overlapper por ejemplo). Ocurría porque faltaba poner un par de v.run() en el repaint()
