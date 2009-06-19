@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.utils.geneticAlgorithms;
+package es.usal.bicoverlapper.analysis.geneticAlgorithms;
 
 import java.util.Iterator;
 
@@ -76,8 +76,13 @@ public class GraphGeneticAlgorithm extends GeneticAlgorithm{
 				//modificar puntos del grafo
 				graph.getNodes().get(nodeNames[j/2]).setPosition(x,y);
 				}
-			graph.draw(priorities);
-			metric=graph.getFailedPositionMetric();
+			
+			//Para mejorar las posiciones
+			//graph.draw(priorities);
+			//metric=graph.getFailedPositionMetric();
+			
+			//Para hacer el layout minimizando LinLog
+			metric=graph.getLinLogEnergy();	
 	        individuo.setAjuste((float)metric);
 	       // System.out.print(metric+"\t");
 			maxAjuste+=metric;
@@ -123,7 +128,7 @@ public class GraphGeneticAlgorithm extends GeneticAlgorithm{
             
             System.out.println("\nPresión Selectiva: "+getSelectivePressure()+", Diversidad: "+getDiversity());
 			}	
-
+		
 		adam=population[0];//best individual
 	    System.out.println("Mejor individuo tomado y dibujando");
 	    for(int j=0;j<adam.getGenes().length;j+=2)
@@ -133,7 +138,8 @@ public class GraphGeneticAlgorithm extends GeneticAlgorithm{
 			//modificar puntos del grafo
 			graph.getNodes().get(nodeNames[j/2]).setPosition(x,y);
 			}
-		graph.draw(priorities);
+		//graph.draw(priorities);
 		System.out.println("Tiempo tardado "+(System.currentTimeMillis()-start));
+		
         }
 	}

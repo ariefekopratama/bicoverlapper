@@ -5,7 +5,7 @@
  * @author Rodrigo Santamaría
  */
 
-package es.usal.bicoverlapper.utils.geneticAlgorithms;
+package es.usal.bicoverlapper.analysis.geneticAlgorithms;
 
 /**
  * This class implements the chromosome for an individual in the Genetic Algorithm population

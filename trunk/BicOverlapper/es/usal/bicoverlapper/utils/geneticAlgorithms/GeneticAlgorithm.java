@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.utils.geneticAlgorithms;
+package es.usal.bicoverlapper.analysis.geneticAlgorithms;
 
 
 /** 
