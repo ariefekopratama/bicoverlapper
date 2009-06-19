@@ -1,6 +1,6 @@
 package es.usal.bicoverlapper.data;
 
-/*import gov.nih.nlm.ncbi.www.soap.eutils.EUtilsServiceLocator;
+import gov.nih.nlm.ncbi.www.soap.eutils.EUtilsServiceLocator;
 import gov.nih.nlm.ncbi.www.soap.eutils.EUtilsServiceSoap;
 import gov.nih.nlm.ncbi.www.soap.eutils.egquery.EGqueryRequest;
 import gov.nih.nlm.ncbi.www.soap.eutils.egquery.Result;
@@ -10,14 +10,14 @@ import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
 import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
 import gov.nih.nlm.ncbi.www.soap.eutils.esummary.ESummaryRequest;
 import gov.nih.nlm.ncbi.www.soap.eutils.esummary.ESummaryResult;
-*/
+
 /**
  * NCBI Entrez database reader
  * @author Rodrigo rodri@usal.es
  *
  */
-public class EReader {
-	/*public static void eGquery(String query)
+public class NCBIReader {
+	public static void eGquery(String query)
 		{
         // run_eGquery_MS provides Entrez database counts for a single search 
         try
@@ -90,6 +90,6 @@ public class EReader {
         }catch(Exception e) { e.printStackTrace(); }
 		return null;
 		}
-*/
+
 }
 

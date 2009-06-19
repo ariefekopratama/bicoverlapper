@@ -24,7 +24,7 @@ public class DiagramConfiguration {
 	private int identificador;
 	private String nombre;
 	private int posX, posY;
-	private Dimension tamaño;
+	private Dimension size;
 	
 	private Vector<Color> paleta;
 	private Vector<String> anclajes;
@@ -43,7 +43,7 @@ public class DiagramConfiguration {
 		this.nombre = name;
 		this.posX = posX;
 		this.posY = posY;
-		this.tamaño = dim;
+		this.size = dim;
 		
 		paleta = new Vector<Color>(0,1);
 		anclajes = new Vector<String>(0,1);
@@ -91,7 +91,7 @@ public class DiagramConfiguration {
 	 * @return {@link Dimension} of the window
 	 */
 	public Dimension getDim(){
-		return this.tamaño;
+		return this.size;
 	}
 	
 	/**

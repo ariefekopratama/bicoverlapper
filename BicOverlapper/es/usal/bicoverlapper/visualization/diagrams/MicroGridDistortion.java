@@ -10,9 +10,7 @@ import es.usal.bicoverlapper.visualization.diagrams.ExpressionRenderer;
 
 
 import prefuse.action.layout.Layout;
-import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.tuple.TupleSet;
-import prefuse.data.util.Sort;
 import prefuse.visual.VisualItem;
 
 /**
@@ -63,6 +61,7 @@ class MicroGridDistortion extends Layout {
         rowField="rowId";
         colField="colId";
     }
+    
     /**
      * Create a new Distortion instance that processes the given data group.
      * It will use user field names for row and column identifying.
@@ -178,7 +177,6 @@ class MicroGridDistortion extends Layout {
     		
                 ExpressionRenderer er=((ExpressionRenderer)item.getRenderer());
                 er.setHeight(h, i);
-              //  er.setHeight(h, actuali);//prueba
                 er.setWidth(w, j);
                 
                 x=xMargin+j*miniw;

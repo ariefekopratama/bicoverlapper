@@ -65,7 +65,7 @@ public class ViewMenuManager implements ActionListener{
 				BubblesDiagram panel = new BubblesDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				ventana.setLocation(config.getDimPanelTRN().width+10, config.getSizePanelCoordenadas().height+30);
+				ventana.setLocation(config.dimPanelCoordenadas.width+config.dimPanelHeatmap.width, 0);
 				sesion.setBubbles(ventana);
 				panel.createAxisLayout();
 				panel.run();
@@ -88,7 +88,7 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
-				ventana.setLocation(config.getSizePanelCoordenadas().width+20,0);
+				ventana.setLocation(config.getSizePanelCoordenadas().width,0);
 				panel.create();
 				//panel.create3d();
 				panel.run();
@@ -98,6 +98,8 @@ public class ViewMenuManager implements ActionListener{
 				OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
+				ventana.setLocation(0, config.getSizePanelCoordenadas().height);
+				
 				sesion.setBubbleGraph(ventana);
 				
 					panel.create();
@@ -111,7 +113,7 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setBubbleGraph(ventana);
-				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
+				ventana.setLocation(0, config.getSizePanelCoordenadas().height);
 				
 				//panel.setPersonas(sesion.isPersonas());
 				
@@ -120,17 +122,18 @@ public class ViewMenuManager implements ActionListener{
 			}
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s13")))
 				{
-				if(!sesion.getMicroarrayData().isAnnotationsRetrieved())
+				/*if(!sesion.getMicroarrayData().isAnnotationsRetrieved())
 					{
 					JOptionPane.showMessageDialog(null,
 							"Retrieving annotations from database, please wait to see word cloud ...", 
 							"Wait for annotations", JOptionPane.INFORMATION_MESSAGE);
 					return;
-					}
+					}*/
 				Dimension dim = config.getDimPanelWordCloud();
 				WordCloudDiagram panel = new WordCloudDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
+				panel.setLocation(config.getSizePanelCoordenadas().width, config.dimAplicacion.height-config.dimPanelWordCloud.height);
 				sesion.setWordCloud(ventana);
 				panel.repaint();
 				}

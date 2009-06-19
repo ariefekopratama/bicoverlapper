@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
+import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemListener;
@@ -13,15 +15,21 @@ import java.awt.event.MouseListener;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Vector;
 
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JPanel;
@@ -30,8 +38,9 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
-//import es.usal.bicoverlapper.data.EReader;
-import es.usal.bicoverlapper.data.EReader;
+import es.usal.bicoverlapper.data.GeneRequester;
+import es.usal.bicoverlapper.data.NCBIReader;
+import es.usal.bicoverlapper.data.GOTerm;
 import es.usal.bicoverlapper.data.GeneAnnotation;
 import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
@@ -39,30 +48,25 @@ import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 
 import es.usal.bicoverlapper.utils.CustomColor;
-//import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
-//import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
 
-public class WordCloudDiagram extends Diagram implements ActionListener,ChangeListener,MouseListener
+public class WordCloudDiagram extends Diagram implements ActionListener,ChangeListener,MouseListener, GeneRequester
 	{
 	private static final long serialVersionUID = 1L;
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	private MultidimensionalData datos;
-	private int alto;
-	private int ancho;
+	//private MultidimensionalData datos;
 	private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
 		
 	// definicion de margenes del diagrama
 	private float zoom =(float) 100;
-	final int margenDer = 40;
-	final int margenIzq = 40;
-	final int margenSup = 25;
-	final int margenInf = 40;
-	final int margenDiagrama = 10; // porcentaje de exceso en intervalo de representacion del diagrama
+	private final int margenDer = 40;
+	private final int margenIzq = 40;
+	private final int margenSup = 25;
+	private final int margenInf = 40;
+	private final int margenDiagrama = 10; // porcentaje de exceso en intervalo de representacion del diagrama
 	
 	// configuracion de color
-	
 	private static final int colorEtiquetaVar = 0;
 	private static final int colorVarSelec = 1;
 	private static final int colorFondoEtiqueta = 2;
@@ -81,42 +85,36 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 								   "Color Eje Seleccionado", "Color Fondo"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 	
-	//private int[] seleccionId = {kernel.Configuracion.DiagramaPuntosId, kernel.Configuracion.CoordenadasId, kernel.Configuracion.DendrogramaId, kernel.Configuracion.BubbleGraphId, 
-		//	kernel.Configuracion.TreeMapId};
-
-	
-	// atributos de configuracion anclajes
-	
-	private DiagramWindow itemAñadir, itemEliminar;	
-	//private Frame frame;
-	
+	private List<GOTerm> got=null;
+	private ArrayList<GeneAnnotation> annot=null;
+	private boolean textChanged=false; //to not repeat hypergeometric tests and other R calls
+	private boolean innerCall=false;//to differentiate updates from combo boxes from internal updates
 	
 	//Atributos propios de la clase --------------------
 	private float maxFontSize=(float)400;
 	private float minFontSize=(float) 1.5;	
 	private int maxCont=0;
-	private int totChar=0;
 	private int contChar=0;
 	private int maxWord=0;
 	private double Y=0;
 	private double  X=0;
 	private int maxChar=0;
-	private String nameC=panelMenu.GO_TERMS;
+	private String nameC=MenuPanel.GO_TERMS;
 	private ArrayList<String> nameSelected;
 	private Color colorNameSelected;
 	private Color myColor;
-	private panelMenu menuCloud=new panelMenu();
+	private MenuPanel menuCloud=null;
 	private TreeMap <String,Word> words;
 	private boolean newSelection=true;
 
-	private boolean existNameSelected;
 	private int contWord;
-	private float escala=0;
-	//private 
+	
 	private int contZoom=0;
 	private boolean Ajusta=true;
+	private boolean Enought=true;
+	private List<String> sortedWords=null;
 
-	private boolean Enought=true;	
+	private boolean doNOTupdate=false;
 	
 	
 	public WordCloudDiagram(Session sesion, Dimension dim)
@@ -125,12 +123,12 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		int num = sesion.getNumWordClouds();
 		this.setName("Keyword Cloud "+num);
 		this.sesion = sesion;
-		this.datos = sesion.getData();
-		this.alto = (int)dim.getHeight();
-		this.ancho = (int)dim.getWidth();
+		//this.datos = sesion.getData();
+		int alto = (int)dim.getHeight();
+		int ancho = (int)dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho,alto));
-		this.setSize(ancho,alto);		
-		
+		this.setSize(ancho,alto);
+		menuCloud=new MenuPanel();
 		CustomColor c=new CustomColor(200,0,0,200);
 		
 		this.colorNameSelected=new Color(c.getR(), c.getG(), c.getB());
@@ -139,11 +137,6 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		this.setBackground(Color.WHITE);
 		
 		this.add(menuCloud,BorderLayout.SOUTH);
-		menuCloud.descButton.addActionListener(this);
-		menuCloud.goButton.addActionListener(this);
-		menuCloud.goButton.setEnabled(false);
-		menuCloud.sliderZoom.addChangeListener(this);
-		menuCloud.sliderZoom.setVisible(false);
 		this.addMouseListener(this);
 		nameSelected=new ArrayList<String>();
 		Ajusta=true;
@@ -153,8 +146,8 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		}
 	
 	private void setEnabledButon(){
-		menuCloud.descButton.setEnabled(true);
-		menuCloud.goButton.setEnabled(true);
+	/*	menuCloud.descButton.setEnabled(true);
+		menuCloud.goButton.setEnabled(true);*/
 	}
 	
 	private Color getColorW(String w){		
@@ -176,190 +169,293 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	public void update() 
 		{
 		contZoom=0;
-		Dimension dim = new Dimension(ancho,alto);
-		this.setPreferredSize(dim);
-		this.setSize(dim);		
 		maxChar=0;
 		contChar=0;
 		maxWord=0;
 		contWord=0;
 		maxCont=0;
-		words.clear();
-		Color colorW;
 		Ajusta=true;
 		Enought=true;
-		getTotChar();
-		this.colorSeleccion=this.sesion.getSelectionColor();
+		words.clear();
+		colorSeleccion=sesion.getSelectionColor();
 		
-		if(this.sesion.getSelectedBicluster()!=null)
+		if(innerCall==false)	
 			{
-			ArrayList<String> names=sesion.getMicroarrayData().getGeneNames(sesion.getSelectedGenesBicluster());
-			
-			//******************** GENE ANNOTATIONS FROM MICROARRAY DATA ******************
-			for(int i=0;i<names.size();i++)
-				{
-				GeneAnnotation ga=sesion.getMicroarrayData().getGeneAnnotations().get(sesion.getMicroarrayData().getGeneId(names.get(i)));
-				if(ga!=null && ga.description!=null && ga.description.length()>0)
-					{
-					String desc=ga.description;
-	        		String[] dw=desc.split(" ");
-	        		for(int j=0;j<dw.length;j++)
-	        			{
-	        			String w=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
-	        			if(words.containsKey(w))
-							{
-							Word nW=(Word)words.get(w);
-							colorW=getColorW(w);
-							TextLayout text=nW.getText();
-							double x=nW.getX();
-							double y=nW.getY();
-							words.put(w,new Word(text,x,y,nW.cont+1,colorW));
-							if ((nW.cont+1)>maxCont) maxCont=(nW.cont+1);
-							}
-						else
-							{
-							colorW=getColorW(w);
-							words.put(w, new Word(null,0,0,new Integer(1),colorW));
-							contChar+=w.length();
-							contWord+=1;
-							}
-						maxWord+=1;
-						maxChar+=w.length();
-	        			}
-					}
-				}
-			//******************** NCBI HTTP Browsing **************************
-			/*
-			String ids="";
-			for(int i=0;i<names.size();i++)	//get NCBI ids
-				{
-				IdListType list=EReader.eGeneQuery(names.get(i)+" AND Escherichia coli");
-				if(list!=null && list.getId()!=null)
-					{
-					if(list.getId().length>0)	ids=ids.concat(list.getId(0)+", ");//TODO: sólo añadimos el primer gene id, suponiendo que es el del organismo bueno
-					}
-				}
-			DocSumType[] res=EReader.eGeneSummary(ids.substring(0, ids.length()-2));
-			for(int i=0; i<res.length; i++)
-	            {
-	            for(int k=0; k<res[i].getItem().length; k++)
-	                {
-	                if(res[i].getItem()[k].get_any()!=null)
-	                	if(res[i].getItem(k).getName().contains("Description"))
-	                		{
-	                		String desc=res[i].getItem()[k].get_any()[0].getValue();
-	                		String[] dw=desc.split(" ");
-	                		for(int j=0;j<dw.length;j++)
-	                			{
-	                			String w=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
-	                			System.out.println("añadiendo "+w);
-								if(words.containsKey(w))
-									{
-									Word nW=(Word)words.get(w);
-									colorW=getColorW(w);
-									TextLayout text=nW.getText();
-									double x=nW.getX();
-									double y=nW.getY();
-									words.put(w,new Word(text,x,y,nW.cont+1,colorW));
-									if ((nW.cont+1)>maxCont) maxCont=(nW.cont+1);
-									}
-								else
-									{
-									colorW=getColorW(w);
-									words.put(w, new Word(null,0,0,new Integer(1),colorW));
-									contChar+=w.length();
-									contWord+=1;
-									}
-								maxWord+=1;
-								maxChar+=w.length();
-	                			}
-	                		}
-	                }
-	            }*/
-			
-		float pMax=(float)(((float)maxChar*(float)100.0)/(float)totChar);//((-1.0)*zoom)+			
-		float pDifSelec=(float)((float)(((((float)maxChar-(float)contChar))*(float)100.0)/(float)totChar));
-		float pDif=(float)((float)(((((float)totChar-(float)maxChar))    )/(float)totChar));//*(float)100.0
-		zoom=(float)((float)pMax+(float)pDifSelec)-((float)((float)pMax+(float)pDifSelec)*((float)1.0 -(float)pDif   ));///(float)100.0
-		menuCloud.sliderZoom.setValue(Math.round(zoom*4));
-		
-		//this.repaint();
-		if(this.getGraphics()!=null)	this.paintComponent(this.getGraphics());
-		}
-	else	//Perform the operation under all genes with annotations
-		{
-		//************* ALL DATA FROM GENEANNOTATIONS ********************
-		  Iterator<es.usal.bicoverlapper.data.GeneAnnotation> it=this.sesion.getMicroarrayData().getGeneAnnotations().values().iterator();
-		while(it.hasNext())
-			{
-			es.usal.bicoverlapper.data.GeneAnnotation ga=it.next();
-			if(ga.description!=null && ga.description.length()>0)
-				{
-				String desc=ga.description;
-        		String[] dw=desc.split(" ");
-        		for(int j=0;j<dw.length;j++)
-        			{
-        			String w=dw[j].replace("(", "").replace(")", "").trim().toLowerCase().replace(",", "").replace(".", "");
-        			//System.out.println("añadiendo "+w);
-					if(words.containsKey(w))
-						{
-						Word nW=(Word)words.get(w);
-						colorW=getColorW(w);
-						TextLayout text=nW.getText();
-						double x=nW.getX();
-						double y=nW.getY();
-						words.put(w,new Word(text,x,y,nW.cont+1,colorW));
-						if ((nW.cont+1)>maxCont) maxCont=(nW.cont+1);
-						}
-					else
-						{
-						colorW=getColorW(w);
-						words.put(w, new Word(null,0,0,new Integer(1),colorW));
-						contChar+=w.length();
-						contWord+=1;
-						}
-					maxWord+=1;
-					maxChar+=w.length();
-        			}
-				}
+			got=null;
+			annot=null;
+			textChanged=true;
 			}
-        //***************** STATIC TESTING *************************
-		/*String desc="uridine phosphorylase";
-		String[] dw=desc.split(" ");
-		for(int j=0;j<dw.length;j++)
+		//TODO: digraphs, colors
+		if(this.sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
 			{
-			String w=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
-			System.out.println("añadiendo "+w);
-			if(words.containsKey(w))
+			if(!innerCall || annot==null || (got==null && menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)) 
 				{
-				Word nW=(Word)words.get(w);
-				colorW=getColorW(w);
-				TextLayout text=nW.getText();
-				double x=nW.getX();
-				double y=nW.getY();
-				words.put(w,new Word(text,x,y,nW.cont+1,colorW));
-				if ((nW.cont+1)>maxCont) maxCont=(nW.cont+1);
+				Point p=new Point(0,0);
+				if(this.getParent()!=null) p=this.sesion.getDiagramWindow(this.getName()).getLocation();
+				if(menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES) 
+					{
+					String ont="";
+					switch(menuCloud.ontology.getSelectedIndex())
+						{
+						case(MenuPanel.ALL):
+							doNOTupdate=true;
+							menuCloud.ontology.setSelectedIndex(MenuPanel.BP);//NOTA: Si hago esto así me hace doble actualización majo
+						case(MenuPanel.BP):
+							ont="BP";
+							break;
+						case(MenuPanel.MF):
+							ont="MF";
+						break;
+						case(MenuPanel.CC):
+							ont="CC";
+							break;
+						}
+					System.out.println("Llamando a test hipergeométrico");
+					this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
+					}
+				else		
+					this.sesion.getMicroarrayData().getGeneAnnotations(sesion.getSelectedGenesBicluster(), this, p);
+				return;
 				}
 			else
-				{
-				colorW=getColorW(w);
-				words.put(w, new Word(null,0,0,new Integer(1),colorW));
-				contChar+=w.length();
-				contWord+=1;
+				{//Words (annot or got) do not change, just the sizes and combination
+				addWords();
 				}
-			}*/
-		//*************
-
-		float pMax=(float)(((float)maxChar*(float)100.0)/(float)totChar);//((-1.0)*zoom)+			
-		float pDifSelec=(float)((float)(((((float)maxChar-(float)contChar))*(float)100.0)/(float)totChar));
-		float pDif=(float)((float)(((((float)totChar-(float)maxChar))    )/(float)totChar));//*(float)100.0
-		zoom=(float)((float)pMax+(float)pDifSelec)-((float)((float)pMax+(float)pDifSelec)*((float)1.0 -(float)pDif   ));///(float)100.0
-		menuCloud.sliderZoom.setValue(Math.round(zoom*4));
+			}
 		
-		//this.repaint();
-		if(this.getGraphics()!=null)	this.paintComponent(this.getGraphics());
-		}
 	}
+	
+public void addWords()
+	{
+	switch(this.menuCloud.text.getSelectedIndex())
+		{
+		case MenuPanel.GO_TERM://----------------------------------------------
+			switch(this.menuCloud.size.getSelectedIndex())
+			{
+			case MenuPanel.GENES:
+				for(GeneAnnotation a : annot)
+				{
+				List<String> added=new ArrayList<String>();
+				if(a.goTerms!=null)
+					{
+					for(GOTerm go : a.goTerms)
+						{
+						if(go!=null)
+							{
+							boolean add=true;
+							switch(menuCloud.ontology.getSelectedIndex())
+								{
+								case MenuPanel.BP:
+									if(!go.ontology.equals("BP"))	add=false;
+									break;
+								case MenuPanel.CC:
+									if(!go.ontology.equals("CC"))	add=false;
+									break;
+								case MenuPanel.MF:
+									if(!go.ontology.equals("MF"))	add=false;
+									break;
+								}
+							if(add)
+								{
+								String desc=go.term;
+								if(!added.contains(desc))
+									{
+									splitAndAdd(desc, 1, this.colorSeleccion, true);
+									added.add(desc);
+									}
+								}
+			        		}
+						}
+					}
+				}
+				break;
+			case MenuPanel.OCCURRENCES:
+				for(GeneAnnotation a : annot)
+				{
+				if(a.goTerms!=null)
+					{
+					for(GOTerm go : a.goTerms)
+						{
+						if(go!=null)
+							{
+							boolean add=true;
+							switch(menuCloud.ontology.getSelectedIndex())
+								{
+								case MenuPanel.BP:
+									if(!go.ontology.equals("BP"))	add=false;
+									break;
+								case MenuPanel.CC:
+									if(!go.ontology.equals("CC"))	add=false;
+									break;
+								case MenuPanel.MF:
+									if(!go.ontology.equals("MF"))	add=false;
+									break;
+								}
+							if(add)
+								{
+								String desc=go.term;
+								int oc=go.occurences;
+								splitAndAdd(desc, oc, this.colorSeleccion, false);
+								}
+			        		}
+						}
+					}
+				}
+				break;
+	
+			case MenuPanel.PVALUES:
+				double min=got.get(0).pvalue;
+				for(GOTerm go: got)
+					if(go.pvalue<min)	min=go.pvalue;
+				
+				System.out.println("Hay "+got.size()+" terms");
+				int cont=0;
+				for(GOTerm go:got)
+					{
+					if(go!=null)
+						{
+						String desc=go.term;
+						int oc=(int)((1/(go.pvalue/min))/min);//TODO: en funcion de pvalue, formatear número y tamaño en concordancia
+						System.out.println(cont++);
+						if(desc.equals("establishment of localization in cell"))
+							System.out.println("Split and add de "+desc);
+						splitAndAdd(desc, oc, this.colorSeleccion, false);
+		        		}
+					}
+				System.out.println("Finished!");
+				break;
+				}
+			break;
+		case MenuPanel.DEFINITION://---------------------------------------------
+		default:
+			for(int i=0;i<annot.size();i++)
+			{
+			GeneAnnotation ga=annot.get(i);
+			if(ga!=null)
+				{
+				if(ga.description!=null)
+					{
+					String desc=ga.description;
+					int oc=1;
+					switch(this.menuCloud.size.getSelectedIndex())
+						{
+						case MenuPanel.OCCURRENCES:
+							splitAndAdd(desc, oc, this.colorSeleccion, false);
+							break;
+						case MenuPanel.GENES:
+						default:
+							splitAndAdd(desc, oc, this.colorSeleccion, true);
+							break;
+						}
+						
+					}
+				}
+			}
+			break;
+		}
+	
+	synchronized(this){
+	textChanged=true;
+	System.out.println("Número de hilos: "+Thread.getAllStackTraces().size());
+	if(this.getGraphics()!=null)	
+		this.paintComponent(this.getGraphics());
+	menuCloud.setVisible(true);
+	menuCloud.repaint();
+	
+	innerCall=false;
+	}
+	}
+public void receiveGOTerms(ArrayList<GOTerm> goterms)
+	{
+	this.got=goterms;
+	if(got==null)
+	      JOptionPane.showMessageDialog(this, "No relevant GO terms on hypergeometric test for onthology: "+(String)(menuCloud.ontology.getSelectedItem()), "Warning",JOptionPane.WARNING_MESSAGE);
+	addWords();
+	}
+public void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
+	{
+	this.annot=annot;
+	addWords();
+	}
+	
+/**
+ * Separates the text desc in words (use blank space as separator), and adds each word with color
+ * c. Usually oc is 1, but if greater, it counts each word as this number of occurences.
+ * Finally, if unique is true, it adds each word just one, even if it appears several times.
+ * @param desc
+ * @param oc
+ * @param c
+ * @param unique
+ */
+public void splitAndAdd(String desc, int oc, Color c, boolean unique)
+	{
+	String[] dw=null;
+	ArrayList<String> added=new ArrayList<String>();
+	switch(this.menuCloud.split.getSelectedIndex())
+		{
+		case 0://1-word
+			dw=desc.split(" ");
+			for(int j=0;j<dw.length;j++)
+				{
+				dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
+				if(!unique || !added.contains(dw[j]))
+					addWord(dw[j], oc, c);
+				added.add(dw[j]);
+				}
+			break;
+		case 1://2-word
+			dw=desc.split(" ");
+			for(int j=0;j<dw.length;j++)      			
+				{
+				if(j<dw.length-1)	
+					{
+					String diword=(dw[j]+" "+dw[j+1]).trim();
+					if(!unique || !added.contains(diword))
+						addWord(diword, oc, c);
+					added.add(diword);
+					}
+				}
+			break;
+		case 2://complete
+			addWord(desc, oc, c);
+			break;
+		}
+	return;
+	}
+	
+	public void addWord(String w, int oc, Color colorW)
+		{
+		if(!valid(w))	return;
+		if(words!=null && words.containsKey(w))
+			{
+			Word nW=(Word)words.get(w);
+			//colorW=getColorW(w);
+			nW.setCont(nW.cont+oc);
+			if(nW.cont>maxCont) maxCont=nW.cont;
+			}
+		else
+			{
+			//colorW=getColorW(w);
+			words.put(w, new Word(null,0,0,new Integer(oc),colorW));
+			contChar+=w.length();
+			contWord+=oc;
+			}
+		maxWord+=oc;
+		maxChar+=w.length();
+		}
+	
+	public boolean valid(String w)
+		{
+		if(w.length()<2)	return false;
+		if(w.length()>4)	return true;
+		if(w.equals("of") || w.equals("in") || w.equals("the") || w.equals("and"))	return false;
+		if(w.equals("or") || w.equals("on") || w.equals("at") || w.equals("for"))	return false;
+		if(w.equals("is") || w.equals("as") || w.equals("an") || w.equals("to"))	return false;
+		if(w.equals("with") || w.equals("some") || w.equals("also") || w.equals("that"))	return false;
+		if(w.equals("by") || w.equals("into") || w.equals("from") || w.equals("has"))	return false;
+		if(w.equals("have") || w.equals("be") || w.equals("which") || w.equals("may"))	return false;
+		return true;
+		}
 	
 	/*
 	private void setSelectedPoints(Vector<String> titulos)
@@ -454,14 +550,16 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		//Añadir el display o papplet o frame de visualización a la ventana
 		//Asociar este panel a la ventana: 
 		//Opcionalmente, se pueden inicializar aquí los datos del frame, en vez de hacerlo en el constructor
-		//this.getVentanta().add(framequehagafalta);
 		this.getWindow().setContentPane(this);
 		this.getWindow().pack();
 		}
 	
 	//	Método que se activa cuando cambia la selecciòn en una ventana
+	//TODO: It requires that ALL the genes have retrieved the annotations, which is computationally huge
+	//(when using the NCBI-QuickGO characteristic). By now, unavailable
 	public void actualizar() 
 		{
+		/*
 		LinkedList<Integer> g=new LinkedList<Integer>();
 		LinkedList<Integer> c=new LinkedList<Integer>();
 		Iterator<GeneAnnotation> it=sesion.getMicroarrayData().getGeneAnnotations().values().iterator();
@@ -475,7 +573,6 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 					String name=nameSelected.get(j);
 					if(ga.description.contains(name))
 						{
-						//g.add(sesion.getMicroarrayData().getGeneId(ga.name));
 						g.add(i);
 						System.out.println("Añadiendo gen "+ga.name+" con id "+i);
 						break;
@@ -483,25 +580,11 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 					}
 				}
 			}
-		/*while(it.hasNext())
-			{
-			GeneAnnotation ga=it.next();
-			
-			for(int i=0;i<nameSelected.size();i++)
-				{
-				String name=nameSelected.get(i);
-				if(ga.description.contains(name))
-					{
-					g.add(sesion.getMicroarrayData().getGeneId(ga.name));
-					System.out.println("Añadiendo gen "+ga.name+" con id "+sesion.getMicroarrayData().getGeneId(ga.name));
-					break;
-					}
-				}
-			}*/
+		
 		for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)	c.add(i);		
 		es.usal.bicoverlapper.kernel.BiclusterSelection bs=new BiclusterSelection(g,c);
 		sesion.setSelectedBiclusters(bs, "loud");
-		update();		
+		update();		*/
 		}
 	public void run()
 		{
@@ -511,23 +594,15 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	private void drawFondo(Graphics2D g2) {
 		g2.setPaint(paleta[colorFondo]);
 	    Rectangle2D.Double fondo =
-			new Rectangle2D.Double(0,0,ancho,alto);
+			new Rectangle2D.Double(0,0,this.getWidth(),this.getHeight());
 		g2.fill(fondo);
 		g2.draw(fondo);			
 	}
-	public void redimensionar(){		
-		Dimension dim = new Dimension(ancho,alto);		
-		this.setPreferredSize(dim);
-		this.setSize(dim);		
-		this.repaintAll=true;
-		//System.out.println("drawFondo:"+ancho+","+alto+"\n");
-	}
+
 	private float getProportion(String w,int c,int ww,int wh){
 		float hipo,size,cMaxProportion;
-		hipo=(float)(Math.sqrt((this.ancho*this.ancho)+((this.alto-this.menuCloud.getHeight())*(this.alto-this.menuCloud.getHeight()))));
+		hipo=(float)(Math.sqrt((this.getHeight()*this.getWidth())+((this.getHeight()-this.menuCloud.getHeight())*(this.getHeight()-this.menuCloud.getHeight()))));
 		cMaxProportion=(float)(hipo)/(float)(Math.sqrt(maxChar));				
-		//System.out.println(" z: "+zoom);
-		//minFontSize=(float)(float)zoom*(float)(-1.0)*(float)(1)/(float)5;
 		minFontSize=(float)(((float)contWord/(float)maxWord));//*(float)0.15);//(-0.1)
 		maxFontSize=(float)(float)zoom*(float)(cMaxProportion);//*((float)hipo)
 		float newMax=(float)maxFontSize;
@@ -535,81 +610,65 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		float max=(float)maxCont;
 		float min=(float)1;
 		float key=(float)c;		
-		//System.out.println("mi= "+min+" ma= "+max+" nMi = "+newMin+" newMax= "+newMax+" c="+c);
 		size=(float)getInterpolation(key,max,min,newMax,newMin);
-			//(float)((minFontSize)*(float)(c));//key +": ma:"+max+"/"+min+" -> nMa:"+newMax+"/"+newMin+
-			//	System.out.println(" mFS= "+minFontSize+" sz = "+size+" "+w+"\n");		
 		return size;
-	}
+		}
+	
 	private float getInterpolation(float key,float maxKey,float minKey,float newMax,float newMin)
 	{
 		return (float)(key-minKey)*(newMax-newMin+1)/(maxKey-minKey)+newMin;
 	}
+	
 	public void drawWords(Graphics2D g2)
 	{
-		drawFondo(g2);
-		Iterator it=words.keySet().iterator();
-		while(it.hasNext())
+	drawFondo(g2);
+	RenderingHints qualityHints = new RenderingHints(null);
+	qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+	qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
+	g2.setRenderingHints(qualityHints);
+
+	Iterator<Word> it=words.values().iterator();
+	if(sortedWords!=null && sortedWords.size()==words.size())
+		for(int i=0;i<words.size();i++)
 			{			
-			String w=(String)it.next();
-			if(w.length()>0)
-				{
-				Word nW=words.get(w);
-				g2.setPaint(nW.getColor());
-				if(nW.text!=null)
-					{
-					if(nW.getText().getBounds().getHeight()>1)
-						{
-						
-						((TextLayout)nW.getText()).draw(g2,(float)(nW.getX()),(float)(nW.getY()));//+maxAlto
-						//double x=(double) + nW.x + (float)(nW.getText().getBounds().getWidth()+ nW.getText().getBounds().getX()-nW.getContText().getBounds().getWidth());
-						
-						//g2.setPaint(new Color(255,255,255,150));
-						//((TextLayout)nW.getContText()).draw(g2,(float)(x),(float)(nW.y));
-						//g2.setPaint(nW.getColor());
-						}
-					}
-				}		
+			Word w=words.get(sortedWords.get(i));
+			g2.setPaint(w.getColor());
+			if(w==null)System.out.println("w es null");
+			if(w.getText()==null)System.out.println("wt es null");
+			if(w.getText().getBounds()==null)System.out.println("wtb es null");
+			((TextLayout)w.getText()).draw(g2,(float)(w.getX()),(float)(w.getY()));
 			}
+	else
+		while(it.hasNext())
+		{			
+		Word w=it.next();
+		if(w.getText()==null)	return;//Words still not selected/set up
+		g2.setPaint(w.getColor());
+		
+		((TextLayout)w.getText()).draw(g2,(float)(w.getX()),(float)(w.getY()));//+maxAlto
+		}
 	}
 	
 	
-	private void getTotChar() {
-	totChar=1;
-	/*Iterator it=MovieDB.instance.movies.values().iterator();
-	while(it.hasNext())
+	
+	public void resize()
 		{
-		Movie m=(Movie)it.next();
-		if(nameC.equalsIgnoreCase(panelMenu.GENRE))
+		//System.out.println(this.getHeight()+" "+this.getWidth());
+		textChanged=true;
+		}
+	
+	public String formatNumber(double n)
 		{
-			List<Genre> l=m.genres;
-			for(int i=0;i<l.size();i++)
-				{
-				String w=(String)l.get(i).name();				
-				totChar+=w.length();
-				}
-			//totChar=maxChar;
-			}
-		else  
-		if(nameC.equalsIgnoreCase(panelMenu.KEYWORD))
-		{
-			List<String> l=m.keywords;
-			for(int i=0;i<l.size();i++)
-				{
-				String w=(String)l.get(i);				
-				totChar+=w.length();
-				}			
-			}
-		else if(nameC.equalsIgnoreCase(panelMenu.DISTRIBUTOR))
+		String cad="";
+		int exp=0;
+		while(n*10<1)
 			{
-				List<String> l=m.companies;
-				for(int i=0;i<l.size();i++)
-					{
-					String w=(String)l.get(i);
-					totChar+=w.length();
-					}			
-				}
-			}*/
+			n=n*10;
+			exp--;
+			}
+		if(exp<0)	cad=Math.round(n*10)+"e"+(exp-1);
+		else		cad=""+(Math.round(n));
+		return cad;
 		}
 	
 	public void setWords(Graphics2D g2)
@@ -618,22 +677,34 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		double x=0;
 		double altoTexto =0;
 		double anchoTexto=0;
-		double maxAlto=0,AreaText=0;		 
-
+		double maxAlto=0;
+		double maxAncho=0;
+		if(g2==null)	return;
+		FontRenderContext frc=g2.getFontRenderContext();
+		
+		//0) Alphabetic sort of words
+		if(words!=null && words.size()>0)	
+			{
+			String[] tal=words.keySet().toArray(new String[0]);
+			sortedWords=Arrays.asList(tal);
+			Collections.sort(sortedWords);
+			}
+		if(sortedWords==null)	return;
 		//1) Primera vuelta, chequeamos el tamaño
-		Iterator<String> it=words.keySet().iterator();
-		while(it.hasNext())
+		for(String w: sortedWords)
 			{			
-			String w=(String)it.next();
-			if(w.length()>0)
+			Word nW=words.get(w);
+			if(w.length()>0 && nW!=null)
 				{
-				Word nW=words.get(w);
-				String wc=" "+w.concat("("+nW.cont+") ");
+				String wc="";
+				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
+						wc=" "+w.concat("("+formatNumber(1.0/nW.cont))+")";
+				else	wc=" "+w.concat("("+nW.cont+") ");
 				float num=nW.cont;
 				
 				Font f=g2.getFont().deriveFont((float)num);
-				TextLayout texto = new TextLayout(wc,f,g2.getFontRenderContext());
-				//TextLayout contText = new TextLayout(" <"+nW.cont+"> ",f,g2.getFontRenderContext());
+				TextLayout texto = new TextLayout(wc,f,frc);
+				
 				altoTexto = texto.getBounds().getHeight();
 				anchoTexto = texto.getBounds().getWidth();
 				if(x+anchoTexto>this.getWidth())	
@@ -644,73 +715,73 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 					}
 				if(maxAlto<altoTexto)	
 					maxAlto=altoTexto;
+				if(maxAncho<anchoTexto)	
+					maxAncho=anchoTexto;
 				nW.setX(x);
-				//nW.setY(y+maxAlto);
-				nW.setY(y+0.75*maxAlto);
+				nW.setY(y);
 				nW.setText(texto);
-				//nW.setContText(contText);
-				if(x+anchoTexto<this.getWidth())	
+				if(x+anchoTexto<=this.getWidth())	
 					x+=anchoTexto;
+				if(anchoTexto>this.getWidth())
+					{
+					y+=altoTexto;
+					maxAlto=0;
+					}
 				}		
 			}
 		y+=maxAlto;//Si no el último salto no se tiene en cuenta.
 		//2) Determinamos el factor de escala
-		double scale=Math.floor(this.getHeight()/y);
-		if(scale>50)	scale=50;
-		//System.out.println("Escala es "+scale);
+		//double scale=Math.min(Math.floor(this.getHeight()/y), Math.floor(this.getWidth()/maxAncho));
+		double scale=Math.min(this.getHeight()/y, this.getWidth()/maxAncho);
 		
 		//3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un bucle donde vamos disminuyendo poco a poco la escala
 		boolean end=false;
+		maxAncho=0;
 		do{
 		x=0;
 		y=0;
 		ArrayList <Word> wordsInLine=new ArrayList<Word>();
-		it=words.keySet().iterator();
-		while(it.hasNext())
-			{			
-			String w=(String)it.next();
-			if(w.length()>0)
+		for(String w : sortedWords)
+			{	
+			Word nW=words.get(w);
+			
+			if(w.length()>0 && nW!=null)
 				{
-				Word nW=words.get(w);
-				String wc=" "+w.concat("("+nW.cont+") ");
+				String wc="";
+				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
+					wc=" "+w.concat("("+formatNumber(1.0/nW.cont))+")";
+				else	wc=" "+w.concat("("+nW.cont+") ");
 				float num=nW.cont;
-				//float num=words.get(w).intValue();
-				//if((float)num>(float)1)
+				Font f=g2.getFont().deriveFont((float)(num*scale));
+				TextLayout texto = new TextLayout(wc,f,frc);
+				
+				altoTexto = texto.getBounds().getHeight();
+				anchoTexto = texto.getBounds().getWidth();
+				if(x+anchoTexto>this.getWidth())	//cambio de línea
 					{
-					Font f=g2.getFont().deriveFont((float)(num*scale));
-					TextLayout texto = new TextLayout(wc,f,g2.getFontRenderContext());
-					//TextLayout contText = new TextLayout(" <"+nW.cont+"> ",f,g2.getFontRenderContext());
-					altoTexto = texto.getBounds().getHeight();
-					anchoTexto = texto.getBounds().getWidth();
-					if(x+anchoTexto>this.getWidth())	//cambio de línea
+					//Sumamos a todas las de la línea anterior el maxAlto de esa línea
+					for(int k=0;k<wordsInLine.size();k++)
 						{
-						//Sumamos a todas las de la línea anterior el maxAlto de esa línea
-						for(int i=0;i<wordsInLine.size();i++)
-							{
-							Word w2=wordsInLine.get(i);
-							w2.setY(w2.getY()+.75*maxAlto);
-							//System.out.println("Palabra "+w2.label+" en "+w2.x+", "+w2.y+" con altura "+w2.getText().getBounds());
-							}
-						wordsInLine.clear();
-						x=0;	
-						y+=maxAlto; 
-						maxAlto=altoTexto;
+						Word w2=wordsInLine.get(k);
+						w2.setY(w2.getY()+.75*maxAlto);
 						}
-					if(maxAlto<altoTexto)	
-						maxAlto=altoTexto;
-					nW.setX(x);
-					//nW.setY(y+.75*maxAlto);//debería ser directamente +maxAlto, pero no queda bien y no sé por qué. 
-					nW.setY(y);//debería ser directamente +maxAlto, pero no queda bien y no sé por qué. 
-										//luego está el tema de que cuando se está viendo una, si luego hay otra mayor, no va a tener en cuenta el maxAlto total.
-											//habría que ir guardando todas las que van en una línea y luego sumarlas a todas el maxAlto, durante el cambio de línea
-					nW.setText(texto);
-					nW.label=w;
-					wordsInLine.add(nW);
-					//nW.setContText(contText);
-					if(x+anchoTexto<this.getWidth())	
-						x+=anchoTexto;
+					wordsInLine.clear();
+					if(maxAncho<x)	maxAncho=x;
+					x=0;	
+					y+=maxAlto; 
+					maxAlto=altoTexto;
 					}
+				if(maxAlto<altoTexto)	
+					maxAlto=altoTexto;
+				nW.setX(x);
+				nW.setY(y);//debería ser directamente +maxAlto, pero no queda bien y no sé por qué. 
+									//luego está el tema de que cuando se está viendo una, si luego hay otra mayor, no va a tener en cuenta el maxAlto total.
+										//habría que ir guardando todas las que van en una línea y luego sumarlas a todas el maxAlto, durante el cambio de línea
+				nW.setText(texto);
+				nW.label=w;
+				wordsInLine.add(nW);
+				x+=anchoTexto;
 				}		
 			}
 		y+=maxAlto;//si no la última línea no se tiene en cuenta
@@ -718,152 +789,48 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 			{
 			Word w2=wordsInLine.get(i);
 			w2.setY(w2.getY()+.75*maxAlto);
-			//System.out.println("Palabra "+w2.label+" en "+w2.x+", "+w2.y+" con altura "+w2.getText().getBounds());
 			}
 		
-		if(y<=this.getHeight()-menuCloud.getBounds().height)	
+		if(y<=this.getHeight()-menuCloud.getBounds().height && x<=this.getWidth())	
 			{
-			//System.out.println("Terminamos, y es "+y+" frente a altura de "+this.getHeight());
 			end=true;
 			}
-		else	scale-=0.1;
-		//System.out.println("Escala es "+scale);
+		else	
+			{
+			if(scale>0.2)	scale-=0.1;
+			else			scale/=10;
+			}
 		}while(!end);
+		
+		textChanged=false;
 		}
 
-	/*
-	public void setWords(Graphics2D g2)
+	public synchronized void paintComponent(Graphics g) 
 		{
-		double y=0;
-		double x=0;
-		double altoTexto =0;
-		double anchoTexto=0;
-		double maxAlto=0,AreaText=0;		 
-		//animacion
-		//do{
-			Iterator it=words.keySet().iterator();
-			while(it.hasNext())
-				{			
-				String w=(String)it.next();
-				if(w.length()>0)
-					{
-					Word nW=words.get(w);
-					String wc=w.concat(" <"+nW.cont+"> ");
-					//float num=getProportion(wc,nW.cont,this.getWidth(),this.getHeight());
-					float num=nW.cont;
-					
-					//float num=words.get(w).intValue();
-					//if((float)num>(float)1)
-						{
-						Font f=g2.getFont().deriveFont((float)num);
-						TextLayout texto = new TextLayout(wc,f,g2.getFontRenderContext());
-						TextLayout contText = new TextLayout(" <"+nW.cont+"> ",f,g2.getFontRenderContext());
-						altoTexto = texto.getBounds().getHeight();
-						anchoTexto = texto.getBounds().getWidth();
-						if(x+anchoTexto>this.getWidth())	
-							{
-							x=0;	
-							y+=maxAlto; 
-							maxAlto=altoTexto;
-							}
-						if(maxAlto<altoTexto)	
-							maxAlto=altoTexto;
-						nW.setX(x);
-						nW.setY(y+maxAlto);//-altoTexto
-						nW.setText(texto);
-						nW.setContText(contText);
-						if(x+anchoTexto<this.getWidth())	
-							x+=anchoTexto;
-						if(anchoTexto>this.getWidth()*(float)0.95)
-							Enought=false;
-						}
-					}		
-				}
-			if(Enought)
-				{
-				if (Ajusta)reajusta(maxAlto,y);
-				}
-			else
-				reversa(maxAlto,y);
-		}*/
-	
-	public void paintComponent(Graphics g) 
-		{
-		Graphics2D g2=(Graphics2D)g;
-		setWords(g2);
-		drawWords(g2);				
+		if(textChanged || innerCall)	
+			setWords((Graphics2D)g);
+		drawWords((Graphics2D)g);				
 		}
-	private void reversa(double maxAlto,double y) 
-		{
-		float tamPasoEscala=(float)Math.abs((this.getHeight()-this.menuCloud.getHeight())-(y+maxAlto));
-		tamPasoEscala/=(float)4.2;
-		escala=(float)(((float)this.getHeight())/((float)(y+maxAlto)));
-		zoom=(float)zoom-((float)(zoom/tamPasoEscala)*((float)escala));
-		Enought=true;
-		Ajusta=false;
-		this.repaint();
-		}	
-	private void reajusta(double maxAlto,double y) {
-		if((this.getHeight()-this.menuCloud.getHeight())>(y+maxAlto)  )
-			{
-			if(((this.getHeight()-this.menuCloud.getHeight())-(y+maxAlto))>((this.getHeight()-this.menuCloud.getHeight())*0.081))
-				{
-					float tamPasoEscala=(float)Math.abs((this.getHeight()-this.menuCloud.getHeight())-(y+maxAlto));
-					tamPasoEscala/=(float)4.2;
-					escala=(float)(((float)(this.getHeight()-this.menuCloud.getHeight()))/((float)(y+maxAlto)));
-					zoom=(float)zoom+((float)(zoom/tamPasoEscala)*((float)escala));
-					tamPasoEscala+=contZoom;
-					//System.out.println("ajustando positivo"+contZoom);
-					contZoom+=1;
-					Ajusta=true;
-					this.repaint();
-				}
-			}
-		else if((y+maxAlto)>(this.getHeight()-this.menuCloud.getHeight()) )
-			{
-			if(((y+maxAlto)-(this.getHeight()-this.menuCloud.getHeight()))>((this.getHeight()-this.menuCloud.getHeight())*(float)0.081))
-				{
-					float tamPasoEscala=(float)Math.abs((this.getHeight()-this.menuCloud.getHeight())-(y+maxAlto));
-					tamPasoEscala/=(float)4.2;
-					escala=(float)(((float)this.getHeight())/((float)(y+maxAlto)));
-					zoom=(float)zoom-((float)(zoom/tamPasoEscala)*((float)escala));
-					tamPasoEscala+=contZoom;
-					contZoom+=1;
-					//System.out.println("ajustando"+contZoom);
-					Ajusta=true;
-					this.repaint();
-				}
-			}
-		else
-			Ajusta=false;
-	}
-	public void setAlto(int alto){
-		this.alto = alto;
-	}
-	public void setAncho(int ancho){
-		this.ancho = ancho;
-	}
+	
 	public int getId(){
 		return es.usal.bicoverlapper.kernel.Configuration.CLOUD_ID;
 	}
 	public void actionPerformed(ActionEvent e){
 		String comando=e.getActionCommand();
-		if (comando.equalsIgnoreCase(panelMenu.DESCRIPTION)){
+		if (comando.equalsIgnoreCase(MenuPanel.DESCRIPTION)){
 			setEnabledButon();
-			if (!this.myColor.equals(this.sesion.getDataLayer().getSelectionColor()))
+			if (!this.myColor.equals(sesion.getSelectionColor()))
 				this.colorSeleccion=this.myColor;
-			menuCloud.descButton.setEnabled(false);
-			nameC=panelMenu.DESCRIPTION;
+			nameC=MenuPanel.DESCRIPTION;
 			newSelection=true;
-			//ajusta=true;
 			this.actualizar();
 			this.repaint();
-		}else if(comando.equalsIgnoreCase(panelMenu.GO_TERMS)){
+		}else if(comando.equalsIgnoreCase(MenuPanel.GO_TERMS)){
 			setEnabledButon();
-			if (!this.myColor.equals(this.sesion.getDataLayer().getSelectedTupleColor()))
+			if (!this.myColor.equals(sesion.getSelectionColor()))
 				this.colorSeleccion=this.myColor;
-			menuCloud.goButton.setEnabled(false);
-			nameC=panelMenu.GO_TERMS;
+			//menuCloud.goButton.setEnabled(false);
+			nameC=MenuPanel.GO_TERMS;
 			newSelection=true;
 			//ajusta=true;
 			this.actualizar();
@@ -871,7 +838,7 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		}
 	}
 	public void stateChanged(ChangeEvent i){
-		zoom=(float)(menuCloud.sliderZoom.getValue()/(float)4.0);
+		//zoom=(float)(menuCloud.sliderZoom.getValue()/(float)4.0);
 		//System.out.println("Z: "+zoom);
 		this.repaint();
 	}
@@ -985,9 +952,127 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 			}
 		}
 	
+	private class MenuPanel extends JPanel implements ActionListener{
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -576605444831473458L;
+		public static final String DESCRIPTION="Description";
+		public static final String GO_TERMS="GO Terms";
+		//public static final String DISTRIBUTOR="Distributor";
+		static final int ZOOM_MIN = 10;
+		static final int ZOOM_MAX = 1600;
+		static final int ZOOM_INIT = 15;
+		
+		static final String textLabel=" Text: ";
+		static final String splitLabel=" Split: ";
+		static final String sizeLabel=" Size: ";
+		static final String ontoLabel=" Ontology: ";
+		JLabel tl=new JLabel(textLabel);
+		JLabel spl=new JLabel(splitLabel);
+		JLabel sil=new JLabel(sizeLabel);
+		JLabel onl=new JLabel(ontoLabel);
+		
+		String antName="";
+		String[] texts;
+		String[] splits;
+		String[] sizes;
+		String[] ontologies;
+		JComboBox text, split, size, ontology;
+		
+		static final int DEFINITION=0;
+		static final int GO_TERM=1;
+		static final int WORD1=0;
+		static final int WORD2=1;
+		static final int COMLETE=2;
+		static final int GENES=0;
+		static final int PVALUES=1;
+		static final int OCCURRENCES=2;//Deprecated
+		static final int ALL=0;
+		static final int BP=1;
+		static final int MF=2;
+		static final int CC=3;
+		
+		
+		public  MenuPanel(){
+			if(sesion.getMicroarrayData().searchByR==true)	
+				{
+				texts=new String[]{"definition", "go term"};
+				splits=new String[]{"1 word", "2 words"};
+		//		sizes=new String[]{"genes", "occurences"};
+				sizes=new String[]{"genes"};
+				ontologies=new String[]{"all", "bp", "mf", "cc"};
+				}
+			else											
+				{
+				texts=new String[]{"definition", "go term"};
+				splits=new String[]{"1 word", "2 words"};
+				//sizes=new String[]{"genes", "occurences"};
+				sizes=new String[]{"genes"};
+				ontologies=new String[]{"all", "bp", "mf", "cc"};
+				}
+
+			text=new JComboBox(texts);
+			split=new JComboBox(splits);
+			size=new JComboBox(sizes);
+			ontology=new JComboBox(ontologies);
+			text.setSelectedIndex(0);
+			split.setSelectedIndex(0);
+			size.setSelectedIndex(0);
+			ontology.setSelectedIndex(0);
+			text.addActionListener(this);
+			split.addActionListener(this);
+			size.addActionListener(this);
+			ontology.addActionListener(this);
+			ontology.setEnabled(false);
+			
+			this.add(tl);
+			this.add(text);
+			this.add(spl);
+			this.add(split);
+			this.add(sil);
+			this.add(size);
+			this.add(onl);
+			this.add(ontology);
+		}
+		
+		public void actionPerformed(ActionEvent e)
+			{
+			if(doNOTupdate)	{doNOTupdate=false; return;}
+			JComboBox cb = (JComboBox)e.getSource();
+			if(cb==text)
+				{
+				if(!antName.equals((String)cb.getSelectedItem()))	textChanged=true;
+				else		
+					textChanged=false;
+				}
+			else			
+				textChanged=false;
+			
+			if(cb==ontology && size.getSelectedIndex()==PVALUES)	got=null;
+			innerCall=true;
+			if(cb==text && textChanged)
+				{
+				if( ((String)cb.getSelectedItem()).equals("go term")	)
+					{
+					split.addItem("complete");
+					size.addItem("p-value");
+					ontology.setEnabled(true);
+					}
+				else
+					{
+					split.removeItem("complete");
+					size.removeItem("p-value");
+					ontology.setEnabled(false);
+					}
+				}
+	        antName = (String)cb.getSelectedItem();
+	        ((WordCloudDiagram)this.getParent()).update();
+	        }
+		}
 	
 	private class Word
-	{
+		{
 		TextLayout text;	
 		TextLayout contText;
 		String label;
@@ -1045,35 +1130,5 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 			this.contText = contText;
 		}
 		
-	}
-	}
-class panelMenu extends JPanel{
-	public static final String DESCRIPTION="Description";
-	public static final String GO_TERMS="GO Terms";
-	//public static final String DISTRIBUTOR="Distributor";
-	static final int ZOOM_MIN = 10;
-	static final int ZOOM_MAX = 1600;
-	static final int ZOOM_INIT = 15;
-	
-	JButton descButton= new JButton(DESCRIPTION);
-	JButton goButton= new JButton(GO_TERMS);
-	//JButton botonDistributor= new JButton(DISTRIBUTOR);
-	JSlider sliderZoom= new JSlider(JSlider.HORIZONTAL,ZOOM_MIN, ZOOM_MAX, ZOOM_INIT);
-	
-	public  panelMenu(){
-		descButton.setActionCommand(DESCRIPTION);
-		goButton.setActionCommand(GO_TERMS);
-	//	botonDistributor.setActionCommand(DISTRIBUTOR);
-		
-		sliderZoom.setMajorTickSpacing(40);
-		sliderZoom.setMinorTickSpacing(1);
-		sliderZoom.setPaintTicks(true);
-		//sliderZoom.setPaintLabels(true);
-
-		this.setLayout(new GridLayout(1,4));
-		this.add(goButton);
-		this.add(descButton);
-		//this.add(botonDistributor);
-		this.add(sliderZoom);
 	}
 }

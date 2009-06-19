@@ -195,32 +195,8 @@ class BubbleFocusControl extends FocusControl
                     nodosSeleccionados.clear();
                     nodosSeleccionados.add(item.getRow());
                     
-                   // if(sesion.getData()!=null)
-	                    {
-	                    //LinkedList lg=(LinkedList)item.get("genes");
-	                    /*Field ejeX, ejeY;//Los ejes que sean nos dan un poco igual, siempre que sea alguna de las condiciones
-						ejeX = sesion.getDataLayer().getXaxis();
-						ejeY = sesion.getDataLayer().getYaxis();*/
-						
-						/*
-						TupleSelection puntosSelec = new TupleSelection(ejeX.getName(),ejeY.getName(),ejeX.size());
-		            	for(int i=0;i<lg.size();i++)
-		            		{
-		            		String name=(String)lg.get(i);
-		            		int pos=0;
-		            		
-		            		for(int j=0;j<geneNames.length;j++)
-		            			{
-		            			if(geneNames[j].equals(name))	{pos=j; break;}
-		            			}
-		            		puntosSelec.setX(pos, true);
-		            		}
-						sesion.setSelectedPoints(puntosSelec, "Bubble");*/
-	                    //	ArrayList lg=(ArrayList)item.get("genes");
-		                //    String geneNames[]=this.sesion.getMicroarrayData().getGeneNames();
-						sesion.setSelectedBiclusters(new BiclusterSelection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
-	            		}
-                 	}
+                  	sesion.setSelectedBiclusters(new BiclusterSelection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
+	            	}
                 else if ( ts.containsTuple(item) ) //Ya estaba, lo quitamos, tanto si hay ctrl como si no
                 	{
                 	//System.out.println("Bubble Focus: Este nodo ya estaba, lo quitamos");

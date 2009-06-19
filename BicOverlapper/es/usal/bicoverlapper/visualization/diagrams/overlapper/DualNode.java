@@ -1,12 +1,15 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
+import java.awt.Color;
 import java.awt.Polygon;
 import java.awt.geom.Point2D;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 
+import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 
 /**
@@ -106,25 +109,103 @@ public class DualNode extends ForcedNode {
   public void draw(boolean dependent) 
   	{
     Overlapper p=(Overlapper)g.getApplet();
-    //System.out.println("dependente es "+dependent);
-    float radius=(float)(this.getHeight()*Math.log(this.subNodes.size()));
-   // float radius=this.getHeight();
+    float radius=(float)(this.getHeight()*Math.log(this.subNodes.size()+1));
     if(dependent)
     	{
 	    Point2D.Double p0=getMiddlePoint();
 	    this.position.setX(p0.x);
 	    this.position.setY(p0.y);
     	}
+    if(this.isDrawn())   		return;
+   
 	    
-	p.noFill();
-	p.stroke(0,200,0,255);
-    p.strokeWeight(2);
-  	p.rectMode(Overlapper.CENTER);
-  	p.ellipse((float)position.getX(), (float)position.getY(), radius, radius);
+    p.noFill();
+	Color c=p.paleta[Overlapper.foregroundColor];
+	p.stroke(c.getRed(),c.getGreen(),c.getBlue(),128);
+    p.rectMode(Overlapper.CENTER);
 
-    p.fill(100,100,100,100);
+  	p.ellipse((float)position.getX(), (float)position.getY(), radius, radius);
+  	
     this.setDrawn(true);
   }
+  
+  public float getRadius()
+  	{
+	  return (float)(this.getHeight()*Math.log(this.subNodes.size()+1));
+        
+  	}
+  //Método mejorado para dibujar piecharts
+  public void drawPie()
+	{
+	Overlapper bv=(Overlapper)g.getApplet();
+	final float env = 1.3f;
+	float ns=this.height;
+	int numSectors=this.clusters.size();
+	if(!isDrawnAsPiechart() && numSectors>=bv.nodeThreshold)
+		{
+		float x=(float)getX();
+        float y=(float)getY();
+       // float s=getSize();
+        //float senv=s*env;
+        float radius=getRadius();
+        
+        
+        //Para saber qué porción de círculo toca;
+        float step = Overlapper.TWO_PI / numSectors;
+	    //Para hacer un sector por grupo al que pertenece
+        int inter=0;
+        if(bv.isOnlyIntersecting())	inter=1;
+        if(numSectors>inter)
+	        {
+        	shownClusters=this.subNodes.values().iterator().next().shownClusters;
+	        Iterator<Cluster> itDraw=shownClusters.values().iterator();
+	        ArrayList<CustomColor> colors=new ArrayList<CustomColor>();
+	        ArrayList<Integer> sizes=new ArrayList<Integer>();
+	        for (int j=0; itDraw.hasNext(); j++)	//Tomamos el tamaño de las porciones por cada color
+	           	{
+	        	MaximalCluster c=(MaximalCluster)itDraw.next();
+		    	ClusterSet r = c.myResultSet;
+		    	CustomColor col = r.myColor;
+		    	if(!colors.contains(col))
+		    		{
+		    		colors.add(col);
+		    		sizes.add(1);
+		    		}
+		    	else
+		    		{
+		    		int ind=colors.indexOf(col);
+		    		int tam=sizes.get(ind);
+		    		sizes.set(ind, tam+1);
+		    		}
+	           	}
+	        
+	        float init=0;
+	        for(int i=0;i<colors.size();i++)
+	        	{
+	        	CustomColor col=colors.get(i);
+	        	bv.rectMode(JProcessingPanel.CENTER);
+	        	bv.fill(col.getR(), col.getG(), col.getB(),150);
+	        	bv.noStroke();
+	        	
+		        float end=init+step*sizes.get(i);
+		        
+		        //bv.arc(x+1, y+1, senv, senv, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
+		        bv.arc(x+1, y+1, radius, radius, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
+		        
+		        bv.stroke(255,255,255,255);
+		        bv.strokeWeight(1);
+		        for(int j=0;j<sizes.get(i);j++)
+			        {
+				   	//bv.line(x, y, (float)(x+ ns/2*Math.cos(init)), (float)(y+ ns/2*Math.sin(init)));
+		        	bv.line(x, y, (float)(x+ radius/2.0*Math.cos(init)), (float)(y+ radius/2.0*Math.sin(init)));
+		         	init+=step;
+			        }
+				bv.fill(0,0,0,255);
+		    	}
+		  	}
+       // setDrawnAsPiechart(true);
+		}//if(no ha sido ya pintada la piechart)
+	}
   
   public void refreshPosition()
   	{
@@ -158,6 +239,13 @@ public class DualNode extends ForcedNode {
 	return radius;
   	}
   
+  public boolean containsPoint(double x, double y) {
+	    double dx = position.getX()-x;
+	    double dy = position.getY()-y;
+	    double r=getRadius();
+	    
+	    return (Math.abs((float) dx) < r/2 && Math.abs((float) dy)<r/2);
+		 }
   /**
    * Returns the center of the cluster, computed as the mean of each cluster node's coordinates
    * returns	point with the coordinates of the middle point

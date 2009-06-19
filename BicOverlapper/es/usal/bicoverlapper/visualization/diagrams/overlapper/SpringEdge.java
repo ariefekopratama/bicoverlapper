@@ -11,7 +11,6 @@ import es.usal.bicoverlapper.utils.GraphPoint2D;
 public class SpringEdge extends Edge {
 	double k;//stiffness
 	double nl;//natural length.
-	double lengthFactor;
 	GraphPoint2D nullVector=null;
 	GraphPoint2D forceFrom=null;
 	GraphPoint2D forceTo=null;
@@ -19,7 +18,10 @@ public class SpringEdge extends Edge {
 	double kf=1;//Factor for stiffness if not equal (in prove)
 	double kt=1;
 	  
-    
+   public SpringEdge()
+   	{
+	   super();
+   	} 
   //This edge subclass applies a spring force between the two nodes it connects
   //The spring force formula is F = k(currentLength-nl)
   //This equation is one-dimensional, and applies to the straight line
@@ -34,20 +36,35 @@ public class SpringEdge extends Edge {
 		  nullVector=new GraphPoint2D(0,0);
 			forceFrom=new GraphPoint2D();
 			forceTo=new GraphPoint2D();
-				  lengthFactor=1;
 	  }
-
+  
+  public SpringEdge(Node a, Node b, Graph graph, double length, double stiffness)
+  	{
+	super(a, b);  
+    nullVector=new GraphPoint2D(0,0);
+	forceFrom=new GraphPoint2D();
+	forceTo=new GraphPoint2D();
+	
+	g=graph;
+	k=stiffness;
+	nl=length;
+  	}
+  
   /**
-   * Sets the natural legth of the spring. At this lenght the force that the edge applies to the connecting
+   * Sets the natural length of the spring. At this length the force that the edge applies to the connecting
    * nodes is zero
    * @param l	natural length of the spring
    */
-  public void setNaturalLength(double l) {
-    if (l > 10)
+  public void setNaturalLength(double l) 
+  	{
+    /*if (l > 10)
 	  nl = l;
     else
       nl = 10;
-  }
+      */
+	if(l>=(this.to.width+this.from.width)) nl = l;
+	//else	System.err.println("Error: spring length must greater than the size of the nodes");
+  	}
   
   /**
    * Returns the natural length of the SpringEdge
@@ -66,6 +83,10 @@ public class SpringEdge extends Edge {
 	    k = s;
 	  }
   
+  public double getStiffness() {
+	    return k;
+	  }
+  
   /**
    * Returns the force applied by the edge to the target node
    * @return	The point in which the node should be if only this force is applied to it
@@ -76,17 +97,17 @@ public class SpringEdge extends Edge {
 	    double dy = dY();
 	    double l = Math.sqrt((float) (dx*dx + dy*dy));
 	    k = bv.getStiffness();//TODO: mejor que cuando cambie se reactualice en todas las aristas y así no haya que rebuscarlo siempre con llamadas no?
-	  //  System.out.println("Stiffness: "+k);
-    	 k=k*kt;
+		 k=k*kt;
 	    
 		nl = bv.getEdgeLength();//El nl se cambia con el handle, y así no vamos a permitir el cambio!
-	      	    
+	    	    
 	    double f = k*(l-nl);
 	    
-		forceTo.setX(-f*dx/l);
+	    forceTo.setX(-f*dx/l);
 		forceTo.setY(-f*dy/l);
-	    //if (l > bv.getCloseness())					return forceTo;
-		//    else	    	  return nullVector;
+	     
+		//forceTo.setX(-f*dx);
+		//forceTo.setY(-f*dy);
 		return forceTo;
 		
 	  }
@@ -104,11 +125,10 @@ public class SpringEdge extends Edge {
 
 	    Overlapper bv=(Overlapper)g.getApplet();
 	    
-	    k = bv.getStiffness();
-	//    System.out.println("Stiffness: "+k);
+	   // k = bv.getStiffness();
     	
 	    k=k*kf;
-	    nl = bv.getEdgeLength();
+	    //nl = bv.getEdgeLength();
 		double f = k*(l-nl);
 
 		if(l>0)
@@ -118,15 +138,124 @@ public class SpringEdge extends Edge {
 			}
 		else
 			{
-			forceFrom.setX(0);
-			forceFrom.setY(0);
+			//forceFrom.setX(0);
+			//forceFrom.setY(0);
 			System.out.println("l es cero!!!----------------------");
 			}
-		//forceFrom.setX(f*dx/l);
-		//forceFrom.setY(f*dy/l);
+		//forceFrom.setX(f*dx);
+		//forceFrom.setY(f*dy);
 		
 		return forceFrom;
 	  }
+    
+    
+    /**
+     * Sugiyama force for horizontal dummy edges
+     */
+      public GraphPoint2D getSugiyamaForceS7() 
+  	  	{  
+  		double dx = dX();
+  	    double dy = dY();
+  	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+   	    double f = k*Math.log(l/nl);
+  		forceFrom.setX(f*dx);		
+  		forceFrom.setY(f*dy);	
+		return forceFrom;
+  	  }
+      
+      /**
+       * Sugiyama force for vertical dummy edges
+       */
+        public GraphPoint2D getSugiyamaForceS8() 
+    	  	{  
+    		double dx = dX();
+    	    double dy = dY();
+    	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+     	    double f = k*Math.log(l/nl);
+    	    forceFrom.setX(f*dx);		
+    	    forceFrom.setY(f*dy);	
+    	    return forceFrom;
+    	    }
+     	   
+        
+        /**
+         * Sugiyama spring force between center dummy nodes and exclusive group nodes
+         */
+          public GraphPoint2D getSugiyamaForceS5() 
+      	  	{  
+      		double dx = dX();
+      	    double dy = dY();
+      	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+       	    double f = k*Math.log(l/nl);
+      		forceFrom.setX(f*dx);
+      		forceFrom.setY(f*dy);	
+       	    return forceFrom;
+      	  }
+          
+          
+          /**
+           * Sugiyama attraction force between vertex dummy nodes and intersection group nodes
+           */
+            public GraphPoint2D getSugiyamaForceA1() 
+        	  	{  
+        		double dx = dX();
+        	    double dy = dY();
+        	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+         	    double f = k*l;
+        		//if(l<nl)	{	forceFrom.setX(f*dx/l);		forceFrom.setY(f*dy/l);	}
+         	   	forceFrom.setX(f*dx);		
+         	   	forceFrom.setY(f*dy);	
+         	   	return forceFrom;
+         	   
+        	  }
+            
+            /**
+             * Sugiyama attraction force between vertex dummy nodes and center dummy node
+             */
+              public GraphPoint2D getSugiyamaForceA2() 
+          	  	{  
+          		double dx = dX();
+          	    double dy = dY();
+          	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+           	    double f = k*l;
+          		if(l>0)	{	forceFrom.setX(f*dx/l);		forceFrom.setY(f*dy/l);	}
+          		else		System.out.println("l es cero en A2!!!----------------------");
+          		return forceFrom;
+          	  }
+            
+            //NOTE:!!! these last two are not really edges!!!
+            /**
+             * Sugiyama repulsion force between nodes in different groups
+             * or between a dummy center node and a node in a different group
+             */
+              public GraphPoint2D getSugiyamaForceR1() 
+          	  	{  
+          		double dx = dX();
+          	    double dy = dY();
+          	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+          	    double f=0;
+           	    if(l<nl)	f = -k*l;
+           	    
+           	    if(l>0)	{	forceFrom.setX(f*dx/l);		forceFrom.setY(f*dy/l);	}
+          		else		System.out.println("l es cero en R1!!!----------------------");
+          		return forceFrom;
+          	  }     
+              /**
+               * Sugiyama repulsion force between center dummy nodes
+               */
+                public GraphPoint2D getSugiyamaForceR2() 
+            	  	{  
+            		double dx = dX();
+            	    double dy = dY();
+            	    double l = Math.sqrt((float) (dx*dx + dy*dy));
+            	    double f=0;
+            	    
+             	    if(l<nl)	f = -k*l;
+             	    
+             	    if(l>0)	{	forceFrom.setX(f*dx/l);		forceFrom.setY(f*dy/l);	}
+            		else		System.out.println("l es cero en R2!!!----------------------");
+            		return forceFrom;
+            	  }
 
     /**
      * Returns the force applied by the edge to the source dual node 
@@ -137,7 +266,7 @@ public class SpringEdge extends Edge {
      * @return	The point in which the node should be if only this force is applied to it
      */
       public GraphPoint2D getDualForceFrom() 
-  	  	{  
+  	  	{
   		double dx = dX();
   	    double dy = dY();
   	    double l = Math.sqrt((float) (dx*dx + dy*dy));
@@ -163,23 +292,9 @@ public class SpringEdge extends Edge {
   			}
   		
   		return forceFrom;
-  	  }
+  	   }
 
     
-    /**
-     * @deprecated
-     * @return length factor
-     */
-public double getLengthFactor() {
-	return lengthFactor;
-}
-/**
- * @deprecated
- * @param lengthFactor
- */
-public void setLengthFactor(double lengthFactor) {
-	this.lengthFactor = lengthFactor;
-}
 /*
 public double getKf() {
 	return kf;

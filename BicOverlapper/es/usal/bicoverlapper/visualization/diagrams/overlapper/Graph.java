@@ -14,14 +14,13 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 
+import es.usal.bicoverlapper.analysis.geneticAlgorithms.GAThread;
+import es.usal.bicoverlapper.analysis.geneticAlgorithms.GeneticAlgorithm;
+import es.usal.bicoverlapper.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
-import es.usal.bicoverlapper.utils.geneticAlgorithms.GAThread;
-import es.usal.bicoverlapper.utils.geneticAlgorithms.GeneticAlgorithm;
-import es.usal.bicoverlapper.utils.geneticAlgorithms.GraphGeneticAlgorithm;
 import gishur.core.SimpleList;
-import gishur.x.Intersection;
 import gishur.x.XPoint;
 import gishur.x.XPolygon;
 import gishur.x.XSegment;
@@ -125,16 +124,15 @@ public class Graph {
    * Identifier for dual nodes
    */
   public static final int DUAL=11;//Special treatment to dual nodes
-  
   /**
    * Identifier for topography map
    */
-  public static final int TOPOGRAPHY=12;//Drawing of topography map
+  public static final int SURFACE=12;//Drawing of topography map
 
   /**
    * Drawing of exact groups
    */
-  public static final int EXACT=14;//Drawing of topography map
+  public static final int ZONE=14;//Drawing of topography map
 
   public static final int MISPLACEMENT=20;
   public static final int AREA=21;
@@ -467,21 +465,22 @@ public class Graph {
    */
   public void draw(int [] priorities)
   	{
-	Iterator<Node> itGraph=nodes.values().iterator();
-	while(itGraph.hasNext())	//Para evitar que se dibujen varias veces en caso de q estén en varios clusters
+	for(Node n : nodes.values())
 	  	{	
-		Node n =(Node)itGraph.next();
 		n.setDrawn(false);
 		n.setDrawnAsPiechart(false);
 		n.setDrawnAsLabel(false);
 	  	}
 	
+	for(DualNode dn : dualNodes.values())		dn.setDrawn(false);
+
 	topographyDrawn=false;
 	dualDrawn=false;
 
 	for(int i=0;i<priorities.length;i++)	drawComponent(priorities[i]);
 	this.getApplet().rectMode(JProcessingPanel.CORNER);
   	}
+  
   
   /**
    * Draws one of the component of the graphs, as explained in draw(int[] priorities)
@@ -505,10 +504,22 @@ public class Graph {
 		    	switch(component)
 					{
 					case HULL:
-						if(bv.isDrawHull())				c.drawHulls();
+						if(bv.isDrawHull())	
+							{
+							if(bv.sugiyama)	((SugiyamaCluster)c).drawHulls();
+							else			c.drawHulls();
+							}
 						break;
 					case NODE:
-						if(bv.isDrawNodes())			c.drawNodes();
+						if(bv.isDrawNodes())			
+							{
+							if(bv.drawDual)	this.drawDualNodes();
+							else
+								{
+								if(bv.sugiyama) ((SugiyamaCluster)c).drawNodes();
+								else			c.drawNodes();
+								}
+							}
 						break;
 					case HULLLABEL:
 						if(bv.isDrawClusterLabels())	c.drawHullLabels();
@@ -517,22 +528,26 @@ public class Graph {
 						if(bv.isShowLabel())			c.drawNodeLabels();
 						break;
 					case EDGE:
-						if(bv.isShowEdges())	drawEdges();//TODO: depende de C y lo hacemos una vez por cluster!	
+						if(bv.isShowEdges())
+							{
+							if(!bv.drawDual)	drawEdges();//TODO: depende de C y lo hacemos una vez por cluster!
+							else				drawDualEdges();
+							}
 						break;
 					case DETAIL:
 						if(bv.isDrawNodes())	c.drawDetails();//TODO: FALTA: ahora mismo el componente integrado a NODE
 						break;
-					case TOPOGRAPHY:
+					case SURFACE:
 						if(bv.isDrawTopography() && !topographyDrawn)		
 							{
 							//double start=System.currentTimeMillis();
-							c.drawTopography2(dualNodes, maxZones);//contour surfaces
-							if(bv.isDrawPlateau())	c.drawTopography(dualNodes, maxZones);//plateaus
+							c.drawSurfaces(dualNodes, maxZones);//contour surfaces
+							//if(bv.isDrawPlateau())	c.drawTopography(dualNodes, maxZones);//plateaus
 							//System.out.println("Topografía tarda "+(System.currentTimeMillis()-start));
 							}
 						break;
-					case EXACT:
-						c.drawTopography(dualNodes, maxZones);
+					case ZONE:
+						if(bv.isDrawZones())	c.drawTopography(dualNodes, maxZones);
 						break;
 			    	}
 		    	}//if(!excluded)
@@ -544,10 +559,15 @@ public class Graph {
 		switch(component)
 			{
 			case EDGE:
-				if(bv.isShowEdges())	drawEdges();	
+				if(bv.isShowEdges())	
+					{
+					if(!bv.isDrawDual())	drawEdges();
+					else					drawDualEdges();
+					}
 				break;
 			case HOVER:
-				drawHoverNode();
+				if(!bv.drawDual)	drawHoverNode();
+				else				drawHoverDualNode();
 				break;
 			case SELECT:
 				drawSelectedNodes();
@@ -559,7 +579,7 @@ public class Graph {
 				if(bv.isDrawErrors())	drawErrors();
 				break;
 			case DUAL:
-				if(bv.isDrawDual() && !dualDrawn)		drawDual();
+				//if(bv.isDrawDual() && !dualDrawn)		drawDual();
 				break;
 			case PIECHART:
 				if(bv.isDrawPiecharts())	drawPies();
@@ -579,8 +599,8 @@ public class Graph {
 		case NODELABEL:
 		case DETAIL:
 		//case PIECHART:
-		case TOPOGRAPHY:	//TODO: estos dos últimos no deberían estar aquí
-		case EXACT:
+		case SURFACE:	//TODO: estos dos últimos no deberían estar aquí
+		case ZONE:
 			return true;
 		}
 	return false;
@@ -588,13 +608,26 @@ public class Graph {
   
   void drawPies()
   	{
-	Iterator<Node> itGraphN=nodes.values().iterator();
-	while(itGraphN.hasNext())
-	  	{
-	    ForcedNode n=(ForcedNode)itGraphN.next();
-	    if(!applet.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
-			n.drawPie();
-	    }	  
+	if(!this.getApplet().drawDual)
+		{
+		Iterator<Node> itGraphN=nodes.values().iterator();
+		while(itGraphN.hasNext())
+		  	{
+		    ForcedNode n=(ForcedNode)itGraphN.next();
+		    if(!applet.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
+				n.drawPie();
+		    }
+		}
+	else
+		{
+		Iterator<DualNode> itGraphN=this.dualNodes.values().iterator();
+		while(itGraphN.hasNext())
+		  	{
+		    DualNode n=itGraphN.next();
+		    if(!applet.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
+				n.drawPie();
+		    }
+		}
   	}
   
   /**
@@ -602,27 +635,35 @@ public class Graph {
    */
   void drawDual()
   	{
-	 if(dualNodes!=null)
+	drawDualEdges();
+	drawDualNodes();
+	dualDrawn=true;
+   	}
+  
+  void drawDualEdges()
+  	{
+	  if(dualNodes!=null)
 	 	{
-		/*Iterator<Edge> ite=dualEdges.values().iterator();
+		Iterator<Edge> ite=dualEdges.values().iterator();
 		while(ite.hasNext())
 			{
 			Edge e=ite.next();
 			e.draw();
-			}*/
-		Iterator<DualNode> itGraph=dualNodes.values().iterator();
-		while(itGraph.hasNext())
-		   {
-		   DualNode dn=itGraph.next();
-		  // if(!dn.isDrawn())
-			   {
-			   if(applet.isComputeDualLayout())	dn.draw(false);
-			   else								dn.draw(true);
-			   }
-		   }
+			}
 		 }
-	dualDrawn=true;
-   	}
+	}
+  void drawDualNodes()
+  	{
+	Iterator<DualNode> itGraph=dualNodes.values().iterator();
+	while(itGraph.hasNext())
+	   {
+	   DualNode dn=itGraph.next();
+	   if(applet.isComputeDualLayout())	dn.draw(false);
+	   else								dn.draw(true);
+	   }
+	}
+  
+  
   
   /**
    * Draws the edges in the graph
@@ -813,11 +854,12 @@ public void drawHoverNode()
 	  	{
 	    int factor=1;
 	    if(bv.isSizeRelevant())    	factor=hoverNode.clusters.size();
-		    
+		
 	    Iterator<Node> itDrawMates=hoverNode.mates.values().iterator();
 		Color c=bv.paleta[Overlapper.hoverColor];
 		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
 		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
+		bv.strokeWeight(2);
 		bv.rectMode(JProcessingPanel.CENTER);
 		//TODO: Excesivamente lento con clusters muy solapados
 		while(itDrawMates.hasNext())
@@ -829,7 +871,26 @@ public void drawHoverNode()
 	  			else			bv.rect((float) n.getX(), (float) n.getY(), n.width*factor, n.height*factor);
 	  			n.setDrawn(true);
 		  		}
-			 }
+	  		 }
+		if(bv.isDrawDual())
+			{
+			//hoverNode.centerNode
+			Iterator<DualNode> it=dualNodes.values().iterator();
+			while(it.hasNext())
+				{
+				DualNode dn=it.next();
+				if(dn.subNodes.containsValue(hoverNode))
+					{
+					Iterator<Edge> ite=dualEdges.values().iterator();
+					while(ite.hasNext())
+						{
+						Edge e=ite.next();
+						if(e.getFrom()==dn)		e.draw();
+						}
+					break;
+					}
+				}
+			}
 	  	
 	  	if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.label))
 		    	{
@@ -838,18 +899,57 @@ public void drawHoverNode()
 				int ls=bv.getLabelSize();
 				float maxLs=bv.getMaxLabelSize();
 				double step=(maxLs-ls)/(max-min);
+				if(max-min==0)	step=(maxLs-ls)/(max-min+1);
+				else			step=(maxLs-ls)/(max-min);
 				double tam=ls+step*hoverNode.getClusters().size();
 		    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
 	    		else				    		bv.textSize((int)tam+1);
 
-	  	    	bv.fill(0,0,0,255);
-		    	bv.text(hoverNode.label, (float)(hoverNode.position.getX()+0.5), (float)(hoverNode.position.getY()-hoverNode.getHeight()+0.5));
+		    	Color chn=bv.paleta[Overlapper.nodeLabelBackgroundColor];
+		    	bv.fill(chn.getRed(),chn.getGreen(),chn.getBlue(),255);
+		    	bv.text(hoverNode.label, (float)Math.floor(hoverNode.position.getX()+1), (float)Math.floor(hoverNode.position.getY()-hoverNode.getHeight()+1));
 			    	
-		    	bv.fill(255,255,255,255);
-		    	bv.text(hoverNode.label, (float)hoverNode.position.getX(), (float)hoverNode.position.getY()-hoverNode.getHeight());
+		    	Color cnb=bv.paleta[Overlapper.hoverNodeLabelColor];
+	  	    	bv.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
+		    	bv.text(hoverNode.label, (float)Math.floor(hoverNode.position.getX()), (float)Math.floor(hoverNode.position.getY()-hoverNode.getHeight()));
 		    	}
 	  	}
   	}
+
+/**
+ * Draws the Hover (dual) node, highlighted, and also highlights their dual neighbors
+ *
+ */
+public void drawHoverDualNode()
+	{
+  Overlapper bv=(Overlapper)applet;
+	
+  if(hoverNode!=null)
+	  	{
+	  	DualNode hn=(DualNode)hoverNode;
+	      
+	    Iterator<DualNode> itDrawMates=this.dualNodes.values().iterator();
+		Color c=bv.paleta[Overlapper.hoverColor];
+		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
+		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
+		bv.rectMode(JProcessingPanel.CENTER);
+		
+		while(itDrawMates.hasNext())
+	  		{
+	  		DualNode n=itDrawMates.next();
+	  		float cic=n.clustersInCommon(hn);
+	  		//if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.label) && !nodeExcluded(n))
+	  		if(cic>0)
+		  		{
+	  			bv.strokeWeight((int)Math.log(cic));
+	  			float r=n.getRadius();
+	  			bv.ellipse((float) n.getX(), (float) n.getY(), r, r);
+	  			n.setDrawn(true);
+		  		}
+	  		 }
+		bv.strokeWeight(0);
+	  	}
+	}
   
 /**
  * Draws the Hover node, highlighted, and also highlights their neighbors (all the nodes directly connected to it)
@@ -885,7 +985,7 @@ public void drawHoverHull()
 		bv.strokeWeight(3);
 		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
 		bv.beginShape();
-		PathIterator pit=bv.selectionArea.getPathIterator(null);
+		/*PathIterator pit=bv.selectionArea.getPathIterator(null);
 		double[] seg=new double[6];
 		
 		while(!pit.isDone())
@@ -893,8 +993,12 @@ public void drawHoverHull()
 			pit.currentSegment(seg);
 			bv.vertex((float)seg[0], (float)seg[1]);
 			pit.next();
-			}
+			}*/
+		for(Point2D.Double p:bv.selectionArea)
+			bv.vertex((float)p.x, (float)p.y);
+			
 		bv.endShape();
+		
 		}
 	  //-------------- selected nodes
 	  Iterator<Node> itGraph=selectedNodes.values().iterator();
@@ -918,12 +1022,14 @@ public void drawHoverHull()
 	    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
     		else				    		bv.textSize((int)tam+1);
     	
-	    	bv.text(n.getLabel(), (float)(n.getX()+0.5), (float)(n.getY()-n.getHeight()+0.5));
-	
+	    	//bv.text(n.getLabel(), (float)(n.getX()+0.5), (float)(n.getY()-n.getHeight()+0.5));
+	    	bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
+		    
 	    	
 	    	if(n.isGene())	bv.fill(195, 250, 190, 255);
 	    	else			bv.fill(165, 175, 250, 255);	
-	    	bv.text(n.getLabel(), (float)n.getX(), (float)n.getY()-n.getHeight());
+	    	//bv.text(n.getLabel(), (float)n.getX(), (float)n.getY()-n.getHeight());
+	    	bv.text(n.getLabel(), (float)Math.floor(n.getX()), (float)Math.floor(n.getY()-n.getHeight()));
 	    	
 			if(selectedNodes.containsKey(n.label))
 				{
@@ -2025,7 +2131,7 @@ public void intelligentFastHill()
 		{
 		Node n=it.next();
 		double fail=this.getFailedPositionMetric(n);
-	//	if(fail>0)
+		if(fail>0)
 			{
 			correctPosition(n);
 			}
@@ -2041,24 +2147,26 @@ public void intelligentFastHill()
  */
 public void correctPosition(Node n)
 	{
-	System.out.println("---Corrigiendo posición de "+n.label+" en "+n.clusters.size()+" contornos");
-	Iterator<Cluster> it=n.clusters.values().iterator();
-	Polygon p1=it.next().hull;
-	if(n.clusters.size()>1)//Si está en más de un cluster, la intersección de sus contornos
-		{
-		while(it.hasNext())
+	try{
+		System.out.println("---Corrigiendo posición de "+n.label+" en "+n.clusters.size()+" contornos");
+		Iterator<Cluster> it=n.clusters.values().iterator();
+		Polygon p1=it.next().hull;
+		if(n.clusters.size()>1)//Si está en más de un cluster, la intersección de sus contornos
 			{
-			p1=intersect(p1,it.next().hull);
+			while(it.hasNext())
+				{
+				p1=intersect(p1,it.next().hull);
+				}
+			if(p1.npoints>0)
+				{
+				Point2D.Double pos=getCenter(p1);
+				n.setPosition((float)pos.x, (float)pos.y);
+				System.out.println("La intersección tiene un área de "+getArea(p1)+" con "+p1.npoints+" puntos, colocamos en "+pos.x+", "+pos.y);
+				}
+			else	System.out.println("Área de intersección nula!");
 			}
-		if(p1.npoints>0)
-			{
-			Point2D.Double pos=getCenter(p1);
-			n.setPosition((float)pos.x, (float)pos.y);
-			System.out.println("La intersección tiene un área de "+getArea(p1)+" con "+p1.npoints+" puntos, colocamos en "+pos.x+", "+pos.y);
-			}
-		else	System.out.println("Área de intersección nula!");
-		}
-	else	System.out.println("Es un nodo en un solo área");
+		else	System.out.println("Es un nodo en un solo área");
+		}catch(Exception e){System.out.println("No se pudo corregir este contorno"); e.printStackTrace();}
 	}
 
 /**
@@ -2134,29 +2242,40 @@ public static Polygon intersect(Polygon p1, Polygon p2)
 
 public static Polygon intersect(Polygon p1, Polygon p2)
 	{
+	try{
 	Polygon p=new Polygon();
-	
+	/*
 	XPoint[] puntos1=new XPoint[p1.npoints];
 	XPoint[] puntos2=new XPoint[p2.npoints];
-	//ArrayList<XPoint> puntos1=new ArrayList<XPoint>();
-	//ArrayList<XPoint> puntos2=new ArrayList<XPoint>();
 	
 	for(int i=0;i<p1.npoints-1;i++)	puntos1[i]=new XPoint(p1.xpoints[i], p1.ypoints[i]);//Hasta npoints-1 porque el último punto es el primero
 	for(int i=0;i<p2.npoints-1;i++)	puntos2[i]=new XPoint(p2.xpoints[i], p2.ypoints[i]);
 	XPolygon xp1=new XPolygon(puntos1);
-	XPolygon xp2=new XPolygon(puntos2);
-	/*for(int i=0;i<p1.npoints-1;i++)	puntos1.add(new XPoint(p1.xpoints[i], p1.ypoints[i]));//Hasta npoints-1 porque el último punto es el primero
+	XPolygon xp2=new XPolygon(puntos2);*/
+	
+	ArrayList<XPoint> puntos1=new ArrayList<XPoint>();
+	ArrayList<XPoint> puntos2=new ArrayList<XPoint>();
+	for(int i=0;i<p1.npoints-1;i++)	puntos1.add(new XPoint(p1.xpoints[i], p1.ypoints[i]));//Hasta npoints-1 porque el último punto es el primero
 	for(int i=0;i<p2.npoints-1;i++)	
 		{//Aseguramos que no se repinten puntos, pues esto da problemas al algoritmo de intersección
 		XPoint punto=new XPoint(p2.xpoints[i], p2.ypoints[i]);
-		while(puntos1.contains(punto))	{punto.x=punto.x+5;}
-		puntos2.add(punto);
+		/*while(puntos1.contains(punto))	
+			{
+			punto.x=punto.x+5;
+			punto.y=punto.y-3;
+			}
+		if(!puntos2.contains(punto))	puntos2.add(punto);
+		*/
+		if(puntos1.contains(punto))	return p;
 		}
-	
-	XPolygon xp1=new XPolygon((XPoint[])puntos1.toArray());
-	XPolygon xp2=new XPolygon((XPoint[])puntos2.toArray());
-*/
-	
+	XPoint [] pa1=new XPoint[puntos1.size()];
+	for(int i=0;i<pa1.length;i++)	pa1[i]=puntos1.get(i);
+	XPoint [] pa2=new XPoint[puntos2.size()];
+	for(int i=0;i<pa2.length;i++)	pa2[i]=puntos2.get(i);
+	XPolygon xp1=new XPolygon(pa1);
+	XPolygon xp2=new XPolygon(pa2);
+
+	//----
 	if(xp1==null || xp2==null)	System.out.println("Error, uno de los polígonos es nulo!!!");
 	SimpleList l=xp1.polygonIntersection(xp2);
 	System.out.println("Intersección de "+l.length()+" poligonos");
@@ -2176,8 +2295,8 @@ public static Polygon intersect(Polygon p1, Polygon p2)
 		//System.out.println("s"+i+": de "+punto1.x+", "+punto1.y+" --> "+punto2.x+", "+punto2.y);
 		System.out.println("s"+i+": de "+punto1.x+", "+punto1.y+" --> "+punto2.x+", "+punto2.y);
 		}
-	//}catch(NullPointerException e){e.printStackTrace(); return null;}
 	return p;
+	}catch(NullPointerException e){System.out.println("No se pudo hacer la interseccion"); e.printStackTrace(); return null;}
 	}
 
 /*
@@ -2707,43 +2826,6 @@ void buildCompleteDualGraph()
 			}
 		}
 	//2) Adding edges
-	/*
-	Object[] lista=dualNodes.values().toArray();
-	for(int i=0;i<dualNodes.size();i++)
-		{
-		//DualNode dn=it2.next();
-		DualNode dn=(DualNode)(lista[i]);
-	//	Iterator<DualNode> it3=dualNodes.values().iterator();
-		//while(it3.hasNext())
-		for(int j=i+1;j<dualNodes.size();j++)
-			{
-			//DualNode dn2=it3.next();
-			DualNode dn2=(DualNode)(lista[j]);
-			//if(dn!=dn2)
-				{
-				Iterator<Cluster> itbic=dn.clusters.values().iterator();
-				while(itbic.hasNext())
-					{
-					Cluster c=itbic.next();
-					if(dn2.clusters.containsValue(c))//Coinciden, así que creamos una arista entre ellos	
-						{
-						SpringEdge e=new SpringEdge(dn, dn2);
-						e.setGraph(this);
-						e.nl=this.getApplet().getEdgeLength()+(dn.getGroupRadius()+dn2.getGroupRadius());
-						e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size()*2;
-						//System.out.println("Longitud para edge de "+e.nl+", radios de "+dn.getGroupRadius()+" y "+dn2.getGroupRadius());
-						if(!dualEdges.containsValue(e) && !dualEdges.containsValue(new SpringEdge(dn2, dn)))	
-							{
-							System.out.println("Añadiendo arista de "+dn.label+" a "+dn2.label);
-							dualEdges.put(e.hashCode(), e);
-							break;
-							}
-						}
-					}
-				}
-			}
-	
-	*/
 	Iterator<DualNode> it2=dualNodes.values().iterator();
 	while(it2.hasNext())
 		{
@@ -2762,8 +2844,13 @@ void buildCompleteDualGraph()
 						{
 						SpringEdge e=new SpringEdge(dn, dn2);
 						e.setGraph(this);
-						e.nl=this.getApplet().getEdgeLength()+(dn.getGroupRadius()+dn2.getGroupRadius());
-						e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size();
+						//e.nl=this.getApplet().getEdgeLength()+(dn.getGroupRadius()+dn2.getGroupRadius());
+						e.nl=(dn.getGroupRadius()+dn2.getGroupRadius())*1.5;
+						//e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size();
+						int clustersInCommon=dn2.clustersInCommon(dn);
+						//e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size();
+						e.k=this.getApplet().getStiffness()*clustersInCommon*(dn.subNodes.size()+dn2.subNodes.size());
+						e.width=clustersInCommon-1;
 						//System.out.println("Longitud para edge de "+e.nl+", radios de "+dn.getGroupRadius()+" y "+dn2.getGroupRadius());
 						if(!dualEdges.containsValue(e) && !dualEdges.containsValue(new SpringEdge(dn2, dn)))	
 							{
@@ -2778,6 +2865,58 @@ void buildCompleteDualGraph()
 			
 		}
 	return;
+	}
+
+/**
+ * For the Noack LinLog model, returns the sum of the distances of all edges
+ */
+public double getSumEdgeLength()
+	{
+	Iterator<Edge> it=this.edges.values().iterator();
+	double sum=0;
+	while(it.hasNext())
+		{
+		Edge e=it.next();
+		sum+=e.length();
+		}
+	return sum;
+	}
+public double getSumLogNodeDistance()
+	{
+	double sum=0;
+	Iterator<Node> it=nodes.values().iterator();
+	for (int i=0; i<nodes.size(); i++) //N(N-1)/2 complexity
+	  	{
+		Node n=it.next();
+		//------------------- expansion force --------------------------------
+	    Iterator<Node> it2=nodes.values().iterator();
+		for(int j=0;j<=i;j++)	it2.next();	//El mejor modo que he encontrado de aplicar el n(n-1)/2
+		for (int j=i+1; j<nodes.size() && it2.hasNext(); j++) 
+			{
+			Node b = it2.next();
+			double dx=n.getX()-b.getX();
+			double dy=n.getY()-b.getY();
+			sum+=Math.log(Math.sqrt(dx*dx+dy*dy));
+			}
+		}
+	return sum;
+	}
+
+/**
+ * Returns the minimal energy by minimization of LinLog as derived from Noack2004 theorem 1
+ */
+public double getMinimalLinLogEnergy()
+	{
+	return ((nodes.size()-1)*nodes.size())/2.0;
+	}
+/**
+ * Gets the LinLog energy as described in Noack2004
+ * @return
+ */
+public double getLinLogEnergy()
+	{
+	double energy=getSumEdgeLength()-getSumLogNodeDistance();
+	return energy;
 	}
 
 /**
@@ -2834,6 +2973,80 @@ void buildDualGraph()
 				}
 			}
 		}
+	}
+
+/**
+ * Builds Sugiyama2007 structure of edges, dummy edges and dummy nodes
+ */
+public void buildSugiyamaStructure()
+	{
+	Iterator<ClusterSet> itGraph=results.values().iterator();//Hull drawing
+	
+	for (int i=0; i<results.size(); i++) 
+	  	{
+	    ClusterSet r = (ClusterSet)itGraph.next();
+	    for(int j=0;j<r.getClusters().size();j++)
+	      	{
+	    	SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);
+	    	//1) dummy nodes
+	    	ForcedNode dummyCenter=new ForcedNode(this, c.getCenterPos());
+	    	c.setCenter(dummyCenter);
+	    	
+	    	ForcedNode top=new ForcedNode(this, c.getTopPos());
+	    	c.setTop(top);
+	    	ForcedNode bottom=new ForcedNode(this, c.getBottomPos());
+	    	c.setBottom(bottom);
+	    	
+	    	ForcedNode left=new ForcedNode(this, c.getLeftPos());
+	    	c.setLeft(left);
+	    	ForcedNode right=new ForcedNode(this, c.getRightPos());
+	    	c.setRight(right);
+	    	
+	    	//2) vertical and horizontal dummy edges (S7 and S8)
+	    	//System.out.println("Número de nodos: "+this.nodes.size());
+	    	double Cs=0.3*3/this.nodes.size();
+	    	//double ls=40+c.getNodes().size()*c.getNode(i).height;
+	    	double ls=40+2*Math.PI*Math.sqrt(c.getNodes().size()*c.getNode(i).height);
+	    	SpringEdge e=new SpringEdge(top, bottom, this, ls*2, Cs);
+			c.setVertical(e);
+		
+			e=new SpringEdge(left, right, this, ls*2, Cs);
+			c.setHorizontal(e);
+		
+			//2.5) Edges between center and vertices (it's not specified which force is used for that, i get S5 too)
+			e=new SpringEdge(dummyCenter, top, this, ls,Cs);
+			c.axials.add(e);
+			e=new SpringEdge(dummyCenter, bottom, this, ls, Cs);
+			c.axials.add(e);
+			e=new SpringEdge(dummyCenter, left, this, ls, Cs);
+			c.axials.add(e);
+			e=new SpringEdge(dummyCenter, right, this, ls, Cs);
+			c.axials.add(e);
+			
+	    	for(int k=0;k<c.getNodes().size();k++)
+	    		{
+		    	//3) edges from the center to the exclusive nodes (nodes that aren't in another cluster) (S5)
+	    		if(c.getNode(k).clusters.size()==1)
+	    			{
+	    			e=new SpringEdge(dummyCenter, c.getNode(k), this, ls/3.0, Cs);//0.3 to 1
+					c.getRadials().add(e);
+	    			}
+	    		//4) edges to the periphery if non exclusive (option 1 in page 1651)
+	    		else
+	    			{
+	    			e=new SpringEdge(top, c.getNode(k), this, ls, Cs);
+	    			c.getPeripherals().add(e);
+	    			e=new SpringEdge(bottom, c.getNode(k), this, ls, Cs);
+	    			c.getPeripherals().add(e);
+	    			e=new SpringEdge(left, c.getNode(k), this, ls, Cs);
+	    			c.getPeripherals().add(e);
+	    			e=new SpringEdge(right, c.getNode(k), this, ls, Cs);
+	    			c.getPeripherals().add(e);
+	    			}
+		    	}
+	    	}
+	  	}
+	
 	}
 
 /**

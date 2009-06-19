@@ -72,7 +72,7 @@ private static final long serialVersionUID = 1L;
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	protected MultidimensionalData datos=null;
+	//protected MultidimensionalData datos=null;
 	private int alto;
 	private int ancho;
 	//private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
@@ -96,10 +96,17 @@ private static final long serialVersionUID = 1L;
 	private static final int conditionLabelColor=7;
 	private static final int bicLabelColor=8;
 	private static final int backgroundColor=9;
-
-	private Color[] paleta = {null, null, null, null, null, null, Color.BLACK, Color.WHITE, Color.YELLOW, Color.BLACK};
+	private static final int foregroundColor=10;
+	private static final int nodeLabelBackgroundColor=11;
+	private static final int hoverNodeLabelColor=12;
+	
+	
+	//Black background
+	//private Color[] paleta = {null, null, null, null, null, null, new Color(195, 250, 190, 255), new Color(165, 175, 250, 255), Color.YELLOW, Color.BLACK, Color.WHITE, new Color(0,0,0,0), Color.WHITE};
+	//White background
+	private Color[] paleta = {null, null, null, null, null, null, new Color(153,255,153), new Color(153,153,255), Color.BLUE, Color.WHITE, Color.DARK_GRAY, new Color(0,0,0), Color.BLACK};
 	private String[] textoLabel = {"Selection", "Search","Hover", "Set 1", "Set 2", "Set 3", "Gene labels", "Condition labels",
-			"Bicluster labels","Background"};
+			"Bicluster labels","Background", "Foreground", "Node Label Bgr.", "Hover Node Label"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 	
 	
@@ -137,18 +144,19 @@ private static final long serialVersionUID = 1L;
 		int num = session.getNumBubbleMapDiagrams();
 		this.sesion = session;
 			{
-			datos=session.getData();
+	//		datos=session.getData();
 			this.setName(Translator.instance.menuLabels.getString("s10")+" "+num);
 			}
 		
 		paleta[OverlapperDiagram.selectionColor]=sesion.getSelectionColor();
 		paleta[OverlapperDiagram.searchColor]=sesion.getSearchColor();
 		paleta[OverlapperDiagram.hoverColor]=sesion.getHoverColor();
+		paleta[OverlapperDiagram.hoverNodeLabelColor]=sesion.getHoverColor();
 		paleta[OverlapperDiagram.bicColor1]=sesion.getBicSet1();
 		paleta[OverlapperDiagram.bicColor2]=sesion.getBicSet2();
 		paleta[OverlapperDiagram.bicColor3]=sesion.getBicSet3();
-		paleta[OverlapperDiagram.geneLabelColor]=new Color(195, 250, 190, 255);
-		paleta[OverlapperDiagram.conditionLabelColor]=new Color(165, 175, 250, 255);
+		//paleta[OverlapperDiagram.geneLabelColor]=new Color(195, 250, 190, 255);
+		//paleta[OverlapperDiagram.conditionLabelColor]=new Color(165, 175, 250, 255);
 
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
@@ -192,13 +200,13 @@ private static final long serialVersionUID = 1L;
 	    
 	    //play-pause
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/Pause24.gif", "pause",
-	                                  "Pause simulation",
+	                                  "Pause simulation (p)",
 	                                  "Pause");
 	    toolBar.add(button);
 
 	    //overview
 	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/Zoom24.gif", "overview",
-	  	                                  "Show overview",
+	  	                                  "Show overview (v)",
 	                                  "Overview", false);
 	    toolBar.add(tb);
 	   
@@ -217,14 +225,14 @@ private static final long serialVersionUID = 1L;
 	    
 	    
 	    //first button
-	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/radial.gif", "change model",
+	   /* button = makeNavigationButton("es/usal/bicoverlapper/resources/images/radial.gif", "change model",
 	                                  "change edge model",
 	                                  "Change to radial model");
-	    toolBar.add(button);
+	    toolBar.add(button);*/
 
 	    //show labels
 	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/names.gif", "labels",
-	  	                                  "Show names",
+	  	                                  "Show labels (l)",
 	                                  "Names", false);
 	    toolBar.add(tb);
 
@@ -236,13 +244,13 @@ private static final long serialVersionUID = 1L;
 
 	    //decrease label size
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/namesMinus.gif", "labels minus",
-	                                  "Decrease name size",
+	                                  "Decrease label size (5)",
 	                                  "Names minus");
 	    toolBar.add(button);
 
 	    //increase label size
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/namesPlus.gif", "labels plus",
-	                                  "Increase name size",
+	                                  "Increase label size (6)",
 	                                  "Names plus");
 	    toolBar.add(button);
 
@@ -252,7 +260,7 @@ private static final long serialVersionUID = 1L;
 	                                  "Decrease threshold");
 	    toolBar.add(button);
 	    
-	    //decrease Threshold
+	    //set Threshold
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/threshold.png", "set threshold",
 	                                  "Set threshold",
 	                                  "Set threshold");
@@ -266,42 +274,48 @@ private static final long serialVersionUID = 1L;
 
 	    //show hulls
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/withoutHull.png", "draw hulls",
-	  	                                  "Hide zones",
+	  	                                  "Hide hulls (h)",
 	                                  "Draw hulls");
 	    toolBar.add(button);
-	    
+
+	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/hideNodes.png", "hide nodes",
+		        "Hide nodes (n)",
+		        "Hide Nodes", false);
+		toolBar.add(tb);
+
 	    //	  	first button
 	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/arc3.png", "draw arcs",
-	                                  "Draw nodes as piecharts",
+	                                  "Draw nodes as piecharts (a)",
 	                                  "Draw arcs", false);
 	    toolBar.add(tb);
 
+		
+		//	  	first button
+	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/attract.png", "attract",
+	                                  "Decrease repulsion (1)",
+	                                  "Attract");
+	    toolBar.add(button);
+
+	    //	  	first button
+	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/repulse.png", "repulse",
+	                                  "Increase repulsion (2)",
+	                                  "Repulse");
+	    toolBar.add(button);
+
 	    //	  	first button
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/shrink.png", "shrink",
-	                                  "Decrease cluster size",
+	                                  "Decrease cluster size (3)",
 	                                  "Shrink");
 	    toolBar.add(button);
 	    
 	    //	  	first button
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/expand.png", "expand",
-	                                  "Increase cluster size",
+	                                  "Increase cluster size (4)",
 	                                  "Expand");
-	    toolBar.add(button);
-		
-	    //	  	first button
-	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/repulse.png", "repulse",
-	                                  "Increase repulsion",
-	                                  "Repulse");
-	    toolBar.add(button);
-		
-	    //	  	first button
-	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/attract.png", "attract",
-	                                  "Decrease repulsion",
-	                                  "Attract");
 	    toolBar.add(button);
 
 	    //	  	first button
-	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/sizeGlyphs.png", "relative size",
+	    /*tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/sizeGlyphs.png", "relative size",
 	                                  "Change to relative size",
 	                                  "Node Size", false);
 	    toolBar.add(tb);
@@ -309,11 +323,7 @@ private static final long serialVersionUID = 1L;
 	    tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/hideEdges.png", "hide edges",
 		                "Hide Edges",
 		                "Hide Edges", true);
-		toolBar.add(tb);
-		tb = makeNavigationToggleButton("es/usal/bicoverlapper/resources/images/hideNodes.png", "hide nodes",
-		        "Hide nodes",
-		        "Hide Nodes", false);
-		toolBar.add(tb);
+		toolBar.add(tb);*/
 	    
 		//	  	first button
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/config.gif", "color",
@@ -428,14 +438,10 @@ private static final long serialVersionUID = 1L;
 	 */
 	public void update() 
 		{
-		//TODO: Lo que sea necesario para actualizar, sin necesidad de que haya cambio de datos de sesión
-		//System.out.println("Actualizando datos!!!!!!!!!!!");
 		if(sesion.getSelectedBicluster()!=null)
 			{
 			if(bv!=null)		bv.updateGraph(sesion.getSelectedBicluster());
-			//else				bv.buildGraph(sesion.getSelectedBicluster());
 			}
-	//	this.repaint();
 		}
 	
 	/**
@@ -534,13 +540,13 @@ private static final long serialVersionUID = 1L;
 			if(!bv.isPauseSimulation())//No estaba en pausa, va a pasar a estarlo, cambiamos la imagen a play
 				{
 				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/Play24.gif"));
-				b.setToolTipText("Restore simulation");
+				b.setToolTipText("Restore simulation (p)");
 				}
 			else	//Volvemos a poner el de pause
 				{
 				//b.setIcon(new ImageIcon("images/pause24.gif"));
 				b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/Pause24.gif"));
-				b.setToolTipText("Pause simulation");
+				b.setToolTipText("Pause simulation (p)");
 				}
 			bv.pause();
 			}
@@ -636,12 +642,12 @@ private static final long serialVersionUID = 1L;
 	    	if(bv.isDrawHull())	
 	    		{
 	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/withHull.png"));
-	    		b.setToolTipText("Draw zones");
+	    		b.setToolTipText("Draw hulls (h)");
 	    		}
 	    	else				
 	    		{
 	    		b.setIcon(loadIcon("es/usal/bicoverlapper/resources/images/withoutHull.png"));
-	    		b.setToolTipText("Hide zones");
+	    		b.setToolTipText("Hide hulls (h)");
 	    		}
 	    	bv.setDrawHull(!bv.isDrawHull());
 		    }			
@@ -787,8 +793,6 @@ private static final long serialVersionUID = 1L;
         panelP.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL;
-		
-		panelP.setBackground(Color.LIGHT_GRAY);
 		
 		JRadioButton sizet=new JRadioButton("Size threshold");
 		JRadioButton overlapt=new JRadioButton("Overlap threshold");

@@ -1,6 +1,7 @@
 package es.usal.bicoverlapper.kernel;
 
 import java.awt.Dimension;
+import java.awt.Point;
 
 /**
  * Class with initial dimensions and ids for each Diagram
@@ -10,19 +11,22 @@ import java.awt.Dimension;
  */
 public class Configuration {
 	
-	private Dimension dimAplicacion = new Dimension(1200,800);//1000x600
-	private Dimension dimPanelPuntos = new Dimension(900,300);
-	private Dimension dimPanelCoordenadas = new Dimension(900,300);
-	private Dimension dimPanelHistograma = new Dimension(350,300);
-	private Dimension dimPanelMapeo = new Dimension(350,300);
-	private Dimension dimPanelDendrograma = new Dimension(900,300);
-	private Dimension dimPanelDatos = new Dimension(350,300);
-	private Dimension dimPanelBubbles = new Dimension(300,300);
-	private Dimension dimPanelTRN = new Dimension(600,430);
-	private Dimension dimPanelHeatmap = new Dimension(210,610);
-	private Dimension dimPanelBubbleGraph = new Dimension(1000,600);
-	private Dimension dimPanelDataSelection = new Dimension(740,560);
-	private Dimension dimPanelWordCloud = new Dimension(400,200);
+	public Dimension dimAplicacion = new Dimension(1200,800);//1000x600
+	public Dimension dimPanelPuntos = new Dimension(900,300);
+	public Dimension dimPanelCoordenadas = new Dimension(900,300);
+	public Dimension dimPanelHistograma = new Dimension(350,300);
+	public Dimension dimPanelMapeo = new Dimension(350,300);
+	public Dimension dimPanelDendrograma = new Dimension(900,300);
+	public Dimension dimPanelDatos = new Dimension(350,300);
+	public Dimension dimPanelBubbles = new Dimension(300,300);
+	public Dimension dimPanelTRN = new Dimension(600,430);
+	public Dimension dimPanelHeatmap = new Dimension(210,610);
+	//private Dimension dimPanelHeatmap = new Dimension(300,610);
+	public Dimension dimPanelBubbleGraph = new Dimension(900,400);
+	public Dimension dimPanelDataSelection = new Dimension(740,560);
+	public Dimension dimPanelWordCloud = new Dimension(500,200);
+	
+	private Point initPC, initHM, initWC, initBM, initO, initTRN;
 	
 	static final int NoId = 0;
 	static final int DiagramaPuntosId = 1;
@@ -47,6 +51,10 @@ public class Configuration {
 	public static final int TRN_ID = 14;
 	public static final int CLOUD_ID = 15;
 	
+	public Configuration()
+		{
+		
+		}
 	/**
 	 * Devuelve la dimension por defecto de la ventana principal de la aplicacion.
 	 * 

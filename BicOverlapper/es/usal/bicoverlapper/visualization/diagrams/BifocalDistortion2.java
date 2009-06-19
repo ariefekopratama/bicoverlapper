@@ -129,7 +129,7 @@ public class BifocalDistortion2 extends BifocalDistortion {
                 ymag = true;
         }
         
-        if(bbox.getWidth()*Math.min(mx,my)>20)	
+        if(bbox.getWidth()*Math.min(mx,my)>maxDistortion)	
 	    	{
 	    	System.out.println("Distorsión controlada: "+bbox.getWidth()+" "+Math.min(mx,my));
 	    	System.out.println("Se va a distorsionar con "+Math.min((1-rx*mx)/(1-rx), (1-ry*my)/(1-ry)));

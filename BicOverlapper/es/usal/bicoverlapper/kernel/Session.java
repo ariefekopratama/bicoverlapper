@@ -18,11 +18,13 @@ import javax.swing.JOptionPane;
 
 
 
+import es.usal.bicoverlapper.analysis.Biclustering;
 import es.usal.bicoverlapper.data.BubbleData;
 import es.usal.bicoverlapper.data.DataLayer;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.data.TRNData;
+import es.usal.bicoverlapper.data.files.DataReader;
 import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.kernel.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.utils.ArrayUtils;
@@ -33,6 +35,7 @@ import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.HeatmapDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.ParallelCoordinatesDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.TRNDiagram;
+import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
 
 
 
@@ -56,13 +59,17 @@ public class Session {
 	private DataLayer capaDatos;
 	private boolean isPersonas=false;
 	
+	public DataReader reader;
+	public BicOverlapperWindow mainWindow;
+	
 	// Datos del fichero de trabajo
 	private MultidimensionalData datos 		= null;
 	private TRNData  datosTRN 		= null;
 	private BubbleData datosBubble 	= null;
 	private MicroarrayData datosMicroarray 	= null;
 	private String biclusterDataFile = null;
-
+	private Biclustering biclustering =null;
+	
 	private boolean datosCargados;
 	private boolean datosTRNCargados;
 	private boolean datosBubbleCargados;
@@ -71,6 +78,7 @@ public class Session {
 	
 //	Atributos para compartir de bicluster
 	private BiclusterSelection selectedBicluster=null;
+	private BiclusterSelection hoveredBicluster=null;
 	private boolean cambioGenes;
 	private boolean cambioTRNGenes;
 	private Vector<Double> expresionesCondicion; //Niveles de expresión de una determinada condición seleccionada (en el heatmap)
@@ -101,6 +109,9 @@ public class Session {
 	private Color bicSet1Color;
 	private Color bicSet2Color;
 	private Color bicSet3Color;
+	public Color lowExpColor;
+	public Color avgExpColor;
+	public Color hiExpColor;
 	
 
 	/**
@@ -109,22 +120,33 @@ public class Session {
 	 * 
 	 * @param desktop <code>JDesktopPane</code> linked to this <code>Session</code>.
 	 */
-	public Session(JDesktopPane desktop){
+	public Session(JDesktopPane desktop, BicOverlapperWindow window){
 		this.datosCargados = false;
 		this.desktop = desktop;
+		this.mainWindow = window;
 		this.capaDatos = new DataLayer(this);
 		this.ventanas = new Vector<DiagramWindow>(0,1);
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0,1);
 		
+		//With black background
+		//this.selectionColor=Color.BLUE;
+		//this.searchColor=Color.MAGENTA;
+		//this.hoverColor=Color.YELLOW;
+		
+		//With white background
 		this.selectionColor=Color.BLUE;
-		this.searchColor=Color.MAGENTA;
-		this.hoverColor=Color.YELLOW;
+		this.searchColor=new Color(0,150,0);
+		this.hoverColor=Color.ORANGE;
 		
 		this.bicSet1Color=CustomColor.getGoodColor(0);
 		this.bicSet2Color=CustomColor.getGoodColor(1);
 		this.bicSet3Color=CustomColor.getGoodColor(2);
-		this.searchColor=Color.MAGENTA;
-		this.hoverColor=Color.YELLOW;
+		
+		this.lowExpColor=Color.BLUE;
+		this.hiExpColor=Color.RED;
+		this.avgExpColor=Color.WHITE;
+		
+		reader=new DataReader();
 		
 	}
 	
@@ -265,12 +287,21 @@ public class Session {
 					}
 				this.setBubbleGraph(ventana);
 				break;
+			case es.usal.bicoverlapper.kernel.Configuration.CLOUD_ID:
+				WordCloudDiagram panelWC = new WordCloudDiagram(this, dim);
+				ventana = new DiagramWindow(this,this.getDesktop(),panelWC);
+				if(this.getBiclusterDataFile()!=null)
+					{
+					panelWC.create();
+					panelWC.run();
+					}
+				this.setBubbleGraph(ventana);
+				break;
 			default: // error tipo de ventana
 				break;
 			}
 			ventana.setTitle(nombre);
 			ventana.setLocation(posX, posY);
-		//	ventana.getPanel().setPersonas(p);
 			ventana.setHooks(anclajes);
 			ventana.setPalette(paleta);
 			ventana.setVisible(true);
@@ -769,6 +800,20 @@ public class Session {
 		this.updateExcept(noUpdate);
 		}
 
+	/**
+	 * Sets the genes and conditions hovered
+	 * @param	hoveredBic	BiclusterSelecteon with genes and conditions contained in the biclusters selected
+	 * @param responsible	Name of the view responsible of the selection
+	 */
+	public void setHoveredBicluster(BiclusterSelection hoveredBic, String responsible) 
+		{
+		this.hoveredBicluster = hoveredBic;
+		}
+	
+	public BiclusterSelection getHoveredBicluster()
+		{
+		return hoveredBicluster;
+		}
 	/*
 	 * Se llama en Bubble cuando se le selecciona alguna burbuja
 	 */
@@ -1034,6 +1079,14 @@ public class Session {
 	 */
 	public void setSelectionColor(Color selectionColor) {
 		this.selectionColor = selectionColor;
+	}
+
+	public Biclustering getBiclustering() {
+		return biclustering;
+	}
+
+	public void setBiclustering(Biclustering biclustering) {
+		this.biclustering = biclustering;
 	}
 	
 	

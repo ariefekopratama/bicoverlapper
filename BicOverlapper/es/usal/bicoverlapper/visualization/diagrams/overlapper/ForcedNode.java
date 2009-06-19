@@ -1,5 +1,6 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -121,34 +122,48 @@ public class ForcedNode extends Node {
     
     int factor=1;
     if(p.isSizeRelevant())    	factor=this.clusters.size();
-    
-	p.noStroke();
-	p.fill(255,255,255,64);
-
- 	p.noFill();
-    p.stroke(255,255,255,128);
- 	int rectMode=p.rectAl;
+        
+    p.noFill();
+	Color c=p.paleta[Overlapper.foregroundColor];
+	p.stroke(c.getRed(),c.getGreen(),c.getBlue(),128);
     p.rectMode(Overlapper.CENTER);
 
    	if(isGene())	p.ellipse((float) getX(), (float) getY(), width*factor, height*factor);
 	else			p.rect((float) getX(), (float) getY(), width*factor, height*factor);
-
-  	p.fill(100,100,100,100);
+    float x0=0,y0=0,w=0,h=0;
+    
+  	p.fill(50,50,50,100);
     if(image.length()>0)
     	{
     	p.rectMode(JProcessingPanel.CORNER);
-    	if(details.length()>0) 	p.rect((float)getX()-5*label.length()-5, (float)getY()+5*factor, 90+(float)maxChars*5, (float)100);
-    	else					p.rect((float)getX()-5*label.length()-5, (float)getY()+5*factor, (float)80, (float)100);
+    	if(details.length()>0) 
+    		{
+    		x0=(float)getX()-5*label.length()-5;
+    		y0=(float)getY()+5*factor;
+    		w=90+(float)maxChars*5;
+    		h=(float)100;
+    		}
+    	else
+    		{
+    		x0=(float)getX()-5*label.length()-5;
+    		y0=(float)getY()+5*factor;
+    		w=(float)80;
+    		h=(float)100;
+    		}
     	}
     else if(details.length()>0)   	
     	{
     	p.rectMode(JProcessingPanel.CORNER);
-    	p.rect((float)getX()-5*label.length()-5+35, (float)(int)getY()+5*factor, 10+(float)maxChars*5, (float)numLines*12);
+    	x0=(float)getX();
+    	y0=(float)(int)getY();
+    	w=10+(float)maxChars*5;
+    	h=(float)numLines*10;
     	}
+	p.rect(x0,y0,w,h);
     	
     if(image.length()>0)    
     	{
-    	p.image(pimage, (int)getX()-5*label.length(), (int)getY()+5*factor+5, 60, 90);
+    	p.image(pimage, (int)x0+5, (int)y0+5, 60, 90);
     	}
     if(details.length()>0)	
     	{
@@ -156,37 +171,28 @@ public class ForcedNode extends Node {
     	p.textSize(9);
     	p.fill(255,255,255,255);
     	p.stroke(1);
-    	p.text(details, (int)getX()-5*label.length()+35, (int)getY()+5*factor+10);
+    	p.text(details, (int)x0+5, (int)y0+10);
     	p.textAlign(Overlapper.CENTER);
     	}
-    //p.rectMode(rectMode);
-    if((image.length()>0 || details.length()>0) && (!g.getSelectedNodes().containsKey(this.label) && g.getHoverNode()!=this))
-    	{
-    	p.stroke(32,64,255,128);
- 	    p.fill(255,255,255,128);
- 	    p.textSize(p.getLabelSize()+4+factor*2);
- 		p.text(label, (float)(position.getX()+0.5), (float)(position.getY()-getHeight()+0.5));
- 		//p.text(label, (float)position.getX(), (float)position.getY());
-     	p.noStroke();
-  		}
-    this.setDrawn(true);
+   this.setDrawn(true);
   }
   
   //Método mejorado para dibujar piecharts
   public void drawPie()
 	{
 	Overlapper bv=(Overlapper)g.getApplet();
-	final float env = 1.3f;
+	//final float env = 1.3f;
 	float ns=bv.getNodeSize();
-	
+	int env=1;
+	if(bv.isSizeRelevant())    	env=this.clusters.size();
+	 	
 	if(!isDrawnAsPiechart() && shownClusters.size()>=bv.nodeThreshold)
 		{
 		float x=(float)getX();
         float y=(float)getY();
         float s=getSize();
         float senv=s*env;
-        float dif=(senv-getSize())/2;
-		 
+        
         
         //Para saber qué porción de círculo toca;
         float step = Overlapper.TWO_PI / shownClusters.size();
@@ -225,16 +231,21 @@ public class ForcedNode extends Node {
 	        	bv.noStroke();
 	        	
 		        float end=init+step*sizes.get(i);
-		        if(label.equals("E3A"))
-		        	System.out.println("");
 		        
-		       bv.arc(x+1, y+1, senv, senv, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
-		        
-		        bv.stroke(255,255,255,255);
+		        //bv.arc((float)(x+.5), (float)(y+.5), senv, senv, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
+		        bv.arc(x, y, width*env, height*env, init, end);//TODO: no sé por qué los arcos no me salen bien centrados, sol temp. poner el +1
+		        for(int j=0;j<sizes.get(i);j++)		init+=step;
+		        }
+	        for(int i=0;i<colors.size();i++)
+	        	{
+	        	bv.rectMode(JProcessingPanel.CENTER);
+	            bv.stroke(255,255,255,255);
 		        bv.strokeWeight(1);
 		        for(int j=0;j<sizes.get(i);j++)
 			        {
-				   	bv.line(x, y, (float)(x+ ns/2*Math.cos(init)), (float)(y+ ns/2*Math.sin(init)));
+				   float x2=(x+(float)(width*env/2*Math.cos(init)));
+		        	float y2=(y+ (float)(height*env/2*Math.sin(init)));
+		        	bv.line(x, y, x2, y2);
 				   	init+=step;
 			        }
 				bv.fill(0,0,0,255);

@@ -57,4 +57,10 @@ public class BiclusterResultsFilter extends FileFilter{
     public String getDescription() {
         return "Space delimited text document (.bic)";
     }
+    
+    public String getExtension()
+    	{
+    	return ".bic";
+    	}
+    
 }

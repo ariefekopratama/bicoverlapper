@@ -1,6 +1,10 @@
 package es.usal.bicoverlapper.data;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import es.usal.bicoverlapper.data.GOTerm;
 
 public class GeneAnnotation {
 	//From NCBI, obtained by eUtils
@@ -9,9 +13,18 @@ public class GeneAnnotation {
 	 */
 	public String name;
 	/**
-	 * NCBI gene id
+	 * NCBI gene symbol
+	 */
+	public String symbol;
+	/**
+	 * Gene ID in the loaded data matrix
 	 */
 	public String id;
+	/**
+	 * NCBI gene id
+	 */
+	public String ncbiId;
+	
 	/**
 	 * Gene type as in NCBI (by now not taken)
 	 */
@@ -34,9 +47,13 @@ public class GeneAnnotation {
 	 */
 	public ArrayList<String> aliases;
 
-	//From GeneOntology
-	public ArrayList<String> goTerms;
+	public ArrayList<GOTerm> goTerms;
 	
+	public GeneAnnotation()
+		{
+		aliases=new ArrayList<String>();
+		goTerms=new ArrayList<GOTerm>();
+		}
 	public String getDetailedForm()
 		{
 		String form="";
@@ -44,13 +61,47 @@ public class GeneAnnotation {
 		if(id!=null && id.length()>0)					form=form.concat("ID:      "+id+"\n");
 		if(type!=null && type.length()>0)				form=form.concat("Type:  "+type+"\n");
 		if(locus!=null && locus.length()>0)				form=form.concat("Loc.:  "+locus+"\n");
-		if(organism!=null && organism.length()>0)		form=form.concat("Org.:   "+organism+"\n");
-		if(description!=null && description.length()>0)	form=form.concat("Desc:  "+description+"\n");
 		if(aliases!=null && aliases.size()>0)
 			{
 			String al="";
 			for(int i=0;i<aliases.size();i++)	al=al.concat(aliases.get(i)+", ");
-			form=form.concat("Aka:     "+al.substring(0, al.length()-2));	
+			form=form.concat("Alias:  "+al.substring(0, al.length()-2)+"\n");	
+			}
+		if(organism!=null && organism.length()>0)		form=form.concat("Org.:   "+organism+"\n");
+		if(description!=null && description.length()>0)	
+			{
+			form=form.concat("Desc.:  ");
+			String[] tok=description.split(" ");
+			int cont=0;
+			for(int i=0;i<tok.length;i++)
+				{
+				form=form.concat(tok[i]+" ");
+				if(cont++>=5 || i==tok.length-1)	
+					{
+					form=form.concat("\n      ");
+					cont=0;
+					}
+				}
+			}
+		if(goTerms!=null && goTerms.size()>0)
+			{
+			//1) Sort terms
+			List<String> terms=new ArrayList<String>();
+			for(GOTerm go : goTerms)	terms.add(go.term);
+			Collections.sort(terms);
+			ArrayList<GOTerm> newgo=new ArrayList<GOTerm>();
+			for(String term: terms)
+				for(GOTerm go: goTerms)
+					if(go.term.equals(term))	newgo.add(go);
+			
+			goTerms=newgo;
+			
+			//2) Add them
+			form=form.concat("\nGO Terms:  ");
+			for(GOTerm go : goTerms)
+				{
+				form=form.concat("\n     "+go.term);
+				}
 			}
 		return form;
 		}

@@ -16,7 +16,6 @@ import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.DataColorAction;
 import prefuse.action.assignment.ShapeAction;
 import prefuse.action.assignment.DataSizeAction;
-import prefuse.action.assignment.SizeAction;
 import prefuse.action.assignment.StrokeAction;
 import prefuse.action.layout.AxisLayout;
 import prefuse.controls.DragControl;
@@ -34,7 +33,6 @@ import java.awt.event.MouseEvent;
 //Search Panel
 import prefuse.data.query.SearchQueryBinding;
 import prefuse.data.search.SearchTupleSet;
-import prefuse.data.Node;
 import prefuse.data.Table;
 import prefuse.util.FontLib;
 import prefuse.util.ui.JFastLabel;
@@ -59,7 +57,6 @@ import javax.swing.BoxLayout;
 
 
 import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
@@ -91,7 +88,6 @@ public class BubblesDiagram extends Diagram {
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	MultidimensionalData datos;
 	private int alto;
 	private int ancho;
 	boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
@@ -119,7 +115,7 @@ public class BubblesDiagram extends Diagram {
 
 	// atributos de configuracion anclajes
 	
-	DiagramWindow itemAñadir, itemEliminar;	
+	DiagramWindow itemToAdd, itemToRemove;	
 	
 	//Información propia de nuestra visualización
 	private Visualization v; //Visualization
@@ -147,7 +143,6 @@ public class BubblesDiagram extends Diagram {
 		int num = session.getNumBubbleMapDiagrams();
 		this.setName("Bubble Map "+num);
 		this.sesion = session;
-		this.datos = session.getData();
 		this.bd    = session.getBubbleData();
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
@@ -161,7 +156,7 @@ public class BubblesDiagram extends Diagram {
 		paleta[BubblesDiagram.bicColor2]=sesion.getBicSet2();
 		paleta[BubblesDiagram.bicColor3]=sesion.getBicSet3();
 
-		
+	
 		// Inicializamos los atributos si al iniciar el diagrama hay datos cargados
 		if(session.dataLoaded())
 			this.iniciarAtributos();		
@@ -199,9 +194,13 @@ public class BubblesDiagram extends Diagram {
 		{
 		if(v!=null && sesion!=null && sesion.getSelectedBicluster()!=null)	
 			{
-			v.cancel("animatePaint");
+			//v.cancel("animatePaint");
 			v.run("color");
-			v.run("animatePaint");
+			//v.run("animatePaint");
+			v.run("layout"); // start up the animated layout
+			v.run("filter");
+			v.run("animate");
+		
 			}
 		}
 	
@@ -222,29 +221,25 @@ public class BubblesDiagram extends Diagram {
 	 */
 	public void createAxisLayout()
 		{
-	//	System.out.println("Create Axis Layout");
 		//----------------------------------VISUALIZATION
 		v = new Visualization();
-		//if(bd==null)System.out.println("No tenemos datos!");
-		//else				System.out.println("Sí que los tenemos");
 		v.add("graph", bd.getGraph());		//Le añadimos el grafo
 		
 		//Renderer con etiquetas y aristas
 		v.setRendererFactory(new DefaultRendererFactory(new ShapeRenderer()));
 
-		//int[] paletaTipos=new int[] {ColorLib.rgba(153,74,237,100), ColorLib.rgba(49,79,79,100) , ColorLib.rgba(254,127,13,100)};
-		int[] paletaTipos=new int[] {sesion.getBicSet2().getRGB(), sesion.getBicSet3().getRGB() , sesion.getBicSet1().getRGB()};
-		//int[] paletaTipos=new int[] {paleta[BubblesDiagram.bicColor2].getRGB(), paleta[BubblesDiagram.bicColor3].getRGB(), paleta[BubblesDiagram.bicColor1].getRGB()};
+		int[] paletaTipos=new int[] {sesion.getBicSet1().getRGB(), sesion.getBicSet2().getRGB() , sesion.getBicSet3().getRGB()};
 
-
-		nodeColor=new DataColorAction("graph.nodes", "resultType", Constants.NOMINAL, VisualItem.FILLCOLOR,paletaTipos);//Pasarle homogeneidad
-			
-		//Iterator it=v.items("graph.nodes");
-		//System.out.println("Despues del colorAction, ya tenemos color: "+((VisualItem)it.next()).getString("_fillColor"));
+		//nodeColor=new DataColorAction("graph.nodes", "resultType", Constants.NOMINAL, VisualItem.FILLCOLOR,paletaTipos);//Pasarle homogeneidad
+		nodeColor=new NodeColorAction("graph.nodes", "resultType", "homogeneity", paletaTipos, v);//Pasarle homogeneidad
+		
 		ItemAction nodeShape=new NodeShapeAction("graph.nodes", Constants.SHAPE_ELLIPSE);
 		ItemAction nodeSize=new NodeSizeAction("graph.nodes", "size",100, Constants.LINEAR_SCALE);//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
-		//ItemAction nodeStroke=new NodeStrokeAction("graph.nodes");//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
-		//ItemAction nodeStroke=new NodeStrokeAction("graph.nodes", sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
+
+//		ItemAction nodeShape=new NodeShapeAction("graph.nodes", Constants.SHAPE_RECTANGLE);
+		ItemAction nodeWidth=new NodeSizeAction("graph.nodes", "width",100, Constants.LINEAR_SCALE);//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
+		ItemAction nodeHeight=new NodeSizeAction("graph.nodes", "height",100, Constants.LINEAR_SCALE);//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
+
 		nodeStroke=new NodeStrokeAction("graph.nodes", sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());//En el futuro, tb goodness TODO: linear scale no es la mejor manera si son círculos
 		ItemAction strokeWidth=new StrokeAction("graph.nodes", new BasicStroke(3));
 		ItemAction textColor=new TextColorAction("graph.nodes");
@@ -253,6 +248,8 @@ public class BubblesDiagram extends Diagram {
 		ActionList color = new ActionList();
 		color.add(nodeColor);
 		color.add(nodeSize);
+		color.add(nodeWidth);
+		color.add(nodeHeight);
 		color.add(nodeShape);
 		color.add(nodeStroke);
 		color.add(strokeWidth);
@@ -271,6 +268,7 @@ public class BubblesDiagram extends Diagram {
 		layout.add(al);
 		layout.add(a2);
 		layout.add(new RepaintAction());
+		
 		v.putAction("layout", layout);
 		
 	    // filtering
@@ -306,6 +304,9 @@ public class BubblesDiagram extends Diagram {
                 v.cancel("animatePaint");
                 v.run("color");
             	v.run("animatePaint");
+            	v.run("layout");
+            	v.run("filter");
+            	v.run("animate");
             	//repaint();
             	}
         	});  
@@ -617,7 +618,7 @@ public class BubblesDiagram extends Diagram {
 			public void process(VisualItem item, double frac)
 				{
 				int homogeneity=(int)((1-item.getDouble(sel2))*255);
-            	if(homogeneity<10)	homogeneity=10;//Para que se vean un poco los más transparentes
+				if(homogeneity<20)	homogeneity=20;//Para que se vean un poco los más transparentes
             	int colorIndex=tipo.indexOf(item.getString(sel));
             	int colorInicial=palette[colorIndex];
             	int color=ColorLib.setAlpha(colorInicial, homogeneity);//En homogeneity realmente ahora tenemos su inversa, la varianza, normalizada entre 0 y 1

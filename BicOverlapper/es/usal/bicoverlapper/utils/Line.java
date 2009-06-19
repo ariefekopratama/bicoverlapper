@@ -16,6 +16,12 @@ public class Line extends Line2D.Double{
 		return;
 		}
 	
+	public Line(Point2D.Double p1, Point2D.Double p2)
+		{
+		super(p1.x,p1.y,p2.x,p2.y);
+		slope=-(y1-y2)/(x1-x2);//negative because of java coordinates
+		return;
+		}
 	/**
 	 * Returns a line parallel to this one that passed by x,y
 	 * @param x
@@ -50,10 +56,57 @@ public class Line extends Line2D.Double{
 		{
 		double angle=Math.atan(slope)+Math.PI/2;
 		double x3=x1+Math.cos(angle)*d;
-		double y3=y1-Math.sin(angle)*d;//minus because of opposite java coordinate sistem
+		double y3=y1-Math.sin(angle)*d;//minus because of opposite java coordinate system
 		double x4=x2+Math.cos(angle)*d;
 		double y4=y2-Math.sin(angle)*d;
 		return new Line(x3,y3,x4,y4);
+		}
+	
+	/**
+	 * Returns the point that is in the same line than this segment, but prolongued a distance d
+	 * If d is > 0, the distance is counted from x2,y2, if <0, from x1, y1
+	 * @param d
+	 * @return
+	 */
+	public Point2D.Double getProlongationPoint(double d)
+		{
+		Point2D.Double point=new Point2D.Double();
+		if(d<0)
+			{
+			point.x=x1;
+			point.y=y1;
+			}
+		else if(d>0)	
+			{
+			point.x=x2;
+			point.y=y2;
+			}
+		else	{System.err.println("Error: distance must be not zero"); return null;}
+		if(x2<x1)
+			{
+			point.x-=Math.cos(getAngle())*d;
+			point.y+=Math.sin(getAngle())*d;
+			}
+		else
+			{
+			point.x+=Math.cos(getAngle())*d;
+			point.y-=Math.sin(getAngle())*d;
+			}
+		return point;
+		
+		/*Line p=getPerpendicular(point.x,point.y);
+		return p.getPerpendicularPoint(point.x, point.y, d);
+		*/
+		}
+	
+	public double getAngle()
+		{
+		//if(x2>x1)
+		//System.out.println(Math.atan((x2-x1)/(y2-y1)));
+		//System.out.println(Math.atan(slope));
+			//return Math.atan((x2-x1)/(y2-y1));
+			return Math.atan(slope);
+		//else		return Math.atan(slope+Math.PI);
 		}
 	/**
 	 * Returns a line perpendicular to this one that passes by x,y
@@ -87,12 +140,23 @@ public class Line extends Line2D.Double{
 	 * @param distance
 	 * @return
 	 */
-	public Point2D.Double getPerpendicularPoint(double x0, double y0, double distance)
+	public Point2D.Double getPerpendicularPoint(double x0, double y0, double d)
 		{
-		double angle=Math.atan(slope)+Math.PI/2;
-		double x3=x0+Math.cos(angle)*distance;
-		double y3=y0-Math.sin(angle)*distance;
-		return new Point2D.Double(x3,y3);
+		double angle=(Math.atan(slope)+Math.PI);
+		Point2D.Double point=new Point2D.Double();
+			if(x2<x1)
+			{
+			point.x=x0+Math.sin(angle)*d;
+			point.y=y0-Math.cos(angle)*d;
+			}
+		else
+			{
+			point.x=x0-Math.sin(angle)*d;
+			point.y=y0+Math.cos(angle)*d;
+			}
+		//double x3=x0+Math.cos(angle)*distance;
+		//double y3=y0-Math.sin(angle)*distance;
+		return point;
 		}
 	/**
 	 * Returns the intersection point with line l, or null if lines are parallel or coincident
