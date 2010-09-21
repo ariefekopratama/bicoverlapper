@@ -6,7 +6,11 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.StringTokenizer;
 
 /**
  * A parser for different formats of TRN information to GML format
@@ -24,6 +28,138 @@ public final class TRNParser
 	private static String inputPath;
 	private static String outputPath;
 
+	/**
+	 * Converts a list of interactions to GML.
+	 * [Developed to convert ChaperoneDB excel information to a proper network format]
+	 * @param in String path of input Syntren XML
+	 * @param out String path of output GML
+	 */
+	public static void list2GML(String in, String out)
+		{
+		inputPath=in;
+		outputPath=out;
+		LinkedList<LinkedList<String>> lista=new LinkedList<LinkedList<String>>();
+		BufferedReader br=null;
+			try{
+		br=new BufferedReader(new FileReader(inputPath));
+			}catch(FileNotFoundException e){System.err.println("Error: file "+inputPath+" not found");}
+		
+		BufferedWriter bw=null;
+		FileWriter fw=null;
+		try{
+			fw=new FileWriter(outputPath);
+			bw=new BufferedWriter(fw);
+			
+			
+			{//Header
+			bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+					"  <graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n " +
+					"  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+					"  xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns\n" +
+					"  http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n" );
+			
+			bw.write("\t<key id=\"d0\" for=\"node\" attr.name=\"name\" attr.type=\"string\">\n"+
+					"</key>\n");
+			
+			bw.write("\t<key id=\"d1\" for=\"node\" attr.name=\"type\" attr.type=\"string\">\n"+
+					"\t\t<default>unknown</default>\n"+
+					"</key>\n");
+			
+			bw.write("\t<key id=\"d2\" for=\"edge\" attr.name=\"type\" attr.type=\"string\">\n"+
+					"</key>\n");
+			
+			bw.write("\t<graph id=\"Gene Network\" edgedefault=\"directed\">\n");
+		    }
+			
+			String linea;
+			HashMap<String, ArrayList<String>> map=new HashMap<String,ArrayList<String>>();
+			HashMap<String, Integer> mapids=new HashMap<String, Integer>();
+			ArrayList<String> genes=new ArrayList<String>();
+			int cont=0;
+			
+			while((linea=br.readLine())!=null)								// Read interactions
+				{
+				StringTokenizer st=new StringTokenizer(linea,":");//El delimitador en Syntren es un tab.
+				String origin=st.nextToken().trim();
+				if(!genes.contains(origin))	
+					{
+					mapids.put(origin, cont++);
+					genes.add(origin);
+					}
+				
+				if(linea.contains("YJL111W"))
+					System.out.println();
+				
+				String rest=st.nextToken();
+				StringTokenizer st2=new StringTokenizer(rest," ");//El delimitador en Syntren es un tab.
+				ArrayList<String> end=new ArrayList<String>();
+				while(st2.hasMoreTokens())
+					{
+					String s=st2.nextToken().trim();
+					end.add(s);
+					if(!genes.contains(s))	
+						{
+						mapids.put(s, cont++);
+						genes.add(s);
+						}
+					}
+				map.put(origin, end);
+				}
+			
+			
+			for(int i=0;i<genes.size();i++)
+				{
+				bw.write("\t\t<node id=\""+mapids.get(genes.get(i))+"\">\n");
+				//System.out.println(linea);						
+				bw.write("\t\t\t<data key=\"d0\">"+genes.get(i)+"</data>\n");
+				bw.write("\t\t\t<data key=\"d1\">gene</data>\n");
+				bw.write("\t\t</node>\n");
+				}
+			
+			Iterator<String> it=map.keySet().iterator();
+			while(it.hasNext())							//Edges
+				{
+				String source=it.next();
+				ArrayList<String> targets=map.get(source);
+				for(String t : targets)
+					{
+					//bw.write("\t\t<edge source=\""+mapids.get(source)+"\" target=\""+mapids.get(t)+"\">\n");
+					bw.write("\t\t<edge source=\""+mapids.get(t)+"\" target=\""+mapids.get(source)+"\">\n");
+					bw.write("\t\t\t<data key=\"d2\">interaction</data>\n");
+					bw.write("\t\t</edge>\n");
+					}
+				}
+			bw.write("\t</graph>\n</graphml>");		//Ending
+			
+			bw.close();
+			fw.close();
+			}catch(IOException e){System.err.println("IOException: "+e.getMessage());}
+		return;	
+		}
+	
+	
+	
+	/**
+	 * Converts GML to BioPAX.
+	 * Only qualitative information is transcribed. Quantitave values are ignored
+	 * @param in String path of input Syntren XML
+	 * @param out String path of output GML
+	 */
+	public static void GML2BioPAX(String in, String out)
+		{
+		
+		}
+	
+	/**
+	 * Converts BioPAX to GML.
+	 * Only qualitative information is transcribed. Quantitave values are ignored
+	 * @param in String path of input Syntren XML
+	 * @param out String path of output GML
+	 */
+	public static void BioPAX2GML(String in, String out)
+		{
+		
+		}
 	
 	/**
 	 * Converts SynTReN XML to GML.

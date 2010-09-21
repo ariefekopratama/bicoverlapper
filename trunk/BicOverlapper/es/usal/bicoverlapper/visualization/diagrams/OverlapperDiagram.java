@@ -19,6 +19,8 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.beans.PropertyVetoException;
 import java.net.URL;
 import java.util.Enumeration;
@@ -46,8 +48,9 @@ import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
+import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.Translator;
-//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestorAñadirAnclaje;
+//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestoraddAnclaje;
 //import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestorEliminarAnclaje;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Overlapper;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Graph;
@@ -72,13 +75,10 @@ private static final long serialVersionUID = 1L;
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	//protected MultidimensionalData datos=null;
 	private int alto;
 	private int ancho;
-	//private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
 	
 	// definicion de margenes del diagrama
-	
 	final int margenDer = 40;
 	final int margenIzq = 40;
 	final int margenSup = 25;
@@ -100,11 +100,14 @@ private static final long serialVersionUID = 1L;
 	private static final int nodeLabelBackgroundColor=11;
 	private static final int hoverNodeLabelColor=12;
 	
+	private LinkedList<Integer> currentGenes=new LinkedList<Integer>();
+	private LinkedList<Integer> currentConditions=new LinkedList<Integer>();
 	
 	//Black background
 	//private Color[] paleta = {null, null, null, null, null, null, new Color(195, 250, 190, 255), new Color(165, 175, 250, 255), Color.YELLOW, Color.BLACK, Color.WHITE, new Color(0,0,0,0), Color.WHITE};
 	//White background
-	private Color[] paleta = {null, null, null, null, null, null, new Color(153,255,153), new Color(153,153,255), Color.BLUE, Color.WHITE, Color.DARK_GRAY, new Color(0,0,0), Color.BLACK};
+	//private Color[] paleta = {null, null, null, null, null, null, new Color(153,255,153), new Color(153,153,255), Color.BLUE, Color.WHITE, Color.DARK_GRAY, new Color(0,0,0), Color.BLACK};
+	private Color[] paleta = {null, null, null, null, null, null, new Color(59, 151, 44), new Color(159, 51, 44), Color.BLUE, Color.WHITE, Color.DARK_GRAY, new Color(0,0,0), Color.BLACK};
 	private String[] textoLabel = {"Selection", "Search","Hover", "Set 1", "Set 2", "Set 3", "Gene labels", "Condition labels",
 			"Bicluster labels","Background", "Foreground", "Node Label Bgr.", "Hover Node Label"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
@@ -143,10 +146,8 @@ private static final long serialVersionUID = 1L;
 		super(new BorderLayout());//
 		int num = session.getNumBubbleMapDiagrams();
 		this.sesion = session;
-			{
-	//		datos=session.getData();
-			this.setName(Translator.instance.menuLabels.getString("s10")+" "+num);
-			}
+
+		this.setName(Translator.instance.menuLabels.getString("s10")+" "+num);
 		
 		paleta[OverlapperDiagram.selectionColor]=sesion.getSelectionColor();
 		paleta[OverlapperDiagram.searchColor]=sesion.getSearchColor();
@@ -155,8 +156,6 @@ private static final long serialVersionUID = 1L;
 		paleta[OverlapperDiagram.bicColor1]=sesion.getBicSet1();
 		paleta[OverlapperDiagram.bicColor2]=sesion.getBicSet2();
 		paleta[OverlapperDiagram.bicColor3]=sesion.getBicSet3();
-		//paleta[OverlapperDiagram.geneLabelColor]=new Color(195, 250, 190, 255);
-		//paleta[OverlapperDiagram.conditionLabelColor]=new Color(165, 175, 250, 255);
 
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
@@ -178,14 +177,19 @@ private static final long serialVersionUID = 1L;
 			bv.setup(ancho,alto);//, sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
 			bv.buildGraph();
-			bv.init();	
+			bv.init();
+			//bv.timeTest(100);
 			
 			JToolBar jtb=new JToolBar();
 			addButtons(jtb);
 			this.getWindow().add(bv, BorderLayout.CENTER);
 			this.getWindow().add(jtb, BorderLayout.SOUTH);
-				
-			bv.addMouseListener(new GestorMouse());	
+
+			GestorMouse gm=new GestorMouse();
+			bv.addMouseListener(gm);	
+			bv.addMouseWheelListener(gm);
+			GestorKey gk=new GestorKey();
+			bv.addKeyListener(gk);	
 			this.getWindow().setContentPane(this);
 			this.getWindow().pack();
 			}
@@ -213,13 +217,13 @@ private static final long serialVersionUID = 1L;
 	    
 	    //first button
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/ZoomOut24.gif", "zoom out",
-	                                  "Zoom Out",
+	                                  "Zoom Out (mouse wheel up)",
 	                                  "Zoom Out");
 	    toolBar.add(button);
 		   
 	    //first button
 	    button = makeNavigationButton("es/usal/bicoverlapper/resources/images/ZoomIn24.gif", "zoom in",
-	                                  "Zoom In",
+	                                  "Zoom In (mouse wheel down)",
 	                                  "Zoom In");
 	    toolBar.add(button);
 	    
@@ -442,6 +446,7 @@ private static final long serialVersionUID = 1L;
 			{
 			if(bv!=null)		bv.updateGraph(sesion.getSelectedBicluster());
 			}
+		else		bv.updateGraph();
 		}
 	
 	/**
@@ -521,7 +526,7 @@ private static final long serialVersionUID = 1L;
 		}
 	}
 	/**
-	 * Esta clase implementa un gestor para añadir un anclaje a través del panel correspondiente en la ventana de configuracion.
+	 * Esta clase implementa un gestor para add un anclaje a través del panel correspondiente en la ventana de configuracion.
 	 * 
 	 * @author Javier Molpeceres Ortego
 	 *
@@ -557,12 +562,10 @@ private static final long serialVersionUID = 1L;
 	        }
 		else if("zoom in".equals(e.getActionCommand()))
 			{
-			//bv.setShowOverview(!bv.isShowOverview());
 			bv.zoomIn();
 	        }
 		else if("zoom out".equals(e.getActionCommand()))
 			{
-			//bv.setShowOverview(!bv.isShowOverview());
 			bv.zoomOut();
 	        }
 		else if("increase threshold".equals(e.getActionCommand()))
@@ -910,44 +913,68 @@ private static final long serialVersionUID = 1L;
 		
 		}
 	
-	private class GestorMouse implements MouseListener{
+	private class GestorKey implements KeyListener{
+		public void keyPressed(KeyEvent e)
+			{
+			System.out.println("Primero esto despues overlapper o algo");
+			if(e.getKeyCode()==90)		sesion.undo();
+			else if(e.getKeyCode()==89)	sesion.redo();
+			}
+		public void keyReleased(KeyEvent e){}
+		public void keyTyped(KeyEvent e){}
+		}
+
+	private class GestorMouse implements MouseListener, MouseWheelListener{
 		
 		public GestorMouse(){}
 		
 		public void mouseClicked(MouseEvent e){}
+		public void mouseWheelMoved(MouseWheelEvent e) 
+			{
+		    int notches = e.getWheelRotation();
+		    if(notches>0)	for(int i=0;i<notches;i++)				bv.zoomIn();
+		    else				for(int i=0;i<Math.abs(notches);i++)	bv.zoomOut();
+			}
+
 		public void mouseReleased(MouseEvent e)
 			{
-			
 			Graph g=bv.getGraph();
 			LinkedList<Integer> genes=new LinkedList<Integer>();
 			LinkedList<Integer> conditions=new LinkedList<Integer>();
-				 Map<String, Node> map=g.getSelectedNodes();
-				 Iterator<Node> itg=map.values().iterator();
-				 while(itg.hasNext())
+			
+			
+			 Map<String, Node> map=g.getSelectedNodes();
+			 Iterator<Node> itg=map.values().iterator();
+			 while(itg.hasNext())
+				 {
+				 Node n=itg.next();
+				 int id=0;
+				 if(sesion.getMicroarrayData()!=null)
 					 {
-					 Node n=itg.next();
-					 int id=0;
-					 if(sesion.getMicroarrayData()!=null)
+					 if(n.isGene())	
 						 {
-						 if(n.isGene())	
-							 {
-							 if(n.getId()<0)	id=sesion.getMicroarrayData().getGeneId(n.getLabel());//TODO: intentar librarse de esto con una llamada a update data
-							 else				id=n.getId();
-							 genes.add(id);
-							 }
-						 else
-							 {
-							 if(n.getId()<0)	id=sesion.getMicroarrayData().getConditionId(n.getLabel());
-							 else				id=n.getId();
-							 conditions.add(id);
-							 }
+						 if(n.id<0)	
+							 id=sesion.getMicroarrayData().getGeneId(n.labelId);//TODO: intentar librarse de esto con una llamada a update data
+						 else				id=n.id;
+						 genes.add(id);
+						 }
+					 else
+						 {
+						 if(n.id<0)	
+							 id=sesion.getMicroarrayData().getConditionId(n.labelId);
+						 else				id=n.id;
+						 conditions.add(id);
 						 }
 					 }
-				if(genes.size()>0 || conditions.size()>0)
-					{
-					 BiclusterSelection bs=new BiclusterSelection(genes,conditions);
-					 sesion.setSelectedBiclusters(bs, "lapper");
-					}
+				 }
+			if(!currentGenes.equals(genes) || !currentConditions.equals(conditions))
+				if(genes.size()>0 || conditions.size()>0)//Only if it's not the navigation area!!
+				{
+				 BiclusterSelection bs=new BiclusterSelection(genes,conditions);
+				 sesion.setSelectedBiclustersExcept(bs, "lapper");
+				 currentGenes=genes;
+				 currentConditions=conditions;
+				}
 			}
 		public void mouseEntered(MouseEvent e){}
 		public void mousePressed(MouseEvent e){}

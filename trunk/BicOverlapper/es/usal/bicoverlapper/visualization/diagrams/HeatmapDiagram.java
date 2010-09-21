@@ -19,7 +19,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.BoxLayout;
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -60,9 +62,11 @@ import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
+import es.usal.bicoverlapper.kernel.configuration.panels.HeatmapParameterConfigurationPanel;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
+import es.usal.bicoverlapper.utils.Sizeof;
 import es.usal.bicoverlapper.utils.Translator;
-import es.usal.bicoverlapper.visualization.diagrams.TRNDiagram.NodeColorAction;
+import es.usal.bicoverlapper.visualization.diagrams.NetworkDiagram.NodeColorAction;
 
 /**
  * This diagram represents a Microarray data matrix as the typical expression level heatmap.
@@ -132,6 +136,10 @@ private static final long serialVersionUID = 1L;
 	ColorAction rectangleStrokeColor;
 	
 	BiclusterSelection bicAnt=null;//para evitar bucles infinitos create-update
+
+	private HorizontalLineLayout xlabels;
+
+	private boolean resort;
 	
 	/**
 	 * Default constructor
@@ -184,9 +192,9 @@ private static final long serialVersionUID = 1L;
 		v.removeGroup("matrix");
 		v.removeGroup("geneLabels");
 		v.removeGroup("conditionLabels");
-		v.addTable("matrix", expressions);					//Le añadimos nuestra tabla
-		v.addTable("geneLabels", genes);				//Le añadimos nuestra tabla
-		v.addTable("conditionLabels", conditions);		//Le añadimos nuestra tabla
+		v.addTable("matrix", expressions);				//Add new sparse tables
+		v.addTable("geneLabels", genes);				
+		v.addTable("conditionLabels", conditions);		
 		}
 	
 	/**
@@ -228,12 +236,13 @@ private static final long serialVersionUID = 1L;
 		Rectangle2D rdata=new Rectangle2D.Double(geneMargin,conditionMargin,ancho-geneMargin,alto-conditionMargin);
 
 		//El renderer tendrá tres partes ahora
-		int paletteTemp[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
-		int paletteTemp2[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
-		//TODO: revisar, hay dos niveles de negro, el ultimo de temp y el primero de temp2
-		palette=new int[paletteTemp.length+paletteTemp2.length];
-		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
-		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
+		int paletteTemp[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
+		int paletteTemp2[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
+		//TODO: revisar, hay dos niveles del average, el ultimo de temp y el primero de temp2
+		palette=new int[paletteTemp.length+paletteTemp2.length-1];
+		for(int i=0;i<paletteTemp.length-1;i++)	palette[i]=paletteTemp[i];
+		//for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
+		for(int i=0;i<paletteTemp2.length;i++)	palette[i+paletteTemp.length-1]=paletteTemp2[i];
 		
 		
 		final int ngtot=md.getNumGenes();
@@ -245,10 +254,7 @@ private static final long serialVersionUID = 1L;
         	AbstractShapeRenderer sr = new ExpressionRenderer(ng, nc, alto-conditionMargin, ancho-geneMargin);
         	Renderer arY = new LabelRenderer2("name");
             Renderer arX = new RotationLabelRenderer("name",300);//270 or 300
-        //	 Renderer arX = new RotationLabelRenderer("name",270);//270 or 300
                     
-          //  AbstractShapeRenderer rRect = new ExpressionRenderer(1, 1, alto-conditionMargin, ancho-geneMargin);
-        	         
             public Renderer getRenderer(VisualItem item) {
             	if(item.isInGroup("geneLabels"))			return arY;
             	else
@@ -261,44 +267,48 @@ private static final long serialVersionUID = 1L;
         });
     	
       t1=System.currentTimeMillis();
-		//System.out.println("2) Renderers: "+(t1-t2)/1000);
+		
+      	try{Sizeof.runGC(1);}catch(Exception e){e.printStackTrace();}
+        System.out.println("Memory before ordinal map "+Sizeof.usedMemory());
+    	//TODO: The retrieval of this ordinal map basically is a new copy of the whole matrix, which means a 
+        //complete killing of the thing in large experiments (50000x70 matrices, for example), for a max mem of 1024
         
-		//ItemAction rectSize=new SizeAction("rectangle", 100);
-		//ItemAction rectStroke=new StrokeAction("rectangle", new BasicStroke(2));
-
-    	//exprColor=new LevelColorAction("matrix", "level", palette);
-  		//exprColor.setMaxScale(max);
-    	//exprColor.setMinScale(min);
-      	double min=DataLib.min(md.getExpressions(), "level").getDouble("level");
-    	double max=DataLib.max(md.getExpressions(), "level").getDouble("level");
-        //exprColor.setOrdinalMap(m_omap.keySet().toArray());
-    	
-    	exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
-    	System.out.println("Max y min son: "+max+", "+min);
-      	Map m_omap = DataLib.ordinalMap(md.getExpressions(), "level");
-      	Object[] ar=m_omap.keySet().toArray();
-      	List<Object> al=Arrays.asList(ar);
+      exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+      exprColor.setMaxScale(md.max);
+      exprColor.setMinScale(md.min);
+      
+    	/*  exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+        Map m_omap = DataLib.ordinalMap(md.getExpressions(), "level");
+    	System.out.println("Memory after ordinal map "+Sizeof.usedMemory());
+    	Object[] ar=m_omap.keySet().toArray();//from here on, momap is not needed
+    	m_omap=null;
+      	List<Object> al=Arrays.asList(ar);//from here on, ar is not needed
+      	ar=null;
       	List<Double> ad=new ArrayList<Double>();
       	for(Object o : al)    		
       		{
       		ad.add((Double)o);
       		}
       	Collections.sort(ad);
-      	exprColor.setOrdinalMap(ad.toArray());
+      	exprColor.setOrdinalMap(ad.toArray());*/
       	
+      	System.out.println("Memory after color selection"+Sizeof.usedMemory());
+    	
     //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
       	ColorAction textColor=new ColorAction("matrix", VisualItem.TEXTCOLOR, ColorLib.gray(255,0));
 		
 		ColorAction labelGeneTextColor=new ColorAction("geneLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-		labelGeneTextColor.add("_hover", ColorLib.rgb(255,0,0));
+		//labelGeneTextColor.add("_hover", ColorLib.rgb(255,0,0)); 
+		Color ch=sesion.getHoverColor();
+		labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 		ColorAction labelGeneStroke=new ColorAction("geneLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
 		
 		ColorAction labelConditionTextColor=new ColorAction("conditionLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-		labelConditionTextColor.add("_hover", ColorLib.rgb(255,0,0));
+		//labelConditionTextColor.add("_hover", ColorLib.rgb(255,0,0));
+		labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 		ColorAction labelConditionColor=new ColorAction("conditionLabels", VisualItem.FILLCOLOR, ColorLib.gray(255,0));
 //		ColorAction labelConditionStroke=new ColorAction("conditionLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
 		//	labelGeneStroke.add("_hover", ColorLib.rgb(255,0,0));
-		//TODO: Hace falta implementar una acción para rotar las etiquetas de las condiciones (ver RotationControl)
 		
 		rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
 		ColorAction rectangleFillColor=new ColorAction("rectangle", VisualItem.FILLCOLOR, ColorLib.alpha(0));
@@ -323,11 +333,12 @@ private static final long serialVersionUID = 1L;
 		VerticalLineLayout2 ylabels=new VerticalLineLayout2((alto-conditionMargin), "geneLabels", ng,m_scale);
 		ylabels.setLayoutBounds(rg);
         
-        HorizontalLineLayout xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,m_scale/2);
+        xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,m_scale/3);
         xlabels.setLayoutBounds(rc);
 
         gl=new MicroGridLayout("matrix",ng,  ngtot, nc, 
-        		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin, m_scale/2, m_scale, "MicroTal construido "+contName);//sparse
+        		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin, m_scale/3, m_scale, "MicroTal construido "+contName);//sparse
+        		//alto-conditionMargin, ancho-geneMargin, "actualRowId", "colRank",geneMargin, conditionMargin, m_scale/3, m_scale, "MicroTal construido "+contName);//sparse
         contName++;
         xlabels.setLayoutAnchor(new Point2D.Double(geneMargin, conditionMargin));//TODO: No podrían funcionar dos AxisLayout?
 		gl.setLayoutBounds(rdata);
@@ -384,7 +395,7 @@ private static final long serialVersionUID = 1L;
 	//	AnchorUpdateControl auc=new AnchorUpdateControl(new Layout[]{fd, fdg,fdc},"distortion");//
 	//	d.addControlListener(auc);
 
-		currentLevels=new HeatmapFocusControl(sesion, "layout", Visualization.FOCUS_ITEMS, "matrix", "geneLabels", "conditionLabels", gl, ylabels, xlabels, v);
+		currentLevels=new HeatmapFocusControl(sesion, "layout", Visualization.FOCUS_ITEMS, "matrix", "geneLabels", "conditionLabels", gl, ylabels, xlabels, v, 10);
 		d.addControlListener(currentLevels);
 		t2=System.currentTimeMillis();
 
@@ -438,6 +449,15 @@ private static final long serialVersionUID = 1L;
 			}
 		}
 	
+	public void setOrder(int [] columnOrder)
+		{
+		if(v!=null && sesion!=null)
+			{
+			gl.setColumnOrder(columnOrder);
+			resort=true;
+			}
+		}
+	
 	public void update() 
 		{
 		if(v!=null && sesion!=null)
@@ -445,62 +465,89 @@ private static final long serialVersionUID = 1L;
 			//Tenemos un bicluster seleccionado
 			if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster()!=bicAnt && sesion.getSelectedGenesBicluster().size()<=md.getNumSparseGenes())
 				{
-				md.buildSparse(sesion.getSelectedBicluster().getGenes());
-				//create(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
-				update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
-				
 				currentLevels.clear();
+				
+				md.buildSparse(sesion.getSelectedBicluster().getGenes());
+				update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+					
 				LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
 				LinkedList<Integer> lc=sesion.getSelectedConditionsBicluster();
-				if(lg.size()>0 || lc.size()>0)			currentLevels.addItems(lg, lc);
+				currentLevels.addItems(lg, lc);
+				resort=false;
+				}
+			else if(resort)
+				{
+				currentLevels.clear();
+				
+				md.sortColumns();
+				update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+					
+				LinkedList<Integer> lg=new LinkedList<Integer>();
+				LinkedList<Integer> lc=new LinkedList<Integer>();
+				currentLevels.addItems(lg, lc);
+				resort=false;
 				}
 			}
-		synchronized(this){this.repaint();}
+		synchronized(this){run();}
 		}
-
+	
 	public void updateConfig(){
 		paleta[HeatmapDiagram.selectionColor]=sesion.getSelectionColor();
 		paleta[HeatmapDiagram.hoverColor]=sesion.getHoverColor();
 		
-		//Molaría añadirle el discretizador a la paleta, no es difícil 
-		int paletteTemp[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
-		int paletteTemp2[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
+		int paletteTemp[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
+		int paletteTemp2[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
 		palette=new int[paletteTemp.length+paletteTemp2.length];
 		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
-
-		
-		exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
-      	double min=DataLib.min(md.getExpressions(), "level").getDouble("level");
-      	double max=DataLib.max(md.getExpressions(), "level").getDouble("level");
-      	exprColor.setMaxScale(max);
-      	exprColor.setMinScale(min);
-    	//exprColor=new LevelColorAction("matrix", "level", palette);
-		strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
-		
-		
-		rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
+      	
+		exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+	      exprColor.setMaxScale(md.max);
+	      exprColor.setMinScale(md.min);
+	      
+	      //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
+	      	ColorAction textColor=new ColorAction("matrix", VisualItem.TEXTCOLOR, ColorLib.gray(255,0));
+			
+			ColorAction labelGeneTextColor=new ColorAction("geneLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
+			//labelGeneTextColor.add("_hover", ColorLib.rgb(255,0,0)); 
+			Color ch=sesion.getHoverColor();
+			labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
+			ColorAction labelGeneStroke=new ColorAction("geneLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
+			
+			ColorAction labelConditionTextColor=new ColorAction("conditionLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
+			//labelConditionTextColor.add("_hover", ColorLib.rgb(255,0,0));
+			labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
+			ColorAction labelConditionColor=new ColorAction("conditionLabels", VisualItem.FILLCOLOR, ColorLib.gray(255,0));
+//			ColorAction labelConditionStroke=new ColorAction("conditionLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
+			//	labelGeneStroke.add("_hover", ColorLib.rgb(255,0,0));
+			
+			rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
+			ColorAction rectangleFillColor=new ColorAction("rectangle", VisualItem.FILLCOLOR, ColorLib.alpha(0));
+			
 		
 		ActionList color = (ActionList)v.getAction("color");
 		color.remove(exprColor);
-		color.remove(strokeColor);
+		color.remove(textColor);
+		color.remove(labelConditionColor);
+		color.remove(labelGeneTextColor);
+		color.remove(labelConditionTextColor);
+	
 		color.add(exprColor);
-		color.add(strokeColor);
-		
+		color.add(textColor);
+		color.add(labelConditionColor);
+		color.add(labelGeneTextColor);
+		color.add(labelConditionTextColor);
+		color.add(new RepaintAction());
+	
 		
 		v.putAction("color", color);
 
-		ActionList colorRectangle= (ActionList)v.getAction("colorRectangle");
-		colorRectangle.remove(rectangleStrokeColor);
-		colorRectangle.add(rectangleStrokeColor);
-
-		v.putAction("colorRectangle", colorRectangle);
-    
-        
 		run();
 		this.repaint();
 		this.configurando = false;
 	}
+	
+	
 	
 	
 	//--------------------- Private classes--------------
@@ -588,7 +635,7 @@ private static final long serialVersionUID = 1L;
 	          
 	           if(sesion.getSelectedBicluster()!=null)	
 	        	   ns=sesion.getSelectedBicluster().getGenes().size();
-	           if(sesion.getHoveredBicluster()!=null )	
+	           if(sesion.getHoveredBicluster()!=null && hoverGenes!=null)	
 	        	   {
 	        	   if(sesion.getHoveredBicluster().getGenes().size()>0) 
 	        		  hoverGene=hoverGenes[0];
@@ -755,16 +802,17 @@ private static final long serialVersionUID = 1L;
         private double m_maxWidth = 100;
         private String grupo;
         private Double scale;
-        private int[] condOrder;
+        public int[] condOrder;
+        public int[] initialCondOrder;
         private double distortion;
         private double maxDistortion=0.7;
      
         
         HorizontalLineLayout(double maxWidth, String group, int colNumber, double d) {
-//        	System.out.println("Anchura máxima "+m_maxWidth);
             m_maxWidth = maxWidth;
             grupo=group;
             condOrder=new int[colNumber];
+            initialCondOrder=new int[colNumber];
             distortion=d;
             initialOrder();
         }
@@ -821,8 +869,7 @@ private static final long serialVersionUID = 1L;
 	            	ns=sesion.getSelectedBicluster().getConditions().size();
 	            if(sesion.getHoveredBicluster()!=null && sesion.getHoveredBicluster().getConditions().size()>0 && sesion.getHoveredBicluster().getConditions().size()<condOrder.length)	
 	        	   {
-	        	   //hoverCondition=sesion.getHoveredBicluster().getConditions().get(0);
-	            	hoverCondition=condOrder[sesion.getHoveredBicluster().getConditions().get(0)];
+	        	   hoverCondition=condOrder[sesion.getHoveredBicluster().getConditions().get(0)];
 		        	   nh=sesion.getHoveredBicluster().getConditions().size();
 	        	   }
 	            if(nh>0 && nh<condOrder.length && (ns==0 || hoverCondition>ns))  	
@@ -852,7 +899,7 @@ private static final long serialVersionUID = 1L;
                 while ( iter.hasNext() ) 
 	            	{
                     VisualItem item = (VisualItem)iter.next();
-               
+               System.out.println(item.getString("name"));
 	                if(nc==condOrder.length || nc==0)
      	                {
 	                	item.setSize(normals); 
@@ -880,9 +927,7 @@ private static final long serialVersionUID = 1L;
    	                x = w;
 	                setX(item, null, x+item.getBounds().getWidth());
 	  	            setY(item, null, y);
-	  	            if(item.getString("name").equals("E1A"))
-	                	System.out.println("Posicionando en "+(x+item.getBounds().getWidth())+" con iw "+iw);
-	                w += iw;
+	  	            w += iw;
 	            	}
      	    	}
           
@@ -903,20 +948,36 @@ private static final long serialVersionUID = 1L;
     	    }
 	    }
         
-      void newOrder(int[] genesFirst)
+       void setColumnOrder(int[] co)
+       	{
+    	/*for(int i=0;i<co.length;i++)
+    		{
+    		initialCondOrder[i]=i;
+    		}*/
+    	condOrder=initialCondOrder.clone();
+        }
+       
+      void newOrder(int[] conditionsFirst)
 	    	{
-	    	int init=0;
-	    	for(int i=0;i<genesFirst.length;i++)
-	    		{
-	    		condOrder[init]=genesFirst[i];//El primero pasa a ocupar la posición de uno de los que tenemos
-	    		condOrder[genesFirst[i]]=init;//y viceversa
-	    		init++;
-	    		}
-	    	init=0;
+    	  	if(conditionsFirst!=null)
+	    	  	{
+    	  		if(conditionsFirst.length<condOrder.length)
+	    	  		{
+	    	  		int init=0;
+			    	for(int i=0;i<conditionsFirst.length;i++)
+			    		{
+			    		condOrder[init]=conditionsFirst[i];//El primero pasa a ocupar la posición de uno de los que tenemos
+			    		condOrder[conditionsFirst[i]]=init;//y viceversa
+			    		init++;
+			    		}
+			    	}
+	    	  	}
 	    	}
+      
         void initialOrder()
 	    	{
-	    	for(int i=0;i<condOrder.length;i++)	condOrder[i]=i;
+	    	for(int i=0;i<condOrder.length;i++)	initialCondOrder[i]=i;
+	    	condOrder=initialCondOrder.clone();
 	    	}
     
     
@@ -932,14 +993,6 @@ private static final long serialVersionUID = 1L;
 
     
    
-   /**
-    * Returns the expression level palette used
-    * @return the expression level palette
-    */
-    /*public  int[] getColors() {
-		return palette;
-	}*/
-
     /**
      * Sets the expression level palette. About a hundred colors are enough for a nice palette
      * @param palette	the colors of the palette
@@ -950,7 +1003,7 @@ private static final long serialVersionUID = 1L;
 	
 	
 	/**
-	 * Pops up a configuration panel for parallel coordinates properties
+	 * Pops up a configuration panel for heatmap visual properties
 	 * TODO: Still in development
 	 */
 	public void configure(){
@@ -963,16 +1016,17 @@ private static final long serialVersionUID = 1L;
 			ConfigurationMenuManager gestor = new ConfigurationMenuManager(this,ventanaConfig,paleta,muestraColor);
 			
 			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
-			//JPanel panelAnclajes = this.getPanelAnclajes(sesion, gestor);
-			JPanel panelParametros = this.getPanelParametros();
+		//	JPanel panelParametros = this.getParameterPanel();
+		//	this.setPanelParametros(panelParametros);
+			JPanel panelParametros=new HeatmapParameterConfigurationPanel();
+			this.setPanelParametros(panelParametros);
 			JPanel panelBotones = this.getPanelBotones(gestor);
-			
+				
 			// Configuramos la ventana de configuracion
 			
 			this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
 							
 			// Mostramos la ventana de configuracion
-			
 			ventanaConfig.setLocation(getPosition());
 			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1")+" "+this.getName());
 			sesion.getDesktop().add(ventanaConfig);
@@ -993,42 +1047,49 @@ private static final long serialVersionUID = 1L;
 		
 		sesion.setSelectionColor(paleta[HeatmapDiagram.selectionColor]);
 		sesion.setHoverColor(paleta[HeatmapDiagram.hoverColor]);
-
-		//Molaría añadirle el discretizador a la paleta, no es difícil 
-		int paletteTemp[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
-		int paletteTemp2[]=ColorLib.getInterpolatedPalette(paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
-
+				
+		int paletteTemp[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.lowColor].getRGB(), paleta[HeatmapDiagram.zeroColor].getRGB());
+		int paletteTemp2[]=ColorLib.getInterpolatedPalette(255,paleta[HeatmapDiagram.zeroColor].getRGB(), paleta[HeatmapDiagram.highColor].getRGB());
 		palette=new int[paletteTemp.length+paletteTemp2.length];
 		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
-
+      	
+		exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+	    exprColor.setMaxScale(md.max);
+	    exprColor.setMinScale(md.min);
+	      
+      	/*exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+      	Map m_omap = DataLib.ordinalMap(md.getExpressions(), "level");
+      	Object[] ar=m_omap.keySet().toArray();
+      	List<Object> al=Arrays.asList(ar);
+      	List<Double> ad=new ArrayList<Double>();
+      	for(Object o : al)    		
+      		{
+      		ad.add((Double)o);
+      		}
+      	Collections.sort(ad);
+      	exprColor.setOrdinalMap(ad.toArray());*/
+      //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
 		
-		exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
-      	double min=DataLib.min(md.getExpressions(), "level").getDouble("level");
-      	double max=DataLib.max(md.getExpressions(), "level").getDouble("level");
-      	exprColor.setMaxScale(max);
-      	exprColor.setMinScale(min);
-      	//exprColor=new LevelColorAction("matrix", "level", palette);
-      	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
 		
-		
-		rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
-		
+	//	rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
 		ActionList color = (ActionList)v.getAction("color");
 		color.remove(exprColor);
-		color.remove(strokeColor);
+		//color.remove(strokeColor);
 		color.add(exprColor);
-		color.add(strokeColor);
+		//color.add(strokeColor);
 		
 		
 		v.putAction("color", color);
 
-		ActionList colorRectangle= (ActionList)v.getAction("colorRectangle");
-		colorRectangle.remove(rectangleStrokeColor);
-		colorRectangle.add(rectangleStrokeColor);
+		//ActionList colorRectangle= (ActionList)v.getAction("colorRectangle");
+		//colorRectangle.remove(rectangleStrokeColor);
+		//colorRectangle.add(rectangleStrokeColor);
 
-		v.putAction("colorRectangle", colorRectangle);
-
+		//v.putAction("colorRectangle", colorRectangle);
+		currentLevels.numNeighbors=new Integer(((HeatmapParameterConfigurationPanel)this.getPanelParametros()).getNumNeighbors().getText()).intValue();
+		
+		
 		this.run();
 		//this.repaint();
 		sesion.updateConfigExcept(this.getName());

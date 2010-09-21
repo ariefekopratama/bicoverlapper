@@ -15,6 +15,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -59,6 +60,8 @@ public MicroarrayLoadProgressMonitor() {
 	closeButton.setEnabled(false);
 	closeButton.setMaximumSize(new Dimension(20,100));
 	closeButton.setSize(20,100);
+	
+	
 	closeButton.addActionListener(new ActionListener(){
 		public void actionPerformed(ActionEvent e) {
 			frame.hide();
@@ -84,7 +87,7 @@ public void propertyChange(PropertyChangeEvent evt)
 		progressMonitor.setNote(message);
 		taskOutput.append(message);
 		
-		if (progressMonitor.isCanceled() || task.isDone()) 
+		if (progressMonitor.isCanceled() || task.isDone() || progress>=100) 
 			{
 			if (progressMonitor.isCanceled()) 
 				{

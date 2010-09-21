@@ -85,7 +85,7 @@ public void propertyChange(PropertyChangeEvent evt)
 		progressMonitor.setNote(message);
 		taskOutput.append(message);
 		
-		if (progressMonitor.isCanceled() || task.isDone()) 
+		if (progressMonitor.isCanceled() || task.isDone() || progress>=100) 
 			{
 			if (progressMonitor.isCanceled()) 
 				{

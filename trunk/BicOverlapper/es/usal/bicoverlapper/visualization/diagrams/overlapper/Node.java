@@ -24,6 +24,7 @@ public class Node {
 	  protected float height = 10;
 	  protected float width = 10;
 	  protected String label = "";
+	  public String labelId = "";
 	  protected Graph g;
 	  private boolean drawn=false;
 	  private boolean drawnAsPiechart=false;
@@ -35,7 +36,7 @@ public class Node {
 	  protected String details="";
 	  protected int numLines;
 	  protected int maxChars;
-	  protected int id=-1;//Para las tablas de diego en los q sean centroides
+	  public int id=-1;
 	  private boolean gene=true;
 	  protected float betweenness;
 	  
@@ -426,12 +427,5 @@ public class Node {
 		this.isDrawnAsLabel = drawnAsLabels;
 	}
 
-	/**
-	 * Gets the Id for this node
-	 * @return	Id for this node
-	 */
-	public int getId() {
-		return id;
-	}
-
+	
 }

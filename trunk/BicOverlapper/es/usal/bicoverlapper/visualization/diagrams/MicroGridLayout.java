@@ -3,7 +3,10 @@ package es.usal.bicoverlapper.visualization.diagrams;
 import java.util.Iterator;
 
 import prefuse.action.layout.Layout;
+import prefuse.data.expression.Predicate;
+import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.tuple.TupleSet;
+import prefuse.data.util.Sort;
 import prefuse.visual.VisualItem;
 
 /**
@@ -23,7 +26,8 @@ class MicroGridLayout extends Layout {
     public static double maxDistortion=0.7;//maximum area, in percentage, devoted to distortion
     public int[] geneOrder;//order in which genes and conditions must be laid out
     //public HashMap<Integer, Integer> geneOrder;
-    public int[] conditionOrder;
+    public int[] conditionOrder;//The actual order after reordering by bicluster selection, etc.
+    public int[] initialConditionOrder;//The initial order, usually 1...M but it could change if the columns are sorted
     public int[] hoverGenes, hoverConditions;
     private String colField;//prefuse table colum field names for row and column ids
     private String rowField;
@@ -68,6 +72,7 @@ class MicroGridLayout extends Layout {
         conditionOrder=new int[m];
         for(int i=0;i<n;i++)	geneOrder[i]=i;
         for(int i=0;i<m;i++)	conditionOrder[i]=i;
+        initialConditionOrder=conditionOrder.clone();
         colField=colName;
         rowField=rowName;
         this.xMargin=xMargin;
@@ -88,7 +93,7 @@ class MicroGridLayout extends Layout {
     public void run()
     	{
     	}
-    
+  
     /**
      * Pone un nuevo orden, ojo, teniendo en cuenta sólo los genes que están en la matriz, es decir, si sale sparse
      * no se le puden pasar genesFirst con ids de genes totales
@@ -99,53 +104,57 @@ class MicroGridLayout extends Layout {
     	{
     	int init=0;
     	if(genesFirst!=null)
-    	{
-    	for(int i=0;i<genesFirst.length;i++)//Primero añado todos los que tienen que ir primero
-    		{
-    		geneOrder[genesFirst[i]]=init;//El primero pasa a ocupar la posición de uno de los que tenemos
-    		init++;
-    		}
-    	for(int i=0;i<n;i++)//Luego el resto, si no están entre lo iniciales
-    		{
-    		boolean add=true;
-    		for(int j=0;j<genesFirst.length;j++)	
-    			if(i==genesFirst[j])	
-    				{add=false;break;}
-    		if(add)	
-    			geneOrder[i]=init++;
-    		}
-    	rowSelected=genesFirst.length;
-    	}
+	    	{
+	    	for(int i=0;i<genesFirst.length;i++)//Primero añado todos los que tienen que ir primero
+	    		{
+	    		geneOrder[genesFirst[i]]=init;//El primero pasa a ocupar la posición de uno de los que tenemos
+	    		init++;
+	    		}
+	    	for(int i=0;i<n;i++)//Luego el resto, si no están entre lo iniciales
+	    		{
+	    		boolean add=true;
+	    		for(int j=0;j<genesFirst.length;j++)	
+	    			if(i==genesFirst[j])	
+	    				{add=false;break;}
+	    		if(add)	
+	    			geneOrder[i]=init++;
+	    		}
+	    	rowSelected=genesFirst.length;
+	    	}
     	else
     		{
     		for(int i=0;i<n;i++)	geneOrder[i]=i;
     		rowSelected=0;
     		}
     	
-    	if(conditionsFirst!=null)
-    	{
-    	init=0;
-    	for(int i=0;i<conditionsFirst.length;i++)//Primero añado todos los que tienen que ir primero
-    		{
-    		conditionOrder[conditionsFirst[i]]=init;//El primero pasa a ocupar la posición de uno de los que tenemos
-    		init++;
-    		}
-    	for(int i=0;i<m;i++)//Luego el resto, si no están entre lo iniciales
-    		{
-    		boolean add=true;
-    		for(int j=0;j<conditionsFirst.length;j++)	if(i==conditionsFirst[j])	{add=false;break;}
-    		if(add)	conditionOrder[i]=init++;
-    		}
-    	colSelected=conditionsFirst.length;
-    	}
-    	else
-    		{
-            for(int i=0;i<m;i++)	conditionOrder[i]=i;
-        	colSelected=0;
-    		}
-    	return;
+     	if(conditionsFirst!=null)
+	    	{
+	    	init=0;
+	    	if(conditionsFirst.length<conditionOrder.length)
+		    	{
+		    	for(int i=0;i<conditionsFirst.length;i++)//Primero añado todos los que tienen que ir primero
+		    		{
+		    		conditionOrder[conditionsFirst[i]]=init;//y viceversa
+		    		init++;
+		         	}
+		    	for(int i=0;i<m;i++)//Luego el resto, si no están entre lo iniciales
+		    		{
+		    		boolean add=true;
+		    		for(int j=0;j<conditionsFirst.length;j++)	if(i==conditionsFirst[j])	{add=false;break;}
+		    		if(add)	conditionOrder[i]=init++;
+		    		}
+		    	}
+	    	colSelected=conditionsFirst.length;
+	    	}
+    	
+     	return;
     	}
     
+    public void setColumnOrder(int [] co)
+    	{
+    	for(int i=0;i<co.length;i++)
+    		conditionOrder[co[i]]=i;
+    	}
     /**
      * Sets the elemnts that are hovered at a moment
      * @param genesFirst	genes that come first in the matrix
@@ -166,12 +175,14 @@ class MicroGridLayout extends Layout {
     	if(hoverGenes!=null)	rowHovered=hoverGenes.length;
     	else					rowHovered=0;
     	}
+    
 
     void initialOrder()
     	{
     	for(int i=0;i<n;i++)	geneOrder[i]=i;
     	for(int i=0;i<m;i++)	conditionOrder[i]=i;
     	}
+    
     boolean contained(int c, int[] vector, int max)
     	{
     	for(int i=0;i<vector.length;i++)
@@ -226,9 +237,9 @@ class MicroGridLayout extends Layout {
         while(iter.hasNext())
         	{
         	VisualItem item = (VisualItem)iter.next();
-        	int i=geneOrder[item.getInt("rowId")];//Con esto sale todo bien menos el que se selecciona
-            int j=conditionOrder[item.getInt(colField)];
-            int icont=item.getInt("rowId");//Sparse
+        	int i=geneOrder[item.getInt("rowId")];
+        	int j=conditionOrder[item.getInt("colId")];//we get the order from the colRank, that may or not be ordered
+        	int icont=item.getInt("rowId");//Sparse
             int jcont=item.getInt(colField);
             
         	double h=0;
@@ -286,136 +297,6 @@ class MicroGridLayout extends Layout {
             }
          }
 
-        
-        //SELECTED NODES ----------------------
-        //Distortion of several nodes on the top left
-        /*if(rowSelected>0 || colSelected>0)//In case there are something selected it is distorted
-	        {
-        	miniw=(this.getLayoutBounds().getWidth()-distortedw*colSelected)/(m-colSelected);
-            minih=(this.getLayoutBounds().getHeight()-distortedh*rowSelected)/(n-rowSelected);
-
-	        if(colSelected>0 && distortedw*colSelected>maxDistortion*width)
-		    	{
-		    	distortedw=maxDistortion*width/colSelected;
-		    	miniw=(this.getLayoutBounds().getWidth()-distortedw*colSelected)/(m-colSelected);
-		        }
-		    if(rowSelected>0 && distortedh*rowSelected>maxDistortion*height)
-	        	{
-		    	distortedh=maxDistortion*height/rowSelected;
-		    	minih=(this.getLayoutBounds().getHeight()-distortedh*rowSelected)/(n-rowSelected);
-		        }
-	        while(iter.hasNext())
-	        	{
-	        	VisualItem item = (VisualItem)iter.next();
-	        	int i=geneOrder[item.getInt("rowId")];//Con esto sale todo bien menos el que se selecciona
-	             int j=conditionOrder[item.getInt(colField)];
-	           // int icont=item.getInt(rowField);
-	            int icont=item.getInt("rowId");//Sparse
-	            int jcont=item.getInt(colField);
-	            
-	        	double h=0;
-	        	double w=0;
-	        	if(i>=rowSelected)	
-		        		h=minih;
-	        	else		   		
-	        		h=distortedh;
-	        	
-	        	if(colSelected==0 || colSelected==m)//we have selected gene profiles only
-	        		w=normalw;
-	        	else
-	        		{
-	        		if(j>=colSelected)	w=miniw;
-	        		else				w=distortedw;
-	        		}
-	        	
-	        	
-	        	ExpressionRenderer er=(ExpressionRenderer)item.getRenderer();
-	        	er.setHeight(h, icont);
-	            er.setWidth(w, jcont);
-	            
-	           if(i>=rowSelected)	y=yMargin+rowSelected*distortedh+(i-rowSelected)*minih;//Esto no vale en esparse porque esta mal el order!!
-		            else				y=yMargin+i*distortedh;
-	        	
-	        	if(colSelected==m)//we have selected gene profiles only (all conditions selected)
-	        		x=xMargin+j*normalw;
-	        	else
-	        		{
-		        	if(j>=colSelected)	x=xMargin+colSelected*distortedw+(j-colSelected)*miniw;
-		        	else				x=xMargin+j*distortedw;
-	        		}
-		        	
-	        	setX(item, null, x);
-	            setY(item, null, y);
-	            }
-	         }
-        //HOVER GENES----------------------------------------
-        //Distortion of a single element anywhere
-        else if((hoverGenes!=null && hoverGenes.length>0) || (hoverConditions!=null && hoverConditions.length>0) )
-        	{
-        	miniw=(this.getLayoutBounds().getWidth()-distortedw*colHovered)/(m-colHovered);
-            minih=(this.getLayoutBounds().getHeight()-distortedh*rowHovered)/(n-rowHovered);
-
-        	try{
-        	
-        	if(colHovered>0 && distortedw*colHovered>maxDistortion*width)
-        		{
-		    	distortedw=maxDistortion*width/colHovered;
-		    	miniw=(this.getLayoutBounds().getWidth()-distortedw*colHovered)/(m-colHovered);
-		        }
-		    if(rowHovered>0 && distortedh*rowHovered>maxDistortion*height)
-	        	{
-		    	distortedh=maxDistortion*height/rowHovered;
-		    	minih=(this.getLayoutBounds().getHeight()-distortedh*rowHovered)/(n-rowHovered);
-		        }
-	        while(iter.hasNext())
-	        	{
-	        	VisualItem item = (VisualItem)iter.next();
-	        	int i=item.getInt("rowId");//Con esto sale todo bien menos el que se selecciona
-	            int j=item.getInt(colField);
-	            int icont=item.getInt("rowId");//Sparse
-	            int jcont=item.getInt(colField);
-	            
-	        	double h=0;
-	        	double w=0;
-	        	if(hoverGenes==null)	h=normalh;
-	        	else
-	        		{
-	        		h=minih;
-	        		for(int k:hoverGenes)	if(k==i)	{h=distortedh; break;}
-		        	}
-	        	
-	        	if(colHovered==m)       		w=normalw;
-	        	else
-	        		{
-	        		w=miniw;
-	        		for(int k:hoverConditions)	if(k==j)	{w=distortedw; break;}	
-		        	}
-	        	
-	        	ExpressionRenderer er=(ExpressionRenderer)item.getRenderer();
-	        	er.setHeight(h, icont);
-	            er.setWidth(w, jcont);
-	            
-	            if(hoverGenes==null)
-	        		y=yMargin+i*normalh;
-	            else
-	            	{
-	            	if(i<=hoverGenes[0])	y=yMargin+i*minih;
-	            	else					y=yMargin+(i-1)*minih+distortedh;
-	            	}
-                
-	        	if(hoverConditions==null || colHovered==m)//we have selected gene profiles only (all conditions selected)
-	        		x=xMargin+j*normalw;
-	        	else
-	        		{
-		        	if(j<=hoverConditions[0])	x=xMargin+j*miniw;
-		        	else						x=xMargin+(j-1)*miniw+distortedw;
-	        		}
-		        	
-	        	setX(item, null, x);
-	            setY(item, null, y);
-	            }
-        	}catch(Exception e){e.printStackTrace();}
-        	}*/
         //-------------------- NON DISTORTED BUILD ---------------------
         else
         	{//otherwise, it is built as normal
@@ -431,7 +312,8 @@ class MicroGridLayout extends Layout {
 	        	{
 	        	VisualItem item = (VisualItem)iter.next();
 	        	ExpressionRenderer er=((ExpressionRenderer)item.getRenderer());
-	        	int ci=item.getInt("colId");
+	        	//int ci=item.getInt("colId");
+	        	int ci=item.getInt("colRank");
 	        	int ri=item.getInt("rowId");
 	        	double w=er.getWidth(ci);
 	        	double h=er.getHeight(ri);

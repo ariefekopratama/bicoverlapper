@@ -130,17 +130,17 @@ public class SpringEdge extends Edge {
 	    k=k*kf;
 	    //nl = bv.getEdgeLength();
 		double f = k*(l-nl);
-
 		if(l>0)
 			{
 			forceFrom.setX(f*dx/l);
 			forceFrom.setY(f*dy/l);
 			}
-		else
+		else 
 			{
-			//forceFrom.setX(0);
-			//forceFrom.setY(0);
-			System.out.println("l es cero!!!----------------------");
+			forceFrom.setX(0);//1
+			forceFrom.setY(0);
+			//System.out.print("0");
+			//System.out.println("l es cero!!!----------------------");
 			}
 		//forceFrom.setX(f*dx);
 		//forceFrom.setY(f*dy);

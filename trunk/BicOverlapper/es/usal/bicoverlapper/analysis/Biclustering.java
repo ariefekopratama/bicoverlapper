@@ -60,14 +60,26 @@ public class Biclustering
         if(exp==null)
         	{
         	exp=r.eval("install.packages(\"biclust\")");
-    	    exp=r.eval("library(biclust)");
-    	    if(exp==null)
+        	exp=r.eval("library(biclust)");
+        	if(exp==null)
     	    	{
     	    	JOptionPane.showMessageDialog(null,
-					"Package biclust is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, annotations and Tag clouds won't be available", 
+					"Package biclust is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, Plaid, Bimax, xMotifs and Cheng&Church biclustering won't be available", 
 					"Missing R package", JOptionPane.WARNING_MESSAGE);
     	    	}
-    	    return;
+        	}
+       	exp=r.eval("library(isa2)");
+       	if(exp==null)
+		   	{
+       	 	exp=r.eval("install.packages(\"isa2\")");
+        	exp=r.eval("library(isa2)");
+        	if(exp==null)
+        		{
+    	    	JOptionPane.showMessageDialog(null,
+					"Package isa2 is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, ISA algorithm won't be available", 
+					"Missing R package", JOptionPane.WARNING_MESSAGE);
+		    	}
+	    	return;
 			}
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/binarize.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/helpers.r\")");
@@ -177,12 +189,15 @@ public class Biclustering
 		filter();
 		exp=r.eval("length(res2)");
 		//TODO: if length>0
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
 		exp=r.eval("rm(loma)");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
 		return outFile;
 		}
+	
+	
+	
 	
 	/**
 	 * Filters the bicluster results by using the current filter options.
@@ -190,7 +205,9 @@ public class Biclustering
 	public void filter()
 		{
 		if(filterOptions==null || filterOptions.length!=4)	return;
+		exp=r.eval("length(res2)");
 		exp=r.eval("res2=filterclust(res2, overlapThreshold="+filterOptions[0]+", maxNumber="+filterOptions[1]+", maxRows="+filterOptions[3]+", maxCols="+filterOptions[2]+")");
+		exp=r.eval("length(res2)");
 		return;
 		}
 	
@@ -244,7 +261,79 @@ public class Biclustering
 		exp=r.eval("res2=convertclust(res)");
 		filter();
 		exp=r.eval("length(res2)");
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
+		//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		exp=r.eval("rm(res)");
+		exp=r.eval("rm(res2)");
+		return outFile;
+		}
+	
+	
+
+	/**
+	 * Executes ISA algorithm as implemented in R package isa2
+	 * ISA takes random gene profiles and starts computing the similarity of other gene profiles, similarly to other algorithms like Cheng and Church
+	 * @param rowThreshold - threshold for rows. NOTE that this is not the threshold used as parameter of isa() but in a postfiltering of biclusters
+	 * @param colThershold - threshold for columns. NOTE that this is not the threshold used as parameter of isa() but in a postfiltering of biclusters
+	 * @param numSeeds - number of initial seeds. They are chosen randomly and one bicluster is generated for each
+	 * @param outFile - file to write down the results
+	 * @param description - description about the biclustering to add to header of the file
+	 * @return the name of the file with the results
+	 */
+	public String isa2(float rowThreshold, float colThreshold, int numSeeds, String outFile, String description)
+		{
+		if(r==null)	
+			{
+			loadR();
+			if(r==null)
+				{
+				System.err.println("ISA: no R console");
+				return "";
+				}
+			}
+		//exp=r.eval("res <- isa(m, thr.row="+rowThreshold+", thr.col="+colThreshold+", no.seeds="+numSeeds+")");
+		exp=r.eval("res <- isa(m, no.seeds="+numSeeds+")");
+		exp=r.eval("res$columns");
+		if(exp==null)
+			{
+			System.err.println("ISA algorithm did not run correctly");
+			return null;
+			}
+		exp=r.eval("dim(res$columns)[2]");
+		if(exp.asInt()==0)
+			{
+			System.err.println("ISA algorithm did not find any bicluster");
+			return null;
+			}
+			
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="isa"+(int)(100000*Math.random())+".tmp";//TODO: erase when exiting 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.concat("isa");
+				outFile=outFile.replace(".", "-");
+				outFile=outFile.concat(".bic");
+				}
+			
+			}
+		if(description.length()==0)
+			{
+			description="ISA";
+			}
+
+//		exp=r.eval("res2=convertISAclust(res)");
+		exp=r.eval("res2=convertISAclust(res, row.thr="+rowThreshold+", col.thr="+colThreshold+")");
+		filter();
+		exp=r.eval("length(res2)");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
 		return outFile;
@@ -311,7 +400,8 @@ public class Biclustering
 		exp=r.eval("res2=convertclust(res)");
 		filter();
 		exp=r.eval("length(res2)");
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
 		exp=r.eval("rm(dima)");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
@@ -373,7 +463,8 @@ public class Biclustering
 	exp=r.eval("res2=convertclust(res)");
 	filter();
 	exp=r.eval("length(res2)");
-	exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+	//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+	exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
 	exp=r.eval("rm(res)");
 	exp=r.eval("rm(res2)");
 	return outFile;

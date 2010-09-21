@@ -11,7 +11,7 @@ import java.awt.Point;
  */
 public class Configuration {
 	
-	public Dimension dimAplicacion = new Dimension(1200,800);//1000x600
+	public Dimension dimAplicacion = new Dimension(1300,800);//1000x600
 	public Dimension dimPanelPuntos = new Dimension(900,300);
 	public Dimension dimPanelCoordenadas = new Dimension(900,300);
 	public Dimension dimPanelHistograma = new Dimension(350,300);
@@ -20,12 +20,13 @@ public class Configuration {
 	public Dimension dimPanelDatos = new Dimension(350,300);
 	public Dimension dimPanelBubbles = new Dimension(300,300);
 	public Dimension dimPanelTRN = new Dimension(600,430);
-	public Dimension dimPanelHeatmap = new Dimension(210,610);
+	public Dimension dimPanelHeatmap = new Dimension(310,610);
 	//private Dimension dimPanelHeatmap = new Dimension(300,610);
 	public Dimension dimPanelBubbleGraph = new Dimension(900,400);
 	public Dimension dimPanelDataSelection = new Dimension(740,560);
-	public Dimension dimPanelWordCloud = new Dimension(500,200);
+	public Dimension dimPanelWordCloud = new Dimension(650,250);
 	
+	public int marginWidth=4; //margin of diagrams
 	private Point initPC, initHM, initWC, initBM, initO, initTRN;
 	
 	static final int NoId = 0;

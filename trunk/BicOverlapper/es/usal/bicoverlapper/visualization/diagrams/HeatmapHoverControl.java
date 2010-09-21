@@ -116,7 +116,7 @@ class HeatmapHoverControl extends FocusControl
             	for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
 					{
 					condicionesSeleccionadas.add((Integer)i);
-					//TODO: añadir todos los items a esta
+					//TODO: add todos los items a esta
 					}
 				}
             if(condicionSeleccionada)

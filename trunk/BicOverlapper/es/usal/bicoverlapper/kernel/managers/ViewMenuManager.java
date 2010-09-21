@@ -14,7 +14,7 @@ import es.usal.bicoverlapper.visualization.diagrams.OverlapperDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.HeatmapDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.ParallelCoordinatesDiagram;
-import es.usal.bicoverlapper.visualization.diagrams.TRNDiagram;
+import es.usal.bicoverlapper.visualization.diagrams.NetworkDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
 
 
@@ -65,15 +65,15 @@ public class ViewMenuManager implements ActionListener{
 				BubblesDiagram panel = new BubblesDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				ventana.setLocation(config.dimPanelCoordenadas.width+config.dimPanelHeatmap.width, 0);
+				ventana.setLocation(config.dimPanelCoordenadas.width+config.dimPanelHeatmap.width+config.marginWidth*4, 0);
 				sesion.setBubbles(ventana);
 				panel.createAxisLayout();
 				panel.run();
 			}
-			else if(e.getActionCommand().equals("Transcription Network")){
+			else if(e.getActionCommand().equals("Biological Network")){
 				//System.out.println("Comenzamos la vista");
 				Dimension dim = config.getDimPanelTRN();
-				TRNDiagram panel = new TRNDiagram(sesion, dim);
+				NetworkDiagram panel = new NetworkDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
@@ -88,7 +88,7 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
-				ventana.setLocation(config.getSizePanelCoordenadas().width,0);
+				ventana.setLocation(config.getSizePanelCoordenadas().width+config.marginWidth*2,0);
 				panel.create();
 				//panel.create3d();
 				panel.run();
@@ -98,7 +98,7 @@ public class ViewMenuManager implements ActionListener{
 				OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				ventana.setLocation(0, config.getSizePanelCoordenadas().height);
+				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
 				
 				sesion.setBubbleGraph(ventana);
 				
@@ -122,18 +122,11 @@ public class ViewMenuManager implements ActionListener{
 			}
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s13")))
 				{
-				/*if(!sesion.getMicroarrayData().isAnnotationsRetrieved())
-					{
-					JOptionPane.showMessageDialog(null,
-							"Retrieving annotations from database, please wait to see word cloud ...", 
-							"Wait for annotations", JOptionPane.INFORMATION_MESSAGE);
-					return;
-					}*/
 				Dimension dim = config.getDimPanelWordCloud();
 				WordCloudDiagram panel = new WordCloudDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				panel.setLocation(config.getSizePanelCoordenadas().width, config.dimAplicacion.height-config.dimPanelWordCloud.height);
+				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
 				sesion.setWordCloud(ventana);
 				panel.repaint();
 				}

@@ -126,6 +126,7 @@ public class ForcedNode extends Node {
     p.noFill();
 	Color c=p.paleta[Overlapper.foregroundColor];
 	p.stroke(c.getRed(),c.getGreen(),c.getBlue(),128);
+	p.strokeWeight(2);
     p.rectMode(Overlapper.CENTER);
 
    	if(isGene())	p.ellipse((float) getX(), (float) getY(), width*factor, height*factor);

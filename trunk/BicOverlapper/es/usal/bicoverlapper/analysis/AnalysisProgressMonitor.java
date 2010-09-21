@@ -41,7 +41,7 @@ PropertyChangeListener, Runnable {
 		this.task = task;
 		}
 
-	public AnalysisProgressMonitor(Biclustering b, int type, ArrayList<Object> params) {
+	public AnalysisProgressMonitor(Analysis b, int type, ArrayList<Object> params) {
 		super(new BorderLayout());
 		this.setBounds(100, 100, 400, 500);
 		taskOutput = new JTextArea(8, 40);
@@ -134,7 +134,7 @@ PropertyChangeListener, Runnable {
 	//public class AnalysisTask extends SwingWorker15<String, Void>//implements Runnable
 	{
 		public String message;
-		Biclustering b;
+		Analysis b;
 		ArrayList<Object> params;
 		int type=-1;
 		public final static int BIMAX=0; 
@@ -142,9 +142,10 @@ PropertyChangeListener, Runnable {
 		public final static int CHENG_CHURCH=2; 
 		public final static int XMOTIFS=3; 
 		public final static int SPECTRAL=4; 
+		public final static int ISA=5; 
+			
 		
-		
-		public AnalysisTask(Biclustering b, int type, ArrayList<Object> params)
+		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
 			{
 			this.b=b;
 			this.type=type;
@@ -168,6 +169,11 @@ PropertyChangeListener, Runnable {
 							((String)params.get(7))); 
 					break;
 				case PLAID:
+					System.out.println(((String)params.get(0)) ); 
+					System.out.println(((Float)params.get(1)).floatValue() );
+							System.out.println(		((Float)params.get(2)).floatValue() ); 
+									System.out.println(		((String)params.get(3)) ); 
+											System.out.println(		((String)params.get(4)));
 					res=b.plaid(((String)params.get(0)), 
 							((Float)params.get(1)).floatValue(), 
 							((Float)params.get(2)).floatValue(), 
@@ -192,6 +198,19 @@ PropertyChangeListener, Runnable {
 							((Integer)params.get(6)).intValue(), 
 							((String)params.get(7)), 
 							((String)params.get(8)));
+					break;
+				case ISA:
+					System.out.println(((Float)params.get(0)).floatValue());
+					System.out.println(((Float)params.get(1)).floatValue());
+					System.out.println(((Integer)params.get(2)).intValue());
+					System.out.println(((String)params.get(3)));
+					System.out.println(((String)params.get(4)));
+					res=b.isa2(	((Float)params.get(0)).floatValue(), 
+							((Float)params.get(1)).floatValue(), 
+							((Integer)params.get(2)).intValue(),
+							((String)params.get(3)), 
+							((String)params.get(4))); 
+					
 					break;
 				case SPECTRAL:
 					break;

@@ -10,9 +10,18 @@ public class Line extends Line2D.Double{
 	double slope;
 	
 	public Line(double x1, double y1, double x2, double y2)
+	{
+	super(x1,y1,x2,y2);
+	if(x1!=x2)	slope=-(y1-y2)/(x1-x2);//negative because of java coordinates
+	else slope=1000000000;
+	return;
+	}
+	
+	public Line(int x1, int y1, int x2, int y2)
 		{
 		super(x1,y1,x2,y2);
-		slope=-(y1-y2)/(x1-x2);//negative because of java coordinates
+		if(x1!=x2)	slope=-(y1-y2)/(x1-x2);//negative because of java coordinates
+		else slope=1000000000;
 		return;
 		}
 	

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
@@ -76,11 +77,11 @@ private double closeness = nodeSize;
 protected ArrayList<Point2D.Double> selectionArea = null;
 //protected Path2D.Double selectionArea = null;
 
-boolean move=false;
+public boolean move=false;
 //Data file information
 private String dataFile;
 //private String titleFile=null;//Names for each clusters, just if necesary.
-String delimiter=" ";
+String delimiter="\t";
 String groupDelimiter=null;
 String posDelimiter="|";
 int headerLines=0;
@@ -192,7 +193,7 @@ boolean additionMode=false;
 boolean drawAwarded=true;		//Se le puede hacer un toggle
 boolean drawGlyphs=true;		//Se le puede hacer un toggle
 boolean fullDrawing=false;		//Para imprimir la imagen entera sin ceñirnos a los márgenes de la ventana (para fotos)
-int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.ZONE, Graph.PIECHART, Graph.NODE, Graph.SELECT, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.ERROR, Graph.DUAL, Graph.SURFACE};
+int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.ZONE, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.SELECT, Graph.HOVER, Graph.SEARCH, Graph.ERROR, Graph.DUAL, Graph.SURFACE};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT, Graph.ERROR, Graph.DUAL};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT, Graph.ERROR};
 //int []	priorities=new int[]{Graph.EDGE, Graph.HULL, Graph.HULLLABEL, Graph.PIECHART, Graph.NODE, Graph.NODELABEL, Graph.HOVER, Graph.SEARCH, Graph.SELECT};
@@ -262,6 +263,15 @@ int drawCount=0;
 public boolean sugiyama=false;
 
 private Node rightButtonNode;
+
+private boolean ctrlPressed;
+
+private float sumOfForces;
+private float antSumOfForces;
+
+private int contStability=0;
+
+private long totalTime;
 
 
 
@@ -506,7 +516,6 @@ public synchronized void paintComponent(Graphics g)
 	return;
 }
 
-
 public void run()
 {
 int delay = 0; //milliseconds
@@ -515,22 +524,58 @@ ActionListener taskPerformerLayout = new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
     	  long ts=System.currentTimeMillis();
     	  if(!pauseSimulation)
-    	  	{
-    		  if(!sugiyama)	doLayout();
-    		  else			doSugiyamaLayout();
-    	  	}
-    	  		
-    	//System.out.println("Tarda en doLayout "+(System.currentTimeMillis()-ts));
+    	 	  	{
+    		  	if(!sugiyama)	doLayout();
+    		  	else			doSugiyamaLayout();
+        	  	}
       }
   };
-new Timer(delay, taskPerformerLayout).start();
-
-ActionListener taskPerformer = new ActionListener() {
-    public void actionPerformed(ActionEvent evt) {
-  	  repaint();
-    }
-};
+  
+ 	new Timer(delay, taskPerformerLayout).start();
+	
+	ActionListener taskPerformer = new ActionListener() {
+	    public void actionPerformed(ActionEvent evt) {
+	    	repaint();
+	    	}
+	};
+ 
 new Timer(delay, taskPerformer).start();
+}
+
+/*
+public void run()
+{
+	
+int delay = 0; //milliseconds
+totalTime=System.currentTimeMillis();
+
+ActionListener taskPerformerLayout = new ActionListener() {
+      public void actionPerformed(ActionEvent evt) {
+    	//  long ts=System.currentTimeMillis();
+    	  if(!pauseSimulation)
+        	  	{
+    		  	//if(!sugiyama)	
+        	  		doLayout();
+    		  	//else			doSugiyamaLayout();
+        	  	}
+      }
+  };
+  
+ 	new Timer(delay, taskPerformerLayout).start();
+	
+	ActionListener taskPerformer = new ActionListener() {
+	    public void actionPerformed(ActionEvent evt) {
+	    	if(pauseSimulation)
+	    	 {
+	    	 repaint();
+	    	 }
+	    }
+	    
+	};
+ 
+new Timer(delay, taskPerformer).start();
+  
+}*/
 /*
 try{
 	this.doLinLogLayout();
@@ -542,7 +587,6 @@ try{
 new Timer(delay, taskPerformer).start();
 	}catch(Exception e){e.printStackTrace();}
 	*/
-}
 
 /**
  * Checks the improvement of the new iteration and stops the drawing if the layout has reached to a no-improvement behavior
@@ -649,9 +693,22 @@ void insertDetails()
 public void updateGraph(BiclusterSelection bs)
 	{
 	this.getGraph().updateSelection(bs);
-	this.restoreClusters();
-	this.removeNonSelected(bs);
+	this.getGraph().updateLabels();
+	//this.restoreClusters();
+	//this.removeNonSelected(bs);
 	}
+
+/**
+ * Updates this graph by showing only the biclusters that contains any of the 
+ * genes or conditions selected.
+ * @param	bs	BiclusterSelection to update the graph
+ *
+ */
+public void updateGraph()
+	{
+	this.getGraph().updateLabels();
+	}
+
 /**
  * Draws a small interface with bars to change force parameters
  * @deprecated
@@ -960,7 +1017,7 @@ public synchronized void doLayout()
 public synchronized void doLayout() 
 	{
 	if(computeDualLayout && g.dualNodes!=null && g.dualNodes.size()>0)	{doDualLayout(); return;}
-	
+	sumOfForces=0;
 	Iterator<Node> it=g.getNodes().values().iterator();
 	for (int i=0; i<g.getNodes().size(); i++) //N(N-1)/2 complexity
 	  	{
@@ -978,6 +1035,7 @@ public synchronized void doLayout()
 		    	ForcedNode m=(ForcedNode)e.getTo();
 		    	f.invert();
 		    	m.applyForce(f);
+		    	sumOfForces+=Math.abs(Math.sqrt(f.getX()*f.getX()+f.getY()*f.getY()));
 		    	}
 		    
 		    //------------------- expansion force --------------------------------
@@ -1003,13 +1061,30 @@ public synchronized void doLayout()
 			       		n.applyForce(vf); 
 				    	vf.invert();
 				    	b.applyForce(vf);
-			       		}
+				    	sumOfForces+=Math.abs(Math.sqrt(vf.getX()*vf.getX()+vf.getY()*vf.getY()));
+					    }
 			    	}
-		    	
+			    
 			}
 		applyLayout(n);
 	   }//for (each node)
-//	System.out.println("LinLog energy: "+g.getLinLogEnergy()+" minimum possible: "+g.getMinimalLinLogEnergy());
+	//System.out.println("LinLog energy: "+g.getLinLogEnergy()+" minimum possible: "+g.getMinimalLinLogEnergy());
+	//System.out.println("Sum of forces "+sumOfForces);
+	/*System.out.print(".");
+	if(antSumOfForces!=0)	
+		{
+		if(Math.abs(antSumOfForces-sumOfForces)<0.001)
+			{
+			contStability++;
+			if(contStability>4)	
+				{
+				pause(); contStability=0; 
+				System.out.println("Total time: "+ (System.currentTimeMillis()-totalTime)/1000.0+"\tForce: "+this.sumOfForces+" ("+this.antSumOfForces+")");
+				}
+			}
+		else	contStability=0;
+		}
+	antSumOfForces=sumOfForces;*/
 	}
 
 private void applyLayout(ForcedNode n)
@@ -1211,6 +1286,7 @@ public synchronized void doLinLogLayout()
 public synchronized void doDualLayout()
 	{	
 	this.stiffness=1;
+	sumOfForces=0;
 	Iterator<DualNode> it=g.dualNodes.values().iterator();
 	for (int i=0; i<g.dualNodes.size(); i++) //N(N-1)/2 complexity
 	  	{
@@ -1222,6 +1298,8 @@ public synchronized void doDualLayout()
 			//GraphPoint2D f = e.getForceFrom();
 			GraphPoint2D f = e.getDualForceFrom();
 	    	n.applyForce(f);
+	       	sumOfForces+=Math.abs(Math.sqrt(f.getX()*f.getX()+f.getY()*f.getY()));
+			 
 	    	}
 		//System.out.println("Fuerza de spring para "+n.label+": "+n.getForce().getX()+", "+n.getForce().getY());
 		Iterator<DualNode> it2=g.dualNodes.values().iterator();
@@ -1249,6 +1327,8 @@ public synchronized void doDualLayout()
 			       		n.applyForce(vf); 
 				    	vf.invert();
 				    	b.applyForce(vf);
+				       	sumOfForces+=Math.abs(Math.sqrt(vf.getX()*vf.getX()+vf.getY()*vf.getY()));
+						 
 			       		}
 			    	}
 			    	
@@ -1289,6 +1369,22 @@ public synchronized void doDualLayout()
     	n.setForce(nullVector);	//una vez cambiada la posición, estas fuerzas ya no actúan sobre el nodo
     	
 	   }//for (each node)
+	
+	/*System.out.println("Sum of forces "+sumOfForces);
+	if(antSumOfForces!=0)	
+		{
+		if(antSumOfForces-sumOfForces<0.001)
+			{
+			contStability++;
+			if(contStability>4)	
+				{
+				pause(); contStability=0; 
+				System.out.println("Total time: "+ (System.currentTimeMillis()-totalTime)/1000.0);
+				}
+			}
+		else	contStability=0;
+		}
+	antSumOfForces=sumOfForces;*/
 	}
 
 
@@ -1343,13 +1439,13 @@ void increaseOverview(double f)
 	}
 
 //----------------------------- INTERACTIVE CONTROLS ---------------------------
+
 /**
  * This function is called when a key is pressed
  */
 protected void keyPressed() {
 	char c = Character.toLowerCase(key);
 	int temp=0;
-		
 	switch(c){
 	/*case  '1'://radial2complete
 		if(radial)
@@ -1389,7 +1485,7 @@ protected void keyPressed() {
 		break;	
 		
 	//Change of node labels (relevance)
-	case '9':
+	/*case '9':
 		this.g.intelligentFastHill();
 		break;
 	case '8':
@@ -1397,7 +1493,7 @@ protected void keyPressed() {
 		break;
 	case '7':
 		setDrawTopography(!isDrawTopography());
-		break;
+		break;*/
 			
 	case  '0'://redraw
 		this.paint(gr);
@@ -1411,15 +1507,19 @@ protected void keyPressed() {
 		//if(g.dualNodes!=null && g.dualNodes.size()>0)	g.fastHillClimberRelocationDual(20, 1, false);
 		//else											//for(int i=20;i>0;i--)	this.g.fastHillClimberRelocation(i, 1, false);//No implica mejora
 													//	this.g.fastHillClimberRelocation(20, 1, false);
-			this.g.fastHillClimber2();
-	   // this.g.gaRelocation();
+		
+		
+		//this.g.fastHillClimber2();
+	   
+		
+		// this.g.gaRelocation();
 	    
 		break;
 	case 'g'://genetic algorithm improvement
-		this.g.gaRelocation();
+		//this.g.gaRelocation();
 		break;
 	case 'f'://convert to dual or normal
-		if(g.dualNodes==null || this.g.dualNodes.size()==0)	
+	/*	if(g.dualNodes==null || this.g.dualNodes.size()==0)	
 			{
 			g.buildCompleteDualGraph();
 			drawNodes=false;
@@ -1428,7 +1528,7 @@ protected void keyPressed() {
 			{
 			g.dualNodes.clear();
 			drawNodes=true;
-			}
+			}*/
 		break;
 	case 'n':
 		drawNodes=!drawNodes;
@@ -1480,8 +1580,9 @@ protected void keyPressed() {
 			break;
 	   case 'r': drawErrors=!drawErrors;
 		break;
-	   case 'u': drawDual=!drawDual;
-		break;
+	   case 'u': 
+		   drawDual=!drawDual;
+		   break;
 	   case 'j': computeDualLayout=!computeDualLayout;
 		break;
 	   case '.': increaseLabelClusterSize();
@@ -1490,7 +1591,7 @@ protected void keyPressed() {
 		   decreaseLabelClusterSize();
 		   break;
 	   case CODED:
-	   		switch(keyCode)
+		   switch(keyCode)
 	   			{
 	   			case UP:
 	   				temp=priorities[0];
@@ -1683,22 +1784,22 @@ public void zoomOut()
 
 private void increaseZoom(double f)
 	{
-	float totalHeightAnt=this.totalHeight;
-	float totalWidthAnt=this.totalWidth;
+	//float totalHeightAnt=this.totalHeight;
+	//float totalWidthAnt=this.totalWidth;
 	
-   // totalHeight/=f;
-	   // totalWidth/=f;
 	//----------nuevo
 	totalHeight-=f*totalHeight;
 	totalWidth-=f*totalWidth;
+	//screenHeight-=f*screenHeight;
+	//screenWidth-=f*screenWidth;
 	zoomFactor+=f;
+	
 	//------------
-	float marcoAlto=(float)(totalHeight-totalHeightAnt)/2.0f;
-    float marcoAncho=(float)(totalWidth-totalWidthAnt)/2.0f;
+	//float marcoAlto=(float)(totalHeight-totalHeightAnt)/2.0f;
+    //float marcoAncho=(float)(totalWidth-totalWidthAnt)/2.0f;
     
     //Centramos
-    Iterator itOver=g.getCenterNodes().values().iterator();
-    itOver=g.getNodes().values().iterator();
+    /*Iterator<Node> itOver=g.getNodes().values().iterator();
     while(itOver.hasNext())
     	{
     	ForcedNode n=(ForcedNode)itOver.next();
@@ -1707,7 +1808,8 @@ private void increaseZoom(double f)
         }
     
     offsetX+=marcoAncho;
-    offsetY+=marcoAlto;
+    offsetY+=marcoAlto;*/
+	//System.out.println("Con zoom"+zoomFactor+", screen is "+getOffsetX()+", "+getOffsetY()+", "+getScreenHeight()+", "+getScreenWidth());
 	}
 
 void increaseEdgeLength()
@@ -1797,11 +1899,10 @@ protected void mousePressed() {
   
   //Sólo funciona fuera del área de overview
   //lo pasamos al release
-  
-	if (mouseX < this.xTopOverviewBox || mouseY > this.yTopOverviewBox)
+  if (mouseX < this.xTopOverviewBox || mouseY > this.yTopOverviewBox)
   	  {
-	  float xpress=mouseX+(Math.abs(xTopMagnifier-xTopOverviewBox)/overviewBoxLength)*areaInc*screenWidth;
-	  float ypress=mouseY+(Math.abs(yTopMagnifier-yTopOverviewBox)/overviewBoxHeight)*areaInc*screenHeight;
+		float xpress=(mouseX-offsetX)/zoomFactor;
+		float ypress=(mouseY-offsetY)/zoomFactor;
 	
 	  for(Node n : g.getNodes().values())
 	  	{
@@ -1930,7 +2031,6 @@ protected void mouseReleased() {
 			Polygon pol=new Polygon();
 			for(Point2D.Double p: selectionArea)	pol.addPoint((int)p.x, (int)p.y);
 			if(pol.contains(n.getX(), n.getY()))
-			//if(selectionArea.contains(n.getX(),n.getY()))
 				{
 				g.addSelectedNode(n);
 				nodeSelected=true;
@@ -1942,77 +2042,113 @@ protected void mouseReleased() {
 
   if (!move && (mouseX < this.xTopOverviewBox || mouseY > (this.yTopOverviewBox+this.overviewBoxHeight)) )
 	 {
-	  Iterator<Node> itMouse=g.getNodes().values().iterator();
-	  float xpress=mouseX+(Math.abs(xTopMagnifier-xTopOverviewBox)/overviewBoxLength)*areaInc*screenWidth;
-	  float ypress=mouseY+(Math.abs(yTopMagnifier-yTopOverviewBox)/overviewBoxHeight)*areaInc*screenHeight;
-	
-	   
-	  //----------- LEFT BUTTON
-	  if(mouseButton==LEFT)
-		  {
-		  while(itMouse.hasNext())	//--------single node selection
-	 		{
-			 Node n=(Node)itMouse.next();
-			 if (n.containsPoint(xpress, ypress)) 
-			     {
-				 if(n.isFixed() && mouseButton!=RIGHT)	n.fix(false);
-				 nodeSelected=true;	
-				 if(!keyPressed)	
-					{
-					g.clearSelectedNodes();
-					g.getSelectedClusters().clear();
-					}
-				 if(n!=g.getDragNode())	g.addSelectedNode(n);
-				 }
-	 		}
-		  if(!nodeSelected && this.drawHull)	//---------- group selection
-		  	{
-			for(int i=0;i<this.numClusters;i++)
-		  		{
-		  		Cluster mc=this.getClusterInPos(i);
-		  		if(mc!=null && mc.hull!=null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label))
-		  			{
-		  			if(!keyPressed)	
+	 float xpress=(mouseX-offsetX)/zoomFactor;
+	 float ypress=(mouseY-offsetY)/zoomFactor;
+	 if(!drawDual)
+		 {
+		 Iterator<Node> itMouse=g.getNodes().values().iterator();
+		
+		   
+		  //----------- LEFT BUTTON
+		  if(mouseButton==LEFT)
+			  {
+			  while(itMouse.hasNext())	//--------single node selection
+		 		{
+				 Node n=(Node)itMouse.next();
+				 if (n.containsPoint(xpress, ypress)) 
+				     {
+					 if(n.isFixed() && mouseButton!=RIGHT)	n.fix(false);
+					 nodeSelected=true;	
+					 if(!keyPressed)	
 						{
 						g.clearSelectedNodes();
 						g.getSelectedClusters().clear();
 						}
-					
-		  			g.getSelectedClusters().put(mc.label, mc);
-		  			for(int j=0;j<mc.getNodes().size();j++)
-		  				g.addSelectedNode(mc.getNode(j));	
-		  			}
-		  		}
-		  	}
-		  }
-	  //-------- RIGHT BUTTON----------------> Search for details
-	  else if(mouseButton==RIGHT)
-	  	{
-		 //System.out.println("Retrieving details");
-		 rightButtonNode=null;
-		 while(itMouse.hasNext())
-	 		{
-			 Node n=(Node)itMouse.next();
-			 if (n.containsPoint(xpress, ypress))	
+					 if(n!=g.getDragNode())	g.addSelectedNode(n);
+					 }
+		 		}
+			  if(!nodeSelected && this.drawHull)	//---------- group selection
+			  	{
+				for(int i=0;i<this.numClusters;i++)
+			  		{
+			  		Cluster mc=this.getClusterInPos(i);
+			  		if(mc!=null && mc.hull!=null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label))
+			  			{
+			  			if(!keyPressed)	
+							{
+							g.clearSelectedNodes();
+							g.getSelectedClusters().clear();
+							}
+						
+			  			g.getSelectedClusters().put(mc.label, mc);
+			  			for(int j=0;j<mc.getNodes().size();j++)
+			  				g.addSelectedNode(mc.getNode(j));	
+			  			}
+			  		}
+			  	}
+			  }
+		  //-------- RIGHT BUTTON----------------> Search for details
+		  else if(mouseButton==RIGHT)
+		  	{
+			 rightButtonNode=null;
+			 while(itMouse.hasNext())
+		 		{
+				 Node n=(Node)itMouse.next();
+				 if (n.containsPoint(xpress, ypress))	
+					 {
+					 rightButtonNode=n;
+					 break;
+					 }
+		 		}
+			 if(rightButtonNode==null)	return;
+			 if(rightButtonNode.details.length() > 0)	rightButtonNode.details="";
+			 else
 				 {
-				 rightButtonNode=n;
-				 break;
+				 if(this.getMicroarrayData()==null)	{System.err.println("Error: Microarray data are not loaded, impossible to retrieve additional info about genes"); return;}
+				 if(rightButtonNode.isGene())
+				 	{
+					 GeneAnnotation ga=this.getMicroarrayData().geneAnnotations.get(rightButtonNode.id);
+					 if(ga!=null && ga.goTerms!=null)
+					 	{
+						rightButtonNode.setDetails(ga.getDetailedForm());
+					 	}
+					 else
+					 	{	 
+						rightButtonNode.details="searching...";
+						this.getMicroarrayData().getGeneAnnotation(rightButtonNode.labelId, this, null);
+					 	}
+				 	}
+				 else
+				 	{
+					rightButtonNode.setDetails(this.getMicroarrayData().getDetailedSampleForm(rightButtonNode.id));
+					System.out.println(rightButtonNode.details);
+				 	}
 				 }
-	 		}
-		 if(rightButtonNode==null)	return;
-		 if(rightButtonNode.details.length() > 0)	rightButtonNode.details="";
-		 else
-			 {
-			 if(this.getMicroarrayData()==null)	{System.err.println("Error: Microarray data are not loaded, impossible to retrieve additional info about genes"); return;}
-			 if(rightButtonNode.isGene())
-			 	{
-				 if(this.getParent()==null)	this.getMicroarrayData().getGeneAnnotation(rightButtonNode.label, this, null);
-				 else						this.getMicroarrayData().getGeneAnnotation(rightButtonNode.label, this, ((Diagram)(this.getParent())).getLocation());
-			 	}
-			 }
-	  	}//end if(rigth button)
-	 }//if !move
-  move=false;
+		  	}//end if(rigth button)
+		 }//if !drawDual
+	  else
+	 	{
+		System.out.println("Selection of dual node"); 
+		Iterator<DualNode> itMM=g.dualNodes.values().iterator();
+		
+		 for(int i=0; i<g.dualNodes.size(); i++) 
+	    	{
+			DualNode n = (DualNode)itMM.next();
+		    if (n.containsPoint(xpress, ypress)) 
+		      	{
+		    	g.clearSelectedNodes();
+		    	g.clearSelectedDualNodes();
+		    	g.getSelectedClusters().clear();
+		    	
+		    	g.addSelectedDualNode(n);
+				g.addSelectedNodes(n.subNodes);	
+	  		    break;
+		      	}
+	    	}
+	    if(!itMM.hasNext())	g.setHoverNode(null);
+	 	}
+	  }//if !move
+	  move=false;
 }
 
 
@@ -2047,7 +2183,7 @@ protected void mouseDragged() {
 				}
 			}	    
 		}
-	/* if(!navigate)
+	 if(!navigate)
 	 	{
 		move=true;
 		float xpress=(mouseX-offsetX)/zoomFactor;
@@ -2060,48 +2196,11 @@ protected void mouseDragged() {
 			}
 		else	//Selección de área
 			{
-		//	System.out.println("Modificando área");
-			selectionArea.lineTo(xpress, ypress);
-			}
-	 	}*/
-	 if(!navigate)
-	 	{
-		move=true;
-		float xpress=(mouseX-offsetX)/zoomFactor;
-		float ypress=(mouseY-offsetY)/zoomFactor;
-	/*	if(g.getSelectedNodes()!=null && g.getSelectedNodes().size()>0)	// drag selected nodes
-			{
-			Iterator<Node> it=g.getSelectedNodes().values().iterator();
-			double mainX=-1;
-			double mainY=-1;
-			while(it.hasNext())
-				{	
-				Node n=it.next();
-				if(mainX<0)
-					{
-					mainX=n.getX();
-					mainY=n.getY();
-					}
-				n.setX(n.getX()-mainX+xpress);
-				n.setY(n.getY()-mainY+ypress);
-				}
-			}
-		else	*///drag node or selection line
-			{
-			if(g.getDragNode()!=null)
-				{
-				 System.out.println("Posición anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
-				 g.getDragNode().setX(xpress);
-				 g.getDragNode().setY(ypress);
-				}
-			else	//Selección de área
-				{
-				//selectionArea.lineTo(xpress, ypress);
-				selectionArea.add(new Point2D.Double(xpress, ypress));
-				}
+			//selectionArea.lineTo(xpress, ypress);
+			selectionArea.add(new Point2D.Double(xpress, ypress));
 			}
 	 	}
-}
+	}
 
 private void moveMagnifier(float newX, float newY)
 	{
@@ -2136,7 +2235,8 @@ public int search(String text, boolean searchInGroups)
 			{
 			for(Node n : g.getNodes().values())
 				{
-				if(n.getLabel().contains(text))
+				if(n.label.contains(text) || n.labelId.contains(text))
+			//	if(n.getLabel().contains(text))
 					g.addSearchNode(n);
 				}
 			if(g.getSearchNodes().size()==1)
@@ -2323,7 +2423,7 @@ private void readClustersBicat()
 	for (int l = 2; l < data.length; l++)
 	  	{
 		dataToken = data[l].split(delimiter);//Filas
-		String groupName="cluster"+cont;
+		String groupName=""+cont;
 		if(groupDelimiter!=null && data[l].contains(groupDelimiter))
 			groupName=dataToken[0].split(groupDelimiter)[0];
 		
@@ -2341,6 +2441,8 @@ private void readClustersBicat()
 					}
 				}
 			l++;
+			if(l==175)
+				System.out.println("ending");
 			dataToken = data[l].split(delimiter);  //Columnas
 			if (dataToken.length >1)
 				{
@@ -2352,6 +2454,9 @@ private void readClustersBicat()
 						if(!conditionNames.contains(dataToken[i]))	conditionNames.add(dataToken[i]);
 						}
 					}
+				}
+			if(lista.size()>0)
+				{
 				groupNames[cont]=groupName;
 				clusters.put(groupNames[cont], lista);
 				this.numClusters++;
@@ -2412,8 +2517,9 @@ public int numClusters()
 		{
 		String [] dataToken = data[0].split(delimiter);
 		if (dataToken.length > 1)		 exit();
+		resultLabels.add(data[1]);
 			
-		for (int l = 1; l < data.length; l++)
+		for (int l = 2; l < data.length; l++)
 		  	{
 			dataToken = data[l].split(delimiter);  
 			if (dataToken.length == 1)		
@@ -2456,11 +2562,11 @@ String data[] = loadStrings(getDataFile());
 
 String [] dataToken = data[0].split(delimiter);//This first one has the number of biclusters
 if (dataToken.length > 1)		 exit();
-	
+boolean skipNext=false;	
 for (int l = 1; l < data.length; l++)
   	{
 	dataToken = data[l].split(delimiter);  
-	if (dataToken.length == 1)		
+	if (!skipNext && (data[l].length()>0 && dataToken.length == 1))		
 		{
 		resultLabels.add(dataToken[0]);
 		//n=Integer.valueOf(data[++l].split(delimiter)dataToken[0]).intValue();
@@ -2470,7 +2576,11 @@ for (int l = 1; l < data.length; l++)
 			}
 		n=0;
 		}
-	if (dataToken.length > 1)		n++;
+	if (data[l].length()==0 || dataToken.length > 0)		n++;//==0 for the case of no-conditions or no-genes
+	if(dataToken[0].equals("1") || dataToken[0].endsWith(this.groupDelimiter+" 1"))	
+		skipNext=true; //Next line with just one element is because of a group of only one element, not because of a change in set.
+	else	
+		skipNext=false;
 	}
 resultSets.add(n/3);
 }
@@ -2922,7 +3032,8 @@ Cluster getClusterInPos(int pos)
 			{
 			Map<String,ClusterSet> m=g.getResults();
 			ClusterSet r=m.get(resultLabels.get(i));
-			return r.getClusters().get(pos);
+			try{return r.getClusters().get(pos);
+			}catch(Exception e){return null;}
 			}
 		}
 	return null;
@@ -3209,15 +3320,17 @@ public void buildGraph()
 	//this.drawNodes=false;
 	//this.drawDual=true;
 	//this.drawHull=false;
-	
+	totalTime=System.currentTimeMillis();
 	//Preliminary reading of biclusters and ordering
 	groupDelimiter=":";
+	delimiter="\t";
 	readResultSetsBicat();
 	readClustersBicat();
-	//readFile();
-	//readFile(":", ", ", null, 2);//Yaxi's format
-	//readFile(":", ", ", "|",2);//Yaxi's format
-
+	
+	//readFile(null, " ", null, 2);//Yaxi's format
+	//readFile(null, ", ", null, 2);//Yaxi's format
+	//readFile(":", ", ", "|",2);//Yaxi's formatdf
+	
 	if(initialOrdering && radial)	g=buildOrderedRadialGraph();
 	else
 		{
@@ -3237,9 +3350,33 @@ public void buildGraph()
 	//g.buildDualGraph();
 	g.computeMaxZones();
 	System.out.println("Graph with "+this.g.getNodes().size()+" nodes, "+this.clusters.size()+" biclusters, "+this.getGraph().getEdges().size()+" edges, "+this.getGraph().getConnectionDegree()+" degree, "+this.getAvgSize()+" avg size "+this.g.getBiclusterDegree()+" avg # of biclusters for each node");
-	System.out.println("Average number of nodes overlapped for each bicluster: "+this.g.getAvgBiclusterOverlap());
+	//System.out.println("Average number of nodes overlapped for each bicluster: "+this.g.getAvgBiclusterOverlap());
 	if(g.dualNodes!=null)	System.out.println("Dual graph with "+this.g.dualNodes.size()+" nodes and "+this.g.dualEdges.size()+" edges");
 	
+	}
+
+/**
+ * Test to check the time performance of the algorithm (comment the run code and call at the end
+ * of the buildGraph() method.
+ * @param numTimes
+ */
+public void timeTest(int numTimes)
+	{
+	double total=0;
+	for(int i=0;i<numTimes;i++)
+		{
+		buildGraph();
+		double time=System.currentTimeMillis();
+		int cont=0;
+		while(!pauseSimulation && cont<3000)	{doLayout();	cont++;}
+		sumOfForces=this.antSumOfForces=0;
+		double took=(System.currentTimeMillis()-time)/1000.0;
+		System.out.println("Time for running "+i+" is "+took+" and it took "+cont+" iterations");
+		pauseSimulation=false;
+		total+=took;
+		//g.draw(this.priorities);
+		}
+	System.out.println("Average is"+total/numTimes);
 	}
 
 /**
@@ -3318,8 +3455,14 @@ Graph buildCompleteGraph()
 			   	  {
 				  n = new ForcedNode(new GraphPoint2D(x -cellWidth/2+random((float)cellWidth),y-cellHeight/2+random((float)cellHeight)));
 				  n.setLabel(nodeLabel);
+				  n.labelId=nodeLabel;
 				  if(conditionNames!=null && conditionNames.contains(nodeLabel))	n.setGene(false);
 				  else										n.setGene(true);
+				  if(microarrayData!=null)	
+					  {
+					  if(n.isGene())	n.id=microarrayData.getGeneId(n.label);
+					  else				n.id=microarrayData.getConditionId(n.label);
+					  }
 				  n.setMass(1.0);
 				  n.setSize(nodeSize);
 				  g.addNode(n);
@@ -3551,7 +3694,7 @@ public void setShowLabel(boolean showLabel) {
  * @return the height of the screen where the graph is displayed
  */
 public float getScreenHeight() {
-	return screenHeight/zoomFactor;
+	return screenHeight;
 }
 
 /**
@@ -3567,7 +3710,7 @@ public void setScreenHeight(int screenHeight) {
  * @return the width of the screen where the graph is displayed
  */
 public float getScreenWidth() {
-	return screenWidth/zoomFactor;
+	return screenWidth;
 }
 
 /**
@@ -3982,8 +4125,9 @@ public void setStep(float v)
 private void computeExcludedClusters()
 	{
 	excludedClusters=new ArrayList<String>();
-	for(int i=0;i<=numClusters;i++)
+	for(int i=0;i<numClusters;i++)
 		{
+		try{
 		Cluster c=getClusterWithLabel("cluster"+i);
 		switch(thresholdType)
 			{
@@ -4012,8 +4156,9 @@ private void computeExcludedClusters()
 				else	System.out.println("Dejamos "+c.label+" poque tiene constancia "+constance);
 				break;
 			}
+		}catch(Exception e){
+			e.printStackTrace();}
 		}
-	
 	//Update cluster information in nodes
 	Iterator<Node> it=g.getNodes().values().iterator();
 	while(it.hasNext())

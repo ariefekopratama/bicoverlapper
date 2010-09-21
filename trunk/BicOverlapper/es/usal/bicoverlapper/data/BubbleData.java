@@ -92,22 +92,29 @@ public class BubbleData
 		minHomogeneity=-1;
 		boolean areGenes=true;
 		boolean isSize=true;
+		boolean skipNext=false;
 		cad=br.readLine();//First line does not matter
+		cont=0;
 		
 		while((cad=br.readLine())!=null)
 			{
-			StringTokenizer st=new StringTokenizer(cad," ");
-			if(st.countTokens()==1)		
+			System.out.println(cad);
+			StringTokenizer st=new StringTokenizer(cad,"\t");
+			if(st.countTokens()==1 && !skipNext)		
 				{
 				method=st.nextToken();
 				numberOfMethods++;
 				}
 			else
 				{
+				skipNext=false;
 				if(isSize)//size info, no interesa	
 					{ 
 					isSize=false;
 					b=new Bubble();
+					if(cad.contains(":"))	b.name=new StringTokenizer(cad,":").nextToken();
+					else					b.name=""+cont;
+					cont++;
 					}
 				else
 					{
@@ -152,6 +159,12 @@ public class BubbleData
 						}
 					areGenes=!areGenes;
 					}
+				}
+			if(st.countTokens()>0)
+				{
+				st=new StringTokenizer(cad,"\t");
+				String firstToken=st.nextToken();
+				if(firstToken.equals("1") || firstToken.endsWith(": 1"))	skipNext=true;
 				}
 			cont++;
 			}
@@ -212,6 +225,7 @@ public class BubbleData
 		nodes.addColumn("goodness", float.class);//De momento paso de esto un poco
 		nodes.addColumn("homogeneity", float.class);//De momento paso de esto un poco
 		nodes.addColumn("resultType", String.class);
+		nodes.addColumn("name", String.class);
 
 		LinkedList<Integer> lista=new LinkedList<Integer>();
 		
@@ -234,8 +248,9 @@ public class BubbleData
 			nodes.set(row, "x", b.position.x);
 			nodes.set(row, "y", b.position.y);
 			nodes.set(row, "homogeneity", (b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
-			System.out.println("Bic de tam "+b.genes.size()+"x"+b.conditions.size()+" con homog "+b.homogeneity+"\t"+(b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
+			//System.out.println("Bic de tam "+b.genes.size()+"x"+b.conditions.size()+" con homog "+b.homogeneity+"\t"+(b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
 			nodes.set(row, "resultType", b.method);
+			nodes.set(row, "name", b.name);
 			}
 		}
 	
@@ -282,6 +297,7 @@ public class BubbleData
 		nodes.addColumn("goodness", float.class);//De momento paso de esto un poco
 		nodes.addColumn("homogeneity", float.class);//De momento paso de esto un poco
 		nodes.addColumn("resultType", String.class);
+		nodes.addColumn("name", String.class);
 
 		int row=0;
 		int n=fsg.numberOfRows();
@@ -299,7 +315,7 @@ public class BubbleData
 				{
 				row=nodes.addRow();
 				nodes.setInt(row,"id", row+1);
-				listag.addFirst(-333);//Tengo que añadir al principio un valor porque el primero no me lo coge!
+				listag.addFirst(-333);//Tengo que add al principio un valor porque el primero no me lo coge!
 				listac.addFirst(-333);
 				nodes.set(row,"genes", listag);
 				nodes.set(row,"conditions", listac);
@@ -308,6 +324,7 @@ public class BubbleData
 				nodes.set(row, "y", fsgn.readFloat(row, 1));
 				nodes.set(row, "homogeneity", fsgn.readFloat(row, 3));
 				nodes.set(row, "resultType", "type"+fsgn.readInt(row,4));
+				nodes.set(row, "name", "fuica");
 				
 				row++;
 				}
@@ -340,7 +357,7 @@ public class BubbleData
 				{
 				row=nodes.addRow();
 				nodes.setInt(row,"id", row+1);
-				listag.addFirst(0);//Tengo que añadir al principio porque el primero no me lo coge!
+				listag.addFirst(0);//Tengo que add al principio porque el primero no me lo coge!
 				listac.addFirst(0);
 				nodes.set(row,"genes", listag);
 				nodes.set(row,"conditions", listac);
@@ -382,7 +399,7 @@ public class BubbleData
 				{
 				row=nodes.addRow();
 				nodes.setInt(row,"id", row+1);
-				listag.addFirst(-444);//Tengo que añadir al principio porque el primero no me lo coge!
+				listag.addFirst(-444);//Tengo que add al principio porque el primero no me lo coge!
 				listac.addFirst(-444);
 				nodes.set(row,"genes", listag);
 				nodes.set(row,"conditions", listac);

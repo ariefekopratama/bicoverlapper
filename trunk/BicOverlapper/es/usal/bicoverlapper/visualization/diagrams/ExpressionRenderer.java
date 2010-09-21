@@ -66,8 +66,6 @@ class ExpressionRenderer extends AbstractShapeRenderer {
         if ( Double.isNaN(y) || Double.isInfinite(y) )
             y = 0;
         double width = baseWidths[item.getInt("colId")];
-        //if(item.getInt("rowId")>=200)
-        	//System.out.println(item.getInt("rowId"));
         double height = baseHeights[item.getInt("rowId")];
         
         switch ( stype ) {
@@ -106,8 +104,6 @@ class ExpressionRenderer extends AbstractShapeRenderer {
 	}
 */
 	public void setHeight(double height, int i) {//a estos dos métodos son a los que hay que llamar para que me haga bien el ojo de pez
-		//if(height>1)	System.out.println("Colocando el tamaño del gen "+i+" a "+height);
-		//if(height>baseHeights[i])	baseHeights[i] = height;//No, si no los que tienen que hacerse pequeños no se hacen pequeños
 		if(height>0)	baseHeights[i] = height;
 		else			System.err.println("Trying to set a negative size");
 		}
