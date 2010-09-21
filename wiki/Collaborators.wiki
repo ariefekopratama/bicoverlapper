@@ -1,15 +1,22 @@
 #labels collaboration,Attribution
-people currently involved in the development of BicOverlapper 
+Bicoverlapper started as a master's project that dealt with the general problem of visualizing overlapping (Overlapper). 
+Later, it evolved into a PhD thesis project to visualize microarray data biclustering results, integrating several sources of data to finally constitute a visual analysis support tool (BicOverlapper).
+In the meantime, the solution was also applied to other fields of research, specially social networks in the areas of movie collaborations (FilmOverlapper) and paper co-authorships (ArtOverlapper)
 
-= Introduction =
-
-Bicoverlapper started as a personal project that dealt with the general problem of visualizing overlapping groups of entities. Later, the approach has proven to fit to the more specific problem of microarray analysis. Now, we are taking another step that seems like a reasonable idea today, and -who knows what the future holds- we are moving towards creating an open-source framework for bicluster analysis.
+Today, the main branch is evolving towards an integrative tool (analysis algorithms+visualization techniques)for visual analysis in systems biology approaches: SysOverlapper. 
 
 
 = List of collaborators and institutions =
 
 *Collaborators*:
-  * _join us!_
+  * Yaxi Chen (ArtOverlapper)
+  * Daniel Andújar ([http://www.postcapital.org/postcapitalmovies PostcapitalMovies])
+  * Jesús Losada (BicOverlapper)
+  * Francisco Antequera (BicOverlapper)
 
 *Institutions*:
   * Universidad de Salamanca (Spain)
+  * University of Munich (Germany)
+  * [http://www.postcapital.org Postcapital] archive.
+  * European Bioinformatics Insitute (UK)
+  * Centro de Investigación del Cáncer (Salamanca, Spain)
