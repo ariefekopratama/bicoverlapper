@@ -33,6 +33,10 @@ public class Bubble
 	public String method;
 	
 	/**
+	 * Name of the bicluster, if present
+	 */
+	public String name;
+	/**
 	 * Size, computed as genes.length x conditions.length
 	 */
 	public int size;
@@ -53,6 +57,7 @@ public class Bubble
 		conditions=new ArrayList<String>();
 		position=new Point2D.Float(0,0);
 		method="";
+		name="";
 		size=0;
 		homogeneity=0;
 		}

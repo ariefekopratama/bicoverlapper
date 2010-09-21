@@ -2,7 +2,10 @@ package es.usal.bicoverlapper.kernel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import javax.swing.JFrame;
@@ -74,6 +77,8 @@ public class BicOverlapperWindow extends JFrame{
 	public JMenuItem menuViewCloud;
 	
 	public JMenu analysisMenu, viewMenu;
+
+	private FileMenuManager gestorMenuArchivo;
 	
 	/**
 	 * Default constructor
@@ -96,12 +101,13 @@ public class BicOverlapperWindow extends JFrame{
 		this.setVisible(true);
 		this.addWindowListener(new java.awt.event.WindowAdapter() {
 		    public void windowClosing(java.awt.event.WindowEvent e) {
+		    	System.out.println("Closing...");
 		    	FileParser.deleteFiles(".", "tmp");
 		    }
 		});
-
+		desktop.setFocusable(true);
 	}
-	
+
 	private void initDesktop(){
 		
 		SubstanceLookAndFeel.registerTabCloseChangeListener(this.desktop,
@@ -151,24 +157,32 @@ public class BicOverlapperWindow extends JFrame{
 		// Creamos menu "Archivo"
 		JMenu fileMenu = new JMenu(Translator.instance.menuLabels.getString("s1"));
 			
-		
-			//Añadimos item "Abrir Microarray" al menu "Archivo"
+		//Añadimos item "Abrir Microarray" al menu "Archivo"
 		JMenuItem menuArchivoAbrirMicroarray = 
-			new JMenuItem("Open Microarray");		
+			new JMenuItem("Load Expression Data");		
 		fileMenu.add(menuArchivoAbrirMicroarray);
+		
 		
 		// Añadimos item "Abrir Bicluster" al menu "Archivo"
 		JMenuItem menuArchivoAbrirBicluster = 
-			new JMenuItem("Open Biclusters");		
+			new JMenuItem("Load Groups");		
 		fileMenu.add(menuArchivoAbrirBicluster);
 
 		// Añadimos item "Abrir TRN" al menu "Archivo"
 		JMenuItem menuArchivoAbrirTRN = 
-			new JMenuItem("Open TRN");		
+			new JMenuItem("Load Network");		
 		fileMenu.add(menuArchivoAbrirTRN);
 		// 
 	
 	
+		// Añadimos separador al menu
+		fileMenu.addSeparator();
+		
+		//Añadimos item "Download expression data"
+		JMenuItem downloadAEmenu = 
+			new JMenuItem("Download AE experiment");		
+		fileMenu.add(downloadAEmenu);
+
 		
 		// Añadimos separador al menu
 		fileMenu.addSeparator();
@@ -191,30 +205,38 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("s18"));
 		fileMenu.add(menuArchivoGuardarConfig);
 		
-		// Añadimos separador al menu
-		fileMenu.addSeparator();
+		JMenuItem fileMenuOpenLastProject =
+			new JMenuItem(Translator.instance.menuLabels.getString("openLastProject"));
+		fileMenu.add(fileMenuOpenLastProject);
 		
-		// Añadimos item "Salir" al menu "Archivo"
-		JMenuItem menuArchivoSalir = 
-			new JMenuItem(Translator.instance.menuLabels.getString("s19"));		
-		fileMenu.add(menuArchivoSalir);
+		JMenu fileMenuRecentProjects =
+			new JMenu(Translator.instance.menuLabels.getString("recentProjects"));
+		
 		
 		// Añadimos el gestor de eventos a los items del menu "Archivo"
-		FileMenuManager gestorMenuArchivo = new FileMenuManager(this);
+		gestorMenuArchivo = new FileMenuManager(this);
 		
-		/*
-		menuArchivoAbrir.addActionListener(gestorMenuArchivo);
-		*/
+		ArrayList<String> list=gestorMenuArchivo.recentFileList();
+		for(String s:list)
+			{
+			JMenuItem jmi =	new JMenuItem(s);
+			fileMenuRecentProjects.add(jmi);
+			jmi.addActionListener(gestorMenuArchivo);
+			}
+		fileMenu.add(fileMenuRecentProjects);
+		
 		menuArchivoAbrirTRN.addActionListener(gestorMenuArchivo);
 		menuArchivoAbrirMicroarray.addActionListener(gestorMenuArchivo);
+		downloadAEmenu.addActionListener(gestorMenuArchivo);
 		menuArchivoAbrirBicluster.addActionListener(gestorMenuArchivo);
 
 		menuArchivoExportSelection.addActionListener(gestorMenuArchivo);
 		
 		menuArchivoGuardarConfig.addActionListener(gestorMenuArchivo);
 		menuArchivoCargarConfig.addActionListener(gestorMenuArchivo);
+		fileMenuOpenLastProject.addActionListener(gestorMenuArchivo);
 
-		menuArchivoSalir.addActionListener(gestorMenuArchivo);
+		//menuArchivoSalir.addActionListener(gestorMenuArchivo);
 		
 		//Create menu "Analysis"
 		AnalysisMenuManager amm = new AnalysisMenuManager(this);
@@ -224,20 +246,43 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("bimax"));
 		JMenuItem menuAnalysisPlaid =
 			new JMenuItem(Translator.instance.menuLabels.getString("plaid"));
+		JMenuItem menuAnalysisISA =
+			new JMenuItem(Translator.instance.menuLabels.getString("isa"));
 		JMenuItem menuAnalysisXMotifs =
 			new JMenuItem(Translator.instance.menuLabels.getString("xmotifs"));
 		JMenuItem menuAnalysisCChurch =
 			new JMenuItem(Translator.instance.menuLabels.getString("cc"));
+		JMenuItem menuAnalysisSearch =
+			new JMenuItem(Translator.instance.menuLabels.getString("search"));
+		JMenuItem menuAnalysisShow =
+			new JMenuItem(Translator.instance.menuLabels.getString("show"));
+		JMenuItem menuAnalysisSort =
+			new JMenuItem(Translator.instance.menuLabels.getString("sort"));
+		JMenuItem menuAnalysisSelect =
+			new JMenuItem(Translator.instance.menuLabels.getString("select"));
 		
 		analysisMenu.add(menuAnalysisBimax);
 		analysisMenu.add(menuAnalysisPlaid);
+		analysisMenu.add(menuAnalysisISA);
 		analysisMenu.add(menuAnalysisXMotifs);
 		analysisMenu.add(menuAnalysisCChurch);
+		analysisMenu.addSeparator();
+		analysisMenu.add(menuAnalysisSearch);
+		analysisMenu.add(menuAnalysisShow);
+		analysisMenu.add(menuAnalysisSort);
+		analysisMenu.add(menuAnalysisSelect);
+				
+		
 		menuAnalysisBimax.addActionListener(amm);
 		menuAnalysisPlaid.addActionListener(amm);
+		menuAnalysisISA.addActionListener(amm);
 		menuAnalysisXMotifs.addActionListener(amm);
 		menuAnalysisCChurch.addActionListener(amm);
-		
+		menuAnalysisSearch.addActionListener(amm);
+		menuAnalysisShow.addActionListener(amm);
+		menuAnalysisSort.addActionListener(amm);
+		menuAnalysisSelect.addActionListener(amm);
+				
 		// Creamos menu "Ver"
 		viewMenu = new JMenu(Translator.instance.menuLabels.getString("s2"));
 		viewMenu.setEnabled(false);
@@ -301,8 +346,8 @@ public class BicOverlapperWindow extends JFrame{
 		menuViewCloud =	new JMenuItem(Translator.instance.menuLabels.getString("s13"));
 		viewMenu.add(menuViewCloud);
 
-		// Añadimos item "Transcription Network" al menu "Ver"
-		menuViewTRN =new JMenuItem("Transcription Network");
+		// Añadimos item "Biological Network" al menu "Ver"
+		menuViewTRN =new JMenuItem("Biological Network");
 		
 		viewMenu.add(menuViewTRN);
 
@@ -310,11 +355,6 @@ public class BicOverlapperWindow extends JFrame{
 		
 		// Añadimos el gestor de eventos a los items del menu "Ver"
 		ViewMenuManager gestorMenuVer = new ViewMenuManager(this,config);
-		/*
-		menuVerDiagPuntos.addActionListener(gestorMenuVer);
-		menuVerHistograma.addActionListener(gestorMenuVer);
-		menuVerMapeo.addActionListener(gestorMenuVer);
-		*/
 		menuViewParallelCoordinates.addActionListener(gestorMenuVer);
 		menuViewHeatmap.addActionListener(gestorMenuVer);
 		menuViewTRN.addActionListener(gestorMenuVer);
@@ -329,38 +369,7 @@ public class BicOverlapperWindow extends JFrame{
 	
 		menuViewOverlapper.addActionListener(gestorMenuVer);
 		menuViewBubbles.addActionListener(gestorMenuVer);
-		// Creamos menu Fichero
-		//JMenu menuFichero =  new JMenu(Translator.instance.menuLabels.getString("s3"));
-		
-		/*
-		// Añadimos item "Ver Datos" al menu "Fichero"
-		JMenuItem menuFicheroVer =
-			new JMenuItem(Translator.instance.menuLabels.getString("s14"));
-		
-//		 Añadimos separador al menu
-		menuVer.addSeparator();
-		
-		//Items para elegir, en el caso de películas, entre la construcción de peliculas o de actores
-		ButtonGroup bg=new ButtonGroup();
-		JRadioButtonMenuItem menuFicheroPersonas =
-			new JRadioButtonMenuItem(Translator.instance.menuLabels.getString("s15"), false);
-		JRadioButtonMenuItem menuFicheroPeliculas =
-			new JRadioButtonMenuItem(Translator.instance.menuLabels.getString("s16"), true);
-		bg.add(menuFicheroPersonas);
-		bg.add(menuFicheroPeliculas);
-		
-				
-		menuFichero.add(menuFicheroVer);
-		menuFichero.add(menuFicheroPersonas);
-		menuFichero.add(menuFicheroPeliculas);
-		
-		// Añadimos el gestor de eventos a los items del menu "Fichero"
-		GestorMenuFichero gestorMenuFichero = new GestorMenuFichero(this,config);
-		
-		menuFicheroVer.addActionListener(gestorMenuFichero);
-		menuFicheroPersonas.addActionListener(gestorMenuFichero);
-		menuFicheroPeliculas.addActionListener(gestorMenuFichero);
-		*/
+	
 
 //		 Creamos menu Ayuda
 		JMenu helpMenu =  new JMenu(Translator.instance.menuLabels.getString("s23"));

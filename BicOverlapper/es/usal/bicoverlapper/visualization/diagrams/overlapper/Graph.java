@@ -13,10 +13,12 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import es.usal.bicoverlapper.analysis.geneticAlgorithms.GAThread;
 import es.usal.bicoverlapper.analysis.geneticAlgorithms.GeneticAlgorithm;
 import es.usal.bicoverlapper.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
+import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
@@ -68,6 +70,9 @@ public class Graph {
   Node dragNode = null;
   Node hoverNode = null;
   private Map<String, Node> selectedNodes;
+ // private Map<Integer, Node> selectedNodes;
+  private Map<String, DualNode> selectedDualNodes;
+  
   private Map<String, Node> searchNodes;
   private Map<String, Node> centroidNodes;
 
@@ -157,8 +162,9 @@ public class Graph {
 	    dualEdgesTo = new HashMap<Node, Map<String,Edge>>();
 	    
 	    searchNodes=new TreeMap<String, Node>();
-	    selectedNodes=new TreeMap<String, Node>();
-	    centroidNodes=new TreeMap<String, Node>();
+	    selectedNodes=new ConcurrentHashMap<String, Node>();
+	    selectedDualNodes=new ConcurrentHashMap<String, DualNode>();
+		centroidNodes=new TreeMap<String, Node>();
 	    
 	    selectedClusters=new TreeMap<String, Cluster>();
 	    hoverClusters=new TreeMap<String, Cluster>();
@@ -199,7 +205,7 @@ public class Graph {
    */
   public void addSearchNode(Node n)
 	{
-	  searchNodes.put(n.label, n);
+	  searchNodes.put(n.labelId, n);
 	}
   
   /**
@@ -253,7 +259,7 @@ public class Graph {
    */
   public void addSelectedNode(Node n)
 	{
-	  selectedNodes.put(n.label, n);
+	  selectedNodes.put(n.labelId, n);
 	}
   
   /**
@@ -263,6 +269,10 @@ public class Graph {
   public void clearSelectedNodes()
 	{
 	if(selectedNodes!=null)	selectedNodes.clear();
+	}
+  public void clearSelectedDualNodes()
+  	{
+	if(selectedDualNodes!=null)	selectedDualNodes.clear();
 	}
   
   /**
@@ -457,7 +467,7 @@ public class Graph {
   /**
    * Draws the graph by layers. 
    * The position of each component in the list priorities sets its drawing order.
-   * Por example, if priorities is {HULL, NODE, LABEL}, first hulls are drawn, then overlapping nodes
+   * For example, if priorities is {HULL, NODE, LABEL}, first hulls are drawn, then overlapping nodes
    * and finally labels.
    * If any element is not present in the vector, it will not be drawn.
    * Elements to draw are HULL, NODE, HULLLABEL, NODELABEL, EDGE, DETAIL, PIECHART,HOVER, SELECT and SEARCH
@@ -865,8 +875,9 @@ public void drawHoverNode()
 		while(itDrawMates.hasNext())
 	  		{
 	  		ForcedNode n=(ForcedNode)itDrawMates.next();
-	  		if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.label) && !nodeExcluded(n))
-		  		{
+	  	//	if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.label) && !nodeExcluded(n))
+	  		if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.labelId) && !nodeExcluded(n))
+	  		  	{
 	  			if(n.isGene())	bv.ellipse((float) n.getX(), (float) n.getY(), n.width, n.height);
 	  			else			bv.rect((float) n.getX(), (float) n.getY(), n.width*factor, n.height*factor);
 	  			n.setDrawn(true);
@@ -892,8 +903,9 @@ public void drawHoverNode()
 				}
 			}
 	  	
-	  	if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.label))
-		    	{
+	  //	if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.label))
+		if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.labelId))
+			   	{
 				int max=maxZones;
 				int min=1;
 				int ls=bv.getLabelSize();
@@ -905,14 +917,14 @@ public void drawHoverNode()
 		    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
 	    		else				    		bv.textSize((int)tam+1);
 
-		    	Color chn=bv.paleta[Overlapper.nodeLabelBackgroundColor];
-		    	bv.fill(chn.getRed(),chn.getGreen(),chn.getBlue(),255);
-		    	bv.text(hoverNode.label, (float)Math.floor(hoverNode.position.getX()+1), (float)Math.floor(hoverNode.position.getY()-hoverNode.getHeight()+1));
-			    	
-		    	Color cnb=bv.paleta[Overlapper.hoverNodeLabelColor];
+		    	Color cnb=bv.paleta[Overlapper.nodeLabelBackgroundColor];
+		    	//bv.fill(chn.getRed(),chn.getGreen(),chn.getBlue(),255);
+		    	//bv.text(hoverNode.label, (float)Math.floor(hoverNode.position.getX()+1), (float)Math.floor(hoverNode.position.getY()-hoverNode.getHeight()+1));
+		    	
+		    	//Color cnb=bv.paleta[Overlapper.hoverNodeLabelColor];
 	  	    	bv.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
 		    	bv.text(hoverNode.label, (float)Math.floor(hoverNode.position.getX()), (float)Math.floor(hoverNode.position.getY()-hoverNode.getHeight()));
-		    	}
+	  	    	}
 	  	}
   	}
 
@@ -941,7 +953,7 @@ public void drawHoverDualNode()
 	  		//if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.label) && !nodeExcluded(n))
 	  		if(cic>0)
 		  		{
-	  			bv.strokeWeight((int)Math.log(cic));
+	  			bv.strokeWeight(Math.max(2,1+(int)Math.log(cic)));
 	  			float r=n.getRadius();
 	  			bv.ellipse((float) n.getX(), (float) n.getY(), r, r);
 	  			n.setDrawn(true);
@@ -985,15 +997,7 @@ public void drawHoverHull()
 		bv.strokeWeight(3);
 		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
 		bv.beginShape();
-		/*PathIterator pit=bv.selectionArea.getPathIterator(null);
-		double[] seg=new double[6];
 		
-		while(!pit.isDone())
-			{
-			pit.currentSegment(seg);
-			bv.vertex((float)seg[0], (float)seg[1]);
-			pit.next();
-			}*/
 		for(Point2D.Double p:bv.selectionArea)
 			bv.vertex((float)p.x, (float)p.y);
 			
@@ -1001,47 +1005,72 @@ public void drawHoverHull()
 		
 		}
 	  //-------------- selected nodes
-	  Iterator<Node> itGraph=selectedNodes.values().iterator();
-	  while(itGraph.hasNext())
-	  	{
-		Node n=(Node)itGraph.next();
-		if(n.clusters.size()>=bv.nodeThreshold && !nodeExcluded(n))
+	 	if(bv.drawDual)
 			{
-			applet.noFill();
-			applet.stroke(200,200,0);
-			applet.strokeWeight(2);
-	
-			bv.fill(0,0,0,255);
-	    	
-			int max=maxZones;
-			int min=1;
-			int ls=bv.getLabelSize();
-			float maxLs=bv.getMaxLabelSize();
-			double step=(maxLs-ls)/(max-min);
-			double tam=ls+step*n.getClusters().size();
-	    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
-    		else				    		bv.textSize((int)tam+1);
-    	
-	    	//bv.text(n.getLabel(), (float)(n.getX()+0.5), (float)(n.getY()-n.getHeight()+0.5));
-	    	bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
-		    
-	    	
-	    	if(n.isGene())	bv.fill(195, 250, 190, 255);
-	    	else			bv.fill(165, 175, 250, 255);	
-	    	//bv.text(n.getLabel(), (float)n.getX(), (float)n.getY()-n.getHeight());
-	    	bv.text(n.getLabel(), (float)Math.floor(n.getX()), (float)Math.floor(n.getY()-n.getHeight()));
-	    	
-			if(selectedNodes.containsKey(n.label))
+	 		Iterator<DualNode> itGraph=selectedDualNodes.values().iterator();
+			while(itGraph.hasNext())
 				{
-				bv.noFill();
-				bv.strokeWeight(3);
-				bv.stroke(c.getRed(), c.getGreen(), c.getBlue());
-				if(n.isGene())	bv.ellipse((float)n.getX(), (float)n.getY(), n.height, n.width);
-				else			bv.rect((float) n.getX(), (float) n.getY(), n.width, n.height);
+				DualNode n=(DualNode)itGraph.next();
+				if(n.clusters.size()>=bv.nodeThreshold && !nodeExcluded(n))
+					{
+					applet.noFill();
+					applet.stroke(200,200,0);
+					applet.strokeWeight(2);
+			
+					bv.fill(0,0,0,255);
+			    	
+					bv.noFill();
+					bv.strokeWeight(3);
+					bv.stroke(c.getRed(), c.getGreen(), c.getBlue());
+					float r=n.getRadius();
+					if(n.isGene())	bv.ellipse((float)n.getX(), (float)n.getY(), r, r);
+					else			bv.rect((float) n.getX(), (float) n.getY(), r, r);
+					}
 				}
-
 			}
-		}
+		else
+			{
+			 Iterator<Node> itGraph=selectedNodes.values().iterator();
+			  while(itGraph.hasNext())
+			  	{
+				Node n=(Node)itGraph.next();
+				if(n.clusters.size()>=bv.nodeThreshold && !nodeExcluded(n))
+					{
+					applet.noFill();
+					applet.stroke(200,200,0);
+					applet.strokeWeight(2);
+			
+					bv.fill(0,0,0,255);
+			    	
+					int max=maxZones;
+					int min=1;
+					int ls=bv.getLabelSize();
+					float maxLs=bv.getMaxLabelSize();
+					double step=(maxLs-ls)/(max-min);
+					double tam=ls+step*n.getClusters().size();
+			    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
+		    		else				    		bv.textSize((int)tam+1);
+		    	
+			    	//bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
+					bv.fill(c.getRed(),c.getGreen(),c.getBlue());
+					
+			    	
+			    	//if(n.isGene())	bv.fill(195, 250, 190, 255);
+			    	//else			bv.fill(165, 175, 250, 255);	
+			    	
+			    	bv.text(n.getLabel(), (float)Math.floor(n.getX()), (float)Math.floor(n.getY()-n.getHeight()));
+			    	
+					if(selectedNodes.containsKey(n.labelId))
+						{
+						bv.noFill();
+						bv.strokeWeight(3);
+						bv.stroke(c.getRed(), c.getGreen(), c.getBlue());
+						if(n.isGene())	bv.ellipse((float)n.getX(), (float)n.getY(), n.height, n.width);
+						else			bv.rect((float) n.getX(), (float) n.getY(), n.width, n.height);
+						}
+					}
+			  	}
+			}
   	}
   
   void updateSelection(BiclusterSelection bs)
@@ -1247,6 +1276,7 @@ public void drawHoverHull()
 	  while(itNodes.hasNext())
 	    {
 		 Node n=(Node)itNodes.next();
+		
 		if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
 		{
 		if(!n.isDrawn())
@@ -1279,7 +1309,6 @@ public void drawHoverHull()
 				        float arcj=arc*j;
 				       
 				        bv.arc(x, y, senv, senv, arcj, arc*(j+1));
-				        //bv.arc(x, y, senv, senv, (float)0.0, (float)(Math.PI/2.0));
 				        
 				        bv.stroke(255,255,255,255);
 				        bv.strokeWeight(1);
@@ -1288,7 +1317,7 @@ public void drawHoverHull()
 					    }
 		        	}
 		        }
-		    if (bv.isShowLabel() && n!=bv.g.getHoverNode() && !bv.g.getSelectedNodes().containsKey(n.getLabel()) && n.getDetails().length()==0 && n.getImage().length()==0)
+		    if (bv.isShowLabel() && n!=bv.g.getHoverNode() && !bv.g.getSelectedNodes().containsKey(n.labelId) && n.getDetails().length()==0 && n.getImage().length()==0)
 		    	{
 	    		bv.fill(0,0,0,255);
 	    		if(ls+n.getClusters().size()*2>20)		bv.textSize(20);
@@ -1334,8 +1363,8 @@ public void drawHoverHull()
 	  Overlapper bv=(Overlapper) this.getApplet();
 	float x=-bv.getOffsetX();
 	float y=-bv.getOffsetY();
-	float w=bv.getScreenWidth();///bv.zoomFactor;
-	float h=bv.getScreenHeight();//bv.zoomFactor;
+	float w=bv.getScreenWidth();
+	float h=bv.getScreenHeight();
 	if(point.getX()>x && point.getX()<(x+w) && point.getY()>y && point.getY()<(y+h))	return true;
 	else																				return false;
 	}
@@ -1856,7 +1885,14 @@ public Node getFirstSelectedNode() {
 public void setSelectedNodes(Map<String, Node> selectedNodes) {
 	this.selectedNodes = selectedNodes;
 }
-
+public void addSelectedNodes(Map<String,Node> selectedNodes)
+	{
+	this.selectedNodes.putAll(selectedNodes);
+	}
+public void addSelectedDualNode(DualNode dn)
+	{
+	selectedDualNodes.put(dn.label, dn);
+	}
 /**
  * Returns all selected clusters
  * @return	Map with all selected clusters. Keys are Strings with cluster labels
@@ -3152,6 +3188,21 @@ public void refreshDualPositions()
 		{
 		DualNode dn=itd.next();
 		dn.refreshPosition();
+		}
+	}
+
+public void updateLabels()
+	{
+	Iterator<Node> it=nodes.values().iterator();
+	while(it.hasNext())
+		{
+		Node n=it.next();
+		MicroarrayData md=this.getApplet().microarrayData;
+		if(md!=null)
+			{
+			if(n.isGene())	n.label=this.getApplet().microarrayData.getRowLabel(n.id);	
+			else			n.label=this.getApplet().microarrayData.getColumnLabel(n.id);
+			}
 		}
 	}
 }

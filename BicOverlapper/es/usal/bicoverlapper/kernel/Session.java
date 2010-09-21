@@ -10,23 +10,55 @@ import infovis07contest.data.Person;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Vector;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+
+import org.rosuda.JRI.Rengine;
+import org.w3c.dom.DOMImplementation;
+import org.w3c.dom.Document;
+import org.w3c.dom.DocumentType;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 
 
-import es.usal.bicoverlapper.analysis.Biclustering;
+import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.data.BubbleData;
 import es.usal.bicoverlapper.data.DataLayer;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MultidimensionalData;
-import es.usal.bicoverlapper.data.TRNData;
+import es.usal.bicoverlapper.data.NetworkData;
 import es.usal.bicoverlapper.data.files.DataReader;
 import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.kernel.configuration.DiagramConfiguration;
+import es.usal.bicoverlapper.kernel.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.Translator;
@@ -34,7 +66,7 @@ import es.usal.bicoverlapper.visualization.diagrams.OverlapperDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.HeatmapDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.ParallelCoordinatesDiagram;
-import es.usal.bicoverlapper.visualization.diagrams.TRNDiagram;
+import es.usal.bicoverlapper.visualization.diagrams.NetworkDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
 
 
@@ -49,11 +81,11 @@ import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
  * <p>
  * 	3) BiclusterData: biclusters found data
  * <p>
- * 	4) TRNData: transcription network data
+ * 	4) TRNData: Biological Network data
  * 
  * @author Javier Molpeceres and Rodrigo Santamaria
  */
-public class Session {
+public class Session implements KeyListener {
 	
 	// Capa de datos para interaccion
 	private DataLayer capaDatos;
@@ -64,21 +96,24 @@ public class Session {
 	
 	// Datos del fichero de trabajo
 	private MultidimensionalData datos 		= null;
-	private TRNData  datosTRN 		= null;
+	private NetworkData  datosTRN 		= null;
 	private BubbleData datosBubble 	= null;
 	private MicroarrayData datosMicroarray 	= null;
 	private String biclusterDataFile = null;
-	private Biclustering biclustering =null;
+	private Analysis biclustering =null;
 	
 	private boolean datosCargados;
 	private boolean datosTRNCargados;
 	private boolean datosBubbleCargados;
 	private boolean datosMicroarrayCargados;
 	private boolean datosBiclusterCargados;
-	
 //	Atributos para compartir de bicluster
 	private BiclusterSelection selectedBicluster=null;
 	private BiclusterSelection hoveredBicluster=null;
+	
+	private LinkedList<BiclusterSelection> selectionLog=null;
+	private int contLog=-1;
+	
 	private boolean cambioGenes;
 	private boolean cambioTRNGenes;
 	private Vector<Double> expresionesCondicion; //Niveles de expresión de una determinada condición seleccionada (en el heatmap)
@@ -113,6 +148,19 @@ public class Session {
 	public Color avgExpColor;
 	public Color hiExpColor;
 	
+	public String microarrayPath=null;
+	public String biclusteringPath=null;
+	public String trnPath=null;
+	private boolean ctrlPressed=false;
+	private boolean undoOrRedo=false;
+	
+	/**
+	 * Biclustering class bound to this microarray data.  
+	 */
+	public Analysis analysis= null;
+	
+	
+	
 
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a <code>JDesktopPane</code>,
@@ -128,6 +176,9 @@ public class Session {
 		this.ventanas = new Vector<DiagramWindow>(0,1);
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0,1);
 		
+		selectionLog=new LinkedList<BiclusterSelection>();
+		selectionLog.add(new BiclusterSelection(new LinkedList<Integer>(), new LinkedList<Integer>()));
+		contLog=0;
 		//With black background
 		//this.selectionColor=Color.BLUE;
 		//this.searchColor=Color.MAGENTA;
@@ -136,8 +187,8 @@ public class Session {
 		//With white background
 		this.selectionColor=Color.BLUE;
 		this.searchColor=new Color(0,150,0);
-		this.hoverColor=Color.ORANGE;
-		
+	//	this.hoverColor=Color.ORANGE.darker();
+		this.hoverColor=Color.GREEN;
 		this.bicSet1Color=CustomColor.getGoodColor(0);
 		this.bicSet2Color=CustomColor.getGoodColor(1);
 		this.bicSet3Color=CustomColor.getGoodColor(2);
@@ -147,7 +198,8 @@ public class Session {
 		this.avgExpColor=Color.WHITE;
 		
 		reader=new DataReader();
-		
+		analysis=new Analysis();
+		return;
 	}
 	
 	/**
@@ -258,7 +310,7 @@ public class Session {
 				this.setHeatmap(ventana);
 				break;
 			case es.usal.bicoverlapper.kernel.Configuration.TRN_ID:
-				TRNDiagram panelT = new TRNDiagram(this, dim);
+				NetworkDiagram panelT = new NetworkDiagram(this, dim);
 				ventana = new DiagramWindow(this,this.getDesktop(),panelT);
 				this.setTRN(ventana);
 				if(this.getTRNData()!=null)
@@ -275,7 +327,7 @@ public class Session {
 					panelB.createAxisLayout();
 					panelB.run();
 					}
-				this.setBubbleGraph(ventana);
+				this.setBubbles(ventana);
 				break;
 			case es.usal.bicoverlapper.kernel.Configuration.OVERLAPPER_ID:
 				OverlapperDiagram panelO = new OverlapperDiagram(this, dim);
@@ -295,7 +347,9 @@ public class Session {
 					panelWC.create();
 					panelWC.run();
 					}
-				this.setBubbleGraph(ventana);
+				WordCloudDiagramConfiguration wcdc=(WordCloudDiagramConfiguration)configVentana;
+				panelWC.menuCloud.setIndices(wcdc.textIndex, wcdc.splitIndex, wcdc.sizeIndex, wcdc.ontologyIndex);
+				this.setWordCloud(ventana);
 				break;
 			default: // error tipo de ventana
 				break;
@@ -320,6 +374,37 @@ public class Session {
 		}
 	}
 	
+	
+	/**
+	 * Selects the elements (rows) that have values above the mean for the columns with value highEFV in the factor highEF and 
+	 * low value in the columns with value lowEFV for the factor lowEFV
+	 * For high and lowEFV, the wildcard "rest" can be used
+	 * 
+	 * For example, if we search for genes upregulated in Growth condition "lps", but downregulated for GrowthCondition "control",
+	 * 
+	 * highEFV - experimental factor value for which the selected elements should have high expression (above the mean)
+	 * highEF  - experimental factor of the EFV above
+	 * sdsAbove - number of standard deviations that the profiles should be above for every sample of the given EFV
+	 * lowEFV  - experimental factor value for which the selected elements should have low expression (below the mean)
+	 * lowEF  - experimental factor of the EFV above
+	 * sdsAbove - number of standard deviations that the profiles should be below for every sample of the given EFV
+	 * 
+	 */
+	public void setSelection(String highEFV, String highEF, int sdsAbove, String lowEFV, String lowEF, int sdsBelow)
+		{
+
+		LinkedList<Integer> genes=datosMicroarray.selectHiLo(highEFV, highEF, sdsAbove, lowEFV, lowEF, sdsBelow);
+		LinkedList<Integer> conditions=new LinkedList<Integer>();
+		for(int j=0;j<datosMicroarray.getNumConditions();j++)			conditions.add(Integer.valueOf(j));
+		
+		BiclusterSelection bs=new BiclusterSelection(genes, conditions);
+		this.setSelectedBiclustersExcept(bs, "");
+		}
+	
+	public void setSelection(String highEFV, String highEF, String lowEFV, String lowEF)
+		{
+		setSelection(highEFV, highEF, 0, lowEFV, lowEF, 0);
+		}
 	/**
 	* @deprecated
 	*/
@@ -443,7 +528,7 @@ public class Session {
 	/**
 	 * Añade la ventana pasada como parametro al grupo por defecto de actualizacion.
 	 * 
-	 * @param ventana <code>VentanaPanel</code> que deseamos añadir.
+	 * @param ventana <code>VentanaPanel</code> que deseamos add.
 	 */
 	void addToGrupoDefecto(DiagramWindow ventana){
 		this.grupoVentanasDefecto.add(ventana);
@@ -459,10 +544,58 @@ public class Session {
 		
 		for(int i = 0; i < this.grupoVentanasDefecto.size(); i++){
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
-			if(!ventana.getTitle().contains(name))	ventana.updateDiagram();
+			if(name=="" || !ventana.getTitle().contains(name))	
+				ventana.updateDiagram();
 		}
 		
 	}
+	
+	// actualizar las ventanas activas menos las uqe tengan por título
+	/**
+	 * Updates all active DiagramWindows except the ones with the input name
+	 * It is usually used to not update the calling DiagramWindow
+	 * @param name	Name of the DiagramWindow not to update
+	 */
+	public void updateOnly(String name) {
+		
+		for(int i = 0; i < this.grupoVentanasDefecto.size(); i++){
+			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
+			if(ventana.getTitle().contains(name))	
+				ventana.updateDiagram();
+		}
+		
+	}
+	
+	/**
+	 * Updates all active DiagramWindows
+	 */
+	public void updateAll()
+		{
+		for(int i = 0; i < this.grupoVentanasDefecto.size(); i++){
+			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
+			ventana.updateDiagram();
+			}
+		}
+	
+	/**
+	 * Sort columns in the matrix following the experimental factor name.
+	 *  * Sends a signal to sort columns on PC and heatmaps
+	 */
+	public void sortColumns(String name)
+		{
+		int [] columnOrder=this.getMicroarrayData().sortColumnsBy(name);
+		
+		for(int i = 0; i < this.grupoVentanasDefecto.size(); i++){
+			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
+			if(ventana.getTitle().contains("arallel"))
+				((ParallelCoordinatesDiagram)ventana.getDiagram()).sortColumns(columnOrder);
+			if(ventana.getTitle().contains("eatmap"))
+				{
+				((HeatmapDiagram)ventana.getDiagram()).setOrder(columnOrder);
+				((HeatmapDiagram)ventana.getDiagram()).update();
+				}
+		}
+		}
 	
 	/**
 	 * Updates all active DiagramWindows configurations except the ones with the input name.
@@ -478,7 +611,7 @@ public class Session {
 		
 	}
 	
-
+	
 	/**
 	 * Check if multidimentional data are loaded
 	 * 
@@ -495,17 +628,12 @@ public class Session {
 	 */
 	public void update(int[] updatableIds) 
 		{
-		//System.out.println("Tenemos "+this.grupoVentanasDefecto.size()+" ventanas en el grupo por defecto");
-		//for(int j=0;j<updatableIds.length;j++)	System.out.println("ID actualizable "+updatableIds[j]);
 		for(int i = 0; i < this.grupoVentanasDefecto.size(); i++)
 			{
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
 			
 			if(ArrayUtils.contains(updatableIds,ventana.getId()))
-				{
-				//System.out.println("Actualizando panel coh id "+ventana.getId()+" y nombre "+ventana.getName());
 				ventana.updateDiagram();
-				}
 			}
 		}
 		
@@ -604,10 +732,10 @@ public class Session {
 	}
 
 	/**
-	 * Returns the data of transcription network for this working set
+	 * Returns the data of Biological Network for this working set
 	 * @return	TRNData for this working set
 	 */
-	public TRNData getTRNData() 
+	public NetworkData getTRNData() 
 		{
 		return this.datosTRN;
 		}
@@ -616,7 +744,7 @@ public class Session {
 	 * Sets the TRNData for this Working set
 	 * @param TRNData	TRNData to set in this working set
 	 */
-	public void setTRNData(TRNData TRNData) {
+	public void setTRNData(NetworkData TRNData) {
 		this.datosTRN = TRNData;
 		datosTRNCargados = true;
 		this.updateData();		
@@ -751,7 +879,8 @@ public class Session {
 	 */
 	public LinkedList<Integer> getSelectedConditionsBicluster() 
 	{
-	return selectedBicluster.getConditions();
+	if(selectedBicluster!=null)	return selectedBicluster.getConditions();
+	else						return new LinkedList<Integer>();
 	}
 
 	
@@ -779,10 +908,25 @@ public class Session {
 	 * @param	selectedBic	BiclusterSelecteon with genes and conditions contained in the biclusters selected
 	 * @param noUpdate	Updates all Diagrams except those that contains this String
 	 */
-	public void setSelectedBiclusters(BiclusterSelection selectedBic, String noUpdate) 
+	public void setSelectedBiclustersExcept(BiclusterSelection selectedBic, String noUpdate) 
 		{
 		this.selectedBicluster = selectedBic;
-		
+		if(!undoOrRedo)
+			{
+			//for(int i=contLog+1;i<selectionLog.size();i++)	
+				//selectionLog.remove(i);
+			if(contLog<selectionLog.size()-1)
+				for(int i=selectionLog.size()-1;i>=contLog;i--)	
+					selectionLog.addLast(selectionLog.get(i));
+			selectionLog.add(selectedBicluster);
+			contLog=selectionLog.size()-1;
+			if(selectionLog.size()>10)   	
+		    	{
+		    	selectionLog.removeFirst();
+		    	contLog--;
+		    	}
+			}
+		else	undoOrRedo=false;
 		TupleSelection sp=this.getDataLayer().getPointSelection(); 
 		if(this.getData()!=null)
 			{
@@ -799,8 +943,98 @@ public class Session {
 		
 		this.updateExcept(noUpdate);
 		}
+	
+	public void setSelectedBiclustersOnly(BiclusterSelection selectedBic, String onlyUpdate) 
+		{
+		this.selectedBicluster = selectedBic;
+		if(!undoOrRedo)
+			{
+			if(contLog<selectionLog.size()-1)
+				for(int i=selectionLog.size()-1;i>=contLog;i--)	
+					selectionLog.addLast(selectionLog.get(i));
+			selectionLog.add(selectedBicluster);
+			contLog=selectionLog.size()-1;
+			if(selectionLog.size()>10)   	
+		    	{
+		    	selectionLog.removeFirst();
+		    	contLog--;
+		    	}
+			}
+		else	undoOrRedo=false;
+		TupleSelection sp=this.getDataLayer().getPointSelection(); 
+		if(this.getData()!=null)
+			{
+			if(sp==null)	sp=new TupleSelection("genes", "conditions", this.getData().getNumTuples());
+			for(int i=0;i<sp.getNumTuples();i++)		{sp.setX(i, false); sp.setY(i, false);}
+			if(selectedBic.getGenes().size()>0)
+				for(int i=0;i<selectedBic.getGenes().size();i++)
+					{
+					sp.setX(selectedBic.getGenes().get(i), true);
+					}
+			this.getDataLayer().setPointSelection(sp);
+			}
+			
+		
+		this.updateOnly(onlyUpdate);
+		}
+	public void setSelectedBicluster(BiclusterSelection selectedBic) 
+		{
+		this.selectedBicluster = selectedBic;
+		}
+	
+	/**
+	 * For Ctrl-Z
+	 */
+	public void undo()
+		{
+		undoOrRedo=true;
+		System.out.println("Undo");
+		if(contLog>0)	contLog--;
+		setSelectedBiclustersExcept(selectionLog.get(contLog), "");
+		System.out.println("contlog "+contLog);
+		}
 
 	/**
+	 * For Ctrl-Y
+	 */
+	public void redo()
+		{
+		undoOrRedo=true;
+		System.out.println("Redo");
+		if(contLog<selectionLog.size()-1)	contLog++;
+		setSelectedBiclustersExcept(selectionLog.get(contLog), "");
+		System.out.println("contlog "+contLog);
+		}
+	
+	 /** Handle the key typed event from the text field. */
+    public void keyTyped(KeyEvent e) {
+    	return;
+    }
+    
+    /** Handle the key pressed event from the text field. */
+    public void keyPressed(KeyEvent e) 
+    	{
+         int keyCode = e.getKeyCode();
+         if(keyCode==17)//Ctrl
+          	 ctrlPressed=true;
+    	}
+    
+    /** Handle the key released event from the text field. */
+    public void keyReleased(KeyEvent e) {
+         if(ctrlPressed)
+        	{
+         	if(e.getKeyCode()==90)	undo();
+        	else if(e.getKeyCode()==89)	redo();
+        	}
+        else
+        	{
+            int keyCode = e.getKeyCode();
+            if(keyCode==17)//Ctrl
+           	ctrlPressed=false;
+        	}
+    }
+    
+/**
 	 * Sets the genes and conditions hovered
 	 * @param	hoveredBic	BiclusterSelecteon with genes and conditions contained in the biclusters selected
 	 * @param responsible	Name of the view responsible of the selection
@@ -910,6 +1144,22 @@ public class Session {
 		this.expresionesCondicion = conditionExpressions;
 	}
 
+	public void changeLabels()
+		{
+		if(getMicroarrayData()!=null)
+			{
+			getMicroarrayData().changeLabels();
+			if(this.getTRNData()!=null)		
+				{
+				for(int i = 0; i < this.grupoVentanasDefecto.size(); i++){
+					DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
+					if(ventana.getDiagram().getClass()==NetworkDiagram.class)	
+						((NetworkDiagram)ventana.getDiagram()).changeLabels();
+					}
+				}
+			updateAll();
+			}
+		}
 	/**
 	 * Gets the number of DiagramWindows opened for this Session
 	 * @return	the number of DiagramWindows opened
@@ -1081,11 +1331,11 @@ public class Session {
 		this.selectionColor = selectionColor;
 	}
 
-	public Biclustering getBiclustering() {
+	public Analysis getBiclustering() {
 		return biclustering;
 	}
 
-	public void setBiclustering(Biclustering biclustering) {
+	public void setBiclustering(Analysis biclustering) {
 		this.biclustering = biclustering;
 	}
 	

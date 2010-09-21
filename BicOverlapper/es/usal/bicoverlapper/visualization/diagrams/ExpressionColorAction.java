@@ -80,6 +80,9 @@ public class ExpressionColorAction extends ColorAction {
         super(group, colorField);
         setDataType(dataType);
         setDataField(dataField);
+        //
+       // this.setDuration(3000);
+        //
         m_palette = palette;
     }
     

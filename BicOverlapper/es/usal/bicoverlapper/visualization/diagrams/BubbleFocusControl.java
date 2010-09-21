@@ -82,8 +82,8 @@ class BubbleFocusControl extends FocusControl
 			BubbleData bd=sesion.getBubbleData();
 			if(sesion.getMicroarrayData()!=null)
 				{
-				ArrayList<String> lgn=sesion.getMicroarrayData().getGeneNames(lg);
-				ArrayList<String> lcn=sesion.getMicroarrayData().getConditionNames(lc);
+				ArrayList<String> lgn=sesion.getMicroarrayData().getRowLabels(lg);
+				ArrayList<String> lcn=sesion.getMicroarrayData().getColumnLabels(lc);
 				for(int i=0;i<bd.getGraph().getNodeCount();i++)
 					{
 					Node n=bd.getGraph().getNode(i);
@@ -135,8 +135,8 @@ class BubbleFocusControl extends FocusControl
 			BubbleData bd=sesion.getBubbleData();
 			if(sesion.getMicroarrayData()!=null)
 				{
-				ArrayList<String> lgn=sesion.getMicroarrayData().getGeneNames(lg);
-				ArrayList<String> lcn=sesion.getMicroarrayData().getConditionNames(lc);
+				ArrayList<String> lgn=sesion.getMicroarrayData().getRowLabels(lg);
+				ArrayList<String> lcn=sesion.getMicroarrayData().getColumnLabels(lc);
 				for(int i=0;i<bd.getGraph().getNodeCount();i++)
 					{
 					boolean add=true;
@@ -149,7 +149,7 @@ class BubbleFocusControl extends FocusControl
 									{	add=false; break;}
 						}
 				
-					if(add && lcn.size()<sesion.getMicroarrayData().getConditionNames().length-1)//Si todavía se puede añadir
+					if(add && lcn.size()<sesion.getMicroarrayData().columnLabels.length-1)//Si todavía se puede add
 						{
 						lista=(ArrayList<String>)n.get("conditions");
 						for(int j=0;j<lcn.size();j++)
@@ -195,7 +195,7 @@ class BubbleFocusControl extends FocusControl
                     nodosSeleccionados.clear();
                     nodosSeleccionados.add(item.getRow());
                     
-                  	sesion.setSelectedBiclusters(new BiclusterSelection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
+                  	sesion.setSelectedBiclustersExcept(new BiclusterSelection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
 	            	}
                 else if ( ts.containsTuple(item) ) //Ya estaba, lo quitamos, tanto si hay ctrl como si no
                 	{
@@ -235,8 +235,8 @@ class BubbleFocusControl extends FocusControl
     	{
     	LinkedList<Integer> lista=new LinkedList<Integer>();
     	String names[];
-    	if(genes) names=this.sesion.getMicroarrayData().getGeneNames();
-    	else		names=this.sesion.getMicroarrayData().getConditionNames();
+    	if(genes) names=this.sesion.getMicroarrayData().rowLabels;
+    	else		names=this.sesion.getMicroarrayData().columnLabels;
 		
     	//System.out.println("Elementos "+l.size());
 		for(int i=0;i<l.size();i++)
@@ -257,7 +257,7 @@ class BubbleFocusControl extends FocusControl
     //Cuando se llama, se pone como seleccionada una burbuja
 	void addItem(VisualItem item)
 		{
-	//	System.out.println("BF: Vamos a añadir lo que nos parezca");
+	//	System.out.println("BF: Vamos a add lo que nos parezca");
 		Visualization vis=item.getVisualization();
 		TupleSet ts = vis.getFocusGroup(group);
 		ts.addTuple(item);

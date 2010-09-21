@@ -46,6 +46,11 @@ binarizeByPercentage=function(x,percentage,error=0.2,gap=0.1, low=FALSE)
 			matd=binarize(x,threshold-gap, low)
 			break
 		}
+		if(slope!=slopeAnt && dens==densNew)
+			{
+				print(paste("Best result possible"))
+				break
+			}
 		dens=densNew
 		print(dens)
 		if(dens>percentage)

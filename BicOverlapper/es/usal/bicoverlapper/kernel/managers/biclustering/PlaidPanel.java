@@ -32,7 +32,7 @@ import javax.swing.JButton;
 
 
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor;
-import es.usal.bicoverlapper.analysis.Biclustering;
+import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
 import es.usal.bicoverlapper.data.files.TextFileFilter;
@@ -343,7 +343,7 @@ public class PlaidPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						Biclustering b=session.getMicroarrayData().biclustering;
+						Analysis b=session.analysis;
 					    if(b.r==null)
 					    	{
 					    	b.loadR();

@@ -2,11 +2,18 @@ package es.usal.bicoverlapper.data;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import es.usal.bicoverlapper.data.GOTerm;
 
 public class GeneAnnotation {
+	
+	
+	/**
+	 * Internal id used only by BicOverlapper
+	 */
+	public int internalId;
 	//From NCBI, obtained by eUtils
 	/**
 	 * Gene name as in NCBI
@@ -21,9 +28,9 @@ public class GeneAnnotation {
 	 */
 	public String id;
 	/**
-	 * NCBI gene id
+	 * NCBI gene id (entrezId)
 	 */
-	public String ncbiId;
+	public String entrezId;
 	
 	/**
 	 * Gene type as in NCBI (by now not taken)
@@ -52,7 +59,7 @@ public class GeneAnnotation {
 	public GeneAnnotation()
 		{
 		aliases=new ArrayList<String>();
-		goTerms=new ArrayList<GOTerm>();
+		//goTerms=new ArrayList<GOTerm>();//null if they haven't been searched yet, empty if they were searched and not found
 		}
 	public String getDetailedForm()
 		{

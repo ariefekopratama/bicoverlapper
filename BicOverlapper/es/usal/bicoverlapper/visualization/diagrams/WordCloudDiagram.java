@@ -93,7 +93,7 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	//Atributos propios de la clase --------------------
 	private float maxFontSize=(float)400;
 	private float minFontSize=(float) 1.5;	
-	private int maxCont=0;
+	private double maxCont=0;
 	private int contChar=0;
 	private int maxWord=0;
 	private double Y=0;
@@ -103,7 +103,9 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	private ArrayList<String> nameSelected;
 	private Color colorNameSelected;
 	private Color myColor;
-	private MenuPanel menuCloud=null;
+	public MenuPanel menuCloud=null;
+	
+
 	private TreeMap <String,Word> words;
 	private boolean newSelection=true;
 
@@ -123,7 +125,6 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		int num = sesion.getNumWordClouds();
 		this.setName("Keyword Cloud "+num);
 		this.sesion = sesion;
-		//this.datos = sesion.getData();
 		int alto = (int)dim.getHeight();
 		int ancho = (int)dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho,alto));
@@ -145,9 +146,14 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		update();
 		}
 	
+	public MenuPanel getMenuCloud() {
+		return menuCloud;
+	}
+
+	public void setMenuCloud(MenuPanel menuCloud) {
+		this.menuCloud = menuCloud;
+	}
 	private void setEnabledButon(){
-	/*	menuCloud.descButton.setEnabled(true);
-		menuCloud.goButton.setEnabled(true);*/
 	}
 	
 	private Color getColorW(String w){		
@@ -210,11 +216,10 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 							ont="CC";
 							break;
 						}
-					System.out.println("Llamando a test hipergeométrico");
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
 					}
 				else		
-					this.sesion.getMicroarrayData().getGeneAnnotations(sesion.getSelectedGenesBicluster(), this, p);
+					this.sesion.getMicroarrayData().getGeneAnnotations(sesion.getSelectedGenesBicluster(), this, this.menuCloud.progress);
 				return;
 				}
 			else
@@ -227,17 +232,21 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	
 public void addWords()
 	{
+	int cont=0;
+	
 	switch(this.menuCloud.text.getSelectedIndex())
 		{
 		case MenuPanel.GO_TERM://----------------------------------------------
 			switch(this.menuCloud.size.getSelectedIndex())
 			{
 			case MenuPanel.GENES:
+				cont=0;
 				for(GeneAnnotation a : annot)
 				{
-				List<String> added=new ArrayList<String>();
+				ArrayList<String> added=new ArrayList<String>();
 				if(a.goTerms!=null)
 					{
+					if(a.goTerms.size()>0)	cont++;
 					for(GOTerm go : a.goTerms)
 						{
 						if(go!=null)
@@ -260,7 +269,7 @@ public void addWords()
 								String desc=go.term;
 								if(!added.contains(desc))
 									{
-									splitAndAdd(desc, 1, this.colorSeleccion, true);
+									splitAndAdd(desc, 1, 1, this.colorSeleccion, true, added);
 									added.add(desc);
 									}
 								}
@@ -268,6 +277,7 @@ public void addWords()
 						}
 					}
 				}
+				
 				break;
 			case MenuPanel.OCCURRENCES:
 				for(GeneAnnotation a : annot)
@@ -295,7 +305,7 @@ public void addWords()
 								{
 								String desc=go.term;
 								int oc=go.occurences;
-								splitAndAdd(desc, oc, this.colorSeleccion, false);
+								splitAndAdd(desc, oc, oc, this.colorSeleccion, false, null);
 								}
 			        		}
 						}
@@ -304,30 +314,25 @@ public void addWords()
 				break;
 	
 			case MenuPanel.PVALUES:
-				double min=got.get(0).pvalue;
-				for(GOTerm go: got)
-					if(go.pvalue<min)	min=go.pvalue;
-				
-				System.out.println("Hay "+got.size()+" terms");
-				int cont=0;
+				cont=0;
+				for(GeneAnnotation a : annot)
+					if(a.goTerms!=null && a.goTerms.size()>0)	cont++;
+			
 				for(GOTerm go:got)
 					{
 					if(go!=null)
 						{
 						String desc=go.term;
-						int oc=(int)((1/(go.pvalue/min))/min);//TODO: en funcion de pvalue, formatear número y tamaño en concordancia
-						System.out.println(cont++);
-						if(desc.equals("establishment of localization in cell"))
-							System.out.println("Split and add de "+desc);
-						splitAndAdd(desc, oc, this.colorSeleccion, false);
-		        		}
+						double size=Math.abs(Math.log10(go.pvalue));
+						splitAndAdd(desc, go.pvalue, size, this.colorSeleccion, false, null);
+						}
 					}
-				System.out.println("Finished!");
 				break;
 				}
 			break;
 		case MenuPanel.DEFINITION://---------------------------------------------
 		default:
+			cont=0;
 			for(int i=0;i<annot.size();i++)
 			{
 			GeneAnnotation ga=annot.get(i);
@@ -335,19 +340,19 @@ public void addWords()
 				{
 				if(ga.description!=null)
 					{
+					if(ga.description.length()>0)	cont++;
 					String desc=ga.description;
 					int oc=1;
 					switch(this.menuCloud.size.getSelectedIndex())
 						{
 						case MenuPanel.OCCURRENCES:
-							splitAndAdd(desc, oc, this.colorSeleccion, false);
+							splitAndAdd(desc, oc, oc, this.colorSeleccion, false, null);
 							break;
 						case MenuPanel.GENES:
 						default:
-							splitAndAdd(desc, oc, this.colorSeleccion, true);
+							splitAndAdd(desc, oc, oc, this.colorSeleccion, true, null);
 							break;
 						}
-						
 					}
 				}
 			}
@@ -356,15 +361,21 @@ public void addWords()
 	
 	synchronized(this){
 	textChanged=true;
-	System.out.println("Número de hilos: "+Thread.getAllStackTraces().size());
 	if(this.getGraphics()!=null)	
 		this.paintComponent(this.getGraphics());
 	menuCloud.setVisible(true);
 	menuCloud.repaint();
 	
 	innerCall=false;
+	if(cont>=0 && cont<=sesion.getSelectedBicluster().getGenes().size())
+		{
+		System.out.println(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
+		this.menuCloud.progress.setText(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
+		this.menuCloud.progress.setToolTipText("Annotations retrieved for "+cont+" of the "+sesion.getSelectedBicluster().getGenes().size()+" selected genes");
+		}
 	}
 	}
+
 public void receiveGOTerms(ArrayList<GOTerm> goterms)
 	{
 	this.got=goterms;
@@ -378,6 +389,8 @@ public void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
 	addWords();
 	}
 	
+
+
 /**
  * Separates the text desc in words (use blank space as separator), and adds each word with color
  * c. Usually oc is 1, but if greater, it counts each word as this number of occurences.
@@ -387,22 +400,32 @@ public void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
  * @param c
  * @param unique
  */
-public void splitAndAdd(String desc, int oc, Color c, boolean unique)
+public void splitAndAdd(String desc, double value, double size, Color c, boolean unique, ArrayList<String> alreadyAdded)
+	{
+	ArrayList<String> added=new ArrayList<String>();
+	if(alreadyAdded!=null)		added=alreadyAdded;
+	//1) split
+	String[] dw=splitter(desc);
+	//2) add
+	for(int j=0;j<dw.length;j++)
+		{
+		dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
+		if(!unique || !added.contains(dw[j]))
+			addWord(dw[j], value, size, c);
+		added.add(dw[j]);
+		}
+	
+	return;
+	}
+	
+public String[] splitter(String desc)
 	{
 	String[] dw=null;
 	ArrayList<String> added=new ArrayList<String>();
 	switch(this.menuCloud.split.getSelectedIndex())
 		{
 		case 0://1-word
-			dw=desc.split(" ");
-			for(int j=0;j<dw.length;j++)
-				{
-				dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
-				if(!unique || !added.contains(dw[j]))
-					addWord(dw[j], oc, c);
-				added.add(dw[j]);
-				}
-			break;
+			return desc.split(" ");
 		case 1://2-word
 			dw=desc.split(" ");
 			for(int j=0;j<dw.length;j++)      			
@@ -410,37 +433,35 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 				if(j<dw.length-1)	
 					{
 					String diword=(dw[j]+" "+dw[j+1]).trim();
-					if(!unique || !added.contains(diword))
-						addWord(diword, oc, c);
 					added.add(diword);
 					}
 				}
-			break;
+			return added.toArray(new String[added.size()]);
 		case 2://complete
-			addWord(desc, oc, c);
-			break;
+			return new String[]{desc};
 		}
-	return;
+	return null;
 	}
-	
-	public void addWord(String w, int oc, Color colorW)
+
+
+public void addWord(String w, double value, double size, Color colorW)
 		{
 		if(!valid(w))	return;
 		if(words!=null && words.containsKey(w))
 			{
 			Word nW=(Word)words.get(w);
 			//colorW=getColorW(w);
-			nW.setCont(nW.cont+oc);
-			if(nW.cont>maxCont) maxCont=nW.cont;
+			nW.setCont(nW.size+size);
+			if(nW.size>maxCont) maxCont=nW.size;
 			}
 		else
 			{
 			//colorW=getColorW(w);
-			words.put(w, new Word(null,0,0,new Integer(oc),colorW));
+			words.put(w, new Word(null,0,0,value, size,colorW));
 			contChar+=w.length();
-			contWord+=oc;
+			contWord+=size;
 			}
-		maxWord+=oc;
+		maxWord+=size;
 		maxChar+=w.length();
 		}
 	
@@ -547,7 +568,7 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 	
 	public void create()
 		{
-		//Añadir el display o papplet o frame de visualización a la ventana
+		//add el display o papplet o frame de visualización a la ventana
 		//Asociar este panel a la ventana: 
 		//Opcionalmente, se pueden inicializar aquí los datos del frame, en vez de hacerlo en el constructor
 		this.getWindow().setContentPane(this);
@@ -698,9 +719,10 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 				{
 				String wc="";
 				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
-						wc=" "+w.concat("("+formatNumber(1.0/nW.cont))+")";
-				else	wc=" "+w.concat("("+nW.cont+") ");
-				float num=nW.cont;
+					wc=" "+w.concat("("+formatNumber(nW.value)+")");
+				else
+					wc=" "+w.concat("("+(int)(nW.size)+") ");
+				double num=nW.size;
 				
 				Font f=g2.getFont().deriveFont((float)num);
 				TextLayout texto = new TextLayout(wc,f,frc);
@@ -750,17 +772,18 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 				{
 				String wc="";
 				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
-					wc=" "+w.concat("("+formatNumber(1.0/nW.cont))+")";
-				else	wc=" "+w.concat("("+nW.cont+") ");
-				float num=nW.cont;
+					wc=" "+w.concat("("+formatNumber(nW.value))+")";
+				else	
+					wc=" "+w.concat("("+(int)nW.size+") ");
+				double num=nW.size;
 				Font f=g2.getFont().deriveFont((float)(num*scale));
 				TextLayout texto = new TextLayout(wc,f,frc);
 				
 				altoTexto = texto.getBounds().getHeight();
 				anchoTexto = texto.getBounds().getWidth();
-				if(x+anchoTexto>this.getWidth())	//cambio de línea
+				if(x+anchoTexto>this.getWidth())	//change to next line
 					{
-					//Sumamos a todas las de la línea anterior el maxAlto de esa línea
+					//Sumamos a todas las de la línea anterior el maxAlto de esa linea
 					for(int k=0;k<wordsInLine.size();k++)
 						{
 						Word w2=wordsInLine.get(k);
@@ -952,7 +975,7 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 			}
 		}
 	
-	private class MenuPanel extends JPanel implements ActionListener{
+	public class MenuPanel extends JPanel implements ActionListener{
 		/**
 		 * 
 		 */
@@ -972,13 +995,14 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 		JLabel spl=new JLabel(splitLabel);
 		JLabel sil=new JLabel(sizeLabel);
 		JLabel onl=new JLabel(ontoLabel);
+		JLabel progress=new JLabel("");
 		
 		String antName="";
 		String[] texts;
 		String[] splits;
 		String[] sizes;
 		String[] ontologies;
-		JComboBox text, split, size, ontology;
+		public JComboBox text, split, size, ontology;
 		
 		static final int DEFINITION=0;
 		static final int GO_TERM=1;
@@ -995,36 +1019,43 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 		
 		
 		public  MenuPanel(){
-			if(sesion.getMicroarrayData().searchByR==true)	
+			/*if(sesion.getMicroarrayData().searchByR==true)	
 				{
 				texts=new String[]{"definition", "go term"};
-				splits=new String[]{"1 word", "2 words"};
-		//		sizes=new String[]{"genes", "occurences"};
-				sizes=new String[]{"genes"};
+				splits=new String[]{"1 word", "2 words", "complete"};
+				sizes=new String[]{"genes", "p-value"};
+		//		sizes=new String[]{"genes"};
 				ontologies=new String[]{"all", "bp", "mf", "cc"};
 				}
 			else											
 				{
 				texts=new String[]{"definition", "go term"};
-				splits=new String[]{"1 word", "2 words"};
-				//sizes=new String[]{"genes", "occurences"};
-				sizes=new String[]{"genes"};
+				splits=new String[]{"1 word", "2 words", "complete"};
+				sizes=new String[]{"genes", "p-value"};
 				ontologies=new String[]{"all", "bp", "mf", "cc"};
-				}
-
+				}*/
+			texts=new String[]{"definition", "go term"};
+			splits=new String[]{"1 word", "2 words", "complete"};
+			sizes=new String[]{"genes", "p-value"};
+			ontologies=new String[]{"all", "bp", "mf", "cc"};
+			
 			text=new JComboBox(texts);
 			split=new JComboBox(splits);
 			size=new JComboBox(sizes);
 			ontology=new JComboBox(ontologies);
-			text.setSelectedIndex(0);
-			split.setSelectedIndex(0);
+			text.setSelectedIndex(1);
+			split.setSelectedIndex(2);
 			size.setSelectedIndex(0);
-			ontology.setSelectedIndex(0);
+			ontology.setSelectedIndex(1);
 			text.addActionListener(this);
 			split.addActionListener(this);
 			size.addActionListener(this);
 			ontology.addActionListener(this);
-			ontology.setEnabled(false);
+			
+			
+			sil.setToolTipText("The size of words is proportional to the number of genes that are annotated with it or to the p-value of a significance test");
+			spl.setToolTipText("The description or GO terms are split and visualized following this:");
+			//ontology.setEnabled(false);
 			
 			this.add(tl);
 			this.add(text);
@@ -1034,6 +1065,7 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 			this.add(size);
 			this.add(onl);
 			this.add(ontology);
+			this.add(progress);
 		}
 		
 		public void actionPerformed(ActionEvent e)
@@ -1069,6 +1101,16 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 	        antName = (String)cb.getSelectedItem();
 	        ((WordCloudDiagram)this.getParent()).update();
 	        }
+
+		public void setIndices(int textIndex, int splitIndex, int sizeIndex,
+				int ontologyIndex) {
+			text.setSelectedIndex(textIndex);	
+			split.setSelectedIndex(splitIndex);
+			size.setSelectedIndex(sizeIndex);
+			ontology.setSelectedIndex(ontologyIndex);
+			 ((WordCloudDiagram)this.getParent()).update();
+		       
+		}
 		}
 	
 	private class Word
@@ -1078,20 +1120,22 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 		String label;
 		double x;
 		double y;
-		int cont;
+		double size;//size for this word, usually related to the figure of merit
+		double value;//figure of merit for this word (number of occurences, p-value, etc.)
 		Color color;
 		
-		public Word(TextLayout text, double x, double y, int cont,Color c)
+		public Word(TextLayout text, double x, double y, double value, double size,Color c)
 			{
 			this.text=text;			
 			this.x=x;
 			this.y=y;
-			this.cont=cont;	
+			this.value=value;	
+			this.size=size;	
 			this.color=c;
 			}
-		public int getCont()
+		public double getSize()
 			{
-			return this.cont;
+			return this.size;
 			}
 		public double getX()
 			{
@@ -1114,8 +1158,8 @@ public void splitAndAdd(String desc, int oc, Color c, boolean unique)
 		public void setY(double y) {
 			this.y = y;
 		}
-		public void setCont(int cont) {
-			this.cont = cont;
+		public void setCont(double cont) {
+			this.size = cont;
 		}
 		public Color getColor() {
 			return color;

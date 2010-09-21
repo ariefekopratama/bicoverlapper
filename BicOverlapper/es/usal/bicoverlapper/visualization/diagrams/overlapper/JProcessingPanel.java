@@ -57,6 +57,8 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	static final int SHIFT=16;
 	static final int CONTROL=17;
 	static final int ALT=18;
+	static final int CONTROL_Z=89;
+	static final int CONTROL_Y=90;
 	
 	int rectAl=CORNER;
 	int textAl=LEFT;
@@ -652,7 +654,9 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	protected void mouseReleasedAction()		{		mouseReleased();		}
 	
 	protected abstract void keyPressed();
+	//protected abstract void keyReleased();
 	protected void keyPressedAction()		{		keyPressed();		}
+	//protected void keyReleasedAction()		{		keyReleased();		}
 	//public abstract void keyReleased();
 	//public void keyReleasedAction()		{		keyReleased();		}
 	
@@ -751,7 +755,7 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 			keyCode=e.getKeyCode();
 			key=e.getKeyChar();
 			keyPressed=false;
-			//keyReleased();
+			//keyReleasedAction();
 			}
 		public void keyTyped(KeyEvent e)
 			{

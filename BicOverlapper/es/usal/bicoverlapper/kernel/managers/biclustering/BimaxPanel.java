@@ -34,7 +34,7 @@ import javax.swing.JButton;
 
 
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor;
-import es.usal.bicoverlapper.analysis.Biclustering;
+import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
 import es.usal.bicoverlapper.data.files.TextFileFilter;
@@ -412,7 +412,7 @@ public class BimaxPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						Biclustering b=session.getMicroarrayData().biclustering;
+						Analysis b=session.analysis;
 					    if(b.r==null)
 					    	{
 					    	b.loadR();
@@ -430,8 +430,7 @@ public class BimaxPanel{
 							if(getJCheckBox().isSelected())	fileName=defaultPath;
 							}
 						
-					   //((JInternalFrame)(getJPanel2().getParent().getParent().getParent().getParent())).dispose();
-						((JFrame)(getJPanel2().getTopLevelAncestor())).dispose();
+					 	((JFrame)(getJPanel2().getTopLevelAncestor())).dispose();
 						
 					   int[] filterOptions=null;
 					   if(getJCheckBox3().isSelected())
@@ -475,13 +474,6 @@ public class BimaxPanel{
 							}
 						};
 						wt.start();
-						
-						/*fileName=b.bimax(getJRadioButton().isSelected()? true:false, 
-								getJRadioButton().isSelected()? new Double(getJTextField21().getText()).doubleValue():new Double(getJTextField211().getText()).doubleValue(),
-								new Integer(getJTextField221().getText()).intValue(), 
-								new Integer(getJTextField22().getText()).intValue(),
-								new Integer(getJTextField2().getText()).intValue(),
-								fileName, getJTextField212().getText());*/
 						}
 					}
 			});

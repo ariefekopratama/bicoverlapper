@@ -109,7 +109,7 @@ public class DualNode extends ForcedNode {
   public void draw(boolean dependent) 
   	{
     Overlapper p=(Overlapper)g.getApplet();
-    float radius=(float)(this.getHeight()*Math.log(this.subNodes.size()+1));
+    float radius=getRadius();
     if(dependent)
     	{
 	    Point2D.Double p0=getMiddlePoint();

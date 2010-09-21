@@ -56,6 +56,10 @@ public class DiagramWindow extends JInternalFrame {
 		this.setDefaultCloseOperation(JInternalFrame.DISPOSE_ON_CLOSE);
 		//this.setLocation(sesion.getNuevaVentanaPos());
 		this.setVisible(true);
+		
+		this.diagram.setFocusable(true);
+		this.diagram.addKeyListener(sesion);
+		
 		desktop.add(this);
 		try {
 			this.setSelected(true);
@@ -229,6 +233,10 @@ public class DiagramWindow extends JInternalFrame {
 			this.update(updatableIds);
 	}
 	
+	void sortColumns(int [] columnOrder)
+		{
+		//To be modified by child classes
+		}
 	/**
 	 * Sends a message to all DiagramWindows with id in updatableIds to
 	 * update their visualizations with the data state in Session layer
@@ -266,7 +274,6 @@ public class DiagramWindow extends JInternalFrame {
 	}
 	
 	// clase gestora del comportamiento de la ventana
-	
 	private class GestorVentana implements InternalFrameListener, ComponentListener{
 		
 		public void componentResized(ComponentEvent e) {

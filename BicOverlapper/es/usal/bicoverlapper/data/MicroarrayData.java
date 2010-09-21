@@ -1,11 +1,15 @@
 package es.usal.bicoverlapper.data;
 
 
-import es.usal.bicoverlapper.analysis.Biclustering;
+import es.usal.bicoverlapper.analysis.Analysis;
+import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor;
+import es.usal.bicoverlapper.utils.AnnotationProgressMonitor2;
+import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.HypergeometricTestProgressMonitor;
 import es.usal.bicoverlapper.utils.MicroarrayLoadProgressMonitor;
+import es.usal.bicoverlapper.utils.Sizeof;
 import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
 import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
 
@@ -21,12 +25,17 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingWorker;
 
@@ -95,8 +104,7 @@ public class MicroarrayData
 	Table sparseGeneLabels;
 	
 	/**
-	 * Names for the conditions. It is recommended not to use very large names or the visualizations
-	 * could be very messy
+	 * Names for the conditions.
 	 */
 	public String[] conditionNames;
 	/**
@@ -105,9 +113,23 @@ public class MicroarrayData
 	public String[] geneNames;
 	
 	/**
-	 * Biclustering class bound to this microarray data.  
+	 * Labels for the conditions. They are built initially from conditionNames and geneNames, but the user can change them
+	 * to any combination of values present for gene ids or for experimental factors. 
 	 */
-	public Biclustering biclustering= null;
+	public String[] columnLabels;
+	/**
+	 * Gene names.
+	 */
+	public String[] rowLabels;
+	
+	public ArrayList<String> experimentFactors;
+	public HashMap<String,String[]> experimentFactorValues;
+	
+	//For any other annotation present in the data in the first place
+	public ArrayList<String> geneFactors;
+	public HashMap<String,String[]> geneFactorValues;
+	
+	
 	/**
 	 * Session class into which this microarray data is loaded
 	 */
@@ -119,6 +141,23 @@ public class MicroarrayData
 	public String rname="GENENAME";
 	public String rdescription="DESCRIPTION";
 	public String rgo="GO";
+	/**
+	 * Usually the R resource to search for gene annotations is an environment like for example illuminaHumanv1.db,
+	 * but in some cases it is a database that cannot be accessed with get, mget; but with queries, and there is no
+	 * environment counterpart. On these cases, in example Illumina Human HT12 for which there is no environment db
+	 * but there is lumiHumanIDMapping package, isRDatabase is set to true and the search is done by dbGetQuery in R.
+	 */
+	public boolean isRDatabase=false;
+	/**
+	 * As isRDatabase, but with bioMaRt package, where getGene will be used for annotations
+	 */
+	public boolean isBioMaRt=false;
+	
+	/**
+	 * As isRDatabase, but with GO.db package, where annotations of GO terms are in GOTERM
+	 */
+	public boolean isGO=false;
+	
 	public Rengine re=null;
 	
 	int numGenes;
@@ -131,11 +170,21 @@ public class MicroarrayData
 	 */
 	public double average=0;
 	
+	/**
+	 * Maximum expression value of the whole expression matrix
+	 */
+	public double max;
+	/**
+	 * Minimum expression value of the whole expression matrix
+	 */
+	public double min;
 	
 	
-	String chip;//kind of microarray chip (any official for Affymetrix permitted, by now), or kind of name taken by genes (geneID and ORF permitted)
-	String organism;//Name of organism as registered in NCBI
+	
+	public String chip;//kind of microarray chip (any official for Affymetrix permitted, by now), or kind of name taken by genes (geneID and ORF permitted)
+	public String organism;//Name of organism as registered in NCBI
 	public Map<Integer, GeneAnnotation> geneAnnotations;//Gene Annotations from NCBI and GeneOntology
+	public Map<String, GOTerm> GOTerms;//GO terms stored
 	public boolean searchByR=false; //if there is information in the file about an available R package, gene annotations are taken from there, otherwise they're searched in NCBI
 	boolean annotationsRetrieved=false;
 	
@@ -147,6 +196,9 @@ public class MicroarrayData
 	private HypergeometricTestTask ht;
 	private LoadTask loadTask;
 	private MicroarrayRequester microarrayRequester;
+	public int[] columnOrder;
+	private double[] averageCols;
+	private double[] sdCols;
 	
 	/**
 	 * Constructor from a file
@@ -156,7 +208,7 @@ public class MicroarrayData
 	 * @param colHeader Number of initial columns with column information (usually one)
 	 * @param nd	Number of decimals to be shown if numerically showing expression levels
 	 */
-	public MicroarrayData(String path, boolean invert, int rowHeader, int colHeader, int nd, MicroarrayRequester mr) throws Exception
+	public MicroarrayData(String path, boolean invert, int rowHeader, int colHeader, int nd, MicroarrayRequester mr, Rengine r) throws Exception
 		{
 		MicroarrayLoadProgressMonitor pmd=new MicroarrayLoadProgressMonitor();
 		loadTask=new LoadTask();
@@ -165,6 +217,10 @@ public class MicroarrayData
 		loadTask.rowHeader=rowHeader;
 		loadTask.colHeader=colHeader;
 		loadTask.nd=nd;
+		experimentFactors=new ArrayList<String>();
+		experimentFactorValues=new HashMap<String,String[]>();
+		this.re=r;
+		
 		pmd.setTask(loadTask);
 		pmd.run();
 		if(mr!=null)
@@ -177,15 +233,32 @@ public class MicroarrayData
 			};
 			wt.start();
 			}
+		
 		}
 
+	/**
+	 * Sets the table geneLabels and conditionLabels to fit with rowLabels and columnLabels values
+	 */
+	public void changeLabels()
+		{
+		for(int i=0;i<rowLabels.length;i++)
+			{
+			geneLabels.setString(i, "name", rowLabels[i]);
+			}
+		for(int i=0;i<columnLabels.length;i++)
+			{
+			conditionLabels.setString(i, "name", columnLabels[i]);
+			}
+		}
+	
+	
 	/**
 	 * Corverts the expression matrix mat to a new matrix with information that Prefuse graphs can manage
 	 * @param mat
 	 * @param skipColumns number of columns to skip, as they are only informative
 	 * @return
 	 */
-	private Table convert(Table mat, int skipColumns)
+	private Table convert(Table mat, int skipRows, int skipColumns)
 		{
 		Table ret=new Table();
 		ret.addColumn("gene", String.class);
@@ -214,30 +287,26 @@ public class MicroarrayData
 		if(numGenes>maxGenes)	step=numGenes/maxGenes;
 		matrix=new double[numGenes][numConditions];
 		average=0;
+		averageCols=new double[numConditions];
+		sdCols = new double[numConditions];
+		for(int i=0;i<numConditions;i++)	
+			averageCols[i]=sdCols[i]=0;
+		
+		max=min=matrix[0][0];
 		for(int i=0;i<numGenes;i++)
 			{
 			for(int j=0;j<numConditions;j++)
 				{
 				row=ret.addRow();
-				ret.setString(row, "gene", geneNames[i]);
-				ret.setString(row, "condition", conditionNames[j]);
-				
-				if(mat.canGet(conditionNames[j],Double.class))	
-					{
-					matrix[i][j]=mat.getDouble(i, j+skipColumns);
-					ret.setDouble(row, "level", matrix[i][j]);
-					average+=matrix[i][j];
-					}
-				else												
-					{
-					if(mat.canGet(conditionNames[j],Integer.class))
-						{
-						double value=((Integer)mat.get(i,j+skipColumns)).doubleValue();
-						matrix[i][j]=(float)value;
-						average+=value;
-						ret.setDouble(row, "level", matrix[i][j]);
-						}
-					}
+				ret.setString(row, "gene", geneNames[i].trim());
+				ret.setString(row, "condition", conditionNames[j].trim());
+				matrix[i][j]=new Double(mat.getString(i+skipRows , j+skipColumns)).doubleValue();
+				ret.setDouble(row, "level", matrix[i][j]);
+				average+=matrix[i][j];
+				averageCols[j]+=matrix[i][j];
+				if(max<matrix[i][j])	max=matrix[i][j];
+				if(min>matrix[i][j])	min=matrix[i][j];
+			
 				ret.setInt(row, "rowId", i);
 				ret.setInt(row, "rowRank", i);
 				ret.setInt(row, "colId", j);
@@ -246,16 +315,11 @@ public class MicroarrayData
 				if(i%step==0)	//replicate for sparse matrix
 					{
 					sparseRow=sparseExpressions.addRow();
-					sparseExpressions.setString(sparseRow, "gene", geneNames[i]);
-					sparseExpressions.setString(sparseRow, "condition", conditionNames[j]);
+					sparseExpressions.setString(sparseRow, "gene", geneNames[i].trim());
+					sparseExpressions.setString(sparseRow, "condition", conditionNames[j].trim());
 					
-					if(mat.canGet(conditionNames[j],Double.class))	sparseExpressions.setDouble(sparseRow, "level", ((Double)mat.get(i,j+skipColumns)).doubleValue());
-					else												
-						{
-						if(mat.canGet(conditionNames[j],Integer.class))
-							{
-							sparseExpressions.setDouble(sparseRow, "level", matrix[i][j]); }
-						}
+					sparseExpressions.setDouble(sparseRow, "level", matrix[i][j]);
+			
 					sparseExpressions.setInt(sparseRow, "rowId", contGene);
 					sparseExpressions.setInt(sparseRow, "actualRowId", i);
 					sparseExpressions.setInt(sparseRow, "rowRank", contGene);
@@ -267,16 +331,26 @@ public class MicroarrayData
 			if(i%step==0)	contGene++;
 			}
 		
+		for(int i=0;i<numConditions;i++)	averageCols[i]/=numGenes;
 		average/=numGenes*numConditions;
+		computeSd();
 		return ret;
 		}
 	
-	
-	/*public void receiveMatrix(int status)
-	{
-		System.out.println("Finished microarray data reading wiht "+status);
-	}*/
-
+	/**
+	 * Computes the standard deviation of each column. Mean should be previously computed (right now it's done in convert())
+	 */
+	private void computeSd()
+		{
+		long t=System.currentTimeMillis();
+		for(int i = 0; i < numConditions; i++)
+			{
+			for(int j = 0; j < numGenes; j++)
+				sdCols[i]+=Math.abs(averageCols[i]-matrix[j][i]);
+			sdCols[i]/=numGenes;
+			}
+		System.out.println("Time to compute sd "+(System.currentTimeMillis()-t)/1000.0);
+		}
 	/**
 	 * Inverts rows and columns
 	 * @param table
@@ -320,7 +394,7 @@ public class MicroarrayData
 				{
 				int j=0;
 				while(genes.contains(sparseGeneLabels.getTuple(j).getInt("actualId")))	j++;//mientras estï¿½ en genes, probamos con la sig.
-				sparseGeneLabels.setString(j, "name", geneNames[genes.get(i)]);//Nuevo nombre e id para ï¿½l, el resto no cambia
+				sparseGeneLabels.setString(j, "name", rowLabels[genes.get(i)]);//Nuevo nombre e id para ï¿½l, el resto no cambia
 				sparseGeneLabels.setInt(j, "actualId", genes.get(i));
 				int id=sparseGeneLabels.getInt(j, "id");
 				int actualId=genes.get(i);
@@ -329,14 +403,34 @@ public class MicroarrayData
 					{
 					this.sparseExpressions.setInt(cont+k, "actualRowId",actualId);
 					this.sparseExpressions.setInt(cont+k, "rowId",id);
-					this.sparseExpressions.setString(cont+k, "gene",geneNames[actualId]);
+					this.sparseExpressions.setString(cont+k, "gene",rowLabels[actualId]);
 					this.sparseExpressions.setDouble(cont+k, "level",matrix[actualId][k]);
 					}
 				}
 			}
+		
+		//sortColumns();//refresh the rowRanks to fit with the columnOrder established
 		return;
 		}
 
+	/**
+	 * Builds a small form for the sample with id i
+	 * @param i
+	 * @return
+	 */
+	public String getDetailedSampleForm(int i)
+		{
+		String form="";
+		form=form.concat("SampleId: "+conditionNames[i]+"\n");
+		for(String s:experimentFactors)
+			{
+			form=form.concat(s+": "+experimentFactorValues.get(s)[i]+"\n");
+			}
+		form=form.concat("\n");
+		return form;
+		//TODO: Properly finish the from for samples
+		}
+	
 	/**
 	 * Returns the table with expression levels
 	 * @return	Table with expression levels
@@ -354,7 +448,9 @@ public class MicroarrayData
 	 */
 	public double getExpressionAt(int i, int j)
 		{
-		return matrix[i][j];
+		if(i>=0 && i<this.numGenes && j>=0 && j<this.numConditions)
+			return matrix[i][j];
+		else	return this.average;//TODO: this should be NA
 		}
 
 	/**
@@ -433,6 +529,28 @@ public class MicroarrayData
 	public String getConditionName(int pos)
 		{
 		return conditionNames[pos];
+		}
+	
+
+	/**
+	 *	Returns the name of the condition at the specified position 
+	 * @param pos	position of the condition in the matrix
+	 * @return	name of the condition
+	 */
+	public String getColumnLabel(int pos)
+		{
+		return columnLabels[pos];
+		}
+
+	/**
+	 *	Returns the name of the condition at the specified position 
+	 * @param pos	position of the condition in the matrix
+	 * @return	name of the condition
+	 */
+	public String getRowLabel(int pos)
+		{
+		if(pos>=0 && pos<rowLabels.length)	return rowLabels[pos];
+		else								return "NA";
 		}
 
 	/**
@@ -582,6 +700,25 @@ public class MicroarrayData
 		return ret;
 		}
 	
+	
+	public String getGeneName(int lg)
+	{
+	return geneNames[lg];
+	}
+	
+	/**
+	 * Returns a list of gene names from a list with genes ids
+	 * @param lg	list of gene ids
+	 * @return	An ArrayList with Strings with corresponding gene and condition names
+	 */
+	public ArrayList<String> getRowLabels(LinkedList<Integer> lg)
+		{
+		ArrayList<String> ret=new ArrayList<String>();
+		for(int i=0;i<lg.size();i++)		ret.add(rowLabels[lg.get(i)]);
+		return ret;
+		}
+	
+	
 	/**
 	 * Returns a list of condition names a lists and conditions ids
 	 * @param lc	list of condition ids 
@@ -594,6 +731,20 @@ public class MicroarrayData
 			for(int i=0;i<lc.size();i++)		ret.add(conditionNames[lc.get(i)]);
 		return ret;
 		}
+	
+	/**
+	 * Returns a list of condition names a lists and conditions ids
+	 * @param lc	list of condition ids 
+	 * @return	An ArrayList with Strings with corresponding gene and condition names
+	 */
+	public ArrayList<String> getColumnLabels(LinkedList<Integer> lc)
+		{
+		ArrayList<String> ret=new ArrayList<String>();
+		if(columnLabels!=null)	
+			for(int i=0;i<lc.size();i++)		ret.add(columnLabels[lc.get(i)]);
+		return ret;
+		}
+	
 	
 	/**
 	 * Returns the Prefuse Table with expression levels for the sparse matrix
@@ -626,9 +777,160 @@ public class MicroarrayData
 	}
 	
 	/**
+	 * Searches for genes or conditions that contain the string "what" in the field where.
+	 * If found, they are selected and the visualizations updated
+	 * @param what
+	 * @param where
+	 * @param exact if exact is true, it searches for exact matches of the string what (only for gene names search)
+	 */
+	public BiclusterSelection search(String what, int where, boolean exact)
+		{
+		LinkedList<Integer> genes=new LinkedList<Integer>();
+		LinkedList<Integer> conditions=new LinkedList<Integer>();
+		long t=System.currentTimeMillis();
+		System.out.println("Searching for "+what+" in "+where);
+		switch(where)
+			{
+			case 0://anywhere
+				genes.addAll(searchAnnotations(what));
+				conditions.addAll(searchConditions(what));
+				break;
+			case 1://gene names
+				genes.addAll(searchGenes(what, exact));
+				break;
+			case 2://condition names
+				conditions.addAll(searchConditions(what));
+				break;
+			case 3://gene annotations (descriptions/go terms, etc.)
+				searchAnnotations(what, null);
+				break;
+			}
+		System.out.println("found "+genes.size()+" genes and "+conditions.size()+" conditions");
+		System.out.println("Time for the search: "+(System.currentTimeMillis()-t)/1000.0);
+		return new BiclusterSelection(genes, conditions);
+		}
+	
+	public LinkedList<Integer> searchAnnotations(String what, LinkedList<Integer> alreadyIn)
+		{
+		LinkedList<Integer> genes=new LinkedList<Integer>();
+		Iterator<GeneAnnotation> it=geneAnnotations.values().iterator();
+		while(it.hasNext())
+			{
+			GeneAnnotation ga=it.next();
+			if(!alreadyIn.contains(getGeneId(ga.id)))
+				{
+				if((ga.id!=null && ga.id.contains(what)) || (ga.description!=null && ga.description.contains(what)) || 
+						(ga.aliases!=null && ga.aliases.contains(what)) || (ga.symbol!=null && ga.symbol.contains(what)) || 
+						(ga.organism!=null && ga.organism.contains(what)) || (ga.locus!=null && ga.locus.contains(what)) ||
+						(ga.entrezId!=null && ga.entrezId.contains(what)) || (ga.name!=null && ga.name.contains(what)) )
+					genes.add(getGeneId(ga.id));
+				else if(ga.goTerms!=null)
+					{
+					for(GOTerm gt : ga.goTerms)
+						{
+						if((gt.definition!=null && gt.definition.contains(what)) || 
+								(gt.term!=null && gt.term.contains(what)))
+							{
+							genes.add(getGeneId(ga.id));
+							break;
+							}
+						}
+					}
+				}
+			}
+		return genes;
+		}
+	
+	public LinkedList<Integer> searchAnnotations(String what)
+		{
+		LinkedList<Integer> genes=new LinkedList<Integer>();
+		Iterator<GeneAnnotation> it=geneAnnotations.values().iterator();
+		while(it.hasNext())
+			{
+			GeneAnnotation ga=it.next();
+			if((ga.id!=null && ga.id.contains(what)) || (ga.description!=null && ga.description.contains(what)) || 
+					(ga.aliases!=null && ga.aliases.contains(what)) || (ga.symbol!=null && ga.symbol.contains(what)) || 
+					(ga.organism!=null && ga.organism.contains(what)) || (ga.locus!=null && ga.locus.contains(what)) ||
+					(ga.entrezId!=null && ga.entrezId.contains(what)) || (ga.name!=null && ga.name.contains(what)) )
+				genes.add(getGeneId(ga.id));
+			else if(ga.goTerms!=null)
+				{
+				for(GOTerm gt : ga.goTerms)
+					{
+					if((gt.definition!=null && gt.definition.contains(what)) || 
+							(gt.term!=null && gt.term.contains(what)))
+						{
+						genes.add(getGeneId(ga.id));
+						break;
+						}
+					}
+				}
+			}
+		return genes;
+		}
+	
+	public LinkedList<Integer> searchGenes(String what, boolean exact)
+		{
+		LinkedList<Integer> genes=new LinkedList<Integer>();
+		for(String s:geneNames)
+			{
+			if(!exact)
+				{
+				if(s.contains(what))
+					{
+					genes.add(getGeneId(s));
+					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					}
+				}
+			else
+				{
+				if(s.trim().equals(what.trim()))
+					{
+					genes.add(getGeneId(s));
+					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					}
+				}
+					
+			}
+		return genes;
+		}
+	
+	public GeneAnnotation searchGene(String geneName)
+		{
+		GeneAnnotation ga=null;
+		for(String s:geneNames)
+			{
+			if(s.trim().equals(geneName.trim()))
+					{
+					ga=geneAnnotations.get(getGeneId(s));
+					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					}
+			}
+		return ga;
+		}
+	
+	public LinkedList<Integer> searchConditions(String what)
+		{
+		LinkedList<Integer> conditions=new LinkedList<Integer>();
+		for(String s:conditionNames)
+			{
+			if(s.contains(what))
+				conditions.add(getGeneId(s));
+			}
+		
+		for(int i=0;i<numConditions;i++)
+			for(String cad:this.experimentFactors)
+				{
+				if(experimentFactorValues.get(cad)[i].contains(what))
+					conditions.add(i);
+				}
+			
+		return conditions;
+		}
+/**
 	 * Returns a string with the requested value as a text string, for a determinate dimension
 	 * @param value	value to format to text
-	 * @param dim	dimension to which the value pertains
+	 * @param dim	dimension to which the value pertains (it determines the number of decimals for that dimension)
 	 * @return	a text string with the value, formatted to have the number of decimals set for its dimension
 	 */
 	public String format(double value, int dim)
@@ -650,12 +952,20 @@ public class MicroarrayData
 				{
 				if(nc>0)
 					{
-					if(pos+1+nc<=cad.length())	cad=cad.substring(0,pos)+cad.substring(pos, pos+1+nc);
-					else						;//En este caso ya estï¿½, no tenemos que quitar decimales
+					if(pos+1+nc<=cad.length())	
+						{
+						double number;
+						//double number = (double)(int)((value+0.005)*100.0)/100.0;
+						if(nc>0) number = (double)(int)((value+Math.signum(value)*((0.1*(nc))/2))*(10.0*(nc)))/(10.0*(nc));
+						else	 number = Math.rint(value);
+						cad=new Double(number).toString();
+						}
+					else						;//En este caso ya esta, no tenemos que quitar decimales
 					}
 				else		cad=cad.substring(0,pos);
 				}
 			}
+		
 		return cad;
 		}
 
@@ -701,40 +1011,49 @@ public class MicroarrayData
 	          */
 	         public void run()
 	         	{
-	        	System.out.println("Library is: "+System.getProperty("java.library.path"));
-	        	try{
-	        	if (!Rengine.versionCheck()) 
-	        		{
-	        		JOptionPane.showMessageDialog(null,
-							" Version mismatch - Java files don't match library version", 
-							"Version mismatch", JOptionPane.WARNING_MESSAGE);
-		    	    System.err.println("** Version mismatch - Java files don't match library version.");
-	    			}
-	        	}catch(Exception e)
-	        		{
-	        		System.out.println("Library is: "+System.getProperty("java.library.path"));
-	        		System.err.println("R cannot be loaded: " + e.getMessage());
-	        		e.printStackTrace();
-	        		}
-    	        System.out.println("Creating Rengine (with arguments)");
-    		
-    	        re=new Rengine(new String[]{"--vanilla"}, false, null);
-    	        System.out.println("Rengine created, waiting for R");
-    			// the engine creates R in a new thread, so we should wait until it's ready
-    	        if (!re.waitForR()) 
-    	        	{
-    	            System.err.println("Cannot load R");
-    	            return;
-    	        	}
-	    	    System.out.println("R started");
-	    	    REXP exp=null;
+	        	REXP exp=null;
 	    	    
-	    	    if(chip.contains("yeast") || chip.contains("YEAST") || chip.contains("ygs98") || chip.contains("pombe") )
-	    	    	{
+	    	   if(chip.contains("yeast") || chip.contains("YEAST") || chip.contains("ygs98") || chip.contains("pombe") )
+	    	       	{
 	    	    	if(chip.equals("YEAST"))
 	    	    		rgo="GOTERM";
 	    	    	}
-	    	    else
+	    	   else if(chip.startsWith("org."))
+		    	   	{
+	    	    	rname="GENENAME";
+	    	    	rdescription="DESCRIPTION";
+	    	       	}
+	    	   //There are some cases with no dedicated environment R annotation package. On these cases (i.e. Illumina Human HT12), there are either 
+	    	   //database packages (lumiHumanIDMapping) or entries in biomaRt (illumina_humanht_12) package
+	    	   //In the case of illumina databases, it must be specified as follows: lumiHumanIDMapping.HumanHT12_V3_0_R2_11283641_A
+	    	   else if(chip.startsWith("lumiHumanIDMapping"))
+		    	   	{
+		    		rname="Symbol";
+		    		rdescription="none";
+		    		isRDatabase=true;
+		    	   	}
+	    	   //Similar to the above situation, but in this case we use bioMaRt instead of a dedicated environment database.
+	    	   else if(chip.startsWith("biomaRt"))
+	    	   		{
+	    		    chip=chip.substring(chip.indexOf(".")+1);
+		    	    if(organism.equals("Homo sapiens"))	rname="hgnc_symbol";
+	    		    else								rname="symbol";
+	    		    rdescription="description";
+	    		    isBioMaRt=true;
+	    		 	}
+	    	   else if(chip.startsWith("KEGG"))
+	    	   		{
+	    		    rname="PATHID2NAME";	
+	    	    	rdescription=null;//no description in KEGG.db
+	    	    	}
+	    	   else if(chip.equals("GO.db"))
+	    	   		{
+	    		    rname="Term";
+	    		    rdescription="Definition";
+	    		    isGO=true;
+	    		    	
+	    	   		}
+	 	       else
 	    	    	{
 	    	    	rname="SYMBOL";
 	    	    	rdescription="GENENAME";
@@ -747,9 +1066,7 @@ public class MicroarrayData
 	    	    	Thread wt=new Thread() {
 	    				public void run() {
 	    					try{
-	    						LinkedList<Integer> l=new LinkedList<Integer>();
-	    		    	    	l.add(getGeneId(geneNames[0]));
-	    		    	    	t=new AnnotationTask(l);
+	    						t=new AnnotationTask(new int[]{getGeneId(geneNames[0])});
 	    		    	    	t.execute();
 	    						}catch(Exception e){e.printStackTrace();}
 	    				}
@@ -758,20 +1075,7 @@ public class MicroarrayData
 	    	    	}
 	    	    else
 		    	    {
-		    	    exp=re.eval("library("+chip+")");
-		    	    if(exp==null)	System.out.println("library "+chip+" returns null in R");
-			        if(exp==null)
-			        	{
-			        	if(installPackage(exp, chip)<0)
-			    	    	{
-			        		chip="GeneName";
-			    	    	searchByR=false;
-			    	    	}
-			    	    else	searchByR=true;
-						}
-			        else	searchByR=true;
-					
-			        //GO specific
+	    	    	//GO specific
 		    	    exp=re.eval("library(GO.db)");
 		    	    if(exp==null)	installPackage(exp, "GO.db");
 		    	    exp=re.eval("library(GOstats)");
@@ -781,7 +1085,33 @@ public class MicroarrayData
 		    	    
 		    	    exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/GOgroups.R\")");
 		    	     
+	    	    	long t=System.currentTimeMillis();
+	    	    	if(!isBioMaRt) //in this case, the chip contains the name of the R annotation package
+	    	    		{
+			    	    exp=re.eval("library("+chip+")");
+			    	    System.out.println("It takes "+(System.currentTimeMillis()-t)+" to load the library");
+			    	    if(exp==null)	System.out.println("library "+chip+" returns null in R");
+			    	    else			System.out.println("library "+chip+" loaded correctly");
+				        if(exp==null)
+				        	{
+				        	if(installPackage(exp, chip)<0)
+				    	    	{
+				        		chip="GeneName";
+				    	    	searchByR=false;
+				    	    	}
+				    	    else	searchByR=true;
+							}
+				        else	searchByR=true;
+	    	    		}
+	    	    	else	
+	    	    		{
+	    	    		exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/geneAnnotation.R\")");
+			    	    searchByR=true;
+			    	    }
+			        
 		    	    chip=chip.replace(".db", "");
+		    	    
+		    	    getGeneAnnotationsLite();
 		    	    }
 	         	}
 	}//end Thread class
@@ -803,38 +1133,9 @@ public class MicroarrayData
 	 */
 	public void getGeneAnnotation(Integer id)
 		{
-		LinkedList<Integer> l=new LinkedList<Integer>();
-		l.add(id);
-		getGeneAnnotations(l, null, new Point(0,0));
+		getGeneAnnotations(new int[]{id},null,new Point(0,0));
 		}
-	/*
- 	public GeneAnnotation getGeneAnnotationR(Integer id)
-		{
-		GeneAnnotation ga=geneAnnotations.get(id);
-		if(ga==null)
-			{
-			ga=new GeneAnnotation();
-			String gene=geneNames[id];
-	    	System.out.println("GENE "+gene);
-	    	REXP exp=re.eval("group=c(\""+gene+"\")");
-	    	ga.id=gene;
-	    	exp=re.eval("get(\""+gene+"\","+chip+rname+")");
-	    	if(exp!=null)	
-	    		{
-	    		System.out.println("name: "+exp.asString());
-				ga.name=exp.asString();
-	    		}
-	    	exp=re.eval("get(\""+gene+"\","+chip+rdescription+")");
-	    	if(exp!=null)	
-	    		{
-	    		System.out.println("desc: "+exp.asString());
-				ga.description=exp.asString();
-	    		}
-	    	geneAnnotations.put(id, ga);
-			}
-		return ga;
-		}*/
-	
+		
 	/**
 	 * Retrieves the gene annotations for the specified gene. It used an annotation task progress
 	 * monitor, so the results of the task are received by a GeneRequester.
@@ -850,9 +1151,7 @@ public class MicroarrayData
 			System.err.println("Gene "+gene+" does not exist in the microarray");
 			return;
 			}
-		LinkedList<Integer> ids=new LinkedList<Integer>();
-		ids.add(id);
-		getGeneAnnotations(ids, gr, p);
+		getGeneAnnotations(new int[]{id}, gr, p);
 		}
 
 	/**
@@ -890,14 +1189,23 @@ public class MicroarrayData
 	    	}
 		    
 		REXP exp=null;
-		exp=re.eval("chipEntrezUniverse <- unique(unlist(mget("+universe+", "+chip+"ENTREZID)))");
-		exp=re.eval("selectedEntrezIds <- unlist(mget("+n+","+chip+"ENTREZID))");
-
+		long t1=System.currentTimeMillis();
+		exp=re.eval("chipEntrezUniverse <- unique(unlist(mget("+universe+", "+chip+"ENTREZID, ifnotfound=NA)))");
+		exp=re.eval("chipEntrezUniverse <- chipEntrezUniverse[which(!is.na(chipEntrezUniverse))]");
+		exp=re.eval("selectedEntrezIds <- unlist(mget("+n+","+chip+"ENTREZID, ifnotfound=NA))");
+		exp=re.eval("selectedEntrezIds <- selectedEntrezIds[which(!is.na(selectedEntrezIds))]");
+			
+		System.out.println("Time preparing Ids: "+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		
 	    exp=re.eval("params <- new(\"GOHyperGParams\", geneIds = selectedEntrezIds," +
 				"universeGeneIds = chipEntrezUniverse, annotation = \""+chip+"\"," +
 				"ontology = \"BP\", pvalueCutoff = "+cutoff+", conditional = FALSE," +
 				"testDirection = \"over\")");
 		exp=re.eval("hgOver <- hyperGTest(params)");
+		System.out.println("Time hypergeometric test: "+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		
 		exp=re.eval("df=summary(hgOver, pvalue=0.1)");
 	    exp=re.eval("df$Term");
     	String[] t=exp.asStringArray();
@@ -907,6 +1215,9 @@ public class MicroarrayData
     	int[] evs=exp.asIntArray();
     	exp=re.eval("df$Pvalue");
     	double[] pval=exp.asDoubleArray();
+    	
+    	System.out.println("Time preparing summary: "+(System.currentTimeMillis()-t1)/1000.0);
+		
     	if(evs!=null && ids !=null && t!=null 
     			&& t.length==evs.length && t.length==ids.length && evs.length==ids.length &&
     			ids.length==t.length)
@@ -1005,19 +1316,68 @@ public class MicroarrayData
     	return null;
 		}
 
+	public GOTerm getGOTermByID(String goid)
+		{
+		REXP exp=null;
+	    long t1=System.currentTimeMillis();
+	    String n="c(\"";
+	    exp=re.eval("got=getGOTerm(\""+goid+"\")");
+	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
+		
+	   // System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
+	    t1=System.currentTimeMillis();
+	    
+	    exp=re.eval("got@terms");
+		if(exp==null)	return null;
+		String t=exp.asString();
+		exp=re.eval("got@definitions");
+		String d=exp.asString();
+		exp=re.eval("got@ontologies");
+		String o=exp.asString();
+		exp=re.eval("got@ids");
+		String ids=exp.asString();
+		exp=re.eval("got@evidences");
+		int evs=1;
+		
+		ArrayList<GOTerm> got=new ArrayList<GOTerm>();
+		if(ids !=null && o!=null && d!=null && t!=null) 
+			{
+			//System.out.println("El resto tarda "+(System.currentTimeMillis()-t1));
+		    return new GOTerm(t, ids, d, o, "", evs);
+	    	}
+		//System.out.println("El resto tarda "+(System.currentTimeMillis()-t1));
+		return null;
+
+		}
+	
 	public ArrayList<GOTerm> getGOTermsRbyID(String[] goids)
 	{
 	REXP exp=null;
-       
-    String n="c(\"";
+    long t1=System.currentTimeMillis();
+    ArrayList<GOTerm> got=new ArrayList<GOTerm>();
+    int toRetrieve=0;
+    
+	String n="c(\"";
     for(int i=0;i<goids.length;i++)
     	{
-    	if(i<goids.length-1)	n=n.concat(goids[i]+"\", \"");
-    	else					n=n.concat(goids[i]+"\")");
+    	GOTerm gt=GOTerms.get(goids[i]);
+    	if(gt!=null)	got.add(gt);
+    	else		
+    		{
+    		toRetrieve++;
+    		n=n.concat(goids[i]+"\", \"");
+    		}
+//    		if(i<goids.length-1)	n=n.concat(goids[i]+"\", \"");
+//	    	else					n=n.concat(goids[i]+"\")");
     	}
-    exp=re.eval("got=getGOTermsByGOID("+n+")");
+    n=n.substring(0,n.length()-3)+")";
+    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
     if(exp==null)	System.err.println("Error getting GO terms by ID with R");
-	exp=re.eval("got@terms");
+	
+   // System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
+    t1=System.currentTimeMillis();
+    
+    exp=re.eval("got@terms");
 	if(exp==null)	return null;
 	String[] t=exp.asStringArray();
 	exp=re.eval("got@definitions");
@@ -1030,27 +1390,38 @@ public class MicroarrayData
 	int[] evs=exp.asIntArray();
 	if(evs.length==0)
 		{
-		evs=new int[goids.length];
+		evs=new int[toRetrieve];
 		for(int i=0;i<evs.length;i++)	evs[i]=1;
 		}
-	ArrayList<GOTerm> got=new ArrayList<GOTerm>();
 	
 	if(evs!=null && ids !=null && o!=null && d!=null && t!=null) 
-		//	&& t.length==d.length && o.length==ids.length && evs.length==ids.length &&
-		//	ids.length==t.length)
-		{
-    	for(int i=0;i<evs.length;i++)
-			got.add(new GOTerm(t[i], ids[i], d[i], o[i], "", evs[i]));
-		return got;
+	//if(evs!=null && ids !=null && o!=null && t!=null) 
+			{
+    		for(int i=0;i<evs.length;i++)
+    			{
+    			GOTerm gt=new GOTerm(t[i], ids[i], d[i], o[i], "", evs[i]);
+    			this.GOTerms.put(ids[i], gt);
+    			got.add(gt);
+    			//	got.add(new GOTerm(t[i], ids[i], "", o[i], "", evs[i]));
+    			}
+    //	System.out.println("El resto tarda "+(System.currentTimeMillis()-t1));
+    	return got;
 		}
+	//System.out.println("El resto tarda "+(System.currentTimeMillis()-t1));
 	return null;
 	}
 
-	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location)
+	//public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location)
+	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location)
 		{
 		getGeneAnnotations(genes, gr, location, false);
 		}
-	//JDK1.6
+	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label)
+		{
+		t.searchGO=true;
+		getGeneAnnotations(genes, gr, label, false);
+		}
+//JDK1.6
 	public void getGOTermsHypergeometric(LinkedList<Integer> genes, GeneRequester gr, Point location, String ontology) 
 	{
 	ht=new HypergeometricTestTask(genes, ontology);
@@ -1071,14 +1442,40 @@ public class MicroarrayData
 		}
 	}
 
-	//***** FOR JDK 1.6
-	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location, boolean pValues) 
+	/** 
+	 * Gets gene annotations for basic info, except thinks like GO terms that can take longer
+	 */
+	public void getGeneAnnotationsLite()
+		{
+		int[] listgenes=new int[numGenes];
+		for(int i=0;i<numGenes;i++)		
+			listgenes[i]=i;
+		t=new AnnotationTask(listgenes);
+		t.searchGO=false;
+		t.run();
+		}
+	
+	//public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location, boolean pValues) 
+	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location, boolean pValues) 
 		{
 		t=new AnnotationTask(genes);
-		if(location!=null)	amd=new AnnotationProgressMonitor(location);
+		t.searchGO=true;
+		/*if(location!=null)	amd=new AnnotationProgressMonitor(location);
 		else				amd=new AnnotationProgressMonitor(new Point(0,0));
 		amd.setTask(t);
-		amd.run();
+		amd.run();*/
+		if(location!=null)	
+			{
+			amd=new AnnotationProgressMonitor(location);
+			amd.setTask(t);
+			amd.run();
+			}
+		else
+			{
+			AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(new JLabel());
+			amd2.setTask(t);
+			amd2.run();
+			}
 		if(gr!=null)
 			{
 			geneRequester=gr;
@@ -1090,13 +1487,32 @@ public class MicroarrayData
 			wt.start();
 			}
 		}
-	// FOR JDK 1.6
-	//public class HypergeometricTestTask extends SwingWorker15<ArrayList<GOTerm>, Void>// implements Runnable
+	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label, boolean pValues) 
+		{
+		//t=new AnnotationTask(genes);
+		t=new AnnotationTask(ArrayUtils.toIntArray(genes));
+		
+		t.searchGO=true;
+		AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(label);
+		amd2.setTask(t);
+		amd2.run();
+		if(gr!=null)
+			{
+			geneRequester=gr;
+			Thread wt=new Thread() {
+				public void run() {
+					try{geneRequester.receiveGeneAnnotations(t.get());}catch(Exception e){e.printStackTrace();}
+				}
+			};
+			wt.start();
+			}
+		}
 	public class HypergeometricTestTask extends SwingWorker<ArrayList<GOTerm>, Void>// implements Runnable
 		{
 		public LinkedList<Integer> genes;
 		public ArrayList<GOTerm> golist=null;
 		public String message="";
+		public String errorMessage="";
 		private int progress;
 		public String ontology="";
 		public HypergeometricTestTask(LinkedList<Integer> genes, String ontology)
@@ -1108,11 +1524,21 @@ public class MicroarrayData
 		@Override
 		public ArrayList<GOTerm> doInBackground()
 			{
-			golist=getGOTermsHypergeometric(genes, ontology, 0.001);
-			progress=100;
-			setProgress(progress);
+			try{
+				golist=getGOTermsHypergeometric(genes, ontology, 0.001);
+				progress=100;
+				setProgress(progress);
+				done();
+			}catch(Exception e)
+				{
+				progress=100;
+				setProgress(progress);
+				done();
+				JOptionPane.showMessageDialog(null,
+						"Error performing the hypergeometric test: "+e.getMessage()+"\n"+errorMessage, 
+						"Analysis Error", JOptionPane.ERROR_MESSAGE);
+				}
 			
-			done();
 			return golist;
 			}
 		
@@ -1130,6 +1556,7 @@ public class MicroarrayData
 		*/ 
 		public ArrayList<GOTerm> getGOTermsHypergeometric(ArrayList<String> genes, String ontology, double cutoff)
 			{
+			long t1=System.currentTimeMillis();
 			String n="c(\"";
 			String universe="c(\"";
 		    for(int i=0;i<genes.size();i++)
@@ -1142,17 +1569,40 @@ public class MicroarrayData
 		    	if(i<geneNames.length-1)	universe=universe.concat(geneNames[i]+"\", \"");
 		    	else						universe=universe.concat(geneNames[i]+"\")");
 		    	}
-			    
+			
+		    System.out.println("Time in building the universe "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
+			
 			REXP exp=null;
-			exp=re.eval("chipEntrezUniverse <- unique(unlist(mget("+universe+", "+chip+"ENTREZID)))");
-			exp=re.eval("selectedEntrezIds <- unlist(mget("+n+","+chip+"ENTREZID))");
-
+			if(!chip.startsWith("org."))
+				{
+				exp=re.eval("chipEntrezUniverse <- unique(unlist(mget("+universe+", "+chip+"ENTREZID, ifnotfound=NA)))");//TODO: Does not work with org.Sc.sgd.db
+				if(exp==null)
+					errorMessage=chip+" database does not have ENTREZIDs, hypergeometric test cannot be run";
+				exp=re.eval("selectedEntrezIds <- unlist(mget("+n+","+chip+"ENTREZID, ifnotfound=NA))");
+				}
+			else	//org. packages has as base ids the species ids, not the entrez ids.
+				{
+				System.out.println("org databasse!");
+				exp=re.eval("chipEntrezUniverse <- "+universe);
+				//if(exp==null)
+				//	errorMessage=chip+" database does not have ENTREZIDs, hypergeometric test cannot be run";
+				exp=re.eval("selectedEntrezIds <- "+n);
+				}
 		    exp=re.eval("params <- new(\"GOHyperGParams\", geneIds = selectedEntrezIds," +
 					"universeGeneIds = chipEntrezUniverse, annotation = \""+chip+"\"," +
 					"ontology = \""+ontology+"\", pvalueCutoff = "+cutoff+", conditional = FALSE," +
 					"testDirection = \"over\")");
+		    
+		    System.out.println("Time in mapping to ids "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
+					    
 			exp=re.eval("hgOver <- hyperGTest(params)");
-			exp=re.eval("df=summary(hgOver, pvalue=0.1)");
+			
+			System.out.println("Time in hypergeometric test "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
+				
+			exp=re.eval("df=summary(hgOver, pvalue="+cutoff+")");
 		    exp=re.eval("df$Term");
 	    	String[] t=exp.asStringArray();
 	    	exp=re.eval("df$GOBPID");
@@ -1172,6 +1622,10 @@ public class MicroarrayData
 	    			g.pvalue=pval[i];
 	    			got.add(g);
 	    			}
+	    		
+	    		System.out.println("Time in preparing the summary "+(System.currentTimeMillis()-t1)/1000.0);
+				t1=System.currentTimeMillis();
+				
 	    		return got;
 	    		}
 	    	return null;
@@ -1188,17 +1642,20 @@ public class MicroarrayData
 		public String gene;
 		public String message;
 		public int id;
-		public LinkedList<Integer> genes;
+		//public LinkedList<Integer> genes;
+		public int[] genes;
 		public GeneAnnotation ga;
 		public AnnotationProgressMonitor apm;
 		public ArrayList<GeneAnnotation> galist=null;
+		public boolean searchGO;
 		
 		
 		public AnnotationTask(int id)
 			{
 			this.id=id;
 			}
-		public AnnotationTask(LinkedList<Integer> genes)
+		//public AnnotationTask(LinkedList<Integer> genes)
+		public AnnotationTask(int[] genes)
 			{
 			this.genes=genes;
 			galist=new ArrayList<GeneAnnotation>();
@@ -1221,91 +1678,224 @@ public class MicroarrayData
 		
 		/**
 		 * Annotations retrieved with method mget() from R
+		 * It take about 5s to retrieve the annotatios for 800 genes
 		 * @return
 		 */
 		public ArrayList<GeneAnnotation> getMultipleGeneAnnotationsR()
-			{
-			int progress=0;
-			long t1=System.currentTimeMillis();
-			
-			message="searching for selected genes in "+organism+" ...";
-	 		progress+=100*0.5/genes.size();
-	 		setProgress(progress);
-	 		
-	 		//0) Build the group of genes to search for
-	 		String group="";
-	 		for(int g=0;g<genes.size();g++)
-				{
-				Integer id=genes.get(g);
-				group=group+"\""+geneNames[id]+"\",";
-				}
-	 		group=group.substring(0, group.length()-1);
-			REXP exp=re.eval("group=c("+group+")");
-			
-			RList names=null, descriptions=null;
-	    	
-			//1) Search for gene names
-	    	exp=re.eval("mget(group,"+chip+rname+")");
-	    	if(exp!=null)	
-	    		{
-	    		names=exp.asList();
-	    		System.out.println("names retrieved correctly for "+names.keys().length+" genes");
-	    		}
-	    	
-	    	//2) Search for gene descriptions
-	    	exp=re.eval("mget(group,"+chip+rdescription+")");
-	    	if(exp!=null)	
-	    		{
-	    		descriptions=exp.asList();
-	    		System.out.println("descriptions retrieved correctly for "+descriptions.keys().length+" genes");
-	    		}
-	    	
-	    	//3) Search for GO terms
-	    	RList go=null;
-	    	exp=re.eval("mget(group,"+chip+rgo+")");
-	    	if(exp!=null)	
+		{
+		int progress=0;
+		long t0=System.currentTimeMillis();
+		
+		message="searching for selected genes in "+organism+" ...";
+		System.out.println(message);
+ 		setProgress(progress);
+ 		
+ 		//0) Build the group of genes to search for
+ 		String group="";
+ 		
+ 		for(int i=0; i<genes.length; i++) //this takes a lot if we have a lot of genes
+ 			group=group+"\""+geneNames[genes[i]]+"\",";
+		group=group.substring(0, group.length()-1);
+		REXP exp=re.eval("group=c("+group+")");
+		
+		String[] names=null, descriptions=null;
+    	
+		message="searching for gene names...";
+		System.out.println(message);
+ 		progress+=5;
+ 		setProgress(progress);
+ 		//1) Search for gene names
+ 		if(!isBioMaRt)
+ 			{
+ 			if(isGO)
+ 				{
+ 				exp=re.eval("golist=unlist(mget(group,GOTERM, ifnotfound=NA))");//If one of them is not found, the whole thing fails and no gene name is returned
+ 				exp=re.eval("sapply(golist, function(x){x@Term})");
+		    	if(exp!=null)	
+		    		{
+		    		names=exp.asStringArray();
+		    		}
+ 				}
+ 			else{
+	 			exp=re.eval("unlist(mget(group,"+chip+rname+", ifnotfound=NA))");//If one of them is not found, the whole thing fails and no gene name is returned
+		    	if(exp!=null)	
+		    		{
+		    		names=exp.asStringArray();
+		    		}
+		    	message="searching for gene descriptions...";
+		        System.out.println(message);
+		        progress+=5;
+		     	setProgress(progress);
+		     	//2) Search for gene descriptions
+		        exp=re.eval("unlist(mget(group,"+chip+rdescription+", ifnotfound=NA))");
+		        if(exp!=null)
+		        	{
+		       		descriptions=exp.asStringArray();
+		    		}
+ 				}
+    		}
+ 		else
+ 			{
+ 			exp=re.eval("df=getBMGenes(group, species=\""+organism+"\", type=\""+chip+"\")");//If one of them is not found, the whole thing fails and no gene name is returned
+ 			exp=re.eval("df[,\""+rname+"\"]");
+ 			if(exp!=null)
+ 				names=exp.asStringArray();
+ 			message="searching for gene descriptions...";
+        	System.out.println(message);
+        	progress+=5;
+     		setProgress(progress);
+     		
+     		exp=re.eval("df[,\""+rdescription+"\"]");
+ 			if(exp!=null)	
+        		descriptions=exp.asStringArray();
+ 			}
+    	
+ 		
+    	
+ 		
+    	
+    	message="searching for go terms...";
+    	System.out.println(message);
+ 		progress+=5;
+ 		setProgress(progress);
+ 		
+ 		//3) Search for GO terms
+ 		RList go=null;
+    	if(searchGO)
+	 		{
+	    	exp=re.eval("go=mget(group,"+chip+rgo+", ifnotfound=NA)");
+	    	exp=re.eval("go");
+			if(exp!=null)	
 	    		{
 	    		go=exp.asList();
-	    		System.out.println("go terms retrieved correctly for "+descriptions.keys().length+" genes");
-	    		}
-	    	
-	    	//4) Add all the new information to the genes
-	    	for(int g=0;g<genes.size();g++)
-				{
-				Integer id=genes.get(g);
-				String gene=geneNames[id];
-				
-				message="searching for "+gene+" in "+organism+" ...";
-		 		progress+=100*0.5/genes.size();
-		 		setProgress(progress);
-		 		
-				GeneAnnotation ga=geneAnnotations.get(id);
-				if(ga==null)
+	    		exp=re.eval("l=unique(unlist(go))");
+	    		exp=re.eval("l=l[grep(\"GO:.*\", l)]");
+	    		exp=re.eval("l");
+	    		String[] goids=exp.asStringArray();
+	    	    ArrayList<GOTerm> got=new ArrayList<GOTerm>();
+	    	    int toRetrieve=0;
+	    	    long t1=System.currentTimeMillis();
+	    	    String n="c(\"";
+	    	    for(int i=0;i<goids.length;i++)	//Select the ones not already stored in java
+	    	    	{
+	    	    	GOTerm gt=GOTerms.get(goids[i]);
+	    	    	if(gt!=null)	got.add(gt);
+	    	    	else		
+	    	    		{
+	    	    		toRetrieve++;
+	    	    		n=n.concat(goids[i]+"\", \"");
+	    	    		}
+	    	    	}
+	    	    n=n.substring(0,n.length()-3)+")";
+	    	    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
+	    	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
+	    		
+	    	    //System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
+	    	    t1=System.currentTimeMillis();
+	    	    
+	    	    //Add new ones to java map
+	    	    exp=re.eval("got@terms");
+	    		String[] t=exp.asStringArray();
+	    		exp=re.eval("got@definitions");
+	    		String[] d=exp.asStringArray();
+	    		exp=re.eval("got@ontologies");
+	    		String[] o=exp.asStringArray();
+	    		exp=re.eval("got@ids");
+	    		String[] ids=exp.asStringArray();
+	    		exp=re.eval("got@evidences");
+	    		int[] evs=exp.asIntArray();
+	    		if(evs.length==0)
+	    			{
+	    			evs=new int[toRetrieve];
+	    			for(int i=0;i<evs.length;i++)	evs[i]=1;
+	    			}
+	    		
+	    		if(evs!=null && ids !=null && o!=null && d!=null && t!=null) 
 					{
-					ga=new GeneAnnotation();
-					ga.description=descriptions.at(g).asString();
-					ga.name=names.at(g).asString();
-					
+		    		for(int i=0;i<evs.length;i++)
+		    			{
+		    			if(!ids[i].equals("biological_process") && !ids[i].equals("molecular_function") && !ids[i].equals("cellular_component"))
+			    			{
+			    			message="adding term "+ids[i];
+			    			progress+=84.0/evs.length;
+			    	 		setProgress(progress);
+			    	 		
+			    			GOTerm gt=new GOTerm(t[i], ids[i], d[i], o[i], "", evs[i]);
+			    			GOTerms.put(ids[i], gt);
+			    			}
+		    			}
+		    		}
+	    		}//searchGO
+    		}
+    	
+    	//4) Add all the new information to the genes
+    	for(int g=0;g<genes.length;g++)
+    		{
+    		Integer id=genes[g];
+			
+			GeneAnnotation ga=geneAnnotations.get(id);
+			if(ga==null)
+				{
+				ga=new GeneAnnotation();
+				ga.internalId=id;
+				if(descriptions!=null)	ga.description=descriptions[g];
+				if(names!=null)			
+					{
+					if(names[g].equals("NA"))	ga.name=geneNames[g];//Set as gene name its id
+					else						ga.name=names[g];
+					}
+				ga.id=geneNames[g];
+				//System.out.println(ga.name+" "+ga.description);
+				if(go!=null)
+					{
 					RList goterms=go.at(g).asList();
 					if(goterms!=null)
 						{
-						String ggo=getGroup(goterms.keys());
-						ga.goTerms=getGOTermsRbyID(goterms.keys());
+						String[] goids=goterms.keys();
+						ga.goTerms=new ArrayList<GOTerm>();
+						for(int i=0;i<goids.length;i++)
+							{
+							GOTerm gt=GOTerms.get(goids[i]);
+							if(gt!=null)	ga.goTerms.add(gt);
+							}
 						}
-					geneAnnotations.put(id, ga);
-					System.out.println("Setting "+ga.name+"\t"+ga.description+"\tto gene "+geneNames[id]);
 					}
-				galist.add(ga);
+				geneAnnotations.put(id, ga);
 				}
-	
-	    	System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000+" secs.");
-			message="Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000+" secs.";
-			progress=100;
-			setProgress(progress);
-			
-			return galist;
+			else
+				{
+				if(descriptions!=null)	ga.description=descriptions[g];
+				if(names!=null)			ga.name=names[g];
+				ga.internalId=id;
+					
+				if(go!=null)
+					{
+					RList goterms=go.at(g).asList();
+					if(goterms!=null)
+						{
+						String[] goids=goterms.keys();
+						ga.goTerms=new ArrayList<GOTerm>();
+						for(int i=0;i<goids.length;i++)
+							{
+							GOTerm gt=GOTerms.get(goids[i]);
+							if(gt!=null)	
+								if(!gt.term.equals("biological_process") && !gt.term.equals("molecular_function") && !gt.term.equals("cellular_component"))
+						    		ga.goTerms.add(gt);
+							}
+						}
+					}
+				}
+			galist.add(ga);
 			}
+
+    	//System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t0)/1000.0+" secs.");
+		message="Finished: annotations retrieved in "+(System.currentTimeMillis()-t0)/1000.0+" secs.";
+		progress=100;
+		setProgress(progress);
 		
+		return galist;
+		}
+
 		/**
 		 * Loop with use of method get() from R
 		 * @return
@@ -1315,46 +1905,52 @@ public class MicroarrayData
 			int progress=0;
 			long t1=System.currentTimeMillis();
 			
-			for(int g=0;g<genes.size();g++)
+			//for(int g=0;g<genes.size();g++)
+			for(int g=0;g<genes.length;g++)
 				{
-				Integer id=genes.get(g);
+				//Integer id=genes.get(g);
+				Integer id=genes[g];
 				String gene=geneNames[id];
 				
 				message="searching for "+gene+" in "+organism+" ...";
-		 		progress+=100*0.5/genes.size();
+		 		//progress+=100*0.5/genes.size();
+				progress+=100*0.5/genes.length;
 		 		setProgress(progress);
 		 		
 				GeneAnnotation ga=geneAnnotations.get(id);
 				if(ga==null)
 					{
 					ga=new GeneAnnotation();
-					System.out.println("GENE "+gene);
+			//		System.out.println("GENE "+gene);
 			    	REXP exp=re.eval("group=c(\""+gene+"\")");
 			    	ga.id=gene;
 			    	exp=re.eval("get(\""+gene+"\","+chip+rname+")");
 			    	if(exp!=null)	
 			    		{
-			    		System.out.println("name: "+exp.asString());
+			 //   		System.out.println("name: "+exp.asString());
 						ga.name=exp.asString();
 			    		}
 			    	exp=re.eval("get(\""+gene+"\","+chip+rdescription+")");
 			    	if(exp!=null)	
 			    		{
-			    		System.out.println("desc: "+exp.asString());
+			 //   		System.out.println("desc: "+exp.asString());
 						ga.description=exp.asString();
 			    		}
-			    	
+			    	galist.add(ga);
+					}
+				if(ga!=null && ga.goTerms==null)
+					{
 			    	//GoTerms
 			    	ArrayList<String> al=new ArrayList<String>();
 			    	al.add(ga.id);
 			    	ga.goTerms=getGOTermsR(al);
 			    	geneAnnotations.put(id, ga);
 					}
-				galist.add(ga);
 				}
 			
-	    	System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000+" secs.");
-	    	message="Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000+" secs.";
+	    	//System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000+" secs.");
+	    	message="Finished: annotations retrieved in "+(System.currentTimeMillis()-t1)/1000.0+" secs.";
+	    	System.out.println(message);
 			progress=100;
 			setProgress(progress);
 			
@@ -1365,15 +1961,19 @@ public class MicroarrayData
 			{
 			double progress=0;
 			long t1=System.currentTimeMillis();
-			for(int g=0;g<genes.size();g++)
+			//for(int g=0;g<genes.size();g++)
+			for(int g=0;g<genes.length;g++)
 				{
-				String gene=geneNames[genes.get(g)];
+				//String gene=geneNames[genes.get(g)];
+				String gene=geneNames[genes[g]];
 		    	ArrayList<String> ncbiIds=new ArrayList<String>();
 		    	
 		 		message="searching for "+gene+" in "+organism+" ...";
-		 		progress+=100*0.5/genes.size();
+		 		//progress+=100*0.5/genes.size();
+		 		progress+=100*0.5/genes.length;
 		 		setProgress((int)progress);
-		 		ga=geneAnnotations.get(genes.get(g));
+		 		//ga=geneAnnotations.get(genes.get(g));
+		 		ga=geneAnnotations.get(genes[g]);
 		 		if(ga==null)
 			 		{
 		 			long t2=System.currentTimeMillis();
@@ -1381,14 +1981,19 @@ public class MicroarrayData
 			 		IdListType list=null;
 			 		if(chip.equals("GeneName"))//if chip is GeneName
 						{
-			 			System.out.println("searching for "+gene+"[gene] AND \""+organism+"\"[organism]");
+			 		//	System.out.println("searching for "+gene+"[gene] AND \""+organism+"\"[organism]");
 				 		list=NCBIReader.eGeneQuery(gene+"[gene] AND \""+organism+"\"[organism]");
 						}
-			 		if(chip.equals("GeneID"))
+			 		else if(chip.equals("GeneID"))
 			 			{
-			 			System.out.println("searching for "+gene+"[uid] AND \""+organism+"\"[organism]");
+			 	//		System.out.println("searching for "+gene+"[uid] AND \""+organism+"\"[organism]");
 				 		list=NCBIReader.eGeneQuery(gene+"[uid] AND \""+organism+"\"[organism]");
 			 			}
+			 		else if(chip.equals("anything"))
+			 			{
+					 	//		System.out.println("searching for "+gene+"[uid] AND \""+organism+"\"[organism]");
+						list=NCBIReader.eGeneQuery(gene+" AND \""+organism+"\"[organism]");
+					 	}
 			 		
 					
 			 		if(list!=null && list.getId()!=null)
@@ -1401,8 +2006,9 @@ public class MicroarrayData
 							}
 						
 						message="Annotations found, collecting ...";
-				 		progress+=100*0.5/genes.size();
-				 		if(progress>=100)	progress=99;
+				 		//progress+=100*0.5/genes.size();
+						progress+=100*0.5/genes.length;
+						if(progress>=100)	progress=99;
 				 		setProgress((int)progress);
 						}
 					else	
@@ -1411,10 +2017,12 @@ public class MicroarrayData
 						ga=new GeneAnnotation();
 						ga.id=gene;
 						
-						geneAnnotations.put(genes.get(g), ga);
+						//geneAnnotations.put(genes.get(g), ga);
+						geneAnnotations.put(genes[g], ga);
 						
 						message="Nothing found for gene "+gene;
-						progress+=100*0.5/genes.size();
+						//progress+=100*0.5/genes.size();
+						progress+=100*0.5/genes.length;
 						if(progress>=100)	progress=99;
 				 		setProgress((int)progress);
 				 		}
@@ -1430,7 +2038,7 @@ public class MicroarrayData
 					          if(res[i].getItem()[k].get_any()!=null)
 					          	{
 					          	String cad=res[i].getItem(k).getName();
-					          	ga.ncbiId=res[i].getId();
+					          	ga.entrezId=res[i].getId();
 					          	if(cad.contains("Description"))
 					          		ga.description=res[i].getItem()[k].get_any()[0].getValue();
 					            else if(cad.contains("Name"))
@@ -1452,16 +2060,17 @@ public class MicroarrayData
 					          	}
 					          }
 							ga.id=gene;
-							System.out.println(ga.name+": "+ga.description);
-							geneAnnotations.put(genes.get(g), ga);
+				//			System.out.println(ga.name+": "+ga.description);
+							//geneAnnotations.put(genes.get(g), ga);
+							geneAnnotations.put(genes[g], ga);
 							}
 			 			}
-			 		System.out.println("Annotations for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
+			 	//	System.out.println("Annotations for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
 			 		t2=System.currentTimeMillis();
 					
 			 		//Try to retrieve GOTerms via QuickGO
 			 		getTermsQuickGO(ga, true);
-			 		System.out.println("GO terms for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
+			 //		System.out.println("GO terms for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
 			 		}
 		 		galist.add(ga);
 				}
@@ -1483,7 +2092,7 @@ public class MicroarrayData
 				//getGeneAnnotationR();
 				getMultipleGeneAnnotationsR();
 			else
-				getGeneAnnotationNCBI();
+				getGeneAnnotationNCBI( );
 			done();
 			return galist;
 			}
@@ -1509,7 +2118,7 @@ public class MicroarrayData
 	 */	
 	public List<GOTerm> getTermsQuickGO(GeneAnnotation ga, boolean unique)
 		{
-		ArrayList<GOTerm> gol=requestQuickGO(ga.ncbiId, unique);
+		ArrayList<GOTerm> gol=requestQuickGO(ga.entrezId, unique);
 		if(gol==null || gol.size()==0)	//try with symbol
 			gol=requestQuickGO(ga.symbol, unique);
 		if(gol==null || gol.size()==0)	//try with name
@@ -1553,7 +2162,7 @@ public class MicroarrayData
 	        BufferedReader rd=new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
 	        // Read data
 	        List<String> columns=Arrays.asList(rd.readLine().split("\t"));
-	        System.out.println(columns);
+	        //System.out.println(columns);
 	        // Collect the unique terms as a sorted set
 	        //ArrayList<GOTerm> terms=new ArrayList<GOTerm>();
 	        HashMap<String, GOTerm> terms=new HashMap<String, GOTerm>();
@@ -1586,32 +2195,34 @@ public class MicroarrayData
  	        }
 	        // close input when finished
 	        rd.close();
-	        System.out.println("Found "+terms.size()+" terms");
+	        //System.out.println("Found "+terms.size()+" terms");
 	        List<GOTerm> list=Arrays.asList(terms.values().toArray(new GOTerm[0]));
 	          // Write out the unique terms
-	        for (GOTerm term : list) {
+	        /*for (GOTerm term : list) {
 		            System.out.println(term.term);
-		    }
+		    }*/
 	        return new ArrayList<GOTerm>(list);
 	        }catch(IOException e){e.printStackTrace();}
 	    return null;
 		}
 	
-	//public class LoadTask extends SwingWorker<Void, Void> 
 	public class LoadTask extends SwingWorker<Integer, Void> 
 	{
 	public String path;
 	public boolean invert;
 	public int nd;
 	public String message="";
-	public int rowHeader, colHeader;
-	
+	public int rowHeader, colHeader;//Row header is the number of initial rows dedicated to information about samples. colHeader is the number of initial columns dedicated to information about genes (by now, just 1)
+	//Right now, rowHeader is computed as the number of rows before the first one that contains numbers, which is 1 (sample IDs) or more, if experimental factors are described
+	//TODO colHeader is fixed to one by now.
+	//TODO rowHeader right now cannot account for numeric experiment factors
 	@Override
 	public Integer doInBackground() 
 		{
+		System.out.println("Memory reserved before loading: "+Sizeof.usedMemory());
 		int progress=0;
 		String name=path.replace("\\","/");
-		message="Reading matrix "+name.substring(name.lastIndexOf("/")+1, path.indexOf("."));
+		message="Reading matrix "+name.substring(name.lastIndexOf("/")+1, name.indexOf("."));
 		progress+=10;
 		setProgress(progress);
 		
@@ -1619,11 +2230,11 @@ public class MicroarrayData
 		double t1=System.currentTimeMillis();
 		double start=System.currentTimeMillis();
 		DelimitedTextTableReader tr=new DelimitedTextTableReader("\t");
-		System.out.println(path);
+		System.out.println("Loading "+path);
 		tr.setHasHeader(true);
 		Table levelsi=null;
 		try{
-		levelsi=tr.readTable(new FileInputStream(path));	//esto es lo que mï¿½s peso tiene en tiempo (5s para 54000x9)
+		levelsi=tr.readTable(new FileInputStream(path));	//esto es lo que mas peso tiene en tiempo (5s para 54000x9)
 		}catch(Exception e){
 			JOptionPane.showMessageDialog(null,
 					"Error reading the file: "+e.getMessage(), 
@@ -1637,10 +2248,42 @@ public class MicroarrayData
 			numGenes=levelsi.getColumnCount();//Al revï¿½s te lo digo para que me entiendas
 			numConditions=levelsi.getRowCount();
 			}
-		else
+		else	//We determine the number of EFs by finding the first double. Therefore, EFVs should be strings that cannot be interpreted as doubles!
 			{
-			numConditions=levelsi.getColumnCount()-rowHeader;
-			numGenes=levelsi.getRowCount();
+			try{
+				BufferedReader in =	new BufferedReader(new FileReader(path));
+				int numLines=levelsi.getRowCount();
+				rowHeader=0;
+				boolean stop=false;
+				for(int i=0;i<numLines;i++)	
+					{
+					String st=in.readLine();
+					Scanner scanner = new Scanner(st);
+					scanner.useDelimiter("\\t");
+					String scan="";
+					int colCont=0;
+					while(scanner.hasNext())
+						{
+					    if (scanner.hasNextDouble()) 
+				        	{stop=true; break;}
+					    scan=scanner.next();
+					    colCont++;
+					    double scand=-333;
+					    try{scand=new Double(scan.trim());}catch(NumberFormatException nfe){}
+					    if(scand!=-333){stop=true; break;}
+					    }
+			        if(stop)
+			        	{
+			        	System.out.println("Out because of "+scanner.next());
+			        	//colHeader=colCont;//By now, only one column
+						break;
+			        	}
+			        rowHeader++;
+					}
+				}catch(Exception e){e.printStackTrace();}
+				System.out.println("Number of row headers: "+rowHeader);
+			numConditions=levelsi.getColumnCount()-colHeader;
+			numGenes=levelsi.getRowCount()-rowHeader+1;
 			}
 		message=numGenes+" genes\n"+numConditions+" conditions";
 		progress+=60;
@@ -1650,7 +2293,10 @@ public class MicroarrayData
 		geneNames=new String[numGenes];
 		decimals=new int[numConditions];
 		for(int i=0;i<numConditions;i++)	decimals[i]=nd;
+		columnOrder=new int[numConditions];
+		for(int i=0;i<numConditions;i++)	columnOrder[i]=i;
 		System.out.println("Microarray matrix with "+numGenes+" genes and "+numConditions+" conditions");
+	
 		
 		try{
 		//Leemos la primera fila, que tiene los nombres de los genes
@@ -1672,13 +2318,67 @@ public class MicroarrayData
 			}
 		else	//Si no estï¿½n invertidas las primeras columnas tienen informaciï¿½n sobre los genes
 			{	//Y las primeras filas sobre las condiciones
-			if(colHeader>=0)
+			BufferedReader in =	new BufferedReader(new FileReader(path));
+			StringTokenizer st=null;
+			
+			//Read sample related info
+			if(rowHeader>=0)
 				{
-				BufferedReader in =	new BufferedReader(new FileReader(path));
-				for(int i=0;i<rowHeader;i++)	in.readLine(); //Pasamos las filas con explicaciones sobre los experimentos
-				for(int i=0;i<numGenes;i++)
+				st=new StringTokenizer(in.readLine(), "\t"); //First row contains sample names and the different gene names maybe
+				for(int i=0;i<colHeader;i++)		//Depending on the colHeader, it can also contain additional information. TODO right now colHeader is always 1, with organism/geneID info
+					{
+					description=st.nextToken();//Pasamos los que no tienen q ver, que nombran las columnas de explicaciï¿½n de genes
+					
+					if(description.contains("/"))
+						{
+						chip=description.substring(description.indexOf("/")+1);
+						organism=description.substring(0, description.indexOf("/"));
+						if(chip.length()<2)	
+							{
+							JOptionPane.showMessageDialog(null,
+									"Chip name is wrong: "+chip, 
+									"Wrong format", JOptionPane.ERROR_MESSAGE);
+							return 1;
+							}
+						if(organism.length()<2)
+							{
+							JOptionPane.showMessageDialog(null,
+									"Organism name is wrong: "+organism, 
+									"Wrong format", JOptionPane.ERROR_MESSAGE);
+							return 1;
+							}
+						}
+					else
+						{
+						JOptionPane.showMessageDialog(null,
+								"Chip/Organism description is wrong, use \"/\" as separator: "+description, 
+								"Wrong format", JOptionPane.ERROR_MESSAGE);
+						return 1;
+						}
+					}
+				for(int i=0;i<numConditions;i++)	conditionNames[i]=st.nextToken().trim();
+				for(int i=0;i<rowHeader-1;i++)	//Read experiment factors
+					{
+					st=new StringTokenizer(in.readLine(), "\t"); 
+					String ef=st.nextToken().trim();
+					for(int j=0;j<colHeader-1;j++)	st.nextToken();//Avoid the blanks due to column Headers
+					String[] efvs=new String[numConditions];
+					int cont=0;
+					while(st.hasMoreTokens())		efvs[cont++]=st.nextToken().trim();
+					experimentFactors.add(ef);
+					experimentFactorValues.put(ef, efvs);
+					}
+				}
+			else	//Use integers as identifiers
+				for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString().trim();
+				
+			//Read gene related info (except expression levels)
+			if(colHeader>0)
+				{
+				for(int i=0;i<numGenes;i++)//Read gene names
 					{
 					String cad=in.readLine();
+				//	System.out.println(i+" "+cad);
 					if(cad.contains("\t\t"))
 						{
 						JOptionPane.showMessageDialog(null,
@@ -1686,63 +2386,30 @@ public class MicroarrayData
 								"Wrong format", JOptionPane.ERROR_MESSAGE);
 						return 1;
 						}
-					StringTokenizer st=new StringTokenizer(cad,"\t");//El delimitador en Syntren es un tab.
-					geneNames[i]=st.nextToken();
+					st=new StringTokenizer(cad,"\t");//El delimitador en Syntren es un tab.
+					geneNames[i]=st.nextToken().trim();
 					}
 				}
-			else	for(int i=0;i<numGenes;i++)	geneNames[i]=new Integer(i).toString();
-			
-			
-			if(rowHeader>=1)
-				{
-				BufferedReader in =	new BufferedReader(new FileReader(path));
-				StringTokenizer st=new StringTokenizer(in.readLine(),"\t");//El delimitador en Syntren es un tab.
-				for(int i=0;i<colHeader;i++)		
-					{
-					description=st.nextToken();//Pasamos los que no tienen q ver, que nombran las columnas de explicaciï¿½n de genes
-					}
-				for(int i=0;i<numConditions;i++)	conditionNames[i]=st.nextToken();
-				}
-			else	for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString();
+			else	//Set up numbers as geneNames
+				for(int i=0;i<numGenes;i++)	geneNames[i]=new Integer(i).toString().trim();
 			}
+		
+		
+		rowLabels=geneNames.clone();//TODO: check
+		columnLabels=conditionNames.clone();
+		
 		}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); return 1;}
 		double t2=System.currentTimeMillis();
-		if(numGenes<=maxGenes)	maxGenes=1;
 		
 		
-		//System.out.println("Descripciï¿½n: "+description);
-		if(description.contains("/"))
-			{
-			chip=description.substring(description.indexOf("/")+1);
-			organism=description.substring(0, description.indexOf("/"));
-			if(chip.length()<2)	
-				{
-				JOptionPane.showMessageDialog(null,
-						"Chip name is wrong: "+chip, 
-						"Wrong format", JOptionPane.ERROR_MESSAGE);
-				return 1;
-				}
-			if(organism.length()<2)
-				{
-				JOptionPane.showMessageDialog(null,
-						"Organism name is wrong: "+organism, 
-						"Wrong format", JOptionPane.ERROR_MESSAGE);
-				return 1;
-				}
-			}
-		else
-			{
-			JOptionPane.showMessageDialog(null,
-					"Chip/Organism description is wrong, use \"/\" as separator: "+description, 
-					"Wrong format", JOptionPane.ERROR_MESSAGE);
-			return 1;
-			}
+		
 
 		message="Organism: "+organism+"\nPlatform: "+chip+"\nRetrieving gene annotations ...";
 		progress+=10;
 		setProgress(progress);
 		
 		geneAnnotations=new TreeMap<Integer, GeneAnnotation>();
+		GOTerms=new TreeMap<String, GOTerm>();
 		AnnotationStartThread p = new AnnotationStartThread();
 		p.setPriority(Thread.MIN_PRIORITY);
 		new Thread(p).start();
@@ -1754,7 +2421,7 @@ public class MicroarrayData
 		t1=System.currentTimeMillis();
 		//System.out.println("T2) inversiï¿½n "+(t1-t2)/1000);
 		
-		expressions=convert(levels, colHeader);
+		expressions=convert(levels, rowHeader-1, colHeader);
 		
 		t2=System.currentTimeMillis();
 		//System.out.println("T3) conversiï¿½n "+(t2-t1)/1000);
@@ -1777,14 +2444,14 @@ public class MicroarrayData
 		for(int i=0;i<numGenes;i++)
 			{
 			row=geneLabels.addRow();
-			geneLabels.setString(row, "name", geneNames[i]);
+			geneLabels.setString(row, "name", rowLabels[i]);
 			geneLabels.setInt(row, "id", i);
 			geneLabels.setInt(row, "rowRank", i);
 			row++;
 			if(i%step==0)
 				{
 				sparseRow=sparseGeneLabels.addRow();
-				sparseGeneLabels.setString(sparseRow, "name", geneNames[i]);
+				sparseGeneLabels.setString(sparseRow, "name", rowLabels[i]);
 				sparseGeneLabels.setInt(sparseRow, "id", sparseRow);
 				sparseGeneLabels.setInt(sparseRow, "actualId", i);
 				sparseGeneLabels.setInt(sparseRow, "rowRank", sparseRow);
@@ -1802,7 +2469,7 @@ public class MicroarrayData
 		for(int i=0;i<numConditions;i++)
 			{
 			row=conditionLabels.addRow();
-			conditionLabels.setString(row, "name", conditionNames[i]);
+			conditionLabels.setString(row, "name", columnLabels[i]);
 			conditionLabels.setInt(row, "id", i);
 			conditionLabels.setInt(row, "colRank", i);
 			}
@@ -1811,12 +2478,14 @@ public class MicroarrayData
 		progress+=10;
 		setProgress(progress);
 		
-		//setupR();
 		t1=System.currentTimeMillis();
 		System.out.println("T4) creacion de tablas "+(t1-t2)/1000);
 		message="Microarray data loaded in "+(t1-start)/1000+" seconds";
 		progress=100;
 		setProgress(progress);
+		System.out.println("Memory reserved after loading: "+Sizeof.usedMemory());
+		try{Sizeof.runGC(1);}catch(Exception e){e.printStackTrace();}
+		System.out.println("Memory reserved after loading & GC: "+Sizeof.usedMemory());
 		return 0;
 		}
 	
@@ -1842,11 +2511,10 @@ public void buildSparseGeneMatrix()
 	for(int i=0;i<numGenes;i+=step)
 		{
 		sparseRow=sparseGeneLabels.addRow();
-		sparseGeneLabels.setString(sparseRow, "name", geneNames[i]);
-		sparseGeneLabels.setInt(sparseRow, "id", sparseRow);
+		sparseGeneLabels.setString(sparseRow, "name", rowLabels[i]);
+			sparseGeneLabels.setInt(sparseRow, "id", sparseRow);
 		sparseGeneLabels.setInt(sparseRow, "actualId", i);
 		sparseGeneLabels.setInt(sparseRow, "rowRank", sparseRow);
-	//	if(sparseRow<20)	System.out.println(sparseRow+": "+geneNames[i]+"\t"+i+"\t");
 		sparseRow++;
 		}
 	
@@ -1872,16 +2540,14 @@ public void buildSparseGeneMatrix()
 			{
 			row++;
 			sparseRow=sparseExpressions.addRow();
-			sparseExpressions.setString(sparseRow, "gene", geneNames[i]);
-			sparseExpressions.setString(sparseRow, "condition", conditionNames[j]);
+			sparseExpressions.setString(sparseRow, "gene", rowLabels[i]);
+			sparseExpressions.setString(sparseRow, "condition", columnLabels[j]);
+					
+			//TODO This if else is probably stupid
+			//if(levels.canGet(conditionNames[j],Double.class))	sparseExpressions.setDouble(sparseRow, "level", ((Double)levels.get(i,j+1)).doubleValue());
+			//else
+			sparseExpressions.setDouble(sparseRow, "level", matrix[i][j]); 
 			
-			if(levels.canGet(conditionNames[j],Double.class))	sparseExpressions.setDouble(sparseRow, "level", ((Double)levels.get(i,j+1)).doubleValue());
-			else												
-				{
-				if(levels.canGet(conditionNames[j],Integer.class))
-					{
-					sparseExpressions.setDouble(sparseRow, "level", matrix[i][j]); }
-					}
 			sparseExpressions.setInt(sparseRow, "rowId", contGene);
 			sparseExpressions.setInt(sparseRow, "actualRowId", i);
 			sparseExpressions.setInt(sparseRow, "rowRank", contGene);
@@ -1891,8 +2557,6 @@ public void buildSparseGeneMatrix()
 			}
 		if(i%step==0)	contGene++;
 		}
-	
-	//System.out.println("\n\n");
 	return;
 	}
 
@@ -1986,7 +2650,7 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 		}
 	}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); System.exit(1);}
 	double t2=System.currentTimeMillis();
-	if(numGenes<=maxGenes)	maxGenes=1;
+	//if(numGenes<=maxGenes)	maxGenes=1;
 	
 	
 	//System.out.println("Descripciï¿½n: "+description);
@@ -2020,7 +2684,7 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 	else		levels=levelsi;
 	t1=System.currentTimeMillis();
 	
-	expressions=convert(levels, colHeader);
+	expressions=convert(levels, rowHeader, colHeader);
 	
 	t2=System.currentTimeMillis();
 	
@@ -2072,4 +2736,91 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 		conditionLabels.setInt(row, "colRank", i);
 		}
 	}
+	
+	/**
+	 * Sorts columns (specially useful for parallel coordinates and heatmaps)
+	 * @param factor
+	 */
+	public int[] sortColumnsBy(String factor)
+		{
+		REXP exp=re.eval("as.integer(rank("+ getRList(experimentFactorValues.get(factor))+", ties.method=\"first\")-1)");//TODO: null pointer if it's not a factor but the ids (it could also be done by sort(..., dindex=T)$ix)
+		columnOrder=exp.asIntArray();
+		sortColumns();
+		return getColumnOrder();
+		}
+	
+	/**
+	 * Refresh colRanks in sparse expressions and in condition labels with the current columnOrder
+	 */
+	public void sortColumns()
+		{
+		for(int i=0;i<this.numSparseGenes;i++)
+			for(int j=0;j<this.numConditions;j++)
+				{
+				sparseExpressions.setInt(i*numConditions+j, "colRank", columnOrder[j]);
+				}
+	    for(int i=0;i<this.numConditions;i++)
+ 	    	{
+ 	    	conditionLabels.setInt(i, "colRank", columnOrder[i]);
+ 	    	}
+	 	}
+	
+	/**
+	 * Returns the current columnOrder c, where c[i]=j means that the current position for column i is now j.
+	 * @return
+	 */
+	public int[] getColumnOrder()
+		{
+		int[] co=new int[columnOrder.length];
+		for(int j=0;j<columnOrder.length;j++)		co[columnOrder[j]]=j;  
+		return co;
+		}
+	
+	/**
+	 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
+	 * @param list
+	 * @return
+	 */
+	private String getRList(String[] list)
+		{
+		String ret="c(";
+		for(String i:list)
+			{
+			ret+="\""+i+"\",";
+			}
+		return ret.substring(0, ret.length()-1)+")";
+		}
+
+	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, int sdsAbove, String lowEFV, String lowEF, int sdsBelow)
+		{
+		if(!experimentFactors.contains(highEF) && !highEF.equals("none333") && !highEF.equals("rest") )
+			{System.err.println("Experimental factor "+highEF+" does not exist"); return null;}
+		if(!experimentFactors.contains(lowEF) && !lowEF.equals("none333") && !lowEF.equals("rest"))
+			{System.err.println("Experimental factor "+highEF+" does not exist"); return null;}
+		
+		LinkedList<Integer> ret=new LinkedList<Integer>(); 
+		String[] efvsH=experimentFactorValues.get(highEF);
+		String[] efvsL=experimentFactorValues.get(lowEF);
+		if(highEF.equals("rest"))	efvsH=efvsL;
+		if(lowEF.equals("rest"))	efvsL=efvsH;
+		
+		for(int i=0;i<numGenes;i++)
+			{
+			boolean add=true;
+			for(int j=0;j<numConditions;j++)
+				{
+				if(!highEFV.equals("none333") && ((highEFV.equals("rest") && !efvsH[j].equals(lowEFV)) || efvsH[j].equals(highEFV))) //TODO:the first part of the if could be done less times.
+					if(matrix[i][j]<averageCols[j]+sdsAbove*sdCols[j])	{add=false; break;}
+				if(!lowEFV.equals("none333") && ((lowEFV.equals("rest") && !efvsL[j].equals(highEFV)) || efvsL[j].equals(lowEFV)))
+					if(matrix[i][j]>averageCols[j]+sdsBelow*sdCols[j])	{add=false; break;}
+				}
+			if(add)	ret.add(i);
+			}
+		return ret;
+		}
+	
+	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, String lowEFV, String lowEF)
+		{
+		return selectHiLo(highEFV, highEF, 0, lowEFV, lowEF, 0);
+		}
 }

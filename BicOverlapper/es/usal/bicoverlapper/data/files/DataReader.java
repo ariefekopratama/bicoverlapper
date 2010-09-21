@@ -14,12 +14,14 @@ import java.util.Vector;
 import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
 
+import prefuse.data.Node;
+
 import es.usal.bicoverlapper.data.BubbleData;
 import es.usal.bicoverlapper.data.Field;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MicroarrayRequester;
 import es.usal.bicoverlapper.data.MultidimensionalData;
-import es.usal.bicoverlapper.data.TRNData;
+import es.usal.bicoverlapper.data.NetworkData;
 import es.usal.bicoverlapper.kernel.BicOverlapper;
 import es.usal.bicoverlapper.kernel.BicOverlapperWindow;
 import es.usal.bicoverlapper.kernel.Session;
@@ -98,13 +100,28 @@ public class DataReader {
 	 * ...
 	 * rowM	expM1	expM2	...	expMN
 	 */
-	public void readMicroarray(String path, File fichero,Session sesion, MicroarrayRequester mr) throws Exception 
+	/*public void readMicroarray(String path, File fichero,Session sesion, MicroarrayRequester mr) throws Exception 
 		{
 		int skipColumns=1;
 		int skipRows=1;
 		double t1=System.currentTimeMillis();
 		double t2=System.currentTimeMillis();
-		MicroarrayData md=new MicroarrayData(getPath(path+"/"+fichero.getName()), false, skipRows,skipColumns,1, mr);
+		MicroarrayData md=new MicroarrayData(path.replace("\\","/"), false, skipRows,skipColumns,1, mr, sesion.analysis.r);
+		sesion.setMicroarrayData(md);
+		
+		t1=System.currentTimeMillis();
+		System.out.println("Time to load microarray data: "+(t1-t2)/1000+" seconds");
+		t2=System.currentTimeMillis();
+		System.out.println("Time to load fichero: "+(t2-t1)/1000+" seconds");
+		}*/
+	
+	public void readMicroarray(String path,Session sesion, MicroarrayRequester mr) throws Exception 
+		{
+		int skipColumns=1;
+		int skipRows=1;
+		double t1=System.currentTimeMillis();
+		double t2=System.currentTimeMillis();
+		MicroarrayData md=new MicroarrayData(path, false, skipRows,skipColumns,1, mr, sesion.analysis.r);
 		sesion.setMicroarrayData(md);
 		
 		t1=System.currentTimeMillis();
@@ -116,7 +133,7 @@ public class DataReader {
 	/**
 	 * Reads a Transcription Regulatory Network in GML or Syntren's XML format
 	 */
-	public void readTRN(String path, File fichero,Session sesion) throws FileNotFoundException,IOException 
+	public void readTRN(String path, File fichero,Session sesion, String fileType) throws FileNotFoundException,IOException 
 		{
 		BufferedReader in =	new BufferedReader(new FileReader(fichero));
 		String variable = null;
@@ -128,14 +145,38 @@ public class DataReader {
 		//3) Un fichero txt de los que usamos para los resultados de biclustering, usamos
 		//	nuestro lector a BubbleData
 		BufferedReader in2=in; //Para no estropear lo que se lea de in
-		String linea2=in2.readLine();
-		if(variable.contains("GeneNetwork") || linea2.contains("graphml"))
+		NetworkData trnd=null;
+		if(variable.contains("GeneNetwork"))
 			{
-			in.close();
-			in2.close();
-			TRNData trnd=new TRNData(getPath(path+"\\"+fichero.getName()));//caso 2)			
-			sesion.setTRNData(trnd);	
+			trnd=new NetworkData(getPath(path));//Syntren format		
 			}
+		else if(variable.contains("?xml"))
+			{
+			String linea2=in2.readLine();
+			if(linea2.contains("graphml"))
+				{
+				trnd=new NetworkData(getPath(path));//GraphML			
+				}
+			}
+		in.close();
+		in2.close();
+		if(sesion.getMicroarrayData()!=null)
+			{//Set ids equivalent to the session ids
+			for(int i=0;i<trnd.getGraph().getNodeCount();i++)
+				{
+				Node n=trnd.getGraph().getNode(i);
+				n.setInt("id", sesion.getMicroarrayData().getGeneId(n.getString("name").trim()));
+				}
+			}
+		else
+			{
+			for(int i=0;i<trnd.getGraph().getNodeCount();i++)
+				{
+				Node n=trnd.getGraph().getNode(i);
+				n.setInt("id", i	);
+				}
+			}
+		sesion.setTRNData(trnd);
 		}
 	
 	//TODO: @deprecated
@@ -163,7 +204,8 @@ public class DataReader {
 	 */
 	public void readBiclusterResults(String path, String fichero,Session sesion) 
 		{
-		readBiclusterResults(path, fichero, getPath(path+"\\"+fichero), sesion);
+		//readBiclusterResults(path, fichero, getPath(path+"\\"+fichero), sesion);
+		readBiclusterResults(path, fichero, path, sesion);
 		}
 	
 	public void readBiclusterResults(String path, String fileName, String file, Session sesion)
@@ -174,6 +216,7 @@ public class DataReader {
 		
 		try{
 			BubbleData bd=new BubbleData(file, sesion.getMicroarrayData()); 
+			bd.getGraph().getNodes().getClientProperty("name");
 			sesion.setBubbleData(bd);
 		
 			sesion.setBiclusterDataFile(file);
@@ -224,7 +267,10 @@ public class DataReader {
 				if(title.contains(".bic") || title.contains(".tmp"))
 					{
 					if(title.endsWith(".bic") || title.endsWith(".tmp"))
-						title=title.substring(0, title.lastIndexOf("|")).trim();
+						{
+						if(title.contains("|"))	title=title.substring(0, title.lastIndexOf("|")).trim();
+						else					title="";
+						}
 					}
 				title=title+" | "+fileName;
 				//window.getDesktop().setTitleAt(0, p.getName()+" | "+fileName);

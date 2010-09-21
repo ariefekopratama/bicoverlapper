@@ -268,7 +268,7 @@ class MicroGridDistortion extends Layout {
         	er.setHeight(h, ii);
             er.setWidth(w, jj);
             
-            
+        /*  All this was actually doing nothing, cause x and y cannot be modified outside the getRawShape parser. Unless we make like with height and width, x and y should be modified during the construction of visual items 
             if(sb==null)
             	{
             	if(j<=contx)	x=xMargin+j*miniw;
@@ -307,7 +307,7 @@ class MicroGridDistortion extends Layout {
             	}
             
         	setX(item, null, x);
-	        setY(item, null, y);
+	        setY(item, null, y);*/
 	    	}
         //System.out.println("Tiempo en MicroGridDistortion.run() "+(System.currentTimeMillis()-t1)/1000);
            }

@@ -184,13 +184,14 @@ public class BubblesDiagram extends Diagram {
 		BiclusterSelection bs=sesion.getSelectedBicluster();
 		//currentBiclusters.setSelectedBiclustersUnion(bs);
 		currentBiclusters.setSelectedBiclustersIntersection(bs);
+		v.run("color");
 		repaint();
 		}
 	
 	/**
 	 * Repaints the diagram with the latest Session status
 	 */
-	public void repaint()
+	/*public void repaint()
 		{
 		if(v!=null && sesion!=null && sesion.getSelectedBicluster()!=null)	
 			{
@@ -202,7 +203,7 @@ public class BubblesDiagram extends Diagram {
 			v.run("animate");
 		
 			}
-		}
+		}*/
 	
 	public int getId(){
 		return es.usal.bicoverlapper.kernel.Configuration.BUBBLE_MAP_ID;
@@ -315,9 +316,8 @@ public class BubblesDiagram extends Diagram {
         //----- display
 		// create a new Display that pull from our Visualization
 		d = new Display(v);
-		d.setSize(400, 300); // set display size
 		d.setHighQuality(true);
-		d.pan(200,150);
+	
 		
 		d.addControlListener(new DragControl()); // drag items around
 		d.addControlListener(new PanControl());  // pan with background left-drag
@@ -339,7 +339,8 @@ public class BubblesDiagram extends Diagram {
         search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
         
         final JFastLabel title = new JFastLabel("                 ");
-        title.setPreferredSize(new Dimension(200, 20));
+        title.setPreferredSize(new Dimension(250, 20));
+        title.setSize(250,20);
         title.setVerticalAlignment(SwingConstants.BOTTOM);
         title.setBorder(BorderFactory.createEmptyBorder(3,0,0,0));
         title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
@@ -348,8 +349,9 @@ public class BubblesDiagram extends Diagram {
        		{
             public void itemEntered(VisualItem item, MouseEvent e) 
             	{
-                if ( item.canGetString("id") )
-                    title.setText(item.getString("resultType") +" "+item.getString("id"));
+                if ( item.canGetString("name") )
+                   // title.setText(item.getString("resultType") +"_"+item.getString("id")+" "+item.getString("width")+"x"+item.getString("height"));
+                  title.setText(item.getString("name") +" ("+item.getString("height")+"x"+item.getString("width")+")");
             	}
             public void itemExited(VisualItem item, MouseEvent e) 
             	{
@@ -366,7 +368,7 @@ public class BubblesDiagram extends Diagram {
         
         this.add(d, BorderLayout.CENTER);	//El display con el grafo
         this.add(box, BorderLayout.SOUTH);	//La caja de búsqueda
-         									//Se podrían añadir otras historias
+         									//Se podrían add otras historias
         
         Color BACKGROUND = Color.WHITE;
         Color FOREGROUND = Color.DARK_GRAY;
@@ -381,8 +383,8 @@ public class BubblesDiagram extends Diagram {
 	{
 	LinkedList<Integer> lista=new LinkedList<Integer>();
 	String names[];
-	if(genes) names=this.sesion.getMicroarrayData().getGeneNames();
-	else		names=this.sesion.getMicroarrayData().getConditionNames();
+	if(genes) names=this.sesion.getMicroarrayData().rowLabels;
+	else		names=this.sesion.getMicroarrayData().columnLabels;
 	
 	//System.out.println("Elementos "+l.size());
 	for(int i=0;i<l.size();i++)
@@ -602,7 +604,7 @@ public class BubblesDiagram extends Diagram {
 				this.sel2=sel2;
 				tipo=new  Vector<String>(0,1);
 				Iterator it=vis.items(group);
-		        while(it.hasNext())
+				 while(it.hasNext())
 		          	{
 		           	VisualItem item=(VisualItem)it.next();
 		           	boolean add=true;
@@ -613,6 +615,17 @@ public class BubblesDiagram extends Diagram {
 		           		}
 		           	if(add)	{tipo.add(item.getString(sel));}
 		           	}
+				/* while(it.hasNext())
+		          	{
+		           	VisualItem item=(VisualItem)it.next();
+		           	boolean add=true;
+		           	if(tipo.size()>0)
+		           		{
+		           		for(int i=0;i<tipo.size();i++)
+		           			if((item.getString(sel)+" "+item.getInt("width")+"x"+item.getInt("height")).equals(tipo.get(i)))	{add=false; break;}
+		           		}
+		           	if(add)	{tipo.add(item.getString(sel)+" "+item.getInt("width")+"x"+item.getInt("height"));}
+		           	}*/
 	            }
 	           
 			public void process(VisualItem item, double frac)
@@ -643,9 +656,6 @@ public class BubblesDiagram extends Diagram {
 		NodeStrokeAction(String group, Color hc, Color selc, Color sc) 
         	{
             super(group, VisualItem.STROKECOLOR, ColorLib.gray(0,0));//Sin borde por defecto
-            //add("_hover", ColorLib.gray(0));//Negro al pasar por encima
-            //add("ingroup('_search_')", ColorLib.color(new Color(0,200,0)));
-            //add("ingroup('_focus_')", ColorLib.gray(0));//Pinta morado si pinchamos en un nodo
             add("_hover", ColorLib.getColor(hc.getRed(), hc.getGreen(), hc.getBlue(),hc.getAlpha()).getRGB());//Negro al pasar por encima
             add("ingroup('_search_')", ColorLib.getColor(sc.getRed(), sc.getGreen(), sc.getBlue(), sc.getAlpha()).getRGB());
             add("ingroup('_focus_')", ColorLib.getColor(selc.getRed(), selc.getGreen(), selc.getBlue(), selc.getAlpha()).getRGB());//Pinta morado si pinchamos en un nodo

@@ -7,7 +7,9 @@ package es.usal.bicoverlapper.utils;
  * @version 3.2, 22/3/2007 
  */
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Vector;
+
 
 public class ArrayUtils {
 
@@ -64,4 +66,35 @@ public class ArrayUtils {
 		}
 		return false;
 	}
+	
+	/**
+	* Converts an array of Integer objects to an array of integer primitives
+	*
+	* @param integerList the integer list
+	*
+	* @return an array of integer primitives
+	*/
+	public static int[] toIntArray(List<Integer> integerList) 
+		{
+		int[] intArray = new int[integerList.size()];
+		for (int i = 0; i < integerList.size(); i++) 
+			{
+			intArray[i] = integerList.get(i);
+			}
+		return intArray;
+		}
+	
+	public static String chopArray(String text, int maxWords, String sep)
+		{
+		String text2="";
+		String[] st=text.split(sep);
+		int cont=0;
+		for(String t : st)
+			{
+			text2+=t+" ";
+			cont++;
+			if(cont>maxWords) {text2+="\n"; cont=0;}
+			}
+		return text2;
+		}
 }

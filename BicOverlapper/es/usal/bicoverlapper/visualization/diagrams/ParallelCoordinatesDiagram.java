@@ -1,4 +1,5 @@
 package es.usal.bicoverlapper.visualization.diagrams;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
@@ -14,6 +15,7 @@ import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
@@ -40,6 +42,7 @@ import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.TupleSelection;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
+import es.usal.bicoverlapper.utils.Line;
 import es.usal.bicoverlapper.utils.Translator;
 
 /**
@@ -93,9 +96,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private static final int colorCotas = 10;
 	private static final int colorBicluster= 11;
 	
-	private Color[] paleta = {Color.DARK_GRAY, new Color(0,0,255,100), Color.YELLOW, 
-			Color.DARK_GRAY, new Color(200,200,200), Color.LIGHT_GRAY,
-			  Color.YELLOW, Color.BLACK, Color.RED, 
+	private Color[] paleta = {Color.DARK_GRAY, new Color(0,0,255,100), new Color(255,255,255,200), 
+			Color.BLACK, new Color(200,200,200), new Color(200,0,0),
+			new Color(0,0,100), Color.BLACK, Color.RED, 
 			  Color.WHITE, Color.LIGHT_GRAY, new Color(200,0,0,100)};
 	private String[] textoLabel = {"Condition labels", "Selected lines",
 			Translator.instance.configureLabels.getString("s12"), Translator.instance.configureLabels.getString("s13"),
@@ -106,6 +109,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	"Bicluster Color"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 	
+	private Point p1;
+	private boolean settingSlope;
+	private Point p2;
+
 	
 	// atributos propios de la representacion del diagrama
 	private int longEjeX;
@@ -128,16 +135,18 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	double anchoTextoCuota;
 	
 	// atributos usados para la gestion del intercambio de variables
-	private int[] ordenVars;
+	public int[] ordenVars;
 	private Line2D.Double[] ejesVars;
 	private int varSeleccionada = -1, posSeleccionada;
 	private Line2D.Double ejeSeleccionado, ejeReferencia = null;
 		
 	// atributos usados para la gestion de la seleccion de una tupla
 	private int tuplaSeleccionada;
-	private  Linea[][] tuplas;
+	//private  Linea[][] tuplas;
+	private  Point2D.Double[][] tuplas;
 	private boolean actualizarTuplas=true;
-	
+	private boolean explicitDenyOfTupleUpdate=false;
+
 	// atributos usados para la gestion de los intervalos de
 	// representacion de cada variable
 	
@@ -171,6 +180,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	//Optimización del cómputo de lineas de fondo
 	GeneralPath gpLineasFondo=null;
 
+	//y position of the lowest (doy) and highest expression (upy) levels
+	private int[] upy;
+	private int[] doy;
+
+	private boolean computeLinePositions=true;
+
 	
 	/**
 	 * Builds a <code>Diagrama2D</code> that implements Parallel Coordinates
@@ -182,12 +197,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		int num = sesion.getNumParallelCoordinatesDiagrams();
 		paleta[ParallelCoordinatesDiagram.colorVarSelec]=sesion.getSelectionColor().darker();
 		paleta[ParallelCoordinatesDiagram.colorBicluster]=sesion.getSelectionColor().brighter();
-	
-		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up3.png";
-		iconoScrollDown = "es/usal/bicoverlapper/resources/images/down3.png";
-		iconoScrollSelecUp = "es/usal/bicoverlapper/resources/images/upSelec2.png";
-		iconoScrollSelecDown = "es/usal/bicoverlapper/resources/images/downSelec2.png";
-
+		paleta[ParallelCoordinatesDiagram.colorLineaMarcada]=sesion.getHoverColor();
+		
+		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up4.png";
+		iconoScrollDown = "es/usal/bicoverlapper/resources/images/up4.png";
+		iconoScrollSelecUp = "es/usal/bicoverlapper/resources/images/upselec4.png";
+		iconoScrollSelecDown = "es/usal/bicoverlapper/resources/images/upselec4.png";
+		
 		String nombre;
 		nombre = Translator.instance.menuLabels.getString("s8")+" "+num;
 		for(int i = num; sesion.existsName(nombre); i++, num++){
@@ -204,13 +220,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.setPreferredSize(new Dimension(ancho,alto));
 		this.setSize(ancho,alto);
 		
+		
 		// Inicializamos los atributos si al iniciar el diagrama hay datos cargados
 		this.iniciarAtributos();		
 		
 		// registramos el gestor que permite seleccionar tuplas
 		GestorSeleccionarTupla gestor1 = new GestorSeleccionarTupla();
+		this.addMouseMotionListener(gestor1);
 		this.addMouseListener(gestor1);
-		
+			
 		// registramos el gestor que permite el intercambio 
 		// de posicion de variables en el diagrama
 		GestorCambioVars gestor2 = new GestorCambioVars();
@@ -229,6 +247,26 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.addMouseMotionListener(gestor4);
 	}
 	
+	
+	public void sortColumns(int [] columnOrder)
+		{
+	
+		//To be modified by child classes
+		this.ordenVars=columnOrder.clone();
+		this.computeLinePositions=true;
+		actualizarTuplas=true;
+		ejeReferencia = null;
+		varSeleccionada = -1;
+			
+		gpLineasFondo=null;
+		
+		atributosIniciados = false;
+		//calcularAtributos();
+		atributosIniciados = true;
+		repaintAll=true;
+		repaint();
+		}
+
 	/**
 	 * Paints this diagram
 	 * @param g	Graphics where the parallel coordinates are painted
@@ -259,17 +297,25 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	    qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 	    gbBuffer.setRenderingHints(qualityHints);
 	    ((Graphics2D)g).setRenderingHints(qualityHints);
+	    
 	if(repaintAll)	//Repintamos toda la pantalla
 		{
+	//	System.out.println("FULL REDRAW");
+		
+		long t=System.currentTimeMillis();
 		drawFondo((Graphics2D)g);
-		//if(sesion.dataLoaded())
+		//System.out.println("drawBackground took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+		
 		if(sesion.areMicroarrayDataLoaded())
 			{
 			drawLineas(gbBuffer);
 	
 			this.diagramaPintado = true;
 			}
-
+		//System.out.println("drawLines took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+		
 		//		 Se ha creado la gráfica completa ya no se debe hacer otro repintado
 		repaintAll = false;
 		if(img != null)
@@ -282,42 +328,66 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		img  = createImage(backBuffer.getSource());
 		// Intercambio la imagen (rendering de doble buffer)
 		g.drawImage(backBuffer,0,0,this);	  
+	
+		//System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
 		
 		drawScrolls((Graphics2D)g);
+		
+		//System.out.println("drawScrolls took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
+		
 		drawEjes((Graphics2D)g);
+		
+		//System.out.println("drawAxes took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
 		drawEtiquetas((Graphics2D)g);
+		
+		//System.out.println("drawLabels took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
 		}
 	else	//Son cambios menores, no hace falta repintar todo
 		{
+		//System.out.println("PARTIAL REDRAW");
+		long t=System.currentTimeMillis();
+		
 		//dibujo la base (las líneas)
      	gbBuffer.drawImage(img,0,0,this);
+     	
+     	//System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
      	//ahora dibujo todo lo demás, que no es necesario meterlo en la imagen
      	//(además, si meto los scrols, por ejemplo, luego se me duplicarían al moverlos)
      	drawScrolls(gbBuffer);
+     	
+     	//System.out.println("drawScrolls took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
 		drawEjes(gbBuffer);
+		
+		//System.out.println("drawAxes took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
 		drawEtiquetas(gbBuffer);
+		
+		//System.out.println("drawLabels took "+(System.currentTimeMillis()-t)/1000.0);
+		t=System.currentTimeMillis();
+	
 		g.drawImage(backBuffer, 0,0,this);
 		scrollMoved=false;
+		
+		//System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
 		}
 			
 	}
 	
 
-	
-	private class Linea{
-		public Line2D.Float linea;
-		public int numTupla;
-		
-		public Linea(Line2D.Float linea, int numTupla){
-			this.linea = linea;
-			this.numTupla = numTupla;
-		}
-	}
-	
 	private void iniciarAtributos(){
 		
 		// iniciamos los atributos de la representacion del diagrama		
-		//int numC=datos.getNumFields();
 		numC=datos.getNumConditions();
 		numG=datos.getNumGenes();
 		
@@ -339,13 +409,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.ejesVars = new Line2D.Double[numC];
 		this.ordenVars = new int[numC];
 		
-		
-		for(int i = 0; i<ordenVars.length; i++)
-			ordenVars[i] = i;
+		if(sesion.getMicroarrayData()!=null)	ordenVars=sesion.getMicroarrayData().columnOrder;
+		else									for(int i = 0; i<ordenVars.length; i++) 	ordenVars[i] = i;
 		
 		// iniciamos los atributos de la seleccion de tuplas
-		//tuplas = new Linea[datos.getNumTuples()][datos.getNumFields()-1];
-		tuplas = new Linea[datos.getNumGenes()][numC-1];
+		tuplas = new Point2D.Double[datos.getNumGenes()][numC];
 		tuplaSeleccionada = -1;
 		actualizarTuplas=true;
 		
@@ -355,7 +423,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.cotaSup = new double[numC];
 		this.cotaInf = new double[numC];
 		
-		this.calcularAtributos();
+		computeMean();
+		calcularAtributos();
 		
 		// iniciamos los botones de scroll para acotar
 		// el intervalo de representacion
@@ -390,6 +459,53 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		return new ImageIcon(Toolkit.getDefaultToolkit().getImage(imgURL));
 		}
 	
+	//TODO: all these statistical data of the matrix should be done in MicroarrayData. In progress, be sure not to repeat operations
+	private void computeMean()
+		{
+		long t=System.currentTimeMillis();
+		for(int i = 0; i < numC; i++)
+			{
+			maxVar[i] = datos.getExpressionAt(0, ordenVars[i]);
+			minVar[i] = maxVar[i];
+			mean[i]= maxVar[i];
+			for(int j = 1; j < numG; j++)//This loop is probably the most time consuming
+				{
+				double exp=datos.getExpressionAt(j, ordenVars[i]);
+				if(exp < minVar[i])
+					minVar[i] = exp;
+				if(exp > maxVar[i])
+					maxVar[i] = exp;
+				mean[i]+=exp;
+				}
+			mean[i]/=numG;
+			sd[i]=0;
+			for(int j = 0; j < numG; j++)
+				{
+				double exp=datos.getExpressionAt(j, ordenVars[i]);
+				sd[i]+=Math.abs(mean[i]-exp);
+				}
+			sd[i]/=numG;
+			}
+		System.out.println("Time to compute mean "+(System.currentTimeMillis()-t)/1000.0);
+		}
+	
+	private void rescale()
+		{
+		for(int i = 0; i < numC; i++)
+		{
+		int k=ordenVars[i];
+		double margen = (maxVar[k] - minVar[k])*((double)margenDiagrama/100);
+		maxVar[k] += margen;
+		minVar[k] -= margen;
+		double dif=maxVar[k]-minVar[k];
+		if(dif>0)
+			{
+			if(dif<1)	dif++;
+			ratio[k] = longEjeY/(dif);
+			}
+		else		ratio[k] = 1;
+		}
+		}
 	/**
 	 * Cambia ratio, max var, etc. para que esté con lo último de ordenVars,
 	 *  salvo los datosVar.
@@ -398,44 +514,68 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void calcularAtributos(){
 		
 		if(sesion.areMicroarrayDataLoaded()){
-				longEjeX = ancho-margenIzq-margenDer;
+			longEjeX = ancho-margenIzq-margenDer;
 			longEjeY = alto-margenSup-margenInf;
 			intervaloVar = longEjeX/(numC-1);
-					
-			for(int i = 0; i < numC; i++)
+				
+			long t1=System.currentTimeMillis();
+			
+			double maxLineas[]=new double[numC];
+			double minLineas[]=new double[numC];
+			
+			if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster().getGenes().size()>0)
 				{
-				maxVar[i] = datos.getExpressionAt(0, ordenVars[i]);
-				minVar[i] = maxVar[i];
-				mean[i]= maxVar[i];
-				for(int j = 1; j < numG; j++)
+				for(int i=0;i<numC;i++)		maxLineas[i]=minLineas[i]=-111;
+				//1) Determine max and min values for genes
+				LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
+				for(int i = 0; i < numC; i++)
 					{
-					double exp=datos.getExpressionAt(j, ordenVars[i]);
-					if(exp < minVar[i])
-						minVar[i] = exp;
-					if(exp > maxVar[i])
-						maxVar[i] = exp;
-					mean[i]+=exp;
+					maxLineas[i] = datos.getExpressionAt(lg.get(0), ordenVars[i]);
+					minLineas[i] = maxLineas[i];
+					for(int j = 1; j < lg.size(); j++)
+						{
+						double exp=datos.getExpressionAt(lg.get(j), ordenVars[i]);
+						if(exp < minLineas[i])
+							minLineas[i] = exp;
+						if(exp > maxLineas[i])
+							maxLineas[i] = exp;
+						}
 					}
-				mean[i]/=numG;
-				sd[i]=0;
-				for(int j = 0; j < numG; j++)
-					{
-					double exp=datos.getExpressionAt(j, ordenVars[i]);
-					sd[i]+=Math.abs(mean[i]-exp);
-					}
-				sd[i]/=numG;
 				}
+			else
+				{
+				for(int j = 0; j < (numC-1); j++)
+					{
+					maxLineas[j]=maxVar[j];
+					minLineas[j]=minVar[j];
+					}
+				}
+			
+			System.out.println("Time to compute min/maxLineas "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
+			
 				
 			for(int i=0;i<numC;i++)
 				{
 				min[i]=minVar[i];
 				max[i]=maxVar[i];
 				
-				maxText[i]=maxVar[i];
-				minText[i]=minVar[i];
-				currentTextSup[i]=maxText[i];
-				currentTextInf[i]=minText[i];
+				if(ratio[i]>0)
+					{
+					currentTextSup[i]=maxLineas[i];
+					currentTextInf[i]=minLineas[i];
+					}
+				else
+					{
+					currentTextSup[i]=maxVar[i];
+					currentTextInf[i]=minVar[i];
+					}
+				//System.out.println("ca\t"+i+"\t"+currentTextInf[i]+"\t"+currentTextSup[i]);
 				}
+			
+			System.out.println("Time to compute textInf/Sup "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
+			
 			
 			for(int i = 0; i < numC; i++)
 				{
@@ -451,6 +591,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				else		ratio[i] = 1;
 				}
 			
+			System.out.println("Time to compute ratio "+(System.currentTimeMillis()-t1)/1000.0);
+			t1=System.currentTimeMillis();
 			
 			if(!ejesRelativos)//si los ejes son absolutos, maxVar es para todos la mayor y minVar igual en cuanto a tamaños
 				{
@@ -474,9 +616,27 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					else		ratio[i] = 1;
 					}
 				}
+		System.out.println("Time to compute min/max "+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		if(computeLinePositions)	computeLinePositions();//Time consuming. Only if it's the first time or there's a redimension
+		computeLinePositions=false;
+		System.out.println("Time to compute line positions "+(System.currentTimeMillis()-t1)/1000.0);
 		actualizarTuplas=true;
 		}
 	}
+	
+	private void computeLinePositions()
+		{
+		for(int j = 0; j < numC; j++)
+			{
+			int o=ordenVars[j];
+			double mv=maxVar[j];
+			double r=ratio[j];
+			double pos=margenIzq+(intervaloVar*j);
+			for(int i = 0; i < numG; i++)
+				tuplas[i][j] = new Point2D.Double(pos, (mv-datos.getExpressionAt(i, o))*r+margenSup);
+			}
+		}
 	
 	private void trasladarScrolls(){
 		if(sesion.areMicroarrayDataLoaded()){
@@ -495,51 +655,61 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	private void drawScrolls(Graphics2D g2)
 		{
+		System.currentTimeMillis();
 		for(int i = 0; i < numC; i++)
 			{
-			g2.draw(scrollSup[i]);
-			if((varScroll == i) && (scrollPos== Sup))
-				g2.drawImage(scrollSelecDown, (int)scrollSup[i].getX(), (int)scrollSup[i].getY(), null);
-			else
-				g2.drawImage(scrollDown, (int)scrollSup[i].getX(), (int)scrollSup[i].getY(), null);
+			int k=ordenVars[i];
 			
-			g2.draw(scrollInf[i]);
-			if((varScroll == i) && (scrollPos== Inf))
-				g2.drawImage(scrollSelecUp, (int)scrollInf[i].getX(), (int)scrollInf[i].getY(), null);
+			//Rectangle2D.Double r=(Rectangle2D.Double)scrollSup[i].clone();
+			//r.y=scrollSup[k].y;
+			//g2.draw(r);
+			//g2.draw(scrollSup[k]);
+			if((varScroll == i) && (scrollPos== Sup))
+				g2.drawImage(scrollSelecDown, (int)scrollSup[i].getX(), (int)scrollSup[k].getY(), null);
 			else
-				g2.drawImage(scrollUp, (int)scrollInf[i].getX(), (int)scrollInf[i].getY(), null);			
-			}		
+				g2.drawImage(scrollDown, (int)scrollSup[i].getX(), (int)scrollSup[k].getY(), null);
+			
+			//Rectangle2D.Double r2=(Rectangle2D.Double)scrollInf[i].clone();
+			//r2.y=scrollInf[k].y;
+			//g2.draw(r2);
+			//g2.draw(scrollInf[k]);
+			if((varScroll == i) && (scrollPos== Inf))
+				g2.drawImage(scrollSelecUp, (int)scrollInf[i].getX(), (int)scrollInf[k].getY(), null);
+			else
+				g2.drawImage(scrollUp, (int)scrollInf[i].getX(), (int)scrollInf[k].getY(), null);			
+			}	
+		return;
 		}
 	
 
 	private void drawEtiquetas(Graphics2D g2) {
-		
+		long t1=System.currentTimeMillis();
 		double altoTexto;
 		double anchoTexto;
 		
 		// representamos la cota asociada con el scroll fijado
 		if(scrollFijado && (varScroll != -1))
 			{
+			int k=ordenVars[varScroll];
 			double posX = 0, posY = 0, valor = 0.0;
 			if(scrollPos == Sup)
 				{
 				posX = scrollSup[varScroll].getX();
-				posY = scrollSup[varScroll].getY();
-				valor = maxVar[varScroll]-(nuevaCota-margenSup+margenScroll)/ratio[varScroll];
-				currentTextSup[varScroll]=valor;
+				posY = scrollSup[k].getY();
+				valor = maxVar[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
 				}
 			else if(scrollPos == Inf)
 				{
 				posX = scrollInf[varScroll].getX();
-				posY = scrollInf[varScroll].getY();
-				valor = maxVar[varScroll]-(nuevaCota-margenSup-margenScroll)/ratio[varScroll];
-				currentTextInf[varScroll]=valor;
+				posY = scrollInf[k].getY();
+				valor = maxVar[k]-(nuevaCota-margenSup-margenScroll)/ratio[k];
 				}
+			
 			Font oldFont = g2.getFont();
 			g2.setFont(new Font("Arial",Font.BOLD,9));
-			g2.setPaint(paleta[colorCotas]);
+			g2.setPaint(paleta[colorEje]);
 
-			String cad=datos.format(valor, varScroll);
+			String cad=datos.format(valor, k);
 			TextLayout cota = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 			
 			altoTexto = cota.getBounds().getHeight();
@@ -548,19 +718,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			g2.setFont(oldFont);
 			anchoTextoCuota = anchoTexto;
 			}
-		//El cambio nos viene de fuera --> se hace más abajo en el código
-		else if(sesion.getSelectedBicluster()!=null)
-			{
-			/*for(int i=0;i<this.numC;i++)
-				{
-				double valor = 0.0;
-				valor = maxVar[i]-(nuevaCota-margenSup+margenScroll)/ratio[i];
-				currentTextSup[i]=valor;
-				valor = maxVar[i]-(nuevaCota-margenSup-margenScroll)/ratio[i];
-				currentTextInf[i]=valor;
-				}*/
-			}
-
+		
+		//System.out.println("---Draw scroll labels"+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		
 		// imprimimos el número de elementos seleccionados
 		TextLayout sele=null;
 		if(sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)	
@@ -570,7 +731,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for(int i=0;i<4;i++)
 				{
 				if(i<sesion.getSelectedGenesBicluster().size())
-					ids=ids+sesion.getMicroarrayData().geneNames[sesion.getSelectedGenesBicluster().get(i)]+", ";
+					ids=ids+sesion.getMicroarrayData().rowLabels[sesion.getSelectedGenesBicluster().get(i)]+", ";
 				}
 			if(sesion.getSelectedGenesBicluster().size()>=4)	ids=ids+"...  ";
 			cad=cad+" ("+ids.substring(0, ids.length()-2)+")";
@@ -581,6 +742,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		anchoTexto = sele.getBounds().getWidth();
 		sele.draw(g2,(float)(ancho-anchoTexto-10), (float)(10));
 		
+		//System.out.println("---Draw selected: label"+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		
 		// representamos los valores de referencia de la escala
 		g2.setPaint(paleta[colorCotas]);
 		Font oldFont = g2.getFont();
@@ -589,19 +753,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		double valor;
 		String cad;
 		TextLayout minimo, maximo;
-		/*double valor =maxText[0];
-		String cad=datos.format(valor, 0);
 		
-		TextLayout maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-		altoTexto = maximo.getBounds().getHeight();
-		anchoTexto = maximo.getBounds().getWidth();
-		
-		valor = minText[0];
-		cad=datos.format(valor, 0);
-		TextLayout minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-		altoTexto = minimo.getBounds().getHeight();
-		anchoTexto = minimo.getBounds().getWidth();
-		*/
 		//Valores ahora
 		valor = currentTextSup[0];
 		cad=datos.format(valor, 0);
@@ -620,53 +772,45 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		anchoTexto = minimo.getBounds().getWidth();
 		minimo.draw(g2,(float)(margenIzq+5),(float)(alto-margenInf));
 
+		Font f=g2.getFont();
+		FontRenderContext frc=g2.getFontRenderContext();
 		for(int i = 1; i < numC; i++)
 			{
-			/*valor = maxText[i];
+			int k=ordenVars[i];
+			valor=currentTextSup[k];
 			cad=datos.format(valor, i);
-
-			maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+			maximo = new TextLayout(cad, f, frc);
 			altoTexto = maximo.getBounds().getHeight();
 			anchoTexto = maximo.getBounds().getWidth();
+			float x=(float)((margenIzq+5+i*intervaloVar));
+			maximo.draw(g2,x,(float)(margenSup+altoTexto));
 			
-			valor=minText[i];
+			valor = currentTextInf[k];
 			cad=datos.format(valor, i);
-			minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
+			minimo = new TextLayout(cad, f, frc);
 			altoTexto = minimo.getBounds().getHeight();
 			anchoTexto = minimo.getBounds().getWidth();
-			 */
-			//Valores ahora
-			valor=currentTextSup[i];
-			
-			cad=datos.format(valor, i);
-
-			maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-			altoTexto = maximo.getBounds().getHeight();
-			anchoTexto = maximo.getBounds().getWidth();
-			maximo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(margenSup+altoTexto));
-			
-			valor = currentTextInf[i];
-			cad=datos.format(valor, i);
-			minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
-			altoTexto = minimo.getBounds().getHeight();
-			anchoTexto = minimo.getBounds().getWidth();
-			minimo.draw(g2,(float)((margenIzq+5+i*intervaloVar)),(float)(alto-margenInf));
+			minimo.draw(g2,x,(float)(alto-margenInf));
 			}
 			
 		g2.setFont(oldFont);
 	
-		// representamos las etiquetas de las variables
+		//System.out.println("---Draw limits labels"+(System.currentTimeMillis()-t1)/1000.0);
+		t1=System.currentTimeMillis();
+		
+		// representamos las etiquetas de las condiciones
 		g2.setPaint(paleta[colorEtiquetaVar]);
 		
 		for(int i = 0; i < numC; i++)
 			{
-			TextLayout texto = new TextLayout(datos.getConditionName(ordenVars[i]), g2.getFont(), 
+			int k=ordenVars[i];
+			TextLayout texto = new TextLayout(datos.getColumnLabel(k), g2.getFont(), 
 												  g2.getFontRenderContext());
 			altoTexto = texto.getBounds().getHeight();
 			anchoTexto = texto.getBounds().getWidth();
 			
-			if(varSeleccionada == ordenVars[i])
-				g2.setPaint(paleta[colorVarSelec]);
+			if(i < sesion.getSelectedConditionsBicluster().size())
+					g2.setPaint(paleta[colorVarSelec]);
 			else
 				g2.setPaint(paleta[colorEtiquetaVar]);
 			
@@ -675,79 +819,31 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			g2.translate((float)(margenIzq+i*intervaloVar-anchoTexto*Math.cos(Math.toRadians(45))+5),
 					  (float)(alto-(margenInf-altoScroll-anchoTexto*Math.sin(Math.toRadians(45))))+10);
 			g2.rotate(Math.toRadians(-45));
-			
 			texto.draw(g2,0,0);
 			
 			g2.setTransform(old);
 			}
 		
-		// representamos las etiquetas de la tupla seleccionada
-		int margenEtiq = 2, margenRecuadro = 2;
+		//System.out.println("---Draw sample labels"+(System.currentTimeMillis()-t1)/1000.0);
 		
+		// representamos las etiquetas de la tupla seleccionada
 		if(tuplaSeleccionada != -1)
 			{
-			for(int i = 0; i < numC; i++)
-				{
-				valor = datos.getExpressionAt(tuplaSeleccionada, ordenVars[i]);
-				valor = Math.rint(valor*100)/100;
-				TextLayout etiqValor = new TextLayout(new Double(valor).toString(),g2.getFont(),
-																 g2.getFontRenderContext());
-				altoTexto = etiqValor.getBounds().getHeight();
-				anchoTexto = etiqValor.getBounds().getWidth();
+			oldFont = g2.getFont();
+			g2.setFont(new Font("Arial",Font.BOLD,9));
+			
+			TextLayout etiqValor = new TextLayout(sesion.getMicroarrayData().rowLabels[tuplaSeleccionada],g2.getFont(),
+					 g2.getFontRenderContext());
+			etiqValor.draw(g2,(float)(margenIzq-5-etiqValor.getBounds().getWidth()),
+				   (float)((maxVar[ordenVars[0]] - datos.getExpressionAt(tuplaSeleccionada, ordenVars[0]))*ratio[ordenVars[0]]+margenSup));	
 				
-				Rectangle2D.Double recuadroEtiq = new Rectangle2D.Double(intervaloVar*i+margenIzq,
-										   (maxVar[i] - valor)*ratio[i]+margenSup-margenEtiq-altoTexto-2*margenRecuadro,
-										   anchoTexto+2*margenRecuadro,altoTexto+2*margenRecuadro);
-				
-				g2.setPaint(paleta[colorFondoEtiqueta]);
-				g2.fill(recuadroEtiq);
-				g2.setPaint(paleta[colorTextoEtiqueta]);
-				g2.draw(recuadroEtiq);
-				etiqValor.draw(g2,(float)(intervaloVar*i+margenIzq+margenRecuadro),
-							      (float)((maxVar[i] - valor)*ratio[i]+margenSup-margenEtiq-margenRecuadro));				
-				}
+			g2.setFont(oldFont);
 			}
+		
 		}
 
-	boolean lineaInLimites(int i)
-	{
-	for(int j=0;j<numC-1;j++)
-		{
-		if((tuplas[i][j].linea.getY1() < cotaSup[j]) || (tuplas[i][j].linea.getY1() > cotaInf[j])
-			|| (tuplas[i][j].linea.getY2() < cotaSup[j+1]) || (tuplas[i][j].linea.getY2() > cotaInf[j+1]))
-			{
-			return false;
-			}
-		}
-	return true;
-	}
-	
-	/*
-	 * Como el anterior, pero devuelve null o el path iterator si entra en los límites
-	 */
-	ParallelLine lineInBounds(int i)
-		{
-		//GeneralPath gp=new GeneralPath();
-		ParallelLine pl=new ParallelLine();
-		pl.gp=new GeneralPath();
-		for(int j=0;j<numC-1;j++)
-			{
-			if((tuplas[i][j].linea.getY1() < cotaSup[j]) || (tuplas[i][j].linea.getY1() > cotaInf[j])
-				|| (tuplas[i][j].linea.getY2() < cotaSup[j+1]) || (tuplas[i][j].linea.getY2() > cotaInf[j+1]))
-				{
-				//return null;
-				pl.isBackground=false;
-				}
-			if(j==0)	
-				pl.gp.moveTo((float)tuplas[i][j].linea.getX1(), (float)tuplas[i][j].linea.getY1());
-			pl.gp.lineTo((float)tuplas[i][j].linea.getX2(), (float)tuplas[i][j].linea.getY2());
-			}
-		return pl;
-		}
-	
 	private void drawLineas(Graphics2D g2) {
 		
-		Point2D.Double puntoInicio = new Point2D.Double(), puntoFin = new Point2D.Double();
 		GeneralPath gpLineas=new GeneralPath();
 		GeneralPath gpLineasSelec=new GeneralPath();
 		GeneralPath gpLineasSelecBic=new GeneralPath();
@@ -758,26 +854,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			gpLineasFondo=new GeneralPath();
 			computeFondo=true;
 			}
-		double t1,t2;
-		t1=System.currentTimeMillis();
-		if(actualizarTuplas)
-			{
-			for(int i = 0; i < numG; i++)
-				{
-				for(int j = 0; j < (numC-1); j++)
-					{
-					puntoInicio.setLocation(margenIzq+(intervaloVar*j),
-							(maxVar[j]-datos.getExpressionAt(i, ordenVars[j]))*ratio[j]+margenSup);
-					puntoFin.setLocation(puntoInicio.getX()+intervaloVar,
-							(maxVar[j+1]-datos.getExpressionAt(i, ordenVars[j+1]))*ratio[j+1]+margenSup);
-							
-					Line2D.Float linea = new Line2D.Float(puntoInicio,puntoFin);
-					Linea lineaTupla = new Linea(linea,i);				
-					tuplas[i][j] = lineaTupla;											
-					}
-				}
-			actualizarTuplas=false;
-			}
+		double t2;
+		
 		t2=System.currentTimeMillis();
 		
 		BiclusterSelection selecBic = this.sesion.getSelectedBicluster();
@@ -785,99 +863,70 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		float minSelecY[]=new float[numC];
 		
 		//------------------------------- preparación de las líneas con el gp
-		int step=1;
-		int numLineasFondo=0;
-		if(numG>maxLineas)	step=numG/maxLineas;
 		boolean[] first=new boolean[numC];
 		for(int i=0;i<numC;i++)		first[i]=true;
-		//System.out.println("step es "+step);
-		for(int i=0;i<numG;i++)
+		
+		if(selecBic!=null)
 			{
-			//if(filterPuntos==null || filterPuntos.isSelectedX(i))//Si no hay filtro o este elemento ha sido filtrado
+			int nc=selecBic.getConditions().size();
+			int ng=selecBic.getGenes().size();
+			if(nc<numC-1 && ng<maxLineas)//Partial profile
 				{
-				if(tuplaSeleccionada!=i)
+				for(int i: selecBic.getGenes())
 					{
-					if(selecBic!=null && selecBic.getGenes().contains(i) )
+					if(tuplaSeleccionada!=i)
 						{
-						int nc=selecBic.getConditions().size();
-						if(nc<numC-1)
+						gpLineasSelecBic.append(getLine(i,0, nc-1),false);
+						int init=nc-1;
+						if(init<0)	init=0;
+						gpLineasSelec.append(getLine(i,init, numC-1), false);
+						}
+					}
+				}
+			else		//Whole profile
+				{
+				if(ng<maxLineas)//We need to compute the whole lines
+					{
+					for(int i : selecBic.getGenes())
+						{
+						for(int j = 0; j < numC; j++)
 							{
-							gpLineasSelecBic.append(getLine(i,0, nc-1),false);
-							int init=nc-1;
-							if(init<0)	init=0;
-							gpLineasSelec.append(getLine(i,init, numC-1), false);
+							float x1=(float)tuplas[i][j].getX();
+							float y1=(float)tuplas[i][ordenVars[j]].getY();
+							
+							if(j==0)	gpLineasSelecBic.moveTo(x1, y1);
+							else		gpLineasSelecBic.lineTo(x1, y1);
 							}
-						else
+						}
+					}
+				else
+					{
+					for(int i : selecBic.getGenes())
+						{	
+						for(int j = 0; j < numC; j++)
 							{
-							for(int j = 0; j < numC-1; j++)
+							float y1=(float)tuplas[i][j].getY();
+							if(first[j])
 								{
-								if(j==0)	
-									gpLineasSelecBic.moveTo((float)tuplas[i][j].linea.getX1(), (float)tuplas[i][j].linea.getY1());
-								gpLineasSelecBic.lineTo((float)tuplas[i][j].linea.getX2(), (float)tuplas[i][j].linea.getY2());
-								if(first[j])
-									{
-									maxSelecY[j]=(float)tuplas[i][j].linea.getY1();
-									minSelecY[j]=(float)tuplas[i][j].linea.getY1();
-									if(j==numC-2)
-										{
-										maxSelecY[j+1]=(float)tuplas[i][j].linea.getY2();	
-										minSelecY[j+1]=(float)tuplas[i][j].linea.getY2();
-										}
-									first[j]=false;
-									}
-								else
-									{
-									if(tuplas[i][j].linea.getY1()>maxSelecY[j]) maxSelecY[j]=(float)tuplas[i][j].linea.getY1();	
-									if(tuplas[i][j].linea.getY1()<minSelecY[j]) minSelecY[j]=(float)tuplas[i][j].linea.getY1();
-									if(j==numC-2)
-										{
-										if(tuplas[i][j].linea.getY2()>maxSelecY[j+1]) maxSelecY[j+1]=(float)tuplas[i][j].linea.getY2();	
-										if(tuplas[i][j].linea.getY2()<minSelecY[j+1]) minSelecY[j+1]=(float)tuplas[i][j].linea.getY2();
-										}
-									}
+								maxSelecY[j]=minSelecY[j]=y1;	
+								first[j]=false;
+								}
+							else
+								{
+								if(y1>maxSelecY[j]) maxSelecY[j]=y1;	
+								if(y1<minSelecY[j]) minSelecY[j]=y1;
 								}
 							}
 						}
-					if(computeFondo && i%step==0)		
-						{
-						gpLineasFondo.append(getLine(i), false);
-						numLineasFondo++;
-						}
 					}
-				}//if(filtro)
-			}
+				
+				}
+			}//if there's a selection
+		
+		//System.out.println("---Time to compute selected lines"+(System.currentTimeMillis()-t2)/1000.0);
+		t2=System.currentTimeMillis();
 		
 		//------------------ BACKGROUND------------------------
-		t1=System.currentTimeMillis();
-		if(computeFondo)	//draw sd variations
-			{
-			imgFondo = createImage(ancho, alto);
-			Graphics2D gbTemp = ((Graphics2D)imgFondo.getGraphics());
-			 RenderingHints qualityHints = new RenderingHints(null);
-			    qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-			    qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-			    gbTemp.setRenderingHints(qualityHints);   
-			drawFondo(gbTemp);
-			for(int s=0;s<4;s++)
-				{
-				int []px=new int[numC*2];
-				int []py=new int[numC*2];
-				for(int i=0;i<numC;i++)	//upper points
-					{
-					py[i]=(int)(Math.max(margenSup+(maxVar[i]-(mean[i]+sd[i]*(s+1)))*ratio[i], margenSup));
-					px[i]=(int)(margenIzq+intervaloVar*i);
-					}
-				for(int i=0;i<numC;i++)	//lower points
-					{
-					int c=numC-i-1;
-					py[i+numC]=(int)(Math.min(margenSup+(maxVar[c]-(mean[c]-sd[c]*(s+1)))*ratio[c], margenSup+this.longEjeY));
-					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
-					}
-				gbTemp.setPaint(new Color(220,220,220, 80));
-				gbTemp.fillPolygon(px,py,px.length);
-				}
-			}
-		
 		if(computeFondo)	//draw mean, max, min
 			{
 			imgFondo = createImage(ancho, alto);
@@ -894,70 +943,62 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				int []py=new int[numC*2];
 				for(int i=0;i<numC;i++)	//upper points
 					{
-					double val=Math.min(mean[i]+sd[i]*(s+1), max[i]);
-					py[i]=(int)(Math.max(margenSup+(maxVar[i]-val)*ratio[i], margenSup));
+					int k=ordenVars[i];
+					double val=Math.min(mean[k]+sd[k]*(s+1), max[k]);
+					py[i]=(int)(Math.max(margenSup+(maxVar[k]-val)*ratio[k], margenSup));
 					px[i]=(int)(margenIzq+intervaloVar*i);
 					}
 				for(int i=0;i<numC;i++)	//lower points
 					{
 					int c=numC-i-1;
-					double val=Math.max(mean[c]-sd[c]*(s+1), min[c]);
-					py[i+numC]=(int)(Math.min(margenSup+(maxVar[c]-val)*ratio[c], margenSup+this.longEjeY));
+					int k=ordenVars[c];
+					double val=Math.max(mean[k]-sd[k]*(s+1), min[k]);
+					py[i+numC]=(int)(Math.min(margenSup+(maxVar[k]-val)*ratio[k], margenSup+this.longEjeY));
 					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
 					}
 				int grey=220-40*(maxFold-s);
 				gbTemp.setPaint(new Color(grey,grey,grey));
 				gbTemp.fillPolygon(px,py,px.length);
-				}
+				}//OK
 			
 			if(min!=null && max!=null)
 				{
 				int []linex=new int[numC];
-				int []upy=new int[numC];
-				int []doy=new int[numC];
-				int []meany=new int[numC];
+				upy=new int[numC];
+				doy=new int[numC];
+				int [] meany=new int[numC];
 				int grey=170;
 				for(int i=0;i<numC;i++)
 					{
-					upy[i]=(int)(Math.max(margenSup+(maxVar[i]-max[i])*ratio[i], margenSup));
+					int k=ordenVars[i];
+					upy[i]=(int)(Math.max(margenSup+(maxVar[k]-max[k])*ratio[k], margenSup));
 					linex[i]=(int)(margenIzq+intervaloVar*i);
-					doy[i]=(int)(Math.min(margenSup+(maxVar[i]-min[i])*ratio[i], margenSup+this.longEjeY));
-					meany[i]=(int)(Math.min(margenSup+(maxVar[i]-mean[i])*ratio[i], margenSup+this.longEjeY));
+					doy[i]=(int)(Math.min(margenSup+(maxVar[k]-min[k])*ratio[k], margenSup+this.longEjeY));
+					meany[i]=(int)(Math.min(margenSup+(maxVar[k]-mean[k])*ratio[k], margenSup+this.longEjeY));
 					}
 				gbTemp.setPaint(new Color(grey,grey,grey));
 				gbTemp.drawPolyline(linex,upy,linex.length);
 				gbTemp.drawPolyline(linex,doy,linex.length);
 				gbTemp.setPaint(new Color(240,240,240));
 				gbTemp.drawPolyline(linex,meany,linex.length);
-				}
-			
-			if(selecBic!=null && selecBic.getGenes().size()>this.maxLineas)
-				{
-				int []px=new int[numC*2];
-				int []py=new int[numC*2];
-				for(int i=0;i<numC;i++)	//upper points
-					{
-					py[i]=(int)maxSelecY[i];
-					//py[i]=(int)(Math.max(margenSup+(maxVar[i]-maxSelecY[i])*ratio[i], margenSup));
-					px[i]=(int)(margenIzq+intervaloVar*i);
-					}
-				for(int i=0;i<numC;i++)	//lower points
-					{
-					int c=numC-i-1;
-					py[i+numC]=(int)minSelecY[c];
-					//py[i+numC]=(int)(Math.max(margenSup+(maxVar[c]-minSelecY[c])*ratio[c], margenSup));
-					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
-					}
-				Color c=sesion.getSelectionColor();
-				Color sc=new Color(c.getRed(), c.getGreen(), c.getBlue(), 100);
-				gbTemp.setPaint(sc);
-				gbTemp.fillPolygon(px,py,px.length);
-				}
+				}//OK
 			}
 		
-		g2.drawImage(imgFondo,0,0,this);
+		
+		//System.out.println("---Time to draw background shapes"+(System.currentTimeMillis()-t2)/1000.0);
 		t2=System.currentTimeMillis();
-
+		g2.drawImage(imgFondo,0,0,this);
+	
+		t2=System.currentTimeMillis();
+		if(this.settingSlope && p1!=null && p2!=null)
+			{
+			System.out.println("Draw slope line");
+			g2.draw(new Line2D.Float(p1.x, p1.y, p2.x, p2.y));
+			}
+		
+		//System.out.println("---Time to draw slope"+(System.currentTimeMillis()-t2)/1000.0);
+		t2=System.currentTimeMillis();
+	
 		if(selecBic==null)
 			{
 			g2.setPaint(this.sesion.getSelectionColor());
@@ -969,69 +1010,72 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		else
 			{
 			//lines of genes of the bicluster but not of conditions in the bicluster
-			if(selecBic.getGenes().size()<this.maxLineas)
+			if(selecBic.getGenes().size()<maxLineas)
 				{
-				if(this.getDataLayer().getSelectionColor()!=null)
-					{
-					g2.setPaint(this.sesion.getSelectionColor().darker());
-					g2.draw(gpLineasSelec);
-					
-					g2.setPaint(this.sesion.getSelectionColor().brighter());
-					g2.draw(gpLineasSelecBic);
-					}
-				else									
-					{
-					g2.setPaint(paleta[colorBicluster].darker().darker());
-					g2.draw(gpLineasSelec);
-					g2.setPaint(paleta[colorBicluster].brighter().brighter());
-					g2.draw(gpLineasSelecBic);
-					}
+				g2.setPaint(paleta[colorBicluster].darker().darker());
+				g2.draw(gpLineasSelec);
+				g2.setPaint(paleta[colorBicluster].brighter().brighter());
+				g2.draw(gpLineasSelecBic);
 				}
+			else 
+				{
+				int []px=new int[numC*2];
+				int []py=new int[numC*2];
+				for(int i=0;i<numC;i++)	//upper points
+					{
+					int k=ordenVars[i];
+					
+					py[i]=(int)maxSelecY[k];
+					px[i]=(int)(margenIzq+intervaloVar*i);
+					}
+				for(int i=0;i<numC;i++)	//lower points
+					{
+					int c=numC-i-1;
+					int k=ordenVars[c];
+					py[i+numC]=(int)minSelecY[k];
+					px[i+numC]=(int)(margenIzq+intervaloVar*(c));
+					}
+				Color c=sesion.getSelectionColor();
+				Color sc=new Color(c.getRed(), c.getGreen(), c.getBlue(), 100);
+				g2.setPaint(sc);
+				g2.fillPolygon(px,py,px.length);
+				}//Large polygon selected
 			}
 		
+		
+		//System.out.println("---Time to draw selected lines"+(System.currentTimeMillis()-t2)/1000.0);
+		t2=System.currentTimeMillis();
+	
 		if(tuplaSeleccionada > -1)
 			{
 			g2.setPaint(paleta[colorLineaMarcada]);
+			g2.setStroke(new BasicStroke(3f)); 
 			for(int j = 0; j < (numC-1); j++)
 				{
-				g2.draw(tuplas[tuplaSeleccionada][j].linea);
+				g2.drawLine((int)tuplas[tuplaSeleccionada][j].x, (int)tuplas[tuplaSeleccionada][ordenVars[j]].y, (int)tuplas[tuplaSeleccionada][j+1].x, (int)tuplas[tuplaSeleccionada][ordenVars[j+1]].y);
 				}
+			g2.setStroke(new BasicStroke(1f)); 
 			}
-		t1=System.currentTimeMillis();
+		
+		//System.out.println("---Time to draw hovered line"+(System.currentTimeMillis()-t2)/1000.0);
+		t2=System.currentTimeMillis();
+	
+		//System.out.println("Draw lineas tarda "+(t2-t1)/1000);
 	}
 
-	private GeneralPath getLine(int i)
-		{
-		GeneralPath gp=new GeneralPath();
-		gp=new GeneralPath();
-		Line2D.Float l;
-		for(int j=0;j<numC-1;j++)
-			{
-			l=tuplas[i][j].linea;
-			if(j==0)
-				//gp.moveTo(l.getX1(), l.getY1());
-				gp.moveTo((float)l.getX1(), (float)l.getY1());
-			//gp.lineTo(l.getX2(), l.getY2());
-			gp.lineTo((float)l.getX2(), (float)l.getY2());
-			}
-		return gp;
-		}
 	//As above, but gives only the line between the corresponding vars
 	private GeneralPath getLine(int i, int beginVar, int endVar)
 		{
 		GeneralPath gp=new GeneralPath();
 		gp=new GeneralPath();
-		Line2D.Float l;
 		if(beginVar<0 || endVar>=numC)	
 			System.err.println("Line out of bounds");
-		for(int j=beginVar;j<endVar;j++)
+		for(int j=beginVar;j<=endVar;j++)
 			{
-			l=tuplas[i][j].linea;
-			if(j==beginVar)
-			//	gp.moveTo(l.getX1(), l.getY1());
-				gp.moveTo((float)l.getX1(), (float)l.getY1());
-			//gp.lineTo(l.getX2(), l.getY2());
-			gp.lineTo((float)l.getX2(), (float)l.getY2());
+			double x=tuplas[i][j].x;
+			double y=tuplas[i][ordenVars[j]].y;
+			if(j==beginVar)		gp.moveTo((float)x, (float)y);
+			else				gp.lineTo((float)x, (float)y);
 			}
 		return gp;
 		}
@@ -1093,53 +1137,107 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	}
 
 	/**
-	 * Updates parallel coordinates with information in the session layer
+	 * Updates parallel coordinates with information in the session layer, and repaints it
 	 */
 	public void update() {
 		repaintAll=true;
 		gpLineasFondo=null;
+		//long t1=System.currentTimeMillis();
+		//fitScrolls();
+		//System.out.println("fit scrolls tarda "+(System.currentTimeMillis()-t1));
+		//t1=System.currentTimeMillis();
 		
-		fitScrolls();
-		this.repaint();
+		fitSelectedConditions();
+		
+		atributosIniciados = false;
+		//calcularAtributos();
+		atributosIniciados = true;
+	
+		//System.out.println("calcular atributos tarda "+(System.currentTimeMillis()-t1));
+		//t1=System.currentTimeMillis();
+		if(sesion.getSelectedConditionsBicluster()==null || sesion.getSelectedConditionsBicluster().size()==0 || sesion.getSelectedConditionsBicluster().size()==sesion.getMicroarrayData().getNumConditions())
+				this.explicitDenyOfTupleUpdate=true;//We don't need to resort samples, which is very time consuming (about 5s for a 5000genes x 70 samples)
+		repaint();
+		
+		//System.out.println("repintar tarda "+(System.currentTimeMillis()-t1));
 	}
 	
+	/**
+	 * Resort the axes so the selected conditions are the first ones
+	 */
+	private void fitSelectedConditions()
+		{
+		if(sesion==null || sesion.getSelectedBicluster()==null || sesion.getSelectedBicluster().getConditions().size()>=sesion.getMicroarrayData().getNumConditions())	return;
+		
+		for(int i=0;i<sesion.getSelectedBicluster().getConditions().size();i++)
+			{
+			int cib=((Integer)sesion.getSelectedBicluster().getConditions().get(i)).intValue();
+			//Buscamos donde estaba antes cib
+			int posCib=-1;
+			
+			for(int j=0;j<ordenVars.length;j++)
+				if(ordenVars[j]==cib)	
+					{
+					posCib=j;
+					break;
+					}
+			
+			//y cambiamos las posiciones
+			ordenVars[posCib]=ordenVars[i];
+			ordenVars[i]=cib;
+			}
+		return;
+		}
 	
+	/**
+	 * Resets scrolls to their initial positions
+	 */
+	 void resetScrolls()
+	 	{
+		 for(int i = 0; i < numC; i++){
+				
+				Rectangle2D.Double scroll = new Rectangle2D.Double(margenIzq+i*intervaloVar-anchoScroll/2,
+																   margenSup-altoScroll-margenScroll,anchoScroll,altoScroll);
+				
+				scrollSup[i] = scroll;
+				
+				scroll = new Rectangle2D.Double(margenIzq+i*intervaloVar-anchoScroll/2,
+												margenSup+longEjeY+margenScroll,anchoScroll,altoScroll);
+				
+				scrollInf[i] = scroll;
+				
+				cotaSup[i] = margenSup-margenScroll;
+				cotaInf[i] = alto-margenInf+margenScroll;
+			} 
+	 	}
+	 
 	 void fitScrolls()
 		{
-		double maxLineas[]=new double[numC];
-		double minLineas[]=new double[numC];
-		for(int i=0;i<numC;i++)		maxLineas[i]=minLineas[i]=-111;
-		
-		if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster().getGenes().size()>0)
+		if(sesion.getSelectedBicluster()!=null )
 			{
+			double maxLineas[]=new double[numC];
+			double minLineas[]=new double[numC];
+			for(int i=0;i<numC;i++)		maxLineas[i]=minLineas[i]=-111;
+		
 			//1) Determine max and min values for genes
 			LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
 			for(int i=0;i<lg.size();i++)
 				{
 				int pos=lg.get(i);
-				for(int j = 0; j < (numC-1); j++)
+				for(int j = 0; j < numC; j++)
 					{
 					double y=0;
-					if(j==0)	
-						{
-						y=tuplas[pos][j].linea.getY1();
-						if(maxLineas[j]==-111)	maxLineas[j]=minLineas[j]=y;
-						else
-							{
-							if(maxLineas[j]<y)	maxLineas[j]=y;
-							if(minLineas[j]>y)	minLineas[j]=y;
-							}
-						}
 					
-					y=tuplas[pos][j].linea.getY2();
-					if(maxLineas[j+1]==-111)	maxLineas[j+1]=minLineas[j+1]=y;
+					y=tuplas[pos][j].getY();
+					if(maxLineas[j]==-111)	maxLineas[j]=minLineas[j]=y;
 					else
 						{
-						if(maxLineas[j+1]<y)	maxLineas[j+1]=y;
-						if(minLineas[j+1]>y)	minLineas[j+1]=y;
+						if(maxLineas[j]<y)	maxLineas[j]=y;
+						if(minLineas[j]>y)	minLineas[j]=y;
 						}
 					}
 				}
+			
 			
 			//2) Set labels and scroll positions
 			for(int i=0;i<numC;i++)
@@ -1149,13 +1247,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				cotaSup[i]=scrollSup[i].y+altoScroll;
 				cotaInf[i]=scrollInf[i].y;
 				
-				double valor = maxVar[i]-(cotaSup[i]-margenSup)/ratio[i];
+				double valor = (cotaSup[i]);
 				currentTextSup[i]=valor;
-				valor = maxVar[i]-(cotaInf[i]-margenSup)/ratio[i];
+				valor = (cotaInf[i]);
 				currentTextInf[i]=valor;
 				}
 			
-			//3) Highlight selected lines
+			//3) Highlight selected lines TODO: here check how we do this to replicate when sorting
 			if(sesion.getSelectedBicluster().getConditions().size()<sesion.getMicroarrayData().getNumConditions()-1)
 				{
 				for(int i=0;i<sesion.getSelectedBicluster().getConditions().size();i++)
@@ -1175,7 +1273,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					ordenVars[posCib]=ordenVars[i];
 					ordenVars[i]=cib;
 					
-					//Cambiamos las cotas
+					//Cambiamos las cotas//CHECK: possibly unnecessary with the new changes
 					double auxCotaSup = cotaSup[i], auxCotaInf = cotaInf[i];
 					cotaSup[i] = cotaSup[posCib];
 					cotaSup[posCib] = auxCotaSup;
@@ -1187,20 +1285,27 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					scrollSup[posCib].y = auxYSup;
 					scrollInf[i].y = scrollInf[posCib].y;
 					scrollInf[posCib].y = auxYInf;
-				//	calcularAtributos();//Parece que este calcular atributos estropeaba los currentText cuando se seleccionaba algo fuera y aparte de eso no aporta nada ni estropea nada el quitarlo...
 					
 					actualizarTuplas=true;
 					}
 				}
 			}
+		else	//If the selection has no genes, we reset the scrolls to min and max
+			{
+			//iniciarAtributos();
+			}
 		}
 
+	 
 	public void resize(){
 		atributosIniciados = false;
 		datos = sesion.getMicroarrayData();
+		computeLinePositions=true;
 		calcularAtributos();
+		computeMean();
+		//rescale();
 		trasladarScrolls();
-		fitScrolls();
+		//fitScrolls();
 		gpLineasFondo=null;
 		atributosIniciados = true;
 		repaintAll=true;
@@ -1278,8 +1383,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			this.crearPanelParametros();
 			
 			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
-			JPanel panelAnclajes = this.getPanelAnclajes(sesion, gestor);
-			JPanel panelParametros = this.getPanelParametros();
+		//	JPanel panelAnclajes = this.getPanelAnclajes(sesion, gestor);
+		//	JPanel panelParametros = this.getPanelParametros();
 			JPanel panelBotones = this.getPanelBotones(gestor);
 			
 			// Configuramos la ventana de configuracion
@@ -1310,7 +1415,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		repaintAll=true;
 		paintComponent(getGraphics());
 		this.configurando = false;
-		
 	}
 	
 	public void updateConfig()
@@ -1322,36 +1426,165 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	
 	// Clase gestora de la seleccion de tuplas
-	private class GestorSeleccionarTupla implements MouseListener{
+	private class GestorSeleccionarTupla implements MouseMotionListener, MouseListener{
 
+		
 		public void mouseClicked(MouseEvent e) {
-			/*
-			if(sesion.datosCargados())
+			BiclusterSelection selecBic=sesion.getSelectedBicluster();
+			if(!scrollFijado && sesion.areMicroarrayDataLoaded() && selecBic!=null && (selecBic.getGenes().size()>0))
+			         {
+                    int zonaSelec = 2;
+                    tuplaSeleccionada = -1;
+                    
+                 	for(int j : selecBic.getGenes())
+	             			{
+	                         for(int i = 0; i < (sesion.getMicroarrayData().getNumConditions()-1); i++)	//for each sample
+	                         	{
+	                        	int k=ordenVars[i];
+	                        	int k2=ordenVars[i+1];
+	                        	Line2D.Double l=new Line2D.Double(tuplas[j][i].x, tuplas[j][k].y,tuplas[j][i+1].x,tuplas[j][k2].y);
+	                          	 if((l.ptSegDist(e.getPoint()) < zonaSelec)
+	                                            && !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint()))
+	                            	{
+	                                tuplaSeleccionada = j;
+	                                break;
+	                                }
+	                            }
+	                        if(tuplaSeleccionada != -1)
+	                        		{
+	                        		LinkedList<Integer> genes=new LinkedList<Integer>();
+	                        		LinkedList<Integer> conditions=new LinkedList<Integer>();
+	                        		genes.add(tuplaSeleccionada);
+	                        		for(int k=0;k<numC;k++)
+			        						conditions.add(Integer.valueOf(ordenVars[k]));
+			        				sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+	        						tuplaSeleccionada=-1;
+			        				update();
+	        						break;
+	                    			}
+	             		}                     
+			         }
+			}
+		
+		public void mouseMoved(MouseEvent e)
+			{
+			BiclusterSelection selecBic=sesion.getSelectedBicluster();
+			if(sesion.areMicroarrayDataLoaded() && selecBic!=null && (selecBic.getGenes().size()>0))
+		        {
+                int zonaSelec = 2;
+                tuplaSeleccionada = -1;
+                
+                 for(int j : selecBic.getGenes())
+             			{
+                         for(int i = 0; i < (sesion.getMicroarrayData().getNumConditions()-1); i++)	//for each sample
+                         	{
+                        	 int k=ordenVars[i];
+                        	 int k2=ordenVars[i+1];
+                         	Line2D.Double l=new Line2D.Double(tuplas[j][i].x,tuplas[j][k].y,tuplas[j][i+1].x,tuplas[j][k2].y);
+                            if((l.ptSegDist(e.getPoint()) < zonaSelec)
+                                            && !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint()))
+                            	{
+                                tuplaSeleccionada = j;
+                                break;
+                                }
+                            }
+                        if(tuplaSeleccionada != -1)
+                        		{
+                            	//System.out.println("Tupla localizada en "+(System.currentTimeMillis()-t1)+", es la numero "+tuplaSeleccionada+", que es la "+sesion.getMicroarrayData().getGeneNames()[tuplaSeleccionada]);
+                            	repaintAll=true;
+                        		repaint();
+                    			break;
+                    			}
+             			}
+         	     }
+
+			}
+		
+		public void mouseDragged(MouseEvent e)
+			{
+			if(scrollFijado || ejeSeleccionado!=null || e.isControlDown())	return; 
+			//Draw the line
+			p2=e.getPoint();
+			repaintAll=true;
+			explicitDenyOfTupleUpdate=true;
+			//update();
+			repaint();
+			
+			}
+
+		public void mousePressed(MouseEvent e) 
+			{
+			//take first point of the slope
+			if(scrollFijado || ejeSeleccionado!=null || e.isControlDown())	return; 
+			p1=e.getPoint();
+			settingSlope=true;
+			}
+
+		public void mouseReleased(MouseEvent e) 
+			{
+			if(scrollFijado || ejeSeleccionado!=null || e.isControlDown())	return; 
+			
+			//take last point of the slope and select all the tuples matching, from the selected ones or if ctrl pressed, from everyones
+			p2 = e.getPoint();
+			if(p1.equals(p2))	return;//it's a click, not a slope
+			
+			int interval=-1;
+			settingSlope=false;	
+			for(int i=0;i<sesion.getMicroarrayData().getNumConditions()-1;i++)
 				{
-				int zonaSelec = 2;
-				tuplaSeleccionada = -1;
-				for(int i = 0; i < (datos.getNumVars()-1); i++){
-					for(int j = 0; j < datos.getNumElems(); j++){
-						if((tuplas[j][i].linea.ptSegDist(e.getPoint()) < zonaSelec)
-							&& !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint())){
-							tuplaSeleccionada = tuplas[j][i].numTupla;
-							break;
-						}
+				int k=ordenVars[i];
+				int k2=ordenVars[i+1];
+			if(p1.x>=scrollSup[k].x && p2.x<=scrollSup[k2].x)
+						{interval=i; break;}
+				}
+			if(interval<0) return;
+			double slope=new Line(p1.x, p1.y, p2.x, p2.y).getSlope();
+			double noise=0.5;
+
+			LinkedList<Integer> genes=new LinkedList<Integer>();
+			LinkedList<Integer> conditions=new LinkedList<Integer>();
+			
+			int k=ordenVars[interval];
+			int k2=ordenVars[interval+1];
+			if(sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
+				{//In this case, select only from the previous selection
+				for(int j : sesion.getSelectedGenesBicluster())
+					{
+					Line ll=new Line(tuplas[j][interval].x, tuplas[j][k].y, tuplas[j][interval+1].x, tuplas[j][k2].y);
+					double s=ll.getSlope();
+					if(s>slope-noise && s<slope+noise)
+						genes.add(Integer.valueOf(j));
 					}
-					if(tuplaSeleccionada != -1)
-						break;
-				}				
-			}*/
-//			repaint();
+				}
+			else
+				{
+				for(int j = 0; j < numG; j++)	//for each row
+		 			{
+					Line ll=new Line(tuplas[j][interval].x, tuplas[j][k].y, tuplas[j][interval+1].x, tuplas[j][k2].y);
+					double s=ll.getSlope();
+					if(s>slope-noise && s<slope+noise)
+						genes.add(Integer.valueOf(j));
+					}
+				}
+			
+		repaintAll=true;
+		
+		for(int j=0;j<numC;j++)
+			conditions.add(Integer.valueOf(j));
+		
+
+		sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+		//update();
+		repaint();
 		}
+	
+		public void mouseEntered(MouseEvent e) 
+			{
+			}
 
-		public void mousePressed(MouseEvent e) {}
-
-		public void mouseReleased(MouseEvent e) {}
-
-		public void mouseEntered(MouseEvent e) {}
-
-		public void mouseExited(MouseEvent e) {}		
+		public void mouseExited(MouseEvent e) 
+			{
+			}		
 	}
 	
 	// Clase gestora del cambio de variables (cambia las posiciones de los ejes)
@@ -1367,12 +1600,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							
 				for(int i = 0; i < ejesVars.length; i++) {
 					if ((Math.abs(e.getPoint().getX()- ejesVars[i].getX1()) < tamZona)
-						&& (e.getPoint().getY() > margenSup) && (e.getPoint().getY() < (alto-margenInf))
-						&& !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint())) {
+						&& ((e.getPoint().getY() > margenSup) && (e.getPoint().getY() < upy[i])
+						|| (e.getPoint().getY() > doy[i]) && (e.getPoint().getY() < (alto-margenInf)))
+								
+						&& !inScroll(e.getPoint(), scrollSup[i], 5, true) && !inScroll(e.getPoint(),scrollInf[i],5, false)) {
 						posSeleccionada = i;
 						varSeleccionada = ordenVars[i];
 						ejeSeleccionado = ejesVars[i];
 						ejeReferencia = new Line2D.Double(ejeSeleccionado.getP1(),ejeSeleccionado.getP2());
+						System.out.println("Seleccionada variable "+varSeleccionada +" en eje "+ejeSeleccionado);
 						break;
 					}
 				}
@@ -1380,6 +1616,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 			
 		public void  mouseReleased(MouseEvent e) {
+			System.out.println("mouseReleased in GestorCambioVars");
 			if(sesion.areMicroarrayDataLoaded() && (ejeSeleccionado != null) && varSeleccionada!=-1)
 				{
 				int nuevaPosicion = 0;
@@ -1419,8 +1656,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						}
 					}
 
-					for(int i=0;i<ordenVars.length;i++)	System.out.print(ordenVars[i]+" ");
-					double auxCotaSup = cotaSup[posSeleccionada], auxCotaInf = cotaInf[posSeleccionada];
+					/*double auxCotaSup = cotaSup[posSeleccionada], auxCotaInf = cotaInf[posSeleccionada];
 					cotaSup[posSeleccionada] = cotaSup[nuevaPosicion];
 					cotaSup[nuevaPosicion] = auxCotaSup;
 					cotaInf[posSeleccionada] = cotaInf[nuevaPosicion];
@@ -1431,7 +1667,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					scrollSup[nuevaPosicion].y = auxYSup;
 					scrollInf[posSeleccionada].y = scrollInf[nuevaPosicion].y;
 					scrollInf[nuevaPosicion].y = auxYInf;
-					
+					*/
 					actualizarTuplas=true;
 				}
 				ejeReferencia = null;
@@ -1440,11 +1676,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				gpLineasFondo=null;
 				
 				atributosIniciados = false;
-				calcularAtributos();
+				//calcularAtributos();
 				//trasladarScrolls();
 				atributosIniciados = true;
-				//update();
 				repaintAll=true;
+				//update();
 				repaint();
 				
 			}
@@ -1470,6 +1706,29 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		public void mouseMoved(MouseEvent e) {}		
 	}
 	
+	/**
+	 * Determines if p is inside a rectangle r, with a vertical margin above or below
+	 * @param p point to check
+	 * @param r rectangle
+	 * @param margin margin in pixels for a rectangle above or below r
+	 * @param up if true, the margin is set above
+	 * @return
+	 */
+	private boolean inScroll(Point2D p, Rectangle2D.Double r, int margin, boolean up)
+		{
+		if(up)
+			{
+			if(p.getX()>=r.x && p.getX()<=r.x+r.width && p.getY()>=r.y-margin && p.getY()<=r.y+r.height)
+				return true;
+			}
+		else 
+			{
+			if(p.getX()>=r.x && p.getX()<=r.x+r.width && p.getY()>=r.y && p.getY()<=r.y+r.height+margin)
+				return true;
+			}
+		return false;
+		}
+	
 	// Clase gestora de los scrolls
 	private class GestorScrolls implements MouseListener,MouseMotionListener {
 
@@ -1481,162 +1740,129 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				posRef = e.getY();
 				offset = 0;
 				scrollFijado = true;
+				scrollSeleccionado=null;
+				
 				
 				for(int i = 0; i < numC; i++){
+					int k=ordenVars[i];
+					Rectangle2D.Double rs=(Rectangle2D.Double)scrollSup[k].clone();
+					rs.x=scrollSup[i].x;
 					
-					if(scrollSup[i].contains(e.getPoint())){
-						scrollSeleccionado = scrollSup[i];
+					Rectangle2D.Double ri=(Rectangle2D.Double)scrollInf[k].clone();
+					ri.x=scrollInf[i].x;
+				
+					if(inScroll(e.getPoint(), rs, 5, true)){
+						scrollSeleccionado = scrollSup[k];
 						varScroll = i;
 						scrollPos = Sup;
-						nuevaCota = cotaSup[i];
-						posY = scrollSup[varScroll].getY();
+						nuevaCota = cotaSup[k];
+						posY = scrollSup[k].getY();
 						break;
 					}
-					else if(scrollInf[i].contains(e.getPoint())){
-						scrollSeleccionado = scrollInf[i];
+					else if(inScroll(e.getPoint(), ri,5, false)){
+						scrollSeleccionado = scrollInf[k];
 						varScroll = i;
 						scrollPos = Inf;
-						nuevaCota = cotaInf[i];
-						posY = scrollInf[varScroll].getY();
+						nuevaCota = cotaInf[k];
+						posY = scrollInf[k].getY();
 						break;
 					}
-				}				
+				}
+				if(scrollSeleccionado==null)	scrollFijado=false;
 			}
+			return;
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			if(ejeSeleccionado!=null)	return; //estamos en un cambio de ejes
+			if(ejeSeleccionado!=null || scrollSeleccionado==null)	return; //estamos en un cambio de ejes o no hay scroll seleccionado
 			LinkedList<Integer> genes=new LinkedList<Integer>();
 			LinkedList<Integer> conditions=new LinkedList<Integer>();
 				
 			if(sesion.areMicroarrayDataLoaded()){
 					if(varScroll > -1){
+						int k=ordenVars[varScroll];
 					if(scrollPos == Sup){
-						cotaSup[varScroll]=nuevaCota;
-						currentTextSup[varScroll] =maxVar[varScroll]-(nuevaCota-margenSup+margenScroll)/ratio[varScroll];
+						cotaSup[k]=nuevaCota;
+						currentTextSup[k] =maxVar[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
 					}
 					else{
-						cotaInf[varScroll] = nuevaCota;
-						currentTextInf[varScroll] =maxVar[varScroll]-(nuevaCota-margenSup+margenScroll)/ratio[varScroll];
+						cotaInf[k] = nuevaCota;
+						currentTextInf[k] =maxVar[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
 					}
 				}
 
-				TupleSelection selec=new TupleSelection("","",numG);
 				//Si no se ha pulsado Control, el movimiento del scroll tiene en cuenta las 
-				//restricciones existentes en otras variables
-				TupleSelection selec2=selec;
-				int cont=numG;
-				
+				//restricciones existentes en otras variables/la seleccion anterior
+				System.out.println("ctrl: "+e.isControlDown()+"\talt: "+e.isAltDown()+"\taltgr: "+e.isAltGraphDown()+"\tshift: "+e.isShiftDown()+"\tmeta: "+e.isMetaDown());
+				long t=System.currentTimeMillis();
 				if(!e.isControlDown())
 					{
-					for(int i=0;i<numG;i++)
+					if(sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
 						{
-						selec.setX(i,true);
-						selec.setY(i,true);
-						selec.setLastSelec(true, i);
-						selec.setColorSelec(colorSeleccion, i);
-						
-						for(int j=0;j<numC-1;j++)
+						for(int i : sesion.getSelectedGenesBicluster())
 							{
-							if(j==0)
-									{
-								if((tuplas[i][j].linea.getY1() < cotaSup[j]) || (tuplas[i][j].linea.getY1() > cotaInf[j]))
-									{
-									selec.setX(i,false);
-									selec.setY(i,false);
-									selec.setLastSelec(false, i);
-									selec.setColorSelec(null, i);
-									cont--;
-									break;
-									}
-								}
-							if((tuplas[i][j].linea.getY2() < cotaSup[j+1]) || (tuplas[i][j].linea.getY2() > cotaInf[j+1]))
+							int j;
+							for(j=0;j<numC;j++)//TODO: we should try first the changed condition, which is the most probable to discriminate
 								{
-								selec.setX(i,false);
-								selec.setY(i,false);
-								selec.setLastSelec(false, i);
-								selec.setColorSelec(null, i);
-								cont--;
-								break;
-								}
+								int k=ordenVars[j];
+								double y1=tuplas[i][k].y;
+								if(y1 < cotaSup[k] || y1 > cotaInf[k])
+									break;//not this gene, try the next (break conditions loop)
+								}//If bicluster selected
+							if(j==numC)		genes.add(Integer.valueOf(i));
 							}
-							
+						}	
+					else //This is the most time consuming loop, specially if we have lots of genes and conditions. (50000x100, for example)
+						{//TODO: it can be done quicker if we start by the selected scroll, which will be the one removing a larger number of things
+						long t1=System.currentTimeMillis();
+						for(int i=0;i<numG;i++)
+							{
+							int j;
+							for(j=0;j<numC;j++)
+								{
+								int k=ordenVars[j];
+								double y1=tuplas[i][k].y;
+								if(y1 < cotaSup[k] || y1 > cotaInf[k])
+									break;//not this gene, try the next (break conditions loop)
+								}
+							if(j==numC)		genes.add(Integer.valueOf(i));
+							}
+						System.out.println("Time to do selection: "+(System.currentTimeMillis()-t1)/1000.0);
 						}
 					}
-				//Si está pulsado Control, las restricciones en otras variables se condicionan
-				//al intervalo seleccionado en este scroll
+				//Si está pulsado Control, las restricciones en otras variables/selecciones anteriores no se tienen en cuenta
 				else
 					{
 					for(int i=0;i<numG;i++)
-							{
-						selec.setX(i,true);
-						selec.setY(i,true);
-						selec.setLastSelec(true, i);
-						selec.setColorSelec(colorSeleccion, i);
-						
-						if(varScroll==0)
-							{
-							if((tuplas[i][varScroll].linea.getY1() < cotaSup[varScroll]) || (tuplas[i][varScroll].linea.getY1() > cotaInf[varScroll]))
-								{
-								selec.setX(i,false);
-								selec.setY(i,false);
-								selec.setLastSelec(false, i);
-								selec.setColorSelec(null, i);
-								cont--;
-								}
-							}
-						else
-							{
-							if((tuplas[i][varScroll-1].linea.getY2() < cotaSup[varScroll]) || (tuplas[i][varScroll-1].linea.getY2() > cotaInf[varScroll]))
-								{
-								selec.setX(i,false);
-								selec.setY(i,false);
-								selec.setLastSelec(false, i);
-								selec.setColorSelec(null, i);
-								cont--;
-								}
-							}
-							
+						{
+						boolean add=true;
+						if((tuplas[i][varScroll].y < cotaSup[varScroll]) || (tuplas[i][varScroll].y > cotaInf[varScroll]))
+									add=false;
+						if(add)		genes.add(Integer.valueOf(i));
 						}
 					}
+				System.out.println("Time to set selection "+(System.currentTimeMillis()-t)/1000.0);
+				t=System.currentTimeMillis();
 				
 				scrollSeleccionado = null;
 				scrollFijado = false;
 				varScroll = -1;
-
-				repaintAll=true;//De momento así, pero con tiempo, si sigue yendo lento, las de fondo se pueden dejar pintadas de por vida
+				
+				explicitDenyOfTupleUpdate=true;
+				
+				repaintAll=true;//De momento asi, pero con tiempo, si sigue yendo lento, las de fondo se pueden dejar pintadas de por vida
 				//Salvo movimientos de los ejes, ojo.
-				getDataLayer().setPointSelection(selec);
 				
-				getDataLayer().setSelectionColor(colorSeleccion);
+				//genes were added in the above loop, then we select all the conditions
+				for(int j=0;j<(numC);j++)			conditions.add(Integer.valueOf(j));
+					
+				System.out.println("Time to set selected bicluster "+(System.currentTimeMillis()-t)/1000.0);
 				
-				for(int i=0;i<selec.getNumTuples();i++)
-					{
-					if(selec.isSelectedX(i))	genes.add(Integer.valueOf(i));
-					}
-				//for(int j=0;j<(numC-1);j++)
-				for(int j=0;j<(numC);j++)
-						{
-					conditions.add(Integer.valueOf(j));
-					}
-				
-				int maxLines=200;
-				/*if(genes.size()>maxLines)	
-					{
-					JOptionPane.showMessageDialog(null,
-							genes.size()+" lines selected, please select up to "+maxLines+" lines" , "Too much lines", JOptionPane.INFORMATION_MESSAGE);
-					//fitScrolls();
-					}
-				else*/
-					{
-					//if(genes.size()<=maxLines)
-						{
-						sesion.setSelectedBiclusters(new BiclusterSelection(genes,conditions), "arallel");
-						getWindow().update(seleccionPuntos);
-						}
-					}
-				
+				sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+				//fitScrolls();//By now, trying without fitting the scrolls, it gives clearer lines
+				repaint();
 			}
+			return;
 		}
 
 		public void mouseEntered(MouseEvent e) {}
@@ -1648,32 +1874,33 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					if(varScroll > -1)
 					{
 				
+					int k=ordenVars[varScroll];
 					offset = e.getY() - posRef;
 										
 					if(scrollPos == Sup){
-						nuevaCota = cotaSup[varScroll]+offset;
+						nuevaCota = cotaSup[k]+offset;
 						
-						if((nuevaCota <= cotaInf[varScroll]) && (nuevaCota >= (margenSup-margenScroll))){
-							double posX = scrollSup[varScroll].getX();
-							scrollSup[varScroll].setRect(posX,posY+offset,anchoScroll,altoScroll);					
+						if((nuevaCota <= cotaInf[k]) && (nuevaCota >= (margenSup-margenScroll))){
+							double posX = scrollSup[k].getX();
+							scrollSup[k].setRect(posX,posY+offset,anchoScroll,altoScroll);
 						}
-						else if(nuevaCota > cotaInf[varScroll]){
-							nuevaCota = cotaInf[varScroll];
+						else if(nuevaCota > cotaInf[k]){
+							nuevaCota = cotaInf[k];
 						}
 						else {
 							nuevaCota = margenSup-margenScroll;
-						}
+							}
 					}
 					
 					if(scrollPos == Inf){
-						nuevaCota = cotaInf[varScroll]+offset;
+						nuevaCota = cotaInf[k]+offset;
 						
-						if((nuevaCota >= cotaSup[varScroll]) && (nuevaCota <= (alto-margenInf+margenScroll))){
-							double posX = scrollInf[varScroll].getX();
-							scrollInf[varScroll].setRect(posX,posY+offset,anchoScroll,altoScroll);				
+						if((nuevaCota >= cotaSup[k]) && (nuevaCota <= (alto-margenInf+margenScroll))){
+							double posX = scrollInf[k].getX();
+							scrollInf[k].setRect(posX,posY+offset,anchoScroll,altoScroll);				
 						}
-						else if(nuevaCota < cotaSup[varScroll]){
-							nuevaCota = cotaSup[varScroll];
+						else if(nuevaCota < cotaSup[k]){
+							nuevaCota = cotaSup[k];
 						}
 						else {
 							nuevaCota = alto-margenInf+margenScroll;
@@ -1692,19 +1919,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	// clase gestora de la imagen del cursor
 	private class GestorCursor implements MouseMotionListener {
 
-		Point p0=null;
 		//Selection by slope
-		public void mousePressed(MouseEvent e)
+	/*	public void mousePressed(MouseEvent e)
 			{
-			p0=e.getPoint();
 			}
 		public void mouseReleased(MouseEvent e)
 			{
-			Point p1=e.getPoint();
-			double slope=(p1.getY()-p0.getY())/(p1.getX()-p0.getX());
-			//TODO: mirar entre qué coordenadas anda, para todos los seleccionados, subseleccionar por esto o seleccionar de nuevo
 			}
-		
+		*/
 		public void mouseDragged(MouseEvent e) 
 			{
 			
@@ -1714,46 +1936,44 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			if(sesion.areMicroarrayDataLoaded() && atributosIniciados && diagramaPintado){
 				int zonaSelec = 2;
 				
-				boolean zonaEje = false;
-				for(int i = 0; i < ejesVars.length; i++) {
-					if ((Math.abs(e.getPoint().getX()- ejesVars[i].getX1()) < zonaSelec)
-						&& (e.getPoint().getY() > margenSup) && (e.getPoint().getY() < (alto-margenInf))
-						&& !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint())) {
-						zonaEje = true;
-						break;
-					}
-				}
+				boolean zonaScroll = false;
+				for(int i = 0; i < numC; i++)
+					{	
+					int k=ordenVars[i];
+					Rectangle2D.Double rs=(Rectangle2D.Double)scrollSup[i].clone();
+					rs.y=scrollSup[k].y;
+					
+					Rectangle2D.Double ri=(Rectangle2D.Double)scrollInf[i].clone();
+					ri.y=scrollInf[k].y;
 				
-				boolean zonaTupla = false;
-				if(!zonaEje){
-					for(int i = 0; i < (numC-1); i++){
-						for(int j = 0; j < numG; j++){
-							if((tuplas[j][i].linea.ptSegDist(e.getPoint()) < zonaSelec)
-								&& !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint())){
-								zonaTupla = true;
-								break;
+					//if(inScroll(e.getPoint(), scrollSup[i], 5, true) || inScroll(e.getPoint(),scrollInf[i],5, false)) 
+					if(inScroll(e.getPoint(), rs, 5, true) || inScroll(e.getPoint(),ri,5, false)) 
+						{
+						zonaScroll = true;
+						break;
+						}
+					}
+				
+				boolean zonaEje = false;
+				if(!zonaScroll)
+					{
+					for(int i = 0; i < ejesVars.length; i++) 
+						{
+						if(ejesVars[i]==null)	System.out.println("Ejes vars "+i+" es null");
+						if ((Math.abs(e.getPoint().getX()- ejesVars[i].getX1()) < zonaSelec)
+							&& ((e.getPoint().getY() > margenSup) && (e.getPoint().getY() < upy[i])
+								|| (e.getPoint().getY() > doy[i]) && (e.getPoint().getY() < (alto-margenInf)))
+												
+							&& !scrollSup[i].contains(e.getPoint()) && !scrollInf[i].contains(e.getPoint())) 
+							{
+							zonaEje = true;
+							break;
 							}
 						}
-						if(zonaTupla)
-							break;
-					}		
-				}
-				
-				boolean zonaScroll = false;
-				if(!zonaEje && !zonaTupla){
-					for(int i = 0; i < numC; i++){					
-						if(scrollSup[i].contains(e.getPoint()) || scrollInf[i].contains(e.getPoint())){
-							zonaScroll = true;
-							break;
-						}
 					}
-				}
 				
 				if(zonaEje){
 					setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
-				}
-				else if(zonaTupla){
-					setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 				}
 				else if(zonaScroll){
 					setCursor(Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR));
@@ -1764,9 +1984,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	}
 	
-	private class ParallelLine
-		{
-		public GeneralPath gp;
-		public boolean isBackground;
-		}
 }
+
+
+
+
+
+
+
+
+

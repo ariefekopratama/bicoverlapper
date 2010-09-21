@@ -26,14 +26,18 @@ import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.biclustering.BimaxPanel;
 import es.usal.bicoverlapper.kernel.managers.biclustering.CCPanel;
+import es.usal.bicoverlapper.kernel.managers.biclustering.ISAPanel;
 import es.usal.bicoverlapper.kernel.managers.biclustering.PlaidPanel;
+import es.usal.bicoverlapper.kernel.managers.biclustering.SearchPanel;
+import es.usal.bicoverlapper.kernel.managers.biclustering.SelectPanel;
+import es.usal.bicoverlapper.kernel.managers.biclustering.ShowPanel;
+import es.usal.bicoverlapper.kernel.managers.biclustering.SortPanel;
 import es.usal.bicoverlapper.kernel.managers.biclustering.XMotifsPanel;
 import es.usal.bicoverlapper.utils.Translator;
 import es.usal.bicoverlapper.visualization.diagrams.OverlapperDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.HeatmapDiagram;
-import es.usal.bicoverlapper.visualization.diagrams.ParallelCoordinatesDiagram;
-import es.usal.bicoverlapper.visualization.diagrams.TRNDiagram;
+import es.usal.bicoverlapper.visualization.diagrams.NetworkDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
 
 
@@ -54,6 +58,11 @@ public class AnalysisMenuManager implements ActionListener{
 	private PlaidPanel plaidPanel=null;
 	private XMotifsPanel xmotifsPanel=null;
 	private CCPanel ccPanel=null;
+	private ISAPanel isaPanel=null;
+	private SearchPanel searchPanel=null;
+	private ShowPanel showPanel=null;
+	private SortPanel sortPanel=null;
+	private SelectPanel selectPanel=null;
 	
 	/**
 	 * Constructor to build a MenuManager
@@ -129,8 +138,22 @@ public class AnalysisMenuManager implements ActionListener{
 				}
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("isa")))
 				{
-					
+				if(isaPanel==null)			
+					isaPanel=new ISAPanel(sesion);
+				
+				// Mostramos la ventana de configuracion
+				// Mostramos la ventana de configuracion
+				JFrame window = new JFrame();
+				isaPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				isaPanel.setTitle("ISA biclustering");
+				isaPanel.setAlwaysOnTop(true);
+				//Display the window.
+				isaPanel.pack();
+				//window.setSize(new Dimension(241, 355));
+				isaPanel.setLocation(200,200);
+				isaPanel.setVisible(true);	
 				}
+			
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("spectral")))
 				{
 					
@@ -177,7 +200,66 @@ public class AnalysisMenuManager implements ActionListener{
 				window.setLocation(200,200);
 				window.setVisible(true);
 				}
+			//
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("search")))
+				{
+				//Search & selection box
+				if(searchPanel==null)			
+					searchPanel=new SearchPanel(sesion);
+				JFrame window = new JFrame();
+				window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				window.setTitle("Search");
+				JComponent newContentPane = searchPanel.getJPanel2();
+				newContentPane.setOpaque(true); //content panes must be opaque
+				window.setContentPane(newContentPane);
+				window.setAlwaysOnTop(true);
+				//Display the window.
+				window.pack();
+				//window.setBounds(window.getContentPane().getBounds());
+				window.setSize(new Dimension(241, 150));
+				window.setLocation(200,200);
+				window.setVisible(true);
+				}
 			
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("show")))
+				{
+				//Show label names box
+				if(showPanel==null)		showPanel=new ShowPanel(sesion);
+				else					showPanel.updateLists();
+				showPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				showPanel.setTitle("Show");
+				showPanel.setAlwaysOnTop(true);
+				
+				//Display the window.
+				showPanel.pack();
+				showPanel.setVisible(true);
+				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("sort")))
+				{
+				//Show label names box
+				if(sortPanel==null)		sortPanel=new SortPanel(sesion);
+				else					sortPanel.updateLists();
+				sortPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				sortPanel.setTitle("Sort Samples");
+				sortPanel.setAlwaysOnTop(true);
+				
+				//Display the window.
+				sortPanel.pack();
+				sortPanel.setVisible(true);
+				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("select")))
+				{
+				//Show label names box
+				if(selectPanel==null)		selectPanel=new SelectPanel(sesion);
+				//else					selectPanel.updateLists();
+				selectPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				selectPanel.setTitle("Select Profiles");
+				selectPanel.setAlwaysOnTop(true);
+				
+				//Display the window.
+				selectPanel.pack();
+				selectPanel.setVisible(true);
+				}
 			}
 		}
 	

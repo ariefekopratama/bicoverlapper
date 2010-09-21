@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import prefuse.util.ColorLib;
 
+import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 import es.usal.bicoverlapper.utils.Line;
@@ -191,7 +192,8 @@ public abstract class Cluster
 					  ArrayList<GraphPoint2D> groupHull;
 					  groupHull = chainHull_2D(group, group.length);
 					  
-					  int [] palette=ColorLib.getInterpolatedPalette(new Color(20,20,20).getRGB(), new Color(255,255,255).getRGB());
+					  //int [] palette=ColorLib.getInterpolatedPalette(new Color(20,20,20).getRGB(), new Color(255,255,255).getRGB());
+					  int [] palette=ColorLib.getInterpolatedPalette(new Color(Math.max(0, bv.paleta[Overlapper.backgroundColor].getRed()-10),Math.max(0,bv.paleta[Overlapper.backgroundColor].getGreen()-10),Math.max(0,bv.paleta[Overlapper.backgroundColor].getBlue()-10)).getRGB(), new Color(0,0,0).getRGB());
 					  int step2=palette.length/(maxZones);
 					  Color c=new Color(palette[coincidence*step2-1]);
 					  
@@ -379,8 +381,18 @@ public abstract class Cluster
 		 center.x/=numNodes;
 		 center.y/=numNodes;
 		
-		 if(numNodes==2)	numNodes+=2;
-		 if(numNodes==1)	numNodes=4;
+		 boolean inflate2=false;
+		 boolean inflate3=false;
+		 if(numNodes==2)
+		 	 {
+			 numNodes+=2;
+			 inflate2=true;
+		 	 }
+		 if(numNodes==1)	
+		 	{
+			 numNodes=4;
+			 inflate3=true;
+		 	}
 		 
 		 group=new GraphPoint2D[numNodes];
 		 
@@ -402,7 +414,7 @@ public abstract class Cluster
 		    	   meany+=pro.y;
 			       }
 		  	  }
-		  if(clusterNodes.size()==2)//inflate 2-groups
+		  if(inflate2)
 			{
 			Line l=new Line(group[0].getX(), group[0].getY(), group[1].getX(), group[1].getY());
 			Point2D.Double p1=l.getPerpendicularPoint((clusterNodes.get(0).getX()+clusterNodes.get(1).getX())/2, (clusterNodes.get(0).getY()+clusterNodes.get(1).getY())/2, -10);
@@ -415,11 +427,22 @@ public abstract class Cluster
 			pro=l.getProlongationPoint(this.getNode(0).height);
 		    group[numNodes-1]=convertRefFrame(new GraphPoint2D(pro.x, pro.y));
 			}
+		  if(inflate3)
+		  	{
+			Node n = (Node)clusterNodes.get(0);
+		       
+			group[1]=convertRefFrame(new GraphPoint2D(n.getX()-10, n.getY()));
+			group[2]=convertRefFrame(new GraphPoint2D(n.getX(), n.getY()-10));
+			group[3]=convertRefFrame(new GraphPoint2D(n.getX()+10, n.getY()));
+			group[0]=convertRefFrame(new GraphPoint2D(n.getX(), n.getY()+10));
+			
+		  	}
 		  
-		  //hullInScreen=true;//TODO: Sólo para pruebas de métricas!
+		  hullInScreen=true;//TODO: Sólo para pruebas de métricas!
 		  if(bv.isDrawingOverview() || hullInScreen)
-		  {
-		  if(clusterNodes.size()>1)
+			  {
+		 // if(clusterNodes.size()>1)
+		  if(group.length>0)
 			  {
 			  presort(group);
 			  
@@ -753,31 +776,36 @@ public abstract class Cluster
 		{
 		Overlapper bv=(Overlapper) myGraph.getApplet();
 		  
-		int lcs=bv.getLabelClusterSize()+this.getNodes().size();
+		//int lcs=Math.max(bv.getLabelClusterSize()+this.getNodes().size(), 60);
+		int lcs=Math.min(bv.getLabelClusterSize()+this.getNodes().size(), 90);
 		float meanx=0;
 		float meany=0;
 		  
 		  
 		  //----------------------------- HULL DRAWING --------------------------
-		  boolean hullInScreen=false;
+		//  boolean hullInScreen=true;
 		  for (int i=0; i<clusterNodes.size(); i++) 
 		  		{
 			       Node n = (Node)clusterNodes.get(i);
-			       if(!hullInScreen && !bv.isDrawingOverview() && pointInScreen((GraphPoint2D)n.getPosition()))	hullInScreen=true;
+			  //     if(!hullInScreen && !bv.isDrawingOverview() && pointInScreen((GraphPoint2D)n.getPosition()))	hullInScreen=true;
 		           meanx+=n.getX();
 		    	   meany+=n.getY();
 		  		}
 		  
-		  if(bv.isDrawingOverview() || hullInScreen)	//TODO: En este caso, no creo que sea muy importante controlar si está o no dentro
+		  //if(bv.isDrawingOverview() || hullInScreen)	//TODO: En este caso, no creo que sea muy importante controlar si está o no dentro
+		  
+		  if(!bv.isDrawingOverview())	
 			  {
 			  if(getLabel()!=null)
 			  	{
+				 String fl=getLabel();//formatting the label if it's too long
+				 
 				bv.textAlign(JProcessingPanel.CENTER);
 				bv.textSize(lcs);
 				Color c=bv.paleta[Overlapper.bicLabelColor];
 	    		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 150);
 				
-				bv.text(getLabel().toUpperCase(), meanx/clusterNodes.size(), meany/clusterNodes.size());  
+				bv.text( ArrayUtils.chopArray(getLabel().toUpperCase(), 5, " "), meanx/clusterNodes.size(), meany/clusterNodes.size());  
 			  	}
 			  }
 		}
@@ -863,9 +891,10 @@ public abstract class Cluster
 		    {
 			Node n=clusterNodes.get(i);
 			
-			if(!n.isDrawnAsLabel())
+			if(!n.isDrawnAsLabel() && n.clusters.size()>=bv.nodeThreshold)
 			{
-			if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
+			//if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
+			if(!bv.isDrawingOverview())
 			{
 			if (n!=bv.g.getHoverNode() && !bv.g.getSelectedNodes().containsKey(n.getLabel()) && n.getImage().length()==0)
 				{
@@ -878,7 +907,7 @@ public abstract class Cluster
 		    	if(bv.isAbsoluteLabelSize())	finalTam=ls;
 	    		if(finalTam<0)	finalTam=0;
 		    	bv.textSize((int)finalTam);
-		    	bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
+		    	//bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
 			            
 
 	        	if(n.isGene())	
@@ -904,7 +933,11 @@ public abstract class Cluster
 		for(int i=0;i<clusterNodes.size();i++)
 		    {
 			Node n=clusterNodes.get(i);
-			if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
+			if(n.label.contains("udp"))
+				{
+				}
+			//if(n.clusters.size()>=bv.nodeThreshold && (bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition())))
+			if(n.clusters.size()>=bv.nodeThreshold)
 				{
 				if(!n.isDrawn())		n.draw();
 				}//if(punto en pantalla)
@@ -1108,7 +1141,7 @@ public abstract class Cluster
 		       		{
 		    	   	e1.setNaturalLength(e1.getNaturalLength()*0.8);
 		    	    if(e1.getStiffness()>0.02)
-		    	    	System.out.println("Estamos en "+e1.getStiffness()+" entre "+n.label+" y "+m.label);
+		    	    	; //System.out.println("Estamos en "+e1.getStiffness()+" entre "+n.label+" y "+m.label);
 		    	    else	e1.setStiffness(e1.getStiffness()*1.2);
 		    	    //System.out.println(e1.getStiffness());
 		    	   }
@@ -1450,36 +1483,39 @@ public abstract class Cluster
 	     */
 	    protected void presort(GraphPoint2D dataSet[])
 	    {
-	    	
+	    try{
 		int j = 0;
 		boolean exchanged;
 		
 		do 
 			{
-			exchanged = false;	
+			exchanged = false;
 			for (int i = 1; i < dataSet.length - j; i++)
 				{
-				
 				if (dataSet[i].getX() < dataSet[i-1].getX())
-					//if (dataSet[i].getY() <= dataSet[i-1].getY())
+				//if (dataSet[i].getY() <= dataSet[i-1].getY())
 						{ 
-						   
-						   double tmpX, tmpY;
-						   
-						   tmpX = dataSet[i-1].getX();
-						   dataSet[i-1].setX(dataSet[i].getX());
-						   dataSet[i].setX(tmpX);
-						   
-						   tmpY = dataSet[i-1].getY();
-						   dataSet[i-1].setY(dataSet[i].getY());
-						   dataSet[i].setY(tmpY);
-						   
-						   exchanged = true;
+					   double tmpX, tmpY;
+					   
+					   tmpX = dataSet[i-1].getX();
+					   dataSet[i-1].setX(dataSet[i].getX());
+					   dataSet[i].setX(tmpX);
+					   
+					   tmpY = dataSet[i-1].getY();
+					   dataSet[i-1].setY(dataSet[i].getY());
+					   dataSet[i].setY(tmpY);
+					   
+					   exchanged = true;
 				    //}//if
 					}//if	
 				} //for
+				
 			j++;
 			}while(exchanged == true);
+	    }catch(Exception e)
+	    	{
+	    	e.printStackTrace();
+	    	}
 	    }
 	    
 	protected boolean pointInScreen(GraphPoint2D point)
@@ -1487,8 +1523,8 @@ public abstract class Cluster
 		Overlapper bv=(Overlapper) myGraph.getApplet();
 		float x=-bv.getOffsetX();
 		float y=-bv.getOffsetY();
-		float w=bv.getScreenWidth();
-		float h=bv.getScreenHeight();
+		float w=bv.getScreenWidth();//bv.zoomFactor;
+		float h=bv.getScreenHeight();//bv.zoomFactor;
 		if(point.getX()>x && point.getX()<(x+w) && point.getY()>y && point.getY()<(y+h))	return true;
 		else																				return false;
 		}

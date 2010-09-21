@@ -316,7 +316,7 @@ public abstract class Diagram extends JPanel {
 	 * 
 	 * @return <code>JPanel</code> con la configuracion de los parametros del diagrama.
 	 */
-	JPanel getPanelParametros(){
+	protected JPanel getPanelParametros(){
 		return this.panelParametros;
 	}
 	
