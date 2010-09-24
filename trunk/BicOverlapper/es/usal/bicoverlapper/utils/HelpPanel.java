@@ -14,7 +14,7 @@ public class HelpPanel extends JPanel
 		{
 		super();
 		text=new JLabel("\n\nYou can find full documentation about BicOverlapper at\n");
-		link=new URLLabel(this, "http://vis.usal.es/bicoverlapper", "http://vis.usal.es/bicoverlapper", "_blank");
+		link=new URLLabel(this, "http://carpex.usal.es/~visusal/bicoverlapper/", "carpex.usal.es/~visusal/bicoverlapper/");
 		this.add(text);
 		this.add(link);
 		//Create and set up the window.

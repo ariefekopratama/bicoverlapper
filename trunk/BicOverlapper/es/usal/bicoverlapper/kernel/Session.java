@@ -22,7 +22,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Vector;
 
+import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -59,6 +61,8 @@ import es.usal.bicoverlapper.data.files.DataReader;
 import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.kernel.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.kernel.configuration.WordCloudDiagramConfiguration;
+import es.usal.bicoverlapper.kernel.panels.SearchPanel;
+import es.usal.bicoverlapper.kernel.panels.ShowPanel;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.Translator;
@@ -100,7 +104,7 @@ public class Session implements KeyListener {
 	private BubbleData datosBubble 	= null;
 	private MicroarrayData datosMicroarray 	= null;
 	private String biclusterDataFile = null;
-	private Analysis biclustering =null;
+	//private Analysis biclustering =null;
 	
 	private boolean datosCargados;
 	private boolean datosTRNCargados;
@@ -158,6 +162,8 @@ public class Session implements KeyListener {
 	 * Biclustering class bound to this microarray data.  
 	 */
 	public Analysis analysis= null;
+	private SearchPanel searchPanel;
+	private ShowPanel showPanel;
 	
 	
 	
@@ -169,6 +175,7 @@ public class Session implements KeyListener {
 	 * @param desktop <code>JDesktopPane</code> linked to this <code>Session</code>.
 	 */
 	public Session(JDesktopPane desktop, BicOverlapperWindow window){
+		analysis=new Analysis();
 		this.datosCargados = false;
 		this.desktop = desktop;
 		this.mainWindow = window;
@@ -198,7 +205,6 @@ public class Session implements KeyListener {
 		this.avgExpColor=Color.WHITE;
 		
 		reader=new DataReader();
-		analysis=new Analysis();
 		return;
 	}
 	
@@ -1006,6 +1012,51 @@ public class Session implements KeyListener {
 		System.out.println("contlog "+contLog);
 		}
 	
+	/**
+	 * For Ctrl-F
+	 */
+	public void search()
+		{
+		//Search & selection box
+		searchPanel=new SearchPanel(this);
+		JFrame window = new JFrame();
+		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		window.setTitle("Search");
+		JComponent newContentPane = searchPanel.getJPanel2();
+		newContentPane.setOpaque(true); //content panes must be opaque
+		window.setContentPane(newContentPane);
+		window.setAlwaysOnTop(true);
+		//Display the window.
+		window.pack();
+		window.setSize(new Dimension(241, 150));
+		window.setLocation((getDesktop().getWidth()-window.getWidth())/2, (getDesktop().getHeight()-window.getHeight())/2);
+	//	searchPanel.getjButton1().requestFocusInWindow();
+		window.setVisible(true);
+		}
+	
+	/**
+	 * For Ctrl-S
+	 */
+	public void show()
+		{
+		//Show label names box
+		if(showPanel==null)		showPanel=new ShowPanel(this);
+		else					showPanel.updateLists();
+		showPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		showPanel.setTitle("Show");
+		showPanel.setAlwaysOnTop(true);
+		
+		//Display the window.
+		showPanel.pack();
+		showPanel.setLocation((getDesktop().getWidth()-showPanel.getWidth())/2, (getDesktop().getHeight()-showPanel.getHeight())/2);
+		showPanel.setVisible(true);
+		}
+	
+	public void sort()
+		{
+		
+		}
+	
 	 /** Handle the key typed event from the text field. */
     public void keyTyped(KeyEvent e) {
     	return;
@@ -1023,8 +1074,12 @@ public class Session implements KeyListener {
     public void keyReleased(KeyEvent e) {
          if(ctrlPressed)
         	{
-         	if(e.getKeyCode()==90)	undo();
-        	else if(e.getKeyCode()==89)	redo();
+        	 System.out.println(e.getKeyChar()+", "+e.getKeyCode());
+         	if(e.getKeyCode()==90)	undo();//crtl-Z
+        	else if(e.getKeyCode()==89)	redo();//ctrl-Y
+        	else if(e.getKeyCode()==70) search();//ctrl-F
+        	else if(e.getKeyCode()==76) show();//ctrl-L
+        	else if(e.getKeyCode()==83) sort();//ctrl-S
         	}
         else
         	{
@@ -1124,6 +1179,7 @@ public class Session implements KeyListener {
 	public void setMicroarrayData(MicroarrayData md) {
 		this.datosMicroarray = md;
 		this.setMicroarrayDataLoaded(true);
+	//	this.analysis.setMicroarrayData(md);
 		}
 	
 	/**
@@ -1331,13 +1387,13 @@ public class Session implements KeyListener {
 		this.selectionColor = selectionColor;
 	}
 
-	public Analysis getBiclustering() {
+	/*public Analysis getBiclustering() {
 		return biclustering;
 	}
 
 	public void setBiclustering(Analysis biclustering) {
 		this.biclustering = biclustering;
-	}
+	}*/
 	
 	
 	

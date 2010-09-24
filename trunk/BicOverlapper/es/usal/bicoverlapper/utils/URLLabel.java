@@ -1,8 +1,6 @@
 package es.usal.bicoverlapper.utils;
-import java.applet.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
 import java.net.*;
 
 import javax.swing.JComponent;
@@ -13,7 +11,6 @@ public class URLLabel extends JLabel  {
 	 * 
 	 */
 	private static final long serialVersionUID = -7796533770130230112L;
-private JComponent applet;
  private URL url;
  private String target = "";
  private Color unvisitedURL = Color.blue;
@@ -59,23 +56,14 @@ private JComponent applet;
  class Clicked extends MouseAdapter{
   public void mouseClicked(MouseEvent me){
    setForeground(visitedURL);
-  // applet.getAppletContext().showDocument(url, target);
   try{
-	//  Runtime.getRuntime().exec("explorer " + target);
-	//  Desktop.getDesktop().browse(new URI(url.toString()));
 	  String os=System.getProperty("os.name");
 	  if(os.contains("Win"))
-	  	{
-		Runtime.getRuntime().exec("explorer " + target); 
-	  	}
+		Runtime.getRuntime().exec("explorer " + url); 
 	  else if(os.contains("Linux"))
-	  	{
-		  
-	  	}
+		Runtime.getRuntime().exec("firefox " + url); 
 	  else if(os.contains("Mac"))
-	  	{
-		  
-	  	}
+		Runtime.getRuntime().exec("safari " + url); 
 	  
   }catch(Exception e){e.printStackTrace();}
   }

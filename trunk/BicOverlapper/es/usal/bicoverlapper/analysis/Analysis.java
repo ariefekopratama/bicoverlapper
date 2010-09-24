@@ -11,19 +11,30 @@ import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.Rengine;
 
 import es.usal.bicoverlapper.data.MicroarrayData;
+import es.usal.bicoverlapper.utils.RUtils;
 
 /**
- * This class performs biclustering analysis by means of R 
+ * This class performs different analysis by means of R.
+ * It will be the only one maintaining an Rengine for the use of other classes too. 
  * @author Rodrigo Santamaria
  *
  */
 public class Analysis 
 	{
-	MicroarrayData md=null;
+	MicroarrayData microarrayData=null;
+	public MicroarrayData getMicroarrayData() {
+		return microarrayData;
+	}
+
+	public void setMicroarrayData(MicroarrayData md) {
+		this.microarrayData = md;
+		//loadMatrix();//TODO: to avoid unnecessary loads, it is only loaded if needed
+	}
 	public Rengine r=null;
 	REXP exp=null;
 	String defaultPath="";
 	int[] filterOptions=null;
+	private boolean matrixLoaded=false;
 	
 	public int[] getFilterOptions() {
 		return filterOptions;
@@ -38,15 +49,6 @@ public class Analysis
 	 * and by loading the microarray data matrix into R
 	 * @param session
 	 */
-	public Analysis(MicroarrayData md)
-		{
-		this.md=md;
-		try{
-			BufferedReader	pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
-			defaultPath=pathReader.readLine();
-			startR();
-		}catch(Exception e){e.printStackTrace();}
-		}
 	public Analysis()
 		{
 		try{
@@ -70,16 +72,9 @@ public class Analysis
             return;
         	}
 	    System.out.println("R started");
-		}
-	
-	public void setMicroarrayData(MicroarrayData md)
-		{
-		this.md=md;
-		try{
-			BufferedReader	pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
-			defaultPath=pathReader.readLine();
-		}catch(Exception e){e.printStackTrace();}
-		}
+	    loadR();
+	    System.out.println("required R/Bioconductor libraries loaded");
+	    }
 	
 	/**
 	 * Loads the libraries in R. An R console must have been started in the sesion to do this.
@@ -87,17 +82,13 @@ public class Analysis
 	 * It also loads some internal r scripts that extend the biclust package.
 	 * TODO: LoadR and loadMatrix should possibly be loaded with the microarra, we should check the memory/loadtime trade-off
 	 */
-	public void loadR()
+	public void loadR() //TODO: maybe good to make it in background or load the big libraries (GO.db, etc) on demand.
 		{
-	//	if(md==null)	{System.err.println("No microarray loaded");	return;} //That's no longer a pre-requisite
-	//	if(md.re==null)	{System.err.println("No R console started");	return;}
-		if(r==null)	startR();
 		if(r==null)	{System.err.println("No R console started");	return;}
-		r=md.re;
-		loadRLibrary("biclust");
+		/*loadRLibrary("biclust");
 		loadRLibrary("isa2");
 		loadRLibrary("GO.db");
-		loadRLibrary("GOstats");
+		loadRLibrary("GOstats");*/
 	       	
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/binarize.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/helpers.r\")");
@@ -125,10 +116,10 @@ public class Analysis
 	 */
 	public void loadMatrix()
 		{
-		if(md.matrix!=null)
+		if(microarrayData.matrix!=null)
 			{
-			int nc=md.getNumConditions();
-			int ng=md.getNumGenes();
+			int nc=microarrayData.getNumConditions();
+			int ng=microarrayData.getNumGenes();
 			exp=r.eval("m<-matrix(NA, "+ng+", "+nc+")");
 			if(exp==null)	{System.err.println("Matrix cannot be load in R"); return;}
 			for(int i=0;i<ng;i++)
@@ -136,26 +127,27 @@ public class Analysis
 				String v="c(";
 				for(int j=0;j<nc;j++)
 					{
-					if(j<nc-1)	v=v.concat(md.matrix[i][j]+", ");
-					else		v=v.concat(md.matrix[i][j]+")");
+					if(j<nc-1)	v=v.concat(microarrayData.matrix[i][j]+", ");
+					else		v=v.concat(microarrayData.matrix[i][j]+")");
 			    	}
 				exp=r.eval("m["+(i+1)+",]<-"+v);
 				}
 			String names="c(";
 			for(int i=0;i<ng;i++)
 				{
-				if(i<ng-1)	names=names.concat("\""+md.geneNames[i]+"\", ");
-				else		names=names.concat("\""+md.geneNames[i]+"\")");
+				if(i<ng-1)	names=names.concat("\""+microarrayData.geneNames[i]+"\", ");
+				else		names=names.concat("\""+microarrayData.geneNames[i]+"\")");
 				}
 			exp=r.eval("rownames(m)<-"+names);
 			names="c(";
 			for(int i=0;i<nc;i++)
 				{
 				
-				if(i<nc-1)	names=names.concat("\""+md.conditionNames[i]+"\", ");
-				else		names=names.concat("\""+md.conditionNames[i]+"\")");
+				if(i<nc-1)	names=names.concat("\""+microarrayData.conditionNames[i]+"\", ");
+				else		names=names.concat("\""+microarrayData.conditionNames[i]+"\")");
 				}
 			exp=r.eval("colnames(m)<-"+names);
+			matrixLoaded = true;
 			}
 		else{System.err.println("No matrix loaded"); return;}
 		}
@@ -175,15 +167,10 @@ public class Analysis
 	 */
 	public String bimax(boolean percentage, double threshold, boolean under, int minr, int minc, int maxNumber, String outFile, String description)
 		{
-		if(r==null)	
-			{
-			loadR();
-			if(r==null)
-				{
-				System.err.println("Bimax: no R console");
-				return null;
-				}
-			}
+		if(r==null)	{ System.err.println("No R console"); return ""; }
+		if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("biclust");
+		
 		String lowCad="TRUE";
 		if(under==false)	lowCad="FALSE";
 		if(percentage)	exp=r.eval("loma<- binarizeByPercentage(m,"+threshold+", error=0.1, gap=(max(m)-min(m))/1000, low="+lowCad+")");
@@ -255,13 +242,12 @@ public class Analysis
 		{
 		if(r==null)	
 			{
-			loadR();
-			if(r==null)
-				{
-				System.err.println("Bimax: no R console");
-				return "";
-				}
+			System.err.println("Bimax: no R console");
+			return "";
 			}
+		if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("biclust");
+		
 		exp=r.eval("res <- biclust(x=m, method=BCPlaid(), cluster=\""+cluster+"\", row.release="+rrel+", col.release="+crel+")");
 		exp=r.eval("res@Number");
 		if(exp==null)
@@ -318,13 +304,12 @@ public class Analysis
 		{
 		if(r==null)	
 			{
-			loadR();
-			if(r==null)
-				{
-				System.err.println("ISA: no R console");
-				return "";
-				}
+			System.err.println("No R console");
+			return "";
 			}
+		if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("isa2");
+		
 		//exp=r.eval("res <- isa(m, thr.row="+rowThreshold+", thr.col="+colThreshold+", no.seeds="+numSeeds+")");
 		exp=r.eval("res <- isa(m, no.seeds="+numSeeds+")");
 		exp=r.eval("res$columns");
@@ -388,15 +373,11 @@ public class Analysis
 	 */
 	public String xmotifs(int disc, boolean quantiles, int ns, int nd, int sd, double alpha, int number, String outFile, String description)
 		{
-		if(r==null)	
-			{
-			loadR();
-			if(r==null)
-				{
-				System.err.println("Xmotifs: no R console");
-				return "";
-				}
-			}
+		if(r==null)	{ System.err.println("No R console"); return ""; }
+		if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("biclust");
+		
+		
 		String boolCad="TRUE";
 		if(quantiles==false)	boolCad="FALSE";
 		
@@ -453,15 +434,11 @@ public class Analysis
 	 */
 	public String chengChurch(float delta, float alpha, int number, String outFile, String description)
 	{
-	if(r==null)	
-		{
-		loadR();
-		if(r==null)
-			{
-			System.err.println("Xmotifs: no R console");
-			return "";
-			}
-		}
+		if(r==null)	{ System.err.println("No R console"); return ""; }
+		if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("biclust");
+		
+		
 
 	exp=r.eval("res <- biclust(x=m, method=BCCC(), delta="+delta+", alpha="+alpha+", number="+number+")");
 	exp=r.eval("res@Number");
@@ -513,16 +490,9 @@ public class Analysis
 	//public ArrayList<Integer> getSimilarProfiles(double threshold, int gene)
 	public String[] getSimilarProfiles(int threshold, String gene)
 		{
-		if(r==null)	
-			{
-			loadR();
-			if(r==null)
-				{
-				System.err.println("Bimax: no R console");
-				return null;
-				}
-			loadMatrix();
-			}
+		if(r==null)		{ System.err.println("no R console"); return null; }
+		if(microarrayData==null)		{ System.err.println("no microarray data"); return null; }
+		
 		//ArrayList<Integer> neighbors=new ArrayList<Integer>();
 		//exp=r.eval("d=dist(m[c("+gene+",genes),])[1:length(genes)]");
 		//exp=r.eval("genes[order(d)]");
@@ -541,5 +511,91 @@ public class Analysis
 		if(exp==null)
 			System.out.println("Error, cannot download and normalize experiment");
 		}
-
+	/**
+	 * Performs differential expression analysis via limma
+	 * TODO: make it iterative so we can do every single group/combination upon the selection
+	 * @param group1 - first group of samples
+	 * @param group2 - second group of samples
+	 * @param bh - if true, Benjamini and Hochberg correction to p-values is computed
+	 * @param pvalue - threshold for statistical significance
+	 * @param elevel - threshold for differential expression (log10)
+	 * @param reg - regulation (can be up, down or all)
+	 */
+    public String limma(Integer[] group1, Integer[] group2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+    	{
+    	if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("limma");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
+		for(int i=0;i<group1.length;i++)  group1[i]=group1[i]+1;
+		for(int i=0;i<group2.length;i++)  group2[i]=group2[i]+1;
+		exp=r.eval("degs=diffAnalysis(m, "+RUtils.getRList(group1)+", nameG1=\"Group 1\", "+RUtils.getRList(group2)+", nameG2=\"Group 2\", " +
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+						"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		if(exp==null)
+			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
+		exp=r.eval("lr=list(rownames(m)[degs])");
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="limma"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.replace(".", "-");
+				outFile=outFile.concat(".bic");
+				}
+			}
+		
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", lr, NA, bicNames=c(\"DEGs\"), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		return outFile;
+		}
+    
+    /**
+	 * Like limma, but in this case the differential expression analysis is performed for every
+	 * Experimental factor value on a experimental factor against a given factor value
+	 * TODO: make it iterative so we can do every single group/combination upon the selection
+	 * @param ef - experimental factor
+	 * @param efv - experimental factor value for differential expression against the rest
+	 * @param bh - if true, Benjamini and Hochberg correction to p-values is computed
+	 * @param pvalue - threshold for statistical significance
+	 * @param elevel - threshold for differential expression (log10)
+	 * @param reg - regulation (can be up, down or all)
+	 */
+    public String limmaEF(String ef, String efv, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+    	{
+    	if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("limma");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
+		
+		exp=r.eval("degs=diffAnalysisEF(m, "+microarrayData.getExperimentFactorValues(ef)+", "+efv+", " +
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+						"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		if(exp==null)
+			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
+		exp=r.eval("lr=list(rownames(m)[degs])");
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="limma"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.replace(".", "-");
+				outFile=outFile.concat(".bic");
+				}
+			}
+		
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", lr, NA, bicNames=c(\"DEGs\"), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		return outFile;
+		}
 	}

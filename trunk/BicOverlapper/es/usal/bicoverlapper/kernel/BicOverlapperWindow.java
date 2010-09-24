@@ -260,17 +260,25 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("sort"));
 		JMenuItem menuAnalysisSelect =
 			new JMenuItem(Translator.instance.menuLabels.getString("select"));
+		JMenuItem menuAnalysisDifexp =
+			new JMenuItem(Translator.instance.menuLabels.getString("difexp"));
 		
+		menuAnalysisSort.setMnemonic('S');
+		menuAnalysisSearch.setMnemonic('F');
+		menuAnalysisShow.setMnemonic('L');
+		
+		analysisMenu.add(menuAnalysisSearch);
+		analysisMenu.add(menuAnalysisShow);
+		analysisMenu.add(menuAnalysisSort);
+		analysisMenu.addSeparator();
+		analysisMenu.add(menuAnalysisSelect);
+		analysisMenu.add(menuAnalysisDifexp);
+		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisBimax);
 		analysisMenu.add(menuAnalysisPlaid);
 		analysisMenu.add(menuAnalysisISA);
 		analysisMenu.add(menuAnalysisXMotifs);
 		analysisMenu.add(menuAnalysisCChurch);
-		analysisMenu.addSeparator();
-		analysisMenu.add(menuAnalysisSearch);
-		analysisMenu.add(menuAnalysisShow);
-		analysisMenu.add(menuAnalysisSort);
-		analysisMenu.add(menuAnalysisSelect);
 				
 		
 		menuAnalysisBimax.addActionListener(amm);
@@ -282,7 +290,8 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisShow.addActionListener(amm);
 		menuAnalysisSort.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
-				
+		menuAnalysisDifexp.addActionListener(amm);
+					
 		// Creamos menu "Ver"
 		viewMenu = new JMenu(Translator.instance.menuLabels.getString("s2"));
 		viewMenu.setEnabled(false);

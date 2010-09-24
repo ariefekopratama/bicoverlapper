@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.kernel.managers.biclustering;
+package es.usal.bicoverlapper.kernel.panels;
 import java.awt.Dimension;
 import java.util.ArrayList;
 
@@ -48,19 +48,7 @@ public class SelectPanel extends javax.swing.JFrame {
 	private DefaultComboBoxModel jList1Model;
 	private DefaultComboBoxModel jList2Model;
 
-	/**
-	* Auto-generated main method to display this JFrame
-	*/
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				SelectPanel inst = new SelectPanel();
-				inst.setLocationRelativeTo(null);
-				inst.setVisible(true);
-			}
-		});
-	}
-	
+		
 	public SelectPanel() {
 		super();
 		initGUI();

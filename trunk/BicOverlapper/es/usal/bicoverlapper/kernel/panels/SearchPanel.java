@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.kernel.managers.biclustering;
+package es.usal.bicoverlapper.kernel.panels;
 
 import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
@@ -21,6 +21,10 @@ import java.awt.GridLayout;
 import java.awt.Label;
 import javax.swing.JRadioButton;
 import java.awt.Checkbox;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -44,6 +48,19 @@ import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
 import javax.swing.JComboBox;
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class SearchPanel{
 	
 	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
@@ -51,6 +68,12 @@ public class SearchPanel{
 	private JLabel jLabel2 = null;
 	private JTextField jTextField221 = null;
 	private JButton jButton1 = null;
+	public JButton getjButton1() {
+		return jButton1;
+	}
+	public void setjButton1(JButton jButton1) {
+		this.jButton1 = jButton1;
+	}
 	private Session session =null;
 	public File resultsFile=null;
 	public String defaultPath="";  //  @jve:decl-index=0:
@@ -70,6 +93,7 @@ public class SearchPanel{
 	 * @return javax.swing.JPanel	
 	 */
 	public JPanel getJPanel() {
+		
 		return jPanel;
 	}
 
@@ -82,11 +106,9 @@ public class SearchPanel{
 		if (jPanel == null) {
 			jLabel2 = new JLabel();
 			jLabel2.setText("in");
-			jLabel2.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel2.setBounds(new Rectangle(10, 37, 78, 16));
 			jLabel = new JLabel();
 			jLabel.setText("Search for");
-			jLabel.setToolTipText("Biclusters with at least this number of genes are searched");
 			jLabel.setBounds(new Rectangle(10, 13, 72, 16));
 			jPanel = new JPanel();
 			jPanel.setLayout(null);
@@ -198,9 +220,7 @@ public class SearchPanel{
 							JOptionPane.showMessageDialog(null,
 									"No genes or conditions found", 
 									"Search failed", JOptionPane.INFORMATION_MESSAGE);
-				    	    	
-						
-						}
+				    	}
 					}
 			});
 	

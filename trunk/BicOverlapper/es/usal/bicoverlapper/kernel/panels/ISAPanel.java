@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.kernel.managers.biclustering;
+package es.usal.bicoverlapper.kernel.panels;
 import com.cloudgarden.layout.AnchorLayout;
 
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor;
