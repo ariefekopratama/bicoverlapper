@@ -7,6 +7,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.beans.PropertyVetoException;
 
 import javax.swing.ButtonGroup;
@@ -24,15 +26,16 @@ import es.usal.bicoverlapper.kernel.BicOverlapperWindow;
 import es.usal.bicoverlapper.kernel.Configuration;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.managers.biclustering.BimaxPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.CCPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.ISAPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.PlaidPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.SearchPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.SelectPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.ShowPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.SortPanel;
-import es.usal.bicoverlapper.kernel.managers.biclustering.XMotifsPanel;
+import es.usal.bicoverlapper.kernel.panels.BimaxPanel;
+import es.usal.bicoverlapper.kernel.panels.CCPanel;
+import es.usal.bicoverlapper.kernel.panels.DiffExpPanel;
+import es.usal.bicoverlapper.kernel.panels.ISAPanel;
+import es.usal.bicoverlapper.kernel.panels.PlaidPanel;
+import es.usal.bicoverlapper.kernel.panels.SearchPanel;
+import es.usal.bicoverlapper.kernel.panels.SelectPanel;
+import es.usal.bicoverlapper.kernel.panels.ShowPanel;
+import es.usal.bicoverlapper.kernel.panels.SortPanel;
+import es.usal.bicoverlapper.kernel.panels.XMotifsPanel;
 import es.usal.bicoverlapper.utils.Translator;
 import es.usal.bicoverlapper.visualization.diagrams.OverlapperDiagram;
 import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram;
@@ -59,10 +62,11 @@ public class AnalysisMenuManager implements ActionListener{
 	private XMotifsPanel xmotifsPanel=null;
 	private CCPanel ccPanel=null;
 	private ISAPanel isaPanel=null;
-	private SearchPanel searchPanel=null;
 	private ShowPanel showPanel=null;
 	private SortPanel sortPanel=null;
 	private SelectPanel selectPanel=null;
+	private boolean ctrlPressed;
+	private DiffExpPanel difExpPanel;
 	
 	/**
 	 * Constructor to build a MenuManager
@@ -202,38 +206,10 @@ public class AnalysisMenuManager implements ActionListener{
 				}
 			//
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("search")))
-				{
-				//Search & selection box
-				if(searchPanel==null)			
-					searchPanel=new SearchPanel(sesion);
-				JFrame window = new JFrame();
-				window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-				window.setTitle("Search");
-				JComponent newContentPane = searchPanel.getJPanel2();
-				newContentPane.setOpaque(true); //content panes must be opaque
-				window.setContentPane(newContentPane);
-				window.setAlwaysOnTop(true);
-				//Display the window.
-				window.pack();
-				//window.setBounds(window.getContentPane().getBounds());
-				window.setSize(new Dimension(241, 150));
-				window.setLocation(200,200);
-				window.setVisible(true);
-				}
-			
-			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("show")))
-				{
-				//Show label names box
-				if(showPanel==null)		showPanel=new ShowPanel(sesion);
-				else					showPanel.updateLists();
-				showPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-				showPanel.setTitle("Show");
-				showPanel.setAlwaysOnTop(true);
+				sesion.search();
 				
-				//Display the window.
-				showPanel.pack();
-				showPanel.setVisible(true);
-				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("show")))
+				sesion.show();
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("sort")))
 				{
 				//Show label names box
@@ -260,10 +236,22 @@ public class AnalysisMenuManager implements ActionListener{
 				selectPanel.pack();
 				selectPanel.setVisible(true);
 				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("difexp")))
+				{
+				//Show label names box
+				if(difExpPanel==null)		difExpPanel=new DiffExpPanel(sesion);
+				//else					selectPanel.updateLists();
+				difExpPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				difExpPanel.setTitle("Select Profiles");
+				difExpPanel.setAlwaysOnTop(true);
+				difExpPanel.setLocation((sesion.getDesktop().getWidth()-difExpPanel.getWidth())/2, (sesion.getDesktop().getHeight()-difExpPanel.getHeight())/2);
+				
+				//Display the window.
+				difExpPanel.pack();
+				difExpPanel.setVisible(true);
+				}
 			}
 		}
-	
-
 	
 	
 }

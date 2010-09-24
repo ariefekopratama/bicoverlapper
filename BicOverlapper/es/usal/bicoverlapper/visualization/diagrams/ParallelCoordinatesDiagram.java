@@ -991,10 +991,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 		t2=System.currentTimeMillis();
 		if(this.settingSlope && p1!=null && p2!=null)
-			{
-			System.out.println("Draw slope line");
 			g2.draw(new Line2D.Float(p1.x, p1.y, p2.x, p2.y));
-			}
 		
 		//System.out.println("---Time to draw slope"+(System.currentTimeMillis()-t2)/1000.0);
 		t2=System.currentTimeMillis();

@@ -9,6 +9,7 @@ import es.usal.bicoverlapper.utils.AnnotationProgressMonitor2;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.HypergeometricTestProgressMonitor;
 import es.usal.bicoverlapper.utils.MicroarrayLoadProgressMonitor;
+import es.usal.bicoverlapper.utils.RUtils;
 import es.usal.bicoverlapper.utils.Sizeof;
 import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
 import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
@@ -123,6 +124,9 @@ public class MicroarrayData
 	public String[] rowLabels;
 	
 	public ArrayList<String> experimentFactors;
+	/**
+	 * Every key is a experimental factor, every array contains all the values for that factor (e.g. key="Time", values="0 min, 0 min, 20 min, 40 min") 
+	 */
 	public HashMap<String,String[]> experimentFactorValues;
 	
 	//For any other annotation present in the data in the first place
@@ -188,8 +192,8 @@ public class MicroarrayData
 	public boolean searchByR=false; //if there is information in the file about an available R package, gene annotations are taken from there, otherwise they're searched in NCBI
 	boolean annotationsRetrieved=false;
 	
-	public AnnotationTask t;
-	private AnnotationProgressMonitor amd;
+	public AnnotationTask annotTask;
+	private AnnotationProgressMonitor annotProgressMon;
 	
 	//GeneAnnotation retrieval
 	private GeneRequester geneRequester;
@@ -233,9 +237,17 @@ public class MicroarrayData
 			};
 			wt.start();
 			}
-		
 		}
 
+	/**
+	 * Given an experimental factor (e.g. "Time") it returns its values for the conditions (e.g. "0 min", "0 min", "40 min", "40 min")
+	 * @param experimentFactor
+	 * @return
+	 */
+	public String[] getExperimentFactorValues(String experimentFactor)
+		{
+		return this.experimentFactorValues.get(experimentFactor);
+		}
 	/**
 	 * Sets the table geneLabels and conditionLabels to fit with rowLabels and columnLabels values
 	 */
@@ -998,7 +1010,6 @@ public class MicroarrayData
 						"Package "+lib+" is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, annotations and Tag clouds won't be available", 
 						"Missing R package", JOptionPane.WARNING_MESSAGE);
 	    	    	return -1;
-	    	    	
 	    	    	}
 	    	    return 0;
 		     	}
@@ -1066,8 +1077,8 @@ public class MicroarrayData
 	    	    	Thread wt=new Thread() {
 	    				public void run() {
 	    					try{
-	    						t=new AnnotationTask(new int[]{getGeneId(geneNames[0])});
-	    		    	    	t.execute();
+	    						annotTask=new AnnotationTask(new int[]{getGeneId(geneNames[0])});
+	    		    	    	annotTask.execute();
 	    						}catch(Exception e){e.printStackTrace();}
 	    				}
 	    			};
@@ -1411,14 +1422,13 @@ public class MicroarrayData
 	return null;
 	}
 
-	//public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location)
 	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location)
 		{
 		getGeneAnnotations(genes, gr, location, false);
 		}
 	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label)
 		{
-		t.searchGO=true;
+		annotTask.searchGO=true;
 		getGeneAnnotations(genes, gr, label, false);
 		}
 //JDK1.6
@@ -1450,30 +1460,30 @@ public class MicroarrayData
 		int[] listgenes=new int[numGenes];
 		for(int i=0;i<numGenes;i++)		
 			listgenes[i]=i;
-		t=new AnnotationTask(listgenes);
-		t.searchGO=false;
-		t.run();
+		annotTask=new AnnotationTask(listgenes);
+		annotTask.searchGO=false;
+		annotTask.run();
 		}
 	
 	//public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location, boolean pValues) 
 	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location, boolean pValues) 
 		{
-		t=new AnnotationTask(genes);
-		t.searchGO=true;
+		annotTask=new AnnotationTask(genes);
+		annotTask.searchGO=true;
 		/*if(location!=null)	amd=new AnnotationProgressMonitor(location);
 		else				amd=new AnnotationProgressMonitor(new Point(0,0));
 		amd.setTask(t);
 		amd.run();*/
 		if(location!=null)	
 			{
-			amd=new AnnotationProgressMonitor(location);
-			amd.setTask(t);
-			amd.run();
+			annotProgressMon=new AnnotationProgressMonitor(location);
+			annotProgressMon.setTask(annotTask);
+			annotProgressMon.run();
 			}
 		else
 			{
 			AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(new JLabel());
-			amd2.setTask(t);
+			amd2.setTask(annotTask);
 			amd2.run();
 			}
 		if(gr!=null)
@@ -1481,7 +1491,7 @@ public class MicroarrayData
 			geneRequester=gr;
 			Thread wt=new Thread() {
 				public void run() {
-					try{geneRequester.receiveGeneAnnotations(t.get());}catch(Exception e){e.printStackTrace();}
+					try{geneRequester.receiveGeneAnnotations(annotTask.get());}catch(Exception e){e.printStackTrace();}
 				}
 			};
 			wt.start();
@@ -1489,19 +1499,18 @@ public class MicroarrayData
 		}
 	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label, boolean pValues) 
 		{
-		//t=new AnnotationTask(genes);
-		t=new AnnotationTask(ArrayUtils.toIntArray(genes));
+		annotTask=new AnnotationTask(ArrayUtils.toIntArray(genes));
 		
-		t.searchGO=true;
+		annotTask.searchGO=true;
 		AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(label);
-		amd2.setTask(t);
+		amd2.setTask(annotTask);
 		amd2.run();
 		if(gr!=null)
 			{
 			geneRequester=gr;
 			Thread wt=new Thread() {
 				public void run() {
-					try{geneRequester.receiveGeneAnnotations(t.get());}catch(Exception e){e.printStackTrace();}
+					try{geneRequester.receiveGeneAnnotations(annotTask.get());}catch(Exception e){e.printStackTrace();}
 				}
 			};
 			wt.start();
@@ -2092,7 +2101,7 @@ public class MicroarrayData
 				//getGeneAnnotationR();
 				getMultipleGeneAnnotationsR();
 			else
-				getGeneAnnotationNCBI( );
+				getGeneAnnotationNCBI();
 			done();
 			return galist;
 			}
@@ -2378,7 +2387,6 @@ public class MicroarrayData
 				for(int i=0;i<numGenes;i++)//Read gene names
 					{
 					String cad=in.readLine();
-				//	System.out.println(i+" "+cad);
 					if(cad.contains("\t\t"))
 						{
 						JOptionPane.showMessageDialog(null,
@@ -2743,7 +2751,8 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 	 */
 	public int[] sortColumnsBy(String factor)
 		{
-		REXP exp=re.eval("as.integer(rank("+ getRList(experimentFactorValues.get(factor))+", ties.method=\"first\")-1)");//TODO: null pointer if it's not a factor but the ids (it could also be done by sort(..., dindex=T)$ix)
+		REXP exp=re.eval("as.integer(rank("+ RUtils.getRList(experimentFactorValues.get(factor))+", " +
+				"ties.method=\"first\")-1)");//TODO: null pointer if it's not a factor but the ids (it could also be done by sort(..., dindex=T)$ix)
 		columnOrder=exp.asIntArray();
 		sortColumns();
 		return getColumnOrder();
@@ -2776,21 +2785,7 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 		return co;
 		}
 	
-	/**
-	 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
-	 * @param list
-	 * @return
-	 */
-	private String getRList(String[] list)
-		{
-		String ret="c(";
-		for(String i:list)
-			{
-			ret+="\""+i+"\",";
-			}
-		return ret.substring(0, ret.length()-1)+")";
-		}
-
+	
 	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, int sdsAbove, String lowEFV, String lowEF, int sdsBelow)
 		{
 		if(!experimentFactors.contains(highEF) && !highEF.equals("none333") && !highEF.equals("rest") )
@@ -2818,7 +2813,25 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 			}
 		return ret;
 		}
-	
+	/**
+	 * Returns the ids of the conditions that have the corresponding experimental factor value for a given experimental factor
+	 * @param ef - experimental factor to be checked
+	 * @param efv - experimental factor value that have the conditions to be returned
+	 * @return
+	 */
+	public Integer[] getConditions(String ef, String efv, boolean notEqual)
+		{
+		if(ef==null || efv==null || ef.length()==0 || efv.length()==0 )
+			{System.err.println("No ef or efv specified"); return null;}
+		LinkedList<Integer> ret=new LinkedList<Integer>();
+		String[] efvs=experimentFactorValues.get(ef);
+		for(int i=0;i<efvs.length;i++)
+			{
+			if(notEqual)	{if(!efvs[i].equals(efv))	ret.add(i);}
+			else			{if(efvs[i].equals(efv))		ret.add(i);}
+			}
+		return ret.toArray(new Integer[ret.size()]);
+		}
 	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, String lowEFV, String lowEF)
 		{
 		return selectHiLo(highEFV, highEF, 0, lowEFV, lowEF, 0);

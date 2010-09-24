@@ -186,7 +186,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	else if(e.getActionCommand().equals("Export Selection"))
 		{
 		JFileChooser selecFile = new JFileChooser();
-		//selecFile.addChoosableFileFilter(new BiclusterResultsFilter());
 		selecFile.addChoosableFileFilter(new TextFileFilter());
 		selecFile.setCurrentDirectory(new File(defaultPath));
 		
@@ -205,6 +204,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	else if(e.getActionCommand().equals("Download AE experiment"))
 		{
 		DownloadPanel dp=new DownloadPanel(this);
+		dp.setLocation((ventana.getWidth()-dp.getWidth())/2, (ventana.getHeight()-dp.getHeight())/2);
 		dp.setVisible(true);
 		}
 	//------------------------- CARGAR CONFIGURACION -------------------------
@@ -300,13 +300,10 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	{
 		System.out.println("Finished microarray data reading with status: "+status);
 		//---
-		if(status==0 && sesion.getMicroarrayData()!=null)
+		if(status==0)//&& sesion.getMicroarrayData()!=null)
 			{
 			// Actualizar las ventanas activas		
-			//sesion.fileLoaded();
 			sesion.microarrayPath=fichero.getAbsolutePath();
-			sesion.updateData();
-			
 			try{
 			pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/path.txt"));
 			pathWriter.write(sesion.microarrayPath);
@@ -338,7 +335,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					p.setName(fichero.getName());
 					}
 				}
-			sesion.analysis= new Analysis(sesion.getMicroarrayData());
+			sesion.updateData();
+			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
 			if(loadingSession)
 				loadSessionAfterMicroarray();
 			}
@@ -941,10 +939,11 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		{
 		boolean error=false;
 		prepareDesktop();
+		System.out.println("---desktop ready, session started");
 		try {
-			sesion.analysis=new Analysis();
 			sesion.reader.readMicroarray(path, sesion, this);
 			sesion.microarrayPath=fichero.getAbsolutePath();
+			
 			} catch (FileNotFoundException e1) {
 			JOptionPane.showMessageDialog(null,
                     "File not found: "+fichero.getName(),

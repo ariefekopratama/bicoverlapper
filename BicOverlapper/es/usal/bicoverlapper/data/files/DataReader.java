@@ -100,21 +100,6 @@ public class DataReader {
 	 * ...
 	 * rowM	expM1	expM2	...	expMN
 	 */
-	/*public void readMicroarray(String path, File fichero,Session sesion, MicroarrayRequester mr) throws Exception 
-		{
-		int skipColumns=1;
-		int skipRows=1;
-		double t1=System.currentTimeMillis();
-		double t2=System.currentTimeMillis();
-		MicroarrayData md=new MicroarrayData(path.replace("\\","/"), false, skipRows,skipColumns,1, mr, sesion.analysis.r);
-		sesion.setMicroarrayData(md);
-		
-		t1=System.currentTimeMillis();
-		System.out.println("Time to load microarray data: "+(t1-t2)/1000+" seconds");
-		t2=System.currentTimeMillis();
-		System.out.println("Time to load fichero: "+(t2-t1)/1000+" seconds");
-		}*/
-	
 	public void readMicroarray(String path,Session sesion, MicroarrayRequester mr) throws Exception 
 		{
 		int skipColumns=1;
@@ -123,7 +108,6 @@ public class DataReader {
 		double t2=System.currentTimeMillis();
 		MicroarrayData md=new MicroarrayData(path, false, skipRows,skipColumns,1, mr, sesion.analysis.r);
 		sesion.setMicroarrayData(md);
-		
 		t1=System.currentTimeMillis();
 		System.out.println("Time to load microarray data: "+(t1-t2)/1000+" seconds");
 		t2=System.currentTimeMillis();

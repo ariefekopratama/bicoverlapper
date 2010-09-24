@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.kernel.managers.biclustering;
+package es.usal.bicoverlapper.kernel.panels;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;

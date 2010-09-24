@@ -143,6 +143,8 @@ PropertyChangeListener, Runnable {
 		public final static int XMOTIFS=3; 
 		public final static int SPECTRAL=4; 
 		public final static int ISA=5; 
+		public final static int LIMMA=6; 
+		public final static int LIMMAEF=7; 
 			
 		
 		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
@@ -210,6 +212,46 @@ PropertyChangeListener, Runnable {
 							((Integer)params.get(2)).intValue(),
 							((String)params.get(3)), 
 							((String)params.get(4))); 
+					
+					break;
+				case LIMMA:
+					System.out.println(((Integer[])params.get(0))[0]);
+					System.out.println(((Integer[])params.get(1))[0]);
+					System.out.println(((Boolean)params.get(2)).booleanValue());
+					System.out.println(((Double)params.get(3)).doubleValue());
+					System.out.println(((Double)params.get(4)).doubleValue());
+					System.out.println(((String)params.get(5)));
+					System.out.println(((String)params.get(6)));
+					System.out.println(((String)params.get(7)));
+					
+					res=b.limma(	((Integer[])params.get(0)), 
+							((Integer[])params.get(1)), 
+							((Boolean)params.get(2)).booleanValue(),
+							((Double)params.get(3)).doubleValue(), 
+							((Double)params.get(4)).doubleValue(),
+							((String)params.get(5)),
+							((String)params.get(6)),
+							((String)params.get(7))		); 
+					
+					break;
+				case LIMMAEF:
+					System.out.println(((String)params.get(0)));
+					System.out.println(((String)params.get(1)));
+					System.out.println(((Boolean)params.get(2)).booleanValue());
+					System.out.println(((Double)params.get(3)).doubleValue());
+					System.out.println(((Double)params.get(4)).doubleValue());
+					System.out.println(((String)params.get(5)));
+					System.out.println(((String)params.get(6)));
+					System.out.println(((String)params.get(7)));
+					
+					res=b.limmaEF(	((String)params.get(0)), 
+							((String)params.get(1)), 
+							((Boolean)params.get(2)).booleanValue(),
+							((Double)params.get(3)).doubleValue(), 
+							((Double)params.get(4)).doubleValue(),
+							((String)params.get(5)),
+							((String)params.get(6)),
+							((String)params.get(7))		); 
 					
 					break;
 				case SPECTRAL:

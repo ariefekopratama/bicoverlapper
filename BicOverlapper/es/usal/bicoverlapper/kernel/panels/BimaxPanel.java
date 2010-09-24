@@ -1,5 +1,6 @@
-package es.usal.bicoverlapper.kernel.managers.biclustering;
+package es.usal.bicoverlapper.kernel.panels;
 
+import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -7,6 +8,7 @@ import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 
 import java.awt.Component;
 import java.awt.Cursor;
@@ -40,14 +42,18 @@ import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
 
-public class PlaidPanel{
+public class BimaxPanel{
 	
 	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
 	private JLabel jLabel = null;
 	private JLabel jLabel1 = null;
+	private JLabel jLabel2 = null;
+	private JTextField jTextField2 = null;
 	private JLabel jLabel3 = null;
 	private JRadioButton jRadioButton = null;
 	private JRadioButton jRadioButton1 = null;
+	private JTextField jTextField21 = null;
+	private JTextField jTextField211 = null;
 	private JTextField jTextField22 = null;
 	private JTextField jTextField221 = null;
 	private JCheckBox jCheckBox = null;
@@ -58,8 +64,8 @@ public class PlaidPanel{
 	private Session session =null;
 	public File resultsFile=null;
 	public String defaultPath="";  //  @jve:decl-index=0:
-	private JRadioButton jRadioButton11 = null;
 	protected AnalysisTask t;
+	private JCheckBox jCheckBox2 = null;
 	private JCheckBox jCheckBox3 = null;
 	private JLabel jLabel21 = null;
 	private JLabel jLabel211 = null;
@@ -69,10 +75,9 @@ public class PlaidPanel{
 	private JTextField jTextField22111 = null;
 	private JTextField jTextField221111 = null;
 	private JTextField jTextField2211111 = null;
-	
-	public PlaidPanel()
+	public BimaxPanel()
 	{}	
-	public PlaidPanel(Session s)
+	public BimaxPanel(Session s)
 	{
 		session=s;
 	}	
@@ -94,45 +99,53 @@ public class PlaidPanel{
 	public JPanel getJPanel2() {
 		if (jPanel == null) {
 			jLabel21111 = new JLabel();
-			jLabel21111.setBounds(new Rectangle(29, 230, 140, 16));
-			jLabel21111.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel21111.setBounds(new Rectangle(32, 248, 145, 16));
 			jLabel21111.setText("Max. # biclusters");
 			jLabel21111.setEnabled(false);
+			jLabel21111.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel2111 = new JLabel();
-			jLabel2111.setBounds(new Rectangle(30, 210, 139, 16));
-			jLabel2111.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel2111.setBounds(new Rectangle(33, 228, 143, 16));
 			jLabel2111.setText("Max. # conditions");
 			jLabel2111.setEnabled(false);
+			jLabel2111.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel211 = new JLabel();
-			jLabel211.setBounds(new Rectangle(30, 190, 141, 16));
-			jLabel211.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel211.setBounds(new Rectangle(32, 208, 144, 16));
 			jLabel211.setText("Max. # genes");
 			jLabel211.setEnabled(false);
+			jLabel211.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel21 = new JLabel();
-			jLabel21.setBounds(new Rectangle(30, 170, 147, 16));
-			jLabel21.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel21.setBounds(new Rectangle(31, 188, 144, 16));
 			jLabel21.setText("Max. % of overlap");
 			jLabel21.setEnabled(false);
+			jLabel21.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel3 = new JLabel();
-			jLabel3.setText("Cluster");
-			jLabel3.setBounds(new Rectangle(10, 62, 93, 16));
-			jLabel3.setToolTipText("Select among gene clustering, condition clustering or biclustering");
+			jLabel3.setText("Binary threshold");
+			jLabel3.setBounds(new Rectangle(10, 75, 172, 16));
+			jLabel3.setToolTipText("Microarray matrix must be binarized in order to run Bimax");
+			jLabel2 = new JLabel();
+			jLabel2.setText("Max. # of biclusters");
+			jLabel2.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel2.setBounds(new Rectangle(10, 48, 167, 16));
 			jLabel1 = new JLabel();
-			jLabel1.setText("Column release");
-			jLabel1.setToolTipText("As above, with columns");
-			jLabel1.setBounds(new Rectangle(10, 31, 109, 16));
+			jLabel1.setText("Min. # of conditions");
+			jLabel1.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel1.setBounds(new Rectangle(10, 31, 168, 16));
 			jLabel = new JLabel();
-			jLabel.setText("Row release");
-			jLabel.setToolTipText("Scalar in [0,1] (recommended [0.5-0.7]) used as threshold to select rows based on row homogeneity");
-			jLabel.setBounds(new Rectangle(10, 13, 85, 16));
+			jLabel.setText("Min. # of genes");
+			jLabel.setToolTipText("Biclusters with at least this number of genes are searched");
+			jLabel.setBounds(new Rectangle(10, 13, 165, 16));
 			jPanel = new JPanel();
 			jPanel.setLayout(null);
-			jPanel.setSize(new Dimension(241, 381));
+			jPanel.setSize(new Dimension(241, 406));
 			jPanel.add(jLabel, null);
 			jPanel.add(jLabel1, null);
+			jPanel.add(jLabel2, null);
+			jPanel.add(getJTextField2(), null);
 			jPanel.add(jLabel3, null);
 			jPanel.add(getJRadioButton(), null);
 			jPanel.add(getJRadioButton1(), null);
+			jPanel.add(getJTextField21(), null);
+			jPanel.add(getJTextField211(), null);
 			jPanel.add(getJTextField22(), null);
 			jPanel.add(getJTextField221(), null);
 			jPanel.add(getJCheckBox(), null);
@@ -140,7 +153,7 @@ public class PlaidPanel{
 			jPanel.add(getJCheckBox1(), null);
 			jPanel.add(getJTextField212(), null);
 			jPanel.add(getJButton1(), null);
-			jPanel.add(getJRadioButton11(), null);
+			jPanel.add(getJCheckBox2(), null);
 			jPanel.add(getJCheckBox3(), null);
 			jPanel.add(jLabel21, null);
 			jPanel.add(jLabel211, null);
@@ -154,7 +167,20 @@ public class PlaidPanel{
 		return jPanel;
 	}
 
-	
+	/**
+	 * This method initializes jTextField2	
+	 * 	
+	 * @return javax.swing.JTextField	
+	 */
+	private JTextField getJTextField2() {
+		if (jTextField2 == null) {
+			jTextField2 = new JTextField();
+			jTextField2.setText("20");
+			jTextField2.setBounds(new Rectangle(186, 49, 33, 20));
+		}
+		return jTextField2;
+	}
+
 	/**
 	 * This method initializes jRadioButton	
 	 * 	
@@ -163,16 +189,23 @@ public class PlaidPanel{
 	private JRadioButton getJRadioButton() {
 		if (jRadioButton == null) {
 			jRadioButton = new JRadioButton();
-			jRadioButton.setSelected(false);
-			jRadioButton.setToolTipText("Gene Clustering");
-			jRadioButton.setText("Genes");
-			jRadioButton.setBounds(new Rectangle(30, 78, 107, 24));
+			jRadioButton.setSelected(true);
+			jRadioButton.setToolTipText("This percentage of the highest levels will be 1, the rest will be 0");
+			jRadioButton.setText("By percentage");
+			jRadioButton.setBounds(new Rectangle(30, 92, 146, 24));
 			jRadioButton.addChangeListener(new javax.swing.event.ChangeListener() {
 				public void stateChanged(javax.swing.event.ChangeEvent e) {
 					if(jRadioButton.isSelected())	
 						{
 						jRadioButton1.setSelected(false);
-						jRadioButton11.setSelected(false);
+						jTextField21.setEnabled(true);
+						jTextField211.setEnabled(false);
+						}
+					else							
+						{
+						jRadioButton1.setSelected(true);
+						jTextField21.setEnabled(false);
+						jTextField211.setEnabled(true);
 						}
 				}
 			});
@@ -189,22 +222,58 @@ public class PlaidPanel{
 	private JRadioButton getJRadioButton1() {
 		if (jRadioButton1 == null) {
 			jRadioButton1 = new JRadioButton();
-			jRadioButton1.setText("Conditions");
-			jRadioButton1.setToolTipText("Condition clustering");
+			jRadioButton1.setText("By expression value");
+			jRadioButton1.setToolTipText("Expression levels above this value will be 1, the rest will be 0");
 
-			jRadioButton1.setBounds(new Rectangle(30, 96, 151, 24));
+			jRadioButton1.setBounds(new Rectangle(30, 114, 151, 24));
 			jRadioButton1.addChangeListener(new javax.swing.event.ChangeListener() {
 				public void stateChanged(javax.swing.event.ChangeEvent e) {
 					if(jRadioButton1.isSelected())	
 						{
 						jRadioButton.setSelected(false);
-						jRadioButton11.setSelected(false);
+						jTextField211.setEnabled(true);
+						jTextField21.setEnabled(false);
+						}
+					else							
+						{
+						jRadioButton.setSelected(true);
+						jTextField211.setEnabled(false);
+						jTextField21.setEnabled(true);
 						}
 				}
 			});
 		
 		}
 		return jRadioButton1;
+	}
+
+	/**
+	 * This method initializes jTextField21	
+	 * 	
+	 * @return javax.swing.JTextField	
+	 */
+	private JTextField getJTextField21() {
+		if (jTextField21 == null) {
+			jTextField21 = new JTextField();
+			jTextField21.setText("5");
+			jTextField21.setBounds(new Rectangle(187, 91, 33, 24));
+		}
+		return jTextField21;
+	}
+
+	/**
+	 * This method initializes jTextField211	
+	 * 	
+	 * @return javax.swing.JTextField	
+	 */
+	private JTextField getJTextField211() {
+		if (jTextField211 == null) {
+			jTextField211 = new JTextField();
+			jTextField211.setText("0.95");
+			jTextField211.setEnabled(false);
+			jTextField211.setBounds(new Rectangle(187, 115, 33, 24));
+		}
+		return jTextField211;
 	}
 
 	/**
@@ -216,7 +285,7 @@ public class PlaidPanel{
 		if (jTextField22 == null) {
 			jTextField22 = new JTextField();
 			jTextField22.setBounds(new Rectangle(186, 29, 33, 20));
-			jTextField22.setText("0.7");
+			jTextField22.setText("2");
 		}
 		return jTextField22;
 	}
@@ -230,7 +299,7 @@ public class PlaidPanel{
 		if (jTextField221 == null) {
 			jTextField221 = new JTextField();
 			jTextField221.setBounds(new Rectangle(186, 8, 33, 20));
-			jTextField221.setText("0.7");
+			jTextField221.setText("2");
 		}
 		return jTextField221;
 	}
@@ -243,7 +312,7 @@ public class PlaidPanel{
 	private JCheckBox getJCheckBox() {
 		if (jCheckBox == null) {
 			jCheckBox = new JCheckBox();
-			jCheckBox.setBounds(new Rectangle(10, 259, 107, 21));
+			jCheckBox.setBounds(new Rectangle(10, 277, 107, 21));
 			jCheckBox.setText("Write to file");
 			jCheckBox.setToolTipText("If checked, biclustering results will be stored in the selected path");
 			jCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -278,7 +347,7 @@ public class PlaidPanel{
 		if (jButton == null) {
 			jButton = new JButton();
 			jButton.setEnabled(false);
-			jButton.setBounds(new Rectangle(146, 264, 73, 17));
+			jButton.setBounds(new Rectangle(148, 280, 73, 17));
 			jButton.setText("Select");
 			jButton.addActionListener(new java.awt.event.ActionListener() {
 
@@ -308,7 +377,7 @@ public class PlaidPanel{
 		if (jCheckBox1 == null) {
 			jCheckBox1 = new JCheckBox();
 			jCheckBox1.setToolTipText("This brief description will be added to the biclustering results file");
-			jCheckBox1.setBounds(new Rectangle(24, 285, 123, 24));
+			jCheckBox1.setBounds(new Rectangle(19, 302, 123, 24));
 			jCheckBox1.setText("Add description");
 			jCheckBox1.setEnabled(false);
 		}
@@ -323,7 +392,7 @@ public class PlaidPanel{
 	private JTextField getJTextField212() {
 		if (jTextField212 == null) {
 			jTextField212 = new JTextField();
-			jTextField212.setBounds(new Rectangle(39, 315, 181, 20));
+			jTextField212.setBounds(new Rectangle(37, 330, 181, 20));
 			jTextField212.setText("");
 		}
 		return jTextField212;
@@ -337,8 +406,8 @@ public class PlaidPanel{
 	private JButton getJButton1() {
 		if (jButton1 == null) {
 			jButton1 = new JButton();
-			jButton1.setBounds(new Rectangle(71, 344, 106, 26));
-			jButton1.setText("Run Plaid");
+			jButton1.setBounds(new Rectangle(63, 370, 106, 26));
+			jButton1.setText("Run Bimax");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
@@ -360,16 +429,11 @@ public class PlaidPanel{
 							{
 							if(getJCheckBox().isSelected())	fileName=defaultPath;
 							}
-					
-						   //((JInternalFrame)(getJPanel2().getParent().getParent().getParent().getParent())).dispose();
-						((JFrame)(getJPanel2().getTopLevelAncestor())).dispose();
-					
-						String cluster="b";
-						if(getJRadioButton().isSelected())	cluster="r";
-						if(getJRadioButton1().isSelected())	cluster="c";
 						
-						int[] filterOptions=null;
-						if(getJCheckBox3().isSelected())
+					 	((JFrame)(getJPanel2().getTopLevelAncestor())).dispose();
+						
+					   int[] filterOptions=null;
+					   if(getJCheckBox3().isSelected())
 						   	{
 							filterOptions=new int[4];
 							filterOptions[0]=new Integer(getJTextField2211().getText()).intValue();
@@ -377,65 +441,58 @@ public class PlaidPanel{
 							filterOptions[2]=new Integer(getJTextField221111().getText()).intValue();
 							filterOptions[3]=new Integer(getJTextField22111().getText()).intValue();
 						   	}
-						b.setFilterOptions(filterOptions);
-						ArrayList<Object> p=new ArrayList<Object>();
-						   p.add(cluster);
-						   p.add(new Float(getJTextField221().getText()).floatValue());
-						   p.add(new Float(getJTextField22().getText()).floatValue());
-						   p.add(fileName);
-						   p.add(getJTextField212().getText());
-						   AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.PLAID, p);
-						   apm.run();
-						   t=apm.getTask();
-						   Thread wt=new Thread() {
-								public void run() {
-									try{
-										String fileName=t.get();
-										if(fileName==null)	
-											JOptionPane.showMessageDialog(null,
-								                    "No biclusters found",
-								                    "Error",JOptionPane.ERROR_MESSAGE);
-										
+					   b.setFilterOptions(filterOptions);
+					   ArrayList<Object> p=new ArrayList<Object>();
+					   p.add(getJRadioButton().isSelected()? true:false);
+					   p.add(getJRadioButton().isSelected()? new Double(getJTextField21().getText()).doubleValue():new Double(getJTextField211().getText()).doubleValue());
+					   p.add(getJCheckBox2().isSelected()? true:false);
+					   p.add(new Integer(getJTextField221().getText()).intValue());
+					   p.add(new Integer(getJTextField22().getText()).intValue());
+					   p.add(new Integer(getJTextField2().getText()).intValue());
+					   p.add(fileName);
+					   p.add(getJTextField212().getText());
+					   AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.BIMAX, p);
+					   apm.run();
+					   t=apm.getTask();
+					   Thread wt=new Thread() {
+							public void run() {
+								try{
+									String fileName=t.get();
+									if(fileName==null)	
+										JOptionPane.showMessageDialog(null,
+							                    "No biclusters found",
+							                    "Error",JOptionPane.ERROR_MESSAGE);
+									
+									else
+										{
+										if(fileName.indexOf("/")>-1)
+											session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 										else
-											{
-											if(fileName.indexOf("/")>-1)
-												session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
-											else
-												session.reader.readBiclusterResults("",fileName, fileName, session);
-											}
-										}catch(Exception e){e.printStackTrace();}
-								}
-							};
-							wt.start();
+											session.reader.readBiclusterResults("",fileName, fileName, session);
+										}
+									}catch(Exception e){e.printStackTrace();}
 							}
+						};
+						wt.start();
+						}
 					}
 			});
 		}
 		return jButton1;
 	}
 	/**
-	 * This method initializes jRadioButton11	
+	 * This method initializes jCheckBox2	
 	 * 	
-	 * @return javax.swing.JRadioButton	
+	 * @return javax.swing.JCheckBox	
 	 */
-	private JRadioButton getJRadioButton11() {
-		if (jRadioButton11 == null) {
-			jRadioButton11 = new JRadioButton();
-			jRadioButton11.setBounds(new Rectangle(30, 114, 64, 24));
-			jRadioButton11.setText("Both");
-			jRadioButton11.setSelected(true);
-			jRadioButton11.setToolTipText("Biclustering");
-			jRadioButton11.addChangeListener(new javax.swing.event.ChangeListener() {
-				public void stateChanged(javax.swing.event.ChangeEvent e) {
-					if(jRadioButton11.isSelected())	
-						{
-						jRadioButton.setSelected(false);
-						jRadioButton1.setSelected(false);
-						}
-				}
-			});
+	private JCheckBox getJCheckBox2() {
+		if (jCheckBox2 == null) {
+			jCheckBox2 = new JCheckBox();
+			jCheckBox2.setBounds(new Rectangle(30, 137, 157, 24));
+			jCheckBox2.setText("Under threshold");
+			jCheckBox2.setToolTipText("If checked, biclustering results will be stored in the selected path");
 		}
-		return jRadioButton11;
+		return jCheckBox2;
 	}
 	/**
 	 * This method initializes jCheckBox3	
@@ -445,7 +502,7 @@ public class PlaidPanel{
 	private JCheckBox getJCheckBox3() {
 		if (jCheckBox3 == null) {
 			jCheckBox3 = new JCheckBox();
-			jCheckBox3.setBounds(new Rectangle(10, 139, 81, 24));
+			jCheckBox3.setBounds(new Rectangle(10, 164, 155, 24));
 			jCheckBox3.setText("Post-filter");
 			jCheckBox3.setToolTipText("Check to perform post-filter and select filter options");
 			jCheckBox3.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -472,9 +529,9 @@ public class PlaidPanel{
 						jTextField221111.setEnabled(false);
 						jTextField2211111.setEnabled(false);
 						}
-					}
-					});
 				}
+			});
+		}
 		return jCheckBox3;
 	}
 	/**
@@ -485,7 +542,7 @@ public class PlaidPanel{
 	private JTextField getJTextField2211() {
 		if (jTextField2211 == null) {
 			jTextField2211 = new JTextField();
-			jTextField2211.setBounds(new Rectangle(186, 170, 33, 20));
+			jTextField2211.setBounds(new Rectangle(186, 188, 33, 20));
 			jTextField2211.setText("25");
 			jTextField2211.setEnabled(false);
 		}
@@ -499,9 +556,9 @@ public class PlaidPanel{
 	private JTextField getJTextField22111() {
 		if (jTextField22111 == null) {
 			jTextField22111 = new JTextField();
-			jTextField22111.setBounds(new Rectangle(186, 190, 33, 20));
-			jTextField22111.setText("100");
+			jTextField22111.setBounds(new Rectangle(186, 208, 33, 20));
 			jTextField22111.setEnabled(false);
+			jTextField22111.setText("100");
 		}
 		return jTextField22111;
 	}
@@ -513,9 +570,9 @@ public class PlaidPanel{
 	private JTextField getJTextField221111() {
 		if (jTextField221111 == null) {
 			jTextField221111 = new JTextField();
-			jTextField221111.setBounds(new Rectangle(186, 210, 33, 20));
-			jTextField221111.setText("100");
+			jTextField221111.setBounds(new Rectangle(186, 228, 33, 20));
 			jTextField221111.setEnabled(false);
+			jTextField221111.setText("100");
 		}
 		return jTextField221111;
 	}
@@ -527,9 +584,9 @@ public class PlaidPanel{
 	private JTextField getJTextField2211111() {
 		if (jTextField2211111 == null) {
 			jTextField2211111 = new JTextField();
-			jTextField2211111.setBounds(new Rectangle(186, 230, 33, 20));
-			jTextField2211111.setText("50");
+			jTextField2211111.setBounds(new Rectangle(186, 248, 33, 20));
 			jTextField2211111.setEnabled(false);
+			jTextField2211111.setText("50");
 		}
 		return jTextField2211111;
 	}

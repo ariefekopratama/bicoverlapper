@@ -28,7 +28,35 @@ public final class RUtils {
 			}
 		return mat;
 		}
+	/**
+	 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
+	 * @param list
+	 * @return
+	 */
+	public static String getRList(String[] list)
+		{
+		String ret="c(";
+		for(String i:list)
+			{
+			ret+="\""+i+"\",";
+			}
+		return ret.substring(0, ret.length()-1)+")";
+		}
 	
+	/**
+	 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
+	 * @param list
+	 * @return
+	 */
+	public static String getRList(Integer[] list)
+		{
+		String ret="c(";
+		for(Integer i:list)
+			{
+			ret+=i+",";
+			}
+		return ret.substring(0, ret.length()-1)+")";
+		}
 	public String sayHello(String cad)
 		{
 		return "Hello"+cad;

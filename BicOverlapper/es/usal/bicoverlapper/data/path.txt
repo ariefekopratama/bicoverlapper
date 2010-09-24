@@ -1,1 +1,1 @@
-C:\Users\Rodrigo\Documents\data\ecoli\synthetic\EcoliSyntren.txt
+C:\Documents and Settings\Rodrigo\Mis documentos\EBI2010\workspace\data\manuel\processed\E-MTAB-153ratios.txt

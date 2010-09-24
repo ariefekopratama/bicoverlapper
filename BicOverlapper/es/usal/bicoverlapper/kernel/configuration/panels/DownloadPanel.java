@@ -75,50 +75,56 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 	
 	private void initGUI() {
 		try {
-			FormLayout thisLayout = new FormLayout(
-					"max(p;5dlu), max(p;5dlu), max(p;5dlu), max(p;5dlu)", 
-					"max(p;5dlu), max(p;5dlu), max(p;5dlu), max(p;5dlu), max(p;15dlu), max(p;15dlu), max(p;15dlu), max(p;15dlu), max(p;15dlu), max(p;15dlu)");
-			this.setLayout(thisLayout);
-			setPreferredSize(new Dimension(400, 150));
-			setSize(new Dimension(400, 150));
+			getContentPane().setLayout(null);
+			this.setPreferredSize(new java.awt.Dimension(449, 141));
+			this.setSize(449, 141);
 			{
 				name = new JLabel();
-				this.add(name, new CellConstraints("1, 1, 1, 1, default, default"));
+				getContentPane().add(name, new CellConstraints("1, 1, 1, 1, default, default"));
 				name.setText("Accession name of the experiment (e.g. E-MEXP-328)   ");
+				name.setBounds(6, 10, 266, 14);
 			}
 			{
 				jTextField1 = new JTextField();
-				this.add(jTextField1, new CellConstraints("2, 1, 1, 1, default, default"));
+				getContentPane().add(jTextField1, new CellConstraints("2, 1, 1, 1, default, default"));
 				jTextField1.setActionCommand("accessionName");
+				jTextField1.setBounds(357, 4, 72, 21);
 				jTextField1.addKeyListener(this);
 			}
 			{
 				filePath = new JLabel();
-				this.add(filePath, new CellConstraints("1, 2, 1, 1, default, default"));
+				getContentPane().add(filePath, new CellConstraints("1, 2, 1, 1, default, default"));
 				filePath.setText("Select a path to store the processed experiment");
+				filePath.setBounds(6, 32, 266, 14);
 			}
 			{
 				selectFile = new JButton();
-				this.add(selectFile, new CellConstraints("2, 2, 1, 1, default, default"));
+				getContentPane().add(selectFile, new CellConstraints("2, 2, 1, 1, default, default"));
 				selectFile.setActionCommand("select");
 				selectFile.addActionListener(this);
 				selectFile.setText("select");
+				selectFile.setBounds(357, 28, 71, 21);
 			}
 			{
 				DownloadButton = new JButton();
-				this.add(DownloadButton, new CellConstraints("2, 6, 1, 1, default, default"));
+				getContentPane().add(DownloadButton, new CellConstraints("2, 4, 1, 1, default, default"));
 				DownloadButton.setText("download");
+				DownloadButton.setBounds(357, 77, 71, 21);
 				DownloadButton.addActionListener(this);
 				
 			}
 			{
 				Instructions = new JLabel();
-				this.add(Instructions, new CellConstraints("1, 6, 1, 1, default, default"));
+				getContentPane().add(Instructions, new CellConstraints("1, 4, 1, 1, default, default"));
 				Instructions.setText("Download + RMA preprocessing");
+				Instructions.setBounds(5, 80, 266, 14);
 			}
 			{
 				jLabel1 = new JLabel();
 				getContentPane().add(jLabel1, new CellConstraints("1, 3, 1, 1, default, default"));
+				jLabel1.setBounds(12, 55, 416, 14);
+				jLabel1.setFont(new java.awt.Font("Tahoma",0,11));
+				jLabel1.setForeground(new java.awt.Color(128,128,255));
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -171,7 +177,7 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 			defaultPath=defaultPath.substring(0, defaultPath.lastIndexOf("/"))+"/";
 			
 			path=defaultPath+jTextField1.getText()+".txt";
-			int maxLength=50;
+			int maxLength=65;
 			String labelPath=path;
 			if(labelPath.length()>maxLength)	labelPath=path.substring(0,10)+"..."+path.substring(path.length()-(maxLength-13), path.length());
 	    	jLabel1.setText(labelPath);
