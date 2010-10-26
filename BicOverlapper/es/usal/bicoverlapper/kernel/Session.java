@@ -264,8 +264,8 @@ public class Session implements KeyListener {
 		}
 		
 		this.grupoVentanasDefecto.clear();
-		
 		this.numVentanaCoordenadasParalelas = 1;
+		analysis.unloadMatrix();
 		}
 	
 	/**

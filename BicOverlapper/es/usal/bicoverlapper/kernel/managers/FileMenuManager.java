@@ -324,7 +324,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			else			
 				{
 				JDesktopPane p=ventana.getActiveWorkDesktop().getPanel();
-				if(p.getName().length()>0)	
+				if(p.getName().length()>0 && !	p.getName().contains(".txt"))	
 					{
 					ventana.getDesktop().setTitleAt(0, p.getName()+" | "+fichero.getName());
 					p.setName(p.getName()+" | "+fichero.getName());
@@ -924,6 +924,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			{
 			addVista=false;
 			sesion = ventana.getActiveWorkDesktop().getSession();
+			sesion.restartSession();
 			}
 		else
 			{

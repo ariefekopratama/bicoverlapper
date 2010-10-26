@@ -40,6 +40,19 @@ import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class XMotifsPanel{
 	
 	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
@@ -284,8 +297,8 @@ public class XMotifsPanel{
 		if (jCheckBox1 == null) {
 			jCheckBox1 = new JCheckBox();
 			jCheckBox1.setToolTipText("This brief description will be added to the biclustering results file");
-			jCheckBox1.setBounds(new Rectangle(32, 316, 123, 24));
-			jCheckBox1.setText("Add description");
+			jCheckBox1.setBounds(32, 316, 184, 24);
+			jCheckBox1.setText("Add description line");
 			jCheckBox1.setEnabled(false);
 		}
 		return jCheckBox1;
@@ -440,7 +453,7 @@ public class XMotifsPanel{
 	private JCheckBox getJCheckBox2() {
 		if (jCheckBox2 == null) {
 			jCheckBox2 = new JCheckBox();
-			jCheckBox2.setBounds(new Rectangle(31, 28, 153, 21));
+			jCheckBox2.setBounds(31, 28, 187, 21);
 			jCheckBox2.setText("Discretize by quantiles");
 		}
 		return jCheckBox2;

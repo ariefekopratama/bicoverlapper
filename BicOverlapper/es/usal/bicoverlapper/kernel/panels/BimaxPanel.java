@@ -42,6 +42,19 @@ import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class BimaxPanel{
 	
 	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
@@ -176,7 +189,7 @@ public class BimaxPanel{
 		if (jTextField2 == null) {
 			jTextField2 = new JTextField();
 			jTextField2.setText("20");
-			jTextField2.setBounds(new Rectangle(186, 49, 33, 20));
+			jTextField2.setBounds(186, 49, 43, 20);
 		}
 		return jTextField2;
 	}
@@ -256,7 +269,7 @@ public class BimaxPanel{
 		if (jTextField21 == null) {
 			jTextField21 = new JTextField();
 			jTextField21.setText("5");
-			jTextField21.setBounds(new Rectangle(187, 91, 33, 24));
+			jTextField21.setBounds(187, 91, 42, 24);
 		}
 		return jTextField21;
 	}
@@ -271,7 +284,7 @@ public class BimaxPanel{
 			jTextField211 = new JTextField();
 			jTextField211.setText("0.95");
 			jTextField211.setEnabled(false);
-			jTextField211.setBounds(new Rectangle(187, 115, 33, 24));
+			jTextField211.setBounds(187, 115, 42, 24);
 		}
 		return jTextField211;
 	}
@@ -284,7 +297,7 @@ public class BimaxPanel{
 	private JTextField getJTextField22() {
 		if (jTextField22 == null) {
 			jTextField22 = new JTextField();
-			jTextField22.setBounds(new Rectangle(186, 29, 33, 20));
+			jTextField22.setBounds(186, 29, 43, 20);
 			jTextField22.setText("2");
 		}
 		return jTextField22;
@@ -298,7 +311,7 @@ public class BimaxPanel{
 	private JTextField getJTextField221() {
 		if (jTextField221 == null) {
 			jTextField221 = new JTextField();
-			jTextField221.setBounds(new Rectangle(186, 8, 33, 20));
+			jTextField221.setBounds(186, 8, 43, 20);
 			jTextField221.setText("2");
 		}
 		return jTextField221;
@@ -377,8 +390,8 @@ public class BimaxPanel{
 		if (jCheckBox1 == null) {
 			jCheckBox1 = new JCheckBox();
 			jCheckBox1.setToolTipText("This brief description will be added to the biclustering results file");
-			jCheckBox1.setBounds(new Rectangle(19, 302, 123, 24));
-			jCheckBox1.setText("Add description");
+			jCheckBox1.setBounds(19, 302, 199, 24);
+			jCheckBox1.setText("Add description line");
 			jCheckBox1.setEnabled(false);
 		}
 		return jCheckBox1;
@@ -542,7 +555,7 @@ public class BimaxPanel{
 	private JTextField getJTextField2211() {
 		if (jTextField2211 == null) {
 			jTextField2211 = new JTextField();
-			jTextField2211.setBounds(new Rectangle(186, 188, 33, 20));
+			jTextField2211.setBounds(186, 188, 43, 20);
 			jTextField2211.setText("25");
 			jTextField2211.setEnabled(false);
 		}
@@ -556,7 +569,7 @@ public class BimaxPanel{
 	private JTextField getJTextField22111() {
 		if (jTextField22111 == null) {
 			jTextField22111 = new JTextField();
-			jTextField22111.setBounds(new Rectangle(186, 208, 33, 20));
+			jTextField22111.setBounds(186, 208, 43, 20);
 			jTextField22111.setEnabled(false);
 			jTextField22111.setText("100");
 		}
@@ -570,7 +583,7 @@ public class BimaxPanel{
 	private JTextField getJTextField221111() {
 		if (jTextField221111 == null) {
 			jTextField221111 = new JTextField();
-			jTextField221111.setBounds(new Rectangle(186, 228, 33, 20));
+			jTextField221111.setBounds(186, 228, 43, 20);
 			jTextField221111.setEnabled(false);
 			jTextField221111.setText("100");
 		}
@@ -584,7 +597,7 @@ public class BimaxPanel{
 	private JTextField getJTextField2211111() {
 		if (jTextField2211111 == null) {
 			jTextField2211111 = new JTextField();
-			jTextField2211111.setBounds(new Rectangle(186, 248, 33, 20));
+			jTextField2211111.setBounds(186, 247, 43, 20);
 			jTextField2211111.setEnabled(false);
 			jTextField2211111.setText("50");
 		}

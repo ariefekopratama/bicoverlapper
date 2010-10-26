@@ -76,26 +76,26 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 	private void initGUI() {
 		try {
 			getContentPane().setLayout(null);
-			this.setPreferredSize(new java.awt.Dimension(449, 141));
-			this.setSize(449, 141);
+			this.setPreferredSize(new java.awt.Dimension(484, 141));
+			this.setSize(484, 141);
 			{
 				name = new JLabel();
 				getContentPane().add(name, new CellConstraints("1, 1, 1, 1, default, default"));
 				name.setText("Accession name of the experiment (e.g. E-MEXP-328)   ");
-				name.setBounds(6, 10, 266, 14);
+				name.setBounds(6, 10, 368, 14);
 			}
 			{
 				jTextField1 = new JTextField();
 				getContentPane().add(jTextField1, new CellConstraints("2, 1, 1, 1, default, default"));
 				jTextField1.setActionCommand("accessionName");
-				jTextField1.setBounds(357, 4, 72, 21);
+				jTextField1.setBounds(381, 2, 91, 22);
 				jTextField1.addKeyListener(this);
 			}
 			{
 				filePath = new JLabel();
 				getContentPane().add(filePath, new CellConstraints("1, 2, 1, 1, default, default"));
 				filePath.setText("Select a path to store the processed experiment");
-				filePath.setBounds(6, 32, 266, 14);
+				filePath.setBounds(6, 32, 339, 14);
 			}
 			{
 				selectFile = new JButton();
@@ -103,13 +103,13 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 				selectFile.setActionCommand("select");
 				selectFile.addActionListener(this);
 				selectFile.setText("select");
-				selectFile.setBounds(357, 28, 71, 21);
+				selectFile.setBounds(381, 25, 91, 21);
 			}
 			{
 				DownloadButton = new JButton();
 				getContentPane().add(DownloadButton, new CellConstraints("2, 4, 1, 1, default, default"));
 				DownloadButton.setText("download");
-				DownloadButton.setBounds(357, 77, 71, 21);
+				DownloadButton.setBounds(381, 77, 86, 21);
 				DownloadButton.addActionListener(this);
 				
 			}
@@ -177,12 +177,12 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 			defaultPath=defaultPath.substring(0, defaultPath.lastIndexOf("/"))+"/";
 			
 			path=defaultPath+jTextField1.getText()+".txt";
-			int maxLength=65;
+			int maxLength=75;
 			String labelPath=path;
 			if(labelPath.length()>maxLength)	labelPath=path.substring(0,10)+"..."+path.substring(path.length()-(maxLength-13), path.length());
 	    	jLabel1.setText(labelPath);
 	    	}catch(Exception ex){ex.printStackTrace();}
-			}	
+	    	}
 	}
 
 	@Override

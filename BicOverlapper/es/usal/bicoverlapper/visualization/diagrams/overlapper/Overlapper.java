@@ -1875,7 +1875,8 @@ public void increaseLabelClusterSize()
  */
 public void decreaseLabelClusterSize()
 	{
-	if(labelClusterSize>5)	labelClusterSize--;
+	//if(labelClusterSize>5)	
+	labelClusterSize--;
 	}
 
 

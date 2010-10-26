@@ -16,4 +16,10 @@
 		<nature>org.eclipse.jdt.core.javanature</nature>
 		<nature>org.eclipse.jem.beaninfo.BeanInfoNature</nature>
 	</natures>
+	<variableList>
+		<variable>
+			<name>R_HOME</name>
+			<value>file:/Library/Frameworks/R.framework/Versions/2.11/Resources</value>
+		</variable>
+	</variableList>
 </projectDescription>

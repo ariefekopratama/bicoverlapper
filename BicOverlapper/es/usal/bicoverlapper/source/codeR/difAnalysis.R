@@ -111,24 +111,26 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 # Like above, but in this case several differential expression analyses are performed, 
 # between a target experimental factor value (efv) and every efv in its experimental 
 # factor (ef) except itself.
-# ef - character array with the efv for each sample (column) in matrix m
+# ef - character array with the efv for each sample (column) in matrix m (e.g. healthy healthy cancer1 cancer1 cancer2 cancer2)
+# efv - efv to check against the rest (e.g. cancer 1)
 # Returns a list of arrays with the DEGs on each of these comparisons
+# TODO: Grep errors with expression symbols (e.g. "CD14+ mo" because of the +)
 diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 		pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all",
 		fileName=NA, description="")
     {
-	g1=grep(efv,ef)
+	g1=grep(paste("^",efv,"$",sep=""),ef)
 	conds=unique(ef)
-	conds=conds[-grep(efv,conds)] #not to compare with itself
+	conds=conds[-grep(paste("^",efv,"$",sep=""),conds)] #not to compare with itself
 	
 	degs=lapply(conds, function(y){
-				g2=grep(y,ef)
+				g2=grep(paste("^",y,"$",sep=""),ef)
 				print(paste(efv,"vs",y))
 				print(g1)
 				print(g2)
 				rownames(m)[diffAnalysis(m, g1, nameG1=efv, g2, nameG2=y, pvalT=pvalT, diffT=diffT, print=print, return=return)]
 			})
-	names=conds
+	names=paste(efv, "vs", conds)
 	
 	temp=list()
 	for(i in 1:length(degs))
@@ -136,8 +138,9 @@ diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 		temp=c(temp,list(degs[[i]]))
 		}
 	degs=temp
-	
-	writeBiclusterResultsFromList(fileName, degs, NA, bicNames=names, biclusteringDescription=description)
+	names(degs)=names
+	#writeBiclusterResultsFromList(fileName, degs, NA, bicNames=names, biclusteringDescription=description)
+	degs
     }
 
 
