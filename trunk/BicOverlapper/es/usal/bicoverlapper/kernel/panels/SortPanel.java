@@ -156,7 +156,8 @@ public class SortPanel extends javax.swing.JFrame {
 				.addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED)
 				.addGroup(thisLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
 				    .addComponent(jButton1, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)
-				    .addComponent(jButton2, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE)));
+				    .addComponent(jButton2, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
+				.addContainerGap());
 			thisLayout.setHorizontalGroup(thisLayout.createSequentialGroup()
 				.addContainerGap(21, 21)
 				.addGroup(thisLayout.createParallelGroup()
@@ -167,11 +168,11 @@ public class SortPanel extends javax.swing.JFrame {
 				        .addGap(0, 0, Short.MAX_VALUE))
 				    .addGroup(GroupLayout.Alignment.LEADING, thisLayout.createSequentialGroup()
 				        .addComponent(jLabel2, GroupLayout.PREFERRED_SIZE, 99, GroupLayout.PREFERRED_SIZE)
-				        .addGap(0, 31, Short.MAX_VALUE))
+				        .addGap(0, 30, Short.MAX_VALUE))
 				    .addGroup(GroupLayout.Alignment.LEADING, thisLayout.createSequentialGroup()
 				        .addComponent(jList2, GroupLayout.PREFERRED_SIZE, 123, GroupLayout.PREFERRED_SIZE)
-				        .addGap(0, 7, Short.MAX_VALUE)))
-				.addContainerGap(25, 25));
+				        .addGap(0, 6, Short.MAX_VALUE)))
+				.addContainerGap(26, 26));
 
 			{
 				ListModel jList1Model = 
@@ -179,6 +180,7 @@ public class SortPanel extends javax.swing.JFrame {
 							new String[] { "Item One", "Item Two" });
 			}
 			pack();
+			this.setSize(176, 204);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

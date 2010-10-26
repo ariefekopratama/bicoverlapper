@@ -28,7 +28,6 @@ public class Analysis
 
 	public void setMicroarrayData(MicroarrayData md) {
 		this.microarrayData = md;
-		//loadMatrix();//TODO: to avoid unnecessary loads, it is only loaded if needed
 	}
 	public Rengine r=null;
 	REXP exp=null;
@@ -60,9 +59,10 @@ public class Analysis
 	
 	public void startR()
 		{
+		
 		System.out.println("Library is: "+System.getProperty("java.library.path"));
     	System.out.println("Creating Rengine (with arguments)");
-	
+	    System.out.println("R_HOME is: "+System.getenv("R_HOME"));
         r=new Rengine(new String[]{"--vanilla"}, false, null);
         System.out.println("Rengine created, waiting for R");
 		// the engine creates R in a new thread, so we should wait until it's ready
@@ -152,6 +152,17 @@ public class Analysis
 		else{System.err.println("No matrix loaded"); return;}
 		}
 	
+	/**
+	 * Removes any possible stored data about the expression matrix
+	 * By now, I feel no need of unloading packages/sources, etc. (should go to unloadR)
+	 */
+	public void unloadMatrix()
+		{
+		if(r!=null)	
+			{
+			r.eval("rm(m)");
+			}
+		}
 	/**
 	 * Performs the BiMax biclustering with the R implementation in package biclust	 
 	 * @param percentage - if true the previous binarization step is done by percentage (only the specified percentage of expression levels will be 1)
@@ -507,9 +518,14 @@ public class Analysis
 		loadRLibrary("ArrayExpress");
 		loadRLibrary("affy");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/downloadAndNormalize.R\")");
-		exp=r.eval("downloadAndNormalize(experimentID="+id+", path="+path);
+		System.out.println("Calling download and normalize");
+		String fileName=path.substring(path.lastIndexOf("/")+1);
+		path=path.substring(0, path.lastIndexOf("/"));
+		exp=r.eval("downloadAndNormalize(experimentID=\""+id+"\", path=\""+path+"\", fileName=\""+fileName+"\")");
 		if(exp==null)
-			System.out.println("Error, cannot download and normalize experiment");
+			System.err.println("Error, cannot download and normalize experiment");
+		else
+			System.out.println("Experiment downloaded and normalized");
 		}
 	/**
 	 * Performs differential expression analysis via limma
@@ -570,14 +586,17 @@ public class Analysis
     	{
     	if(!matrixLoaded)	loadMatrix();
 		loadRLibrary("limma");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
-		
-		exp=r.eval("degs=diffAnalysisEF(m, "+microarrayData.getExperimentFactorValues(ef)+", "+efv+", " +
+		System.out.println("degs=diffAnalysisEF(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-						"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		exp=r.eval("degs=diffAnalysisEF(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
-		exp=r.eval("lr=list(rownames(m)[degs])");
+		//exp=r.eval("lr=list(rownames(m)[degs])");
 		
 		if(outFile.length()==0)	//tempfile
 			{
@@ -595,7 +614,7 @@ public class Analysis
 				}
 			}
 		
-		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", lr, NA, bicNames=c(\"DEGs\"), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs, NA, bicNames=names(degs), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
 		return outFile;
 		}
 	}

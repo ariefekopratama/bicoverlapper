@@ -95,15 +95,15 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			{
 				this.setSize(286, 225);
 			}
-			this.setPreferredSize(new java.awt.Dimension(244, 388));
+			this.setPreferredSize(new java.awt.Dimension(497, 490));
 			this.setLayout(null);
-			this.setSize(244, 388);
+			this.setSize(497, 490);
 			//this.setToolTipText("Limma differential expression analysis between groups 1 and 2.\r\nThe genes above the thresholds are selected.");
 			{
 				OK = new JButton();
 				this.add(OK);
 				OK.setText("Differential Expression Analysis");
-				OK.setBounds(15, 321, 199, 21);
+				OK.setBounds(120, 425, 230, 21);
 				OK.addActionListener(new java.awt.event.ActionListener() {
 					private AnalysisTask t;
 					/* Possible combinations:
@@ -164,7 +164,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						else
 							{
 							efv2=g2.toString().trim();
-							for(int i=group2.getSelectedIndex()-1;i>=0;i--)
+							for(int i=group2.getSelectedIndex();i>=0;i--)
 								{
 								if(!group2Model.getElementAt(i).toString().startsWith(" "))	
 								 {ef2=group2Model.getElementAt(i).toString(); break;}
@@ -204,7 +204,8 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						 b.setFilterOptions(null);
 						
 						//----------------------- EF case
-						if((!efv1.equals("rest") && !efv1.startsWith(" ")) || (!efv2.equals("rest") && !efv2.startsWith(" ")))
+						//if((!efv1.equals("rest") && !efv1.startsWith(" ")) || (!efv2.equals("rest") && !efv2.startsWith(" ")))
+						 if(!efv1.equals("rest") && !efv2.equals("rest") && (efv1.equals(ef1) || efv2.equals(ef2)) && ef1.equals(ef2))//same ef, not rest
 							{ 	//TODO: 4b, 5, 6, 7
 							System.out.println("EF case");
 							String ef=null, efv=null;
@@ -249,6 +250,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						else
 							{
 							//3,4) ---------------- EFVs case
+							System.out.println("EFV case");
 							ArrayList<Object> p=new ArrayList<Object>();
 							   p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
 							   p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
@@ -291,33 +293,33 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				pvalue = new JLabel();
 				this.add(pvalue);
 				pvalue.setText("p-value threshold (-log10)      <");
-				pvalue.setBounds(13, 12, 154, 14);
+				pvalue.setBounds(17, 12, 208, 14);
 				pvalue.setToolTipText("-log10 scale means that a p-value of 10e-6 must be specified as 6");
 			}
 			{
 				correction = new JCheckBox();
 				this.add(correction);
 				correction.setText("Benjamini-Hochberg correction");
-				correction.setBounds(38, 30, 176, 18);
+				correction.setBounds(38, 30, 227, 18);
 				correction.setSelected(true);
 			}
 			{
 				pvalueValue = new JTextField();
 				this.add(pvalueValue);
 				pvalueValue.setText("3");
-				pvalueValue.setBounds(171, 9, 43, 21);
+				pvalueValue.setBounds(228, 9, 43, 21);
 			}
 			{
 				differentialExpression = new JLabel();
 				this.add(differentialExpression);
 				differentialExpression.setText("Expression threshold              >");
-				differentialExpression.setBounds(13, 57, 154, 14);
+				differentialExpression.setBounds(13, 57, 199, 14);
 			}
 			{
 				expressionValue = new JTextField();
 				this.add(expressionValue);
 				expressionValue.setText("2.0");
-				expressionValue.setBounds(171, 54, 43, 21);
+				expressionValue.setBounds(230, 54, 43, 21);
 			}
 			{
 				ComboBoxModel regulationModel = 
@@ -326,9 +328,8 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				regulation = new JComboBox();
 				this.add(regulation);
 				regulation.setModel(regulationModel);
-				regulation.setBounds(39, 83, 165, 21);
+				regulation.setBounds(39, 83, 192, 21);
 			}
-			
 
 			MicroarrayData md=session.getMicroarrayData();
 			ArrayList<String> efs=new ArrayList<String>();
@@ -346,38 +347,26 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						}
 					}
 				}
+
 			{
 				jScrollPane1 = new JScrollPane();
 				getContentPane().add(jScrollPane1);
-				jScrollPane1.setBounds(13, 136, 100, 89);
-				group1Model = new DefaultComboBoxModel(efs.toArray(new String[0]));
-				group1 = new JList();
-				
-				this.add(group1);
-				jScrollPane1.setViewportView(group1);
-				group1.setModel(group1Model);
-				group1.setSelectedIndex(0);
-				group1.setBorder(new LineBorder(new java.awt.Color(0,0,0),1,false));
-				group1.setLayout(null);
-				group1.setBounds(13, 136, 100, 89);
-				group1.setAutoscrolls(true);
+				jScrollPane1.setBounds(13, 136, 241, 178);
+				{
+					group1Model = new DefaultComboBoxModel(efs.toArray(new String[0]));
+					group1 = new JList();
+					jScrollPane1.setViewportView(group1);
+
+					group1.setModel(group1Model);
+					group1.setSelectedIndex(0);
+					group1.setBorder(new LineBorder(new java.awt.Color(0,0,0),1,false));
+					group1.setLayout(null);
+					group1.setBounds(13, 136, 134, 89);
+					group1.setAutoscrolls(true);
+
+				}
 			}
-			{
-				jScrollPane2 = new JScrollPane();
-				getContentPane().add(jScrollPane2);
-				jScrollPane2.setBounds(123, 136, 102, 89);
-				group2Model = 
-							new DefaultComboBoxModel(efs.toArray(new String[0]));
-				group2 = new JList();
-				this.add(group2);
-				jScrollPane2.setViewportView(group2);
-				group2.setModel(group2Model);
-				group2.setSelectedIndex(0);
-				group2.setBorder(new LineBorder(new java.awt.Color(0,0,0),1,false));
-				group2.setLayout(null);
-				group2.setBounds(123, 136, 102, 89);
-				group2.setAutoscrolls(true);
-			}
+			
 			{
 				jLabel1 = new JLabel();
 				this.add(jLabel1);
@@ -388,13 +377,13 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				jLabel2 = new JLabel();
 				this.add(jLabel2);
 				jLabel2.setText("Group 2");
-				jLabel2.setBounds(124, 116, 81, 14);
+				jLabel2.setBounds(267, 116, 81, 14);
 			}
 			{
 				writeToFile = new JCheckBox();
 				getContentPane().add(writeToFile);
 				writeToFile.setText("Write to file");
-				writeToFile.setBounds(25, 231, 129, 18);
+				writeToFile.setBounds(25, 336, 129, 18);
 				writeToFile.addChangeListener(new javax.swing.event.ChangeListener() {
 					public void stateChanged(javax.swing.event.ChangeEvent e) {
 						if(writeToFile.isSelected())	
@@ -421,7 +410,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				select = new JButton();
 				getContentPane().add(select);
 				select.setText("Select");
-				select.setBounds(159, 230, 55, 21);
+				select.setBounds(188, 331, 72, 21);
 				select.setEnabled(false);
 				select.addActionListener(new java.awt.event.ActionListener() {
 
@@ -440,15 +429,31 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			{
 				addDescription = new JCheckBox();
 				getContentPane().add(addDescription);
-				addDescription.setText("Add description");
-				addDescription.setBounds(37, 256, 92, 18);
+				addDescription.setText("Add description line");
+				addDescription.setBounds(37, 355, 194, 18);
 				addDescription.setEnabled(false);
 			}
 			{
 				description = new JTextField();
 				getContentPane().add(description);
-				description.setBounds(37, 279, 177, 21);
+				description.setBounds(37, 382, 422, 21);
 				description.setEnabled(false);
+			}
+			{
+				jScrollPane2 = new JScrollPane();
+				getContentPane().add(jScrollPane2);
+				jScrollPane2.setBounds(265, 137, 216, 177);
+				{
+					group2Model = new DefaultComboBoxModel(efs.toArray(new String[0]));
+					group2 = new JList();
+					jScrollPane2.setViewportView(group2);
+					group2.setModel(group2Model);
+					group2.setSelectedIndex(0);
+					group2.setBorder(new LineBorder(new java.awt.Color(0,0,0),1,false));
+					group2.setLayout(null);
+					group2.setBounds(265, 137, 216, 177);
+					group2.setAutoscrolls(true);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

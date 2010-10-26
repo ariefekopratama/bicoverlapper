@@ -40,6 +40,19 @@ import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class PlaidPanel{
 	
 	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
@@ -308,8 +321,8 @@ public class PlaidPanel{
 		if (jCheckBox1 == null) {
 			jCheckBox1 = new JCheckBox();
 			jCheckBox1.setToolTipText("This brief description will be added to the biclustering results file");
-			jCheckBox1.setBounds(new Rectangle(24, 285, 123, 24));
-			jCheckBox1.setText("Add description");
+			jCheckBox1.setBounds(24, 285, 195, 24);
+			jCheckBox1.setText("Add description line");
 			jCheckBox1.setEnabled(false);
 		}
 		return jCheckBox1;
@@ -444,7 +457,7 @@ public class PlaidPanel{
 	private JCheckBox getJCheckBox3() {
 		if (jCheckBox3 == null) {
 			jCheckBox3 = new JCheckBox();
-			jCheckBox3.setBounds(new Rectangle(10, 139, 81, 24));
+			jCheckBox3.setBounds(10, 139, 120, 24);
 			jCheckBox3.setText("Post-filter");
 			jCheckBox3.setToolTipText("Check to perform post-filter and select filter options");
 			jCheckBox3.addChangeListener(new javax.swing.event.ChangeListener() {

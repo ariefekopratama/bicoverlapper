@@ -2,7 +2,14 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
-Data - 	Direct download from ArrayExpress (raw) + process it and save in the BicOverlapper format.
+Analysis - differential expression analysis. Close to solution.
+			S 1) Done efv vs efv
+			S 2) Done ef vs efv
+			3) Not done ef vs ef? necessary?
+Data -		Close session properly when a new matrix is loaded
+S Data - 	Direct download from ArrayExpress (raw) + process it and save in the BicOverlapper format.
+Data - 		One step beyond, direct download and preprocessing of several experiments, either by ID list or by descriptive name!
+
 		Currently, MicroarrayData are replicated in a double[][] and in a R matrix everytime we call R for something. That can be very memory consuming, maybe we
 		should remove the java matrix and access only the R matrix --> That's a huge redesign.
 		Right now, it works well for 300 000 expression levels, and slow for about 10e6, but it renders unusable for 3*10e6 (on a 2GHz, 3G RAM machine)
@@ -23,7 +30,8 @@ PC, HM -> Sort columns by different EFVs. Exhaustive check on PC, Errors in HM
 				S About expression levels, now they work on sorting but not in expression levels, so we had leveled off their behavior with the ones of labels.
 			PC if columns are sorted and then a bicluster is selected, the sorting is not kept.
 			S HM initial sorting for the whole matrix (only worked for selected biclusters, and labels). Now solved
-PC -> when resize: lines get out of limits, or limits shrink
+
+PC -> when resize: lines get out of limits, or limits shrink: solved, and data computations moved to the MicroarrayData class
 
 BicOverlapper -> High dimensionality matrices. I'm trying with our merging, with ~50000x70, and experiencing several troubles.
 				S It's specially because of the bad use of resources on parallel coordinates, that has been to some extent reduced. 

@@ -3,6 +3,27 @@
 # Author: rodri
 ###############################################################################
 
+getBMGO=function(geneids, species="Homo sapiens", type="ensembl_gene_id", GOtypes=c("go_biological_process_id"))
+	{
+		require(biomaRt)
+		spec=c()
+		specens=c()
+		
+		if(length(strsplit(species, " ")[[1]])==2) 	
+		{
+			spec=tolower(paste( substr(strsplit(species, " ")[[1]][1],0,1), substr(strsplit(species, " ")[[1]][2],0,2), sep=""))
+			specens=tolower(paste( substr(strsplit(species, " ")[[1]][1],0,1), strsplit(species, " ")[[1]][2], "_gene_ensembl", sep=""))
+		}
+		if(length(spec)==0)	stop("Species name is wrong")
+		mart = useMart("ensembl", dataset=specens)
+		
+	
+		geneens=getBM( attributes = c(type, GOtypes), filters = type, values=geneids, mart = mart)
+		
+		geneens[which(nchar(geneens[,GOtypes[1]])>0),]
+	#geneens
+		}
+
 
 getBMGenes=function(geneids, species="Homo sapiens", type)
 {
@@ -17,9 +38,17 @@ getBMGenes=function(geneids, species="Homo sapiens", type)
 	}
 	if(length(spec)==0)	stop("Species name is wrong")
 	mart = useMart("ensembl", dataset=specens)
+	
 	if(species=="Homo sapiens")
+		#geneens=sapply(geneids, function(x){print(x); getGene( id = x, type = type, mart = mart)[,c("hgnc_symbol","description","ensembl_gene_id")]})
 		geneens=getGene( id = geneids, type = type, mart = mart)[,c("hgnc_symbol","description","ensembl_gene_id")]
 	else
 		geneens=getGene( id = geneids, type = type, mart = mart)[,c("symbol","description","ensembl_gene_id")]
-	geneens
+	#there might be duplicated, we remove them
+	geneens=geneens[-which(duplicated(geneens[,type])),]
+	#they might be unsorted, so we make sure they are returned in the same order
+	rownames(geneens)=geneens[, type] 
+	#remove source info on description (to make the lines sorter)
+	geneens[,"description"]=gsub(" \\[.*\\]", "", geneens[,"description"])
+	geneens[geneids,]
 }

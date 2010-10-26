@@ -109,7 +109,7 @@ PropertyChangeListener, Runnable {
 		
 		task.addPropertyChangeListener(this);
 		
-		frame = new JFrame("Running biclustering ...");
+		frame = new JFrame("Running analysis ...");
 		frame.setBounds(400,200, 300, 50);
 		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		frame.setMinimumSize(new Dimension(300,50));

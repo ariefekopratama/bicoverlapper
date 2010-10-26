@@ -68,6 +68,7 @@ public class SearchPanel{
 	private JLabel jLabel2 = null;
 	private JTextField jTextField221 = null;
 	private JButton jButton1 = null;
+	private JCheckBox exactMatch;
 	public JButton getjButton1() {
 		return jButton1;
 	}
@@ -113,12 +114,14 @@ public class SearchPanel{
 			jPanel = new JPanel();
 			jPanel.setLayout(null);
 			jPanel.setSize(new Dimension(241, 111));
+			jPanel.setPreferredSize(new java.awt.Dimension(241, 130));
 			jPanel.add(jLabel, null);
 			jPanel.add(jLabel2, null);
 			jPanel.add(getJTextField221(), null);
 			jPanel.add(getJButton1(), null);
 			jPanel.add(getJComboBox(), null);
 			jPanel.add(getJButton11(), null);
+			jPanel.add(getExactMatch());
 		}
 		return jPanel;
 	}
@@ -145,14 +148,15 @@ public class SearchPanel{
 	private JButton getJButton1() {
 		if (jButton1 == null) {
 			jButton1 = new JButton();
-			jButton1.setBounds(new Rectangle(21, 65, 82, 26));
+			jButton1.setBounds(22, 92, 82, 26);
 			jButton1.setToolTipText("Search for and select matching elements");
 			jButton1.setText("Search");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), false);
+						
+						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
 							session.setSelectedBiclustersExcept(sb,"");
@@ -194,14 +198,14 @@ public class SearchPanel{
 	private JButton getJButton11() {
 		if (jButton11 == null) {
 			jButton11 = new JButton();
-			jButton11.setBounds(new Rectangle(137, 65, 75, 26));
+			jButton11.setBounds(136, 92, 75, 26);
 			jButton11.setToolTipText("Search for matching elements and add to current selection");
 			jButton11.setText("Add");
 			jButton11.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), false);
+						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
 							BiclusterSelection csb=session.getSelectedBicluster();
@@ -226,6 +230,15 @@ public class SearchPanel{
 	
 		}
 		return jButton11;
+	}
+	
+	private JCheckBox getExactMatch() {
+		if(exactMatch == null) {
+			exactMatch = new JCheckBox();
+			exactMatch.setText("Exact match");
+			exactMatch.setBounds(82, 64, 121, 19);
+		}
+		return exactMatch;
 	}
 
 }

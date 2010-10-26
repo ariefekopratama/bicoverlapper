@@ -112,7 +112,7 @@ public class ShowPanel extends javax.swing.JFrame {
 					public void actionPerformed(java.awt.event.ActionEvent e) {
 						if(session!=null)	
 							{
-							String del=" -- ";
+							String del=" - ";
 							MicroarrayData md=session.getMicroarrayData();
 							for(int i=0;i<md.getNumConditions();i++)
 								{
