@@ -40,7 +40,7 @@ import gishur.x.XSegment;
 public class Graph {
 	private Map<String, Node> nodes;
 	private Map<String, Edge> edges;
-	private Map<String, ClusterSet> results;
+	private Map<String, GroupSet> results;
 	private Map<String, Node> centerNodes;
 	
 	HashMap<Node, Map<String, Edge>> edgesFrom;
@@ -70,14 +70,13 @@ public class Graph {
   Node dragNode = null;
   Node hoverNode = null;
   private Map<String, Node> selectedNodes;
- // private Map<Integer, Node> selectedNodes;
   private Map<String, DualNode> selectedDualNodes;
   
   private Map<String, Node> searchNodes;
   private Map<String, Node> centroidNodes;
 
-  private Map<String, Cluster> selectedClusters;
-  private Map<String, Cluster> hoverClusters;
+  private Map<String, Group> selectedClusters;
+  private Map<String, Group> hoverClusters;
   private Map<String, DualNode> hoverDualZones;
   
   //drawing priorities
@@ -152,7 +151,7 @@ public class Graph {
   public Graph(Overlapper p) {
 	    nodes = new HashMap<String, Node>();
 	    edges = new HashMap<String, Edge>();
-	    results = new HashMap<String, ClusterSet>();
+	    results = new HashMap<String, GroupSet>();
 	    centerNodes = new HashMap<String, Node>();
 	  
 	    edgesFrom = new HashMap<Node, Map<String,Edge>>();
@@ -166,8 +165,8 @@ public class Graph {
 	    selectedDualNodes=new ConcurrentHashMap<String, DualNode>();
 		centroidNodes=new TreeMap<String, Node>();
 	    
-	    selectedClusters=new TreeMap<String, Cluster>();
-	    hoverClusters=new TreeMap<String, Cluster>();
+	    selectedClusters=new TreeMap<String, Group>();
+	    hoverClusters=new TreeMap<String, Group>();
 	    hoverDualZones=new TreeMap<String, DualNode>();
 	    
 	   	    
@@ -458,7 +457,7 @@ public class Graph {
    * DEPLOYMENT NOTE: still this not adds all nodes in the ClusterSet to the Graph, it must be done by addNode()
    * @param r	ClusterSet to add to the graph
    */
-  public void addClusterSet(ClusterSet r) {
+  public void addClusterSet(GroupSet r) {
 	  	results.put(r.label, r);
 	    r.setGraph(this);
 	  }
@@ -499,16 +498,16 @@ public class Graph {
   public void drawComponent(int component)
   	{
 	Overlapper bv=(Overlapper)applet;
-	Iterator<ClusterSet> itGraph=results.values().iterator();//Hull drawing
+	Iterator<GroupSet> itGraph=results.values().iterator();//Hull drawing
 	
 	if(clusterDependent(component))
 		{
 		for (int i=0; i<results.size(); i++) 
 	  	{
-	    ClusterSet r = (ClusterSet)itGraph.next();
+	    GroupSet r = (GroupSet)itGraph.next();
 	    for(int j=0;j<r.getClusters().size();j++)
 	      	{
-	    	Cluster c=(Cluster)r.getClusters().get(j);
+	    	Group c=(Group)r.getClusters().get(j);
 	    	if(!bv.excludedClusters.contains(c.label))
 		    	{
 		    	switch(component)
@@ -516,8 +515,8 @@ public class Graph {
 					case HULL:
 						if(bv.isDrawHull())	
 							{
-							if(bv.sugiyama)	((SugiyamaCluster)c).drawHulls();
-							else			c.drawHulls();
+							if(bv.sugiyama)	((SugiyamaCluster)c).drawHull();
+							else			c.drawHull();
 							}
 						break;
 					case NODE:
@@ -550,10 +549,7 @@ public class Graph {
 					case SURFACE:
 						if(bv.isDrawTopography() && !topographyDrawn)		
 							{
-							//double start=System.currentTimeMillis();
 							c.drawSurfaces(dualNodes, maxZones);//contour surfaces
-							//if(bv.isDrawPlateau())	c.drawTopography(dualNodes, maxZones);//plateaus
-							//System.out.println("Topografía tarda "+(System.currentTimeMillis()-start));
 							}
 						break;
 					case ZONE:
@@ -576,10 +572,19 @@ public class Graph {
 					}
 				break;
 			case HOVER:
-				if(!bv.drawDual)	drawHoverNode();
-				else				drawHoverDualNode();
+				if(!bv.drawDual)	
+					{
+					drawHoverHull();
+					drawHoverNode();
+					}
+				else				
+					{
+					drawHoverHull();
+					drawHoverDualNode();
+					}
 				break;
 			case SELECT:
+				drawSelectedHulls();
 				drawSelectedNodes();
 				break;
 			case SEARCH:
@@ -699,143 +704,7 @@ public class Graph {
 	    }	  
   	}
   
-  /*
-   * Draws all the components in the graph at a predefined order
-   *
-  public void draw() {
-	  Iterator itGraph=nodes.values().iterator();
-	  while(itGraph.hasNext())	//Para evitar que se dibujen varias veces en caso de q estén en varios clusters
-	  	{	
-		Node n =(Node)itGraph.next();
-		n.setDrawn(false);
-	  	}
-
-	  Overlapper bv=(Overlapper)applet;
-	  itGraph=results.values().iterator();//Hull drawing
-	  for (int i=0; i<results.size(); i++) 
-	  	{
-	      ClusterSet r = (ClusterSet)itGraph.next();
-	      for(int j=0;j<r.getClusters().size();j++)
-	      	{
-	    	if(bv.isRadial())	
-	    		{
-	    		RadialCluster c=(RadialCluster)r.getClusters().get(j);
-	    		c.draw(true,false);
-		      	}
-	    	else
-	    		{
-	    		MaximalCluster c=(MaximalCluster)r.getClusters().get(j);
-	    		c.draw(true,false);
-		      	}
-	    	}
-	    }
-
-	  drawNodes();
-
-	  if(bv.isShowEdges())
-	  	{
-		itGraph=edges.values().iterator();
-		while(itGraph.hasNext())
-			   {
-			   Edge e=(Edge)itGraph.next();
-		       e.draw();
-		       }
-		  
-	  	itGraph=centerNodes.values().iterator();
-		while(itGraph.hasNext())
-		  	{
-		    Node n=(Node)itGraph.next();
-		    n.draw();
-		    }
-		}
-
-	  
-	  itGraph=centroidNodes.values().iterator();
-	  while(itGraph.hasNext())
-	  	{
-		Node n=(Node)itGraph.next();
-		int x=(int)n.getX();
-		int y=(int)n.getY();
-		applet.stroke(200,200,0);
-		applet.strokeWeight(2);
-		applet.line(x+10, y+10, x, y);
-		}
-	  
-	  //Searched nodes ------------------------
-	  bv.rectMode(JProcessingPanel.CENTER);
-	  itGraph=searchNodes.values().iterator();
-	  while(itGraph.hasNext())
-	  	{
-		Node n=(Node)itGraph.next();
-		int x=(int)n.getX();
-		int y=(int)n.getY();
-		int w=(int)(n.getWidth()*n.getClusters().size()+5);
-		applet.noFill();
-		applet.stroke(200,200,0);
-		applet.strokeWeight(2);
-		applet.ellipse(x, y, w, w);
-		}
-	  applet.noStroke();
-
-	  //-------------- selected nodes
-	  itGraph=selectedNodes.values().iterator();
-	  while(itGraph.hasNext())
-	  	{
-		Node n=(Node)itGraph.next();
-		applet.noFill();
-		applet.stroke(200,200,0);
-		applet.strokeWeight(2);
-
-		bv.fill(0,0,0,255);
-    	bv.textSize(bv.getLabelSize()+6);
-    	bv.text(n.getLabel(), (float)(n.getX()+0.5), (float)(n.getY()-n.getHeight()+0.5));
-
-    	
-    	if(n.isGene())	bv.fill(195, 250, 190, 255);
-    	else			bv.fill(165, 175, 250, 255);	
-    	bv.textSize(bv.getLabelSize()+5);
-    	bv.text(n.getLabel(), (float)n.getX(), (float)n.getY()-n.getHeight());
-		}
-	  
-	  //----------------- hover node
-	  if(hoverNode!=null)
-	  	{
-	    int factor=1;
-	    if(bv.isSizeRelevant())    	factor=hoverNode.clusters.size();
-		    
-  		Iterator itDrawMates=hoverNode.mates.values().iterator();
-    	while(itDrawMates.hasNext())
-    		{
-    		ForcedNode n=(ForcedNode)itDrawMates.next();
-    		Color c=bv.paleta[bv.selectionColor];
-    		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
-			bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
-    			bv.rectMode(JProcessingPanel.CENTER);
-    			if(n.isGene())	bv.ellipse((float) n.getX(), (float) n.getY(), n.width, n.height);
-    			else			bv.rect((float) n.getX(), (float) n.getY(), n.width*factor, n.height*factor);
-    		n.setDrawn(true);
-	    	}
-    	
-    	if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.label))
-	    	{
-	    	bv.fill(0,0,0,255);
-	    	bv.textSize(bv.getLabelSize()+hoverNode.getClusters().size()*3+1); 
-	    	bv.text(hoverNode.label, (float)(hoverNode.position.getX()+0.5), (float)(hoverNode.position.getY()-hoverNode.getHeight()+0.5));
-	
-		    	
-	    	bv.fill(255,255,255,255);
-	    	bv.textSize(bv.getLabelSize()+hoverNode.clusters.size()*3); 
-	    	bv.text(hoverNode.label, (float)hoverNode.position.getX(), (float)hoverNode.position.getY()-hoverNode.getHeight());
-	    	}
-    	
-    	}
-	  
-	  
-	  applet.noStroke();
-	  bv.rectMode(JProcessingPanel.CORNER);
-  	}
-  */
-/**
+ /**
  * Returns true if the node n is only in clusters that have been excluded by threshold limit, false otherwise
  * @param n - Node to check if it is completely excluded from the display
  * @return true if it is excluded, false otherwise
@@ -843,10 +712,10 @@ public class Graph {
   private boolean nodeExcluded(Node n)
 	{
 	Overlapper bv=(Overlapper)applet;
-	Iterator<Cluster> itc=n.clusters.values().iterator();
+	Iterator<Group> itc=n.clusters.values().iterator();
 	while(itc.hasNext())
 		{
-		Cluster c=(Cluster)itc.next();
+		Group c=(Group)itc.next();
 		if(!bv.excludedClusters.contains(c.label))	return false;
 		}
 	return true;
@@ -871,11 +740,11 @@ public void drawHoverNode()
 		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
 		bv.strokeWeight(2);
 		bv.rectMode(JProcessingPanel.CENTER);
+		
 		//TODO: Excesivamente lento con clusters muy solapados
 		while(itDrawMates.hasNext())
 	  		{
 	  		ForcedNode n=(ForcedNode)itDrawMates.next();
-	  	//	if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.label) && !nodeExcluded(n))
 	  		if(n.clusters.size()>=bv.nodeThreshold && this.nodes.containsKey(n.labelId) && !nodeExcluded(n))
 	  		  	{
 	  			if(n.isGene())	bv.ellipse((float) n.getX(), (float) n.getY(), n.width, n.height);
@@ -939,7 +808,7 @@ public void drawHoverDualNode()
   if(hoverNode!=null)
 	  	{
 	  	DualNode hn=(DualNode)hoverNode;
-	      
+	  	  
 	    Iterator<DualNode> itDrawMates=this.dualNodes.values().iterator();
 		Color c=bv.paleta[Overlapper.hoverColor];
 		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
@@ -964,21 +833,51 @@ public void drawHoverDualNode()
 	}
   
 /**
- * Draws the Hover node, highlighted, and also highlights their neighbors (all the nodes directly connected to it)
+ * Draws the Hovered hulls
  *
  */
 public void drawHoverHull()
 	{
-  Overlapper bv=(Overlapper)applet;
+    Overlapper bv=(Overlapper)applet;
+    CustomColor c=new CustomColor(bv.paleta[Overlapper.hoverColor]);
 	
-  if(!bv.isDrawHull() && bv.isDrawTopography() && this.hoverClusters!=null)
+	
+    if(bv.isDrawHull() && hoverClusters!=null)
 	  	{
-		Iterator<Cluster> itDrawMates=hoverClusters.values().iterator();
-	  	while(itDrawMates.hasNext())
+		Iterator<Group> it=hoverClusters.values().iterator();
+	  	while(it.hasNext())
 	  		{
-	  		Cluster n=(Cluster)itDrawMates.next();
+	  		Group n=(Group)it.next();
 	  		if(n.hull!=null)
-				n.drawHulls();
+	  			{
+	  			n.drawHull(c);
+				n.drawHullLabels();
+	  			}
+	  		 }
+	  	}
+	}
+
+/**
+ * Draws the Selected hulls
+ *
+ */
+public void drawSelectedHulls()
+	{
+    Overlapper bv=(Overlapper)applet;
+    CustomColor c=new CustomColor(bv.paleta[Overlapper.selectionColor]);
+	
+	
+    if(bv.isDrawHull() && selectedClusters!=null)
+	  	{
+		Iterator<Group> it=selectedClusters.values().iterator();
+	  	while(it.hasNext())
+	  		{
+	  		Group n=(Group)it.next();
+	  		if(n.hull!=null)
+	  			{
+	  			n.drawHull(c);
+				n.drawHullLabels();
+	  			}
 	  		 }
 	  	}
 	}
@@ -1048,13 +947,18 @@ public void drawHoverHull()
 					float maxLs=bv.getMaxLabelSize();
 					double step=(maxLs-ls)/(max-min);
 					double tam=ls+step*n.getClusters().size();
-			    	if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
-		    		else				    		bv.textSize((int)tam+1);
+				    double finalTam=tam;
+			    	if(bv.isAbsoluteLabelSize())	finalTam=ls;
+		    		if(finalTam<0)	finalTam=0;
+			    	bv.textSize((int)finalTam);
+				    	
+			    	//if(bv.isAbsoluteLabelSize())	bv.textSize(ls+1);
+		    		//else				    		bv.textSize((int)tam+1);
 		    	
 			    	//bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
 					bv.fill(c.getRed(),c.getGreen(),c.getBlue());
 					
-			    	
+					
 			    	//if(n.isGene())	bv.fill(195, 250, 190, 255);
 			    	//else			bv.fill(165, 175, 250, 255);	
 			    	
@@ -1139,7 +1043,7 @@ public void drawHoverHull()
 	  itGraph=results.values().iterator();//Hull drawing
 	  for (int i=0; i<results.size(); i++) 
 	  	{
-	      ClusterSet r = (ClusterSet)itGraph.next();
+	      GroupSet r = (GroupSet)itGraph.next();
 	      for(int j=0;j<r.getClusters().size();j++)
 	      	{
 	    	if(bv.isRadial())	
@@ -1296,11 +1200,11 @@ public void drawHoverHull()
 		        if(bv.isOnlyIntersecting())	inter=1;
 		        if(n.getClusters().size()>inter)
 		        	{
-			        Iterator<Cluster> itDraw=n.getClusters().values().iterator();
+			        Iterator<Group> itDraw=n.getClusters().values().iterator();
 			        for (int j=0; itDraw.hasNext(); j++)
 			           	{
 			        	MaximalCluster c=(MaximalCluster)itDraw.next();
-				    	ClusterSet r = c.myResultSet;
+				    	GroupSet r = c.myResultSet;
 				    	CustomColor col = r.myColor;
 				    	bv.fill(col.getR(), col.getG(), col.getB(),100);
 				    	bv.strokeWeight(ns/3);
@@ -1377,11 +1281,11 @@ public void drawHoverHull()
   public void radial2complete()
   	{
 	  edges.clear();
-	  Iterator<ClusterSet> it=results.values().iterator();
+	  Iterator<GroupSet> it=results.values().iterator();
 	  while(it.hasNext())
 		{
-		ClusterSet r=(ClusterSet)it.next();
-		ArrayList<Cluster> c=r.getClusters();
+		GroupSet r=(GroupSet)it.next();
+		ArrayList<Group> c=r.getClusters();
 		for(int j=0;j<c.size();j++)
 			{
 			//Quitamos las aristas y el nodo central
@@ -1409,11 +1313,11 @@ public void drawHoverHull()
 		edges.clear();
 		edgesTo.clear();
 		edgesFrom.clear();
-	Iterator<ClusterSet> it=results.values().iterator();
+	Iterator<GroupSet> it=results.values().iterator();
 	while(it.hasNext())
 		{
-		ClusterSet r=(ClusterSet)it.next();
-		ArrayList<Cluster> c=r.getClusters();
+		GroupSet r=(GroupSet)it.next();
+		ArrayList<Group> c=r.getClusters();
 		for(int j=0;j<c.size();j++)
 			{
 			MaximalCluster cc=(MaximalCluster)c.get(j);//Los convertimos a radiales según los cogemos
@@ -1463,14 +1367,14 @@ public void drawHoverHull()
 		{
 		Node n=(Node)itn.next();
 		den-=n.clusters.size();
-		Iterator<ClusterSet> it=results.values().iterator();
+		Iterator<GroupSet> it=results.values().iterator();
 		while(it.hasNext())
 			{
-			ClusterSet r=(ClusterSet)it.next();
-			ArrayList<Cluster> c=r.getClusters();
+			GroupSet r=(GroupSet)it.next();
+			ArrayList<Group> c=r.getClusters();
 			for(int j=0;j<c.size();j++)
 				{
-				Cluster cc=(Cluster)c.get(j);
+				Group cc=(Group)c.get(j);
 				if(!cc.getNodes().contains(n) && cc.hull!=null && cc.hull.contains(n.getX(),n.getY()))
 					metric++;
 				den++;
@@ -1489,14 +1393,14 @@ public void drawHoverHull()
 		{
 		DualNode n=(DualNode)itn.next();
 		den-=n.clusters.size();
-		Iterator<ClusterSet> it=results.values().iterator();
+		Iterator<GroupSet> it=results.values().iterator();
 		while(it.hasNext())
 			{
-			ClusterSet r=(ClusterSet)it.next();
-			ArrayList<Cluster> c=r.getClusters();
+			GroupSet r=(GroupSet)it.next();
+			ArrayList<Group> c=r.getClusters();
 			for(int j=0;j<c.size();j++)
 				{
-				Cluster cc=(Cluster)c.get(j);
+				Group cc=(Group)c.get(j);
 				//Si los clusters del nodo dual no tienen a este, y tiene hull y ese hull contiene al nodo dual
 				//OJO: sigue haciendo las zonas con los nodos antiguos, no con los duales
 				if(!n.clusters.containsKey(cc.label) && cc.hull!=null && cc.hull.contains(n.getX(),n.getY()))
@@ -1511,14 +1415,14 @@ public void drawHoverHull()
   public int getFailedPositionMetric(Node n)
   	{
 	int metric=0;
-	Iterator<ClusterSet> it=results.values().iterator();
+	Iterator<GroupSet> it=results.values().iterator();
 	while(it.hasNext())
 		{
-		ClusterSet r=(ClusterSet)it.next();
-		ArrayList<Cluster> c=r.getClusters();
+		GroupSet r=(GroupSet)it.next();
+		ArrayList<Group> c=r.getClusters();
 		for(int j=0;j<c.size();j++)
 			{
-			Cluster cc=(Cluster)c.get(j);
+			Group cc=(Group)c.get(j);
 			if(!cc.getNodes().contains(n) && cc.hull!=null && cc.hull.contains(n.getX(),n.getY()))
 				metric++;
 			}
@@ -1536,14 +1440,14 @@ public void drawHoverHull()
 	double metric=0;
 	double den=0;
 	double mean=this.getAverageNormArea();
-	Iterator<ClusterSet> it=this.results.values().iterator();
+	Iterator<GroupSet> it=this.results.values().iterator();
 	while(it.hasNext())
 		{	
-		ClusterSet cs=it.next();
-		Iterator<Cluster> it2=cs.getClusters().iterator();
+		GroupSet cs=it.next();
+		Iterator<Group> it2=cs.getClusters().iterator();
 		while(it2.hasNext())
 			{
-			Cluster c=it2.next();
+			Group c=it2.next();
 			double ac=getAreaPerNode(c);
 			metric+=(ac-mean)*(ac-mean);
 			den+=ac;
@@ -1558,7 +1462,7 @@ public void drawHoverHull()
    * @param c Cluster to compute its area per node
    * @return	The area per node for the chosen cluster
    */
-  public double getAreaPerNode(Cluster cl)
+  public double getAreaPerNode(Group cl)
   	{
 	double area=0;
 	//By bounding boxes
@@ -1626,14 +1530,14 @@ public void drawHoverHull()
   	{
 	double metric=0;
 	double den=0;
-	Iterator<ClusterSet> it=results.values().iterator();
+	Iterator<GroupSet> it=results.values().iterator();
 	while(it.hasNext())
 		{
-		ClusterSet r=(ClusterSet)it.next();
-		ArrayList<Cluster> c=r.getClusters();
+		GroupSet r=(GroupSet)it.next();
+		ArrayList<Group> c=r.getClusters();
 		for(int j=0;j<c.size();j++)
 			{
-			Cluster cc=(Cluster)c.get(j);
+			Group cc=(Group)c.get(j);
 			metric+=getAreaPerNode(cc);
 			den++;
 			}
@@ -1756,11 +1660,11 @@ public void drawHoverHull()
   
   private int clustersInCommon(Node a, Node b)
   	{
-	Iterator<Cluster> it=a.clusters.values().iterator();
+	Iterator<Group> it=a.clusters.values().iterator();
 	int numClusters=0;
 	while(it.hasNext())
 		{
-		Cluster c=(Cluster)it.next();
+		Group c=(Group)it.next();
 		if(b.clusters.containsValue(c))	numClusters++;
 		}
 	return numClusters;
@@ -1779,11 +1683,11 @@ public void drawHoverHull()
   
   int clustersInCommon(DualNode a, DualNode b)
   	{
-	Iterator<Cluster> it=a.clusters.values().iterator();
+	Iterator<Group> it=a.clusters.values().iterator();
 	int cc=0;
 	while(it.hasNext())
 		{
-		Cluster c=it.next();
+		Group c=it.next();
 		if(b.clusters.containsKey(c.label))	cc++;
 		}
 	return cc;
@@ -1834,7 +1738,7 @@ public void setEdges(Map<String, Edge> edges) {
  * Returns all clsuterSets as a map
  * @return	Map with all ClusterSets. Keys are Strings with cluster labels
  */
-public Map<String, ClusterSet> getResults() {
+public Map<String, GroupSet> getResults() {
 	return results;
 }
 
@@ -1842,7 +1746,7 @@ public Map<String, ClusterSet> getResults() {
  * Sets the complete group of clustersSets that will be in this graph
  * @param cs	map with all the cluster sets. Keys are clusters labels
  */
-public void setClusterSets(Map<String, ClusterSet> cs) {
+public void setClusterSets(Map<String, GroupSet> cs) {
 	this.results = cs;
 }
 
@@ -1897,7 +1801,7 @@ public void addSelectedDualNode(DualNode dn)
  * Returns all selected clusters
  * @return	Map with all selected clusters. Keys are Strings with cluster labels
  */
-public Map<String, Cluster> getSelectedClusters() {
+public Map<String, Group> getSelectedClusters() {
 	return selectedClusters;
 }
 
@@ -1905,7 +1809,7 @@ public Map<String, Cluster> getSelectedClusters() {
  * Returns all hover clusters
  * @return	Map with all hover clusters. Keys are Strings with cluster labels
  */
-public Map<String, Cluster> getHoverClusters() {
+public Map<String, Group> getHoverClusters() {
 	return hoverClusters;
 }
 
@@ -1953,14 +1857,14 @@ public float getAvgBiclusterOverlap()
 	float overlap1=0;
 	float avgovp=0;
 	
-	Iterator<ClusterSet> it=this.results.values().iterator();
+	Iterator<GroupSet> it=this.results.values().iterator();
 	while(it.hasNext())
 		{
-		ClusterSet cs=it.next();
-		Iterator<Cluster> itc=cs.getClusters().iterator();
+		GroupSet cs=it.next();
+		Iterator<Group> itc=cs.getClusters().iterator();
 		while(itc.hasNext())
 			{
-			Cluster c=itc.next();
+			Group c=itc.next();
 			for(int i=0;i<c.clusterNodes.size();i++)
 				{
 				Node n=c.clusterNodes.get(i);
@@ -2185,7 +2089,7 @@ public void correctPosition(Node n)
 	{
 	try{
 		System.out.println("---Corrigiendo posición de "+n.label+" en "+n.clusters.size()+" contornos");
-		Iterator<Cluster> it=n.clusters.values().iterator();
+		Iterator<Group> it=n.clusters.values().iterator();
 		Polygon p1=it.next().hull;
 		if(n.clusters.size()>1)//Si está en más de un cluster, la intersección de sus contornos
 			{
@@ -2538,7 +2442,7 @@ public void fastHillClimber2()
 	double start=System.currentTimeMillis();
 	double dist=0;
 	double minDist=0;
-	Cluster minC=null;
+	Group minC=null;
 	Line2D.Double minLine=null;
 	double itFail=this.getFailedPositionMetric();
 
@@ -2558,14 +2462,14 @@ public void fastHillClimber2()
 			minC=null;
 			double x0=n.getX();
 			double y0=n.getY();
-			Iterator<ClusterSet> ics=this.results.values().iterator();
+			Iterator<GroupSet> ics=this.results.values().iterator();
 			while(ics.hasNext())//Buscamos la línea más próxima del contorno más proximo a nuestro nodo
 				{
-				ClusterSet cs=ics.next();
+				GroupSet cs=ics.next();
 				
 				for(int i=0;i<cs.getClusters().size();i++)
 					{
-					Cluster c=cs.getClusters().get(i);
+					Group c=cs.getClusters().get(i);
 					if(!c.getNodes().contains(n) && c.hull!=null)
 						{
 						double x1=c.hull.xpoints[0];
@@ -2837,7 +2741,7 @@ void buildCompleteDualGraph()
 	{
     dualNodes = new HashMap<Integer, DualNode>();
     dualEdges = new HashMap<Integer, Edge>();
-    HashMap<Integer, Map<String, Cluster>> zones=new HashMap<Integer, Map<String, Cluster>>();
+    HashMap<Integer, Map<String, Group>> zones=new HashMap<Integer, Map<String, Group>>();
 	
     //1) Adding nodes
     Iterator<Node> it=nodes.values().iterator();
@@ -2853,10 +2757,10 @@ void buildCompleteDualGraph()
 			dn.label=(cont++)+"";
 			dn.setMass(m.size());
 			dualNodes.put(dn.hashCode(), dn);
-			Iterator<Cluster> itc=n.clusters.values().iterator();
+			Iterator<Group> itc=n.clusters.values().iterator();
 			while(itc.hasNext())
 				{
-				Cluster c=itc.next();
+				Group c=itc.next();
 				c.clusterDualNodes.add(dn);
 				}
 			}
@@ -2872,10 +2776,10 @@ void buildCompleteDualGraph()
 			DualNode dn2=it3.next();
 			if(dn!=dn2)
 				{
-				Iterator<Cluster> itbic=dn.clusters.values().iterator();
+				Iterator<Group> itbic=dn.clusters.values().iterator();
 				while(itbic.hasNext())
 					{
-					Cluster c=itbic.next();
+					Group c=itbic.next();
 					if(dn2.clusters.containsValue(c))//Coinciden, así que creamos una arista entre ellos	
 						{
 						SpringEdge e=new SpringEdge(dn, dn2);
@@ -2962,7 +2866,7 @@ void buildDualGraph()
 	{
 	dualNodes = new HashMap<Integer, DualNode>();
 	dualEdges = new HashMap<Integer, Edge>();
-	HashMap<Integer, Map<String, Cluster>> zones=new HashMap<Integer, Map<String, Cluster>>();
+	HashMap<Integer, Map<String, Group>> zones=new HashMap<Integer, Map<String, Group>>();
 	
 	//1) Adding nodes
 	Iterator<Node> it=nodes.values().iterator();
@@ -2978,10 +2882,10 @@ void buildDualGraph()
 			dn.label=(cont++)+"";
 			dn.setMass(m.size());
 			dualNodes.put(dn.hashCode(), dn);
-			Iterator<Cluster> itc=n.clusters.values().iterator();
+			Iterator<Group> itc=n.clusters.values().iterator();
 			while(itc.hasNext())
 				{
-				Cluster c=itc.next();
+				Group c=itc.next();
 				c.clusterDualNodes.add(dn);
 				}
 			}
@@ -3016,11 +2920,11 @@ void buildDualGraph()
  */
 public void buildSugiyamaStructure()
 	{
-	Iterator<ClusterSet> itGraph=results.values().iterator();//Hull drawing
+	Iterator<GroupSet> itGraph=results.values().iterator();//Hull drawing
 	
 	for (int i=0; i<results.size(); i++) 
 	  	{
-	    ClusterSet r = (ClusterSet)itGraph.next();
+	    GroupSet r = (GroupSet)itGraph.next();
 	    for(int j=0;j<r.getClusters().size();j++)
 	      	{
 	    	SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);

@@ -10,7 +10,7 @@ import es.usal.bicoverlapper.utils.GraphPoint2D;
  * @author Rodrigo
  *
  */
-public class SugiyamaCluster extends Cluster {
+public class SugiyamaCluster extends Group {
 	protected ForcedNode center;
 	protected ForcedNode top;
 	protected ForcedNode bottom;
@@ -37,7 +37,7 @@ public class SugiyamaCluster extends Cluster {
    * Builds an empty MaximalCluster in the ClusterSet r
    * @param r	the ClusterSet in which the cluster is in
    */
-  public SugiyamaCluster(ClusterSet r) {
+  public SugiyamaCluster(GroupSet r) {
  	 super(r);
  	 radials=new ArrayList<Edge>();
  	 axials=new ArrayList<Edge>();
@@ -49,7 +49,7 @@ public class SugiyamaCluster extends Cluster {
    * @param r the ClusterSet in which the cluster is in
    * @param l the String used as label to name the Cluster
    */
-  public SugiyamaCluster(ClusterSet r, String l) {
+  public SugiyamaCluster(GroupSet r, String l) {
 	  super(r,l);
 	  radials=new ArrayList<Edge>();
       axials=new ArrayList<Edge>();
@@ -228,7 +228,7 @@ public class SugiyamaCluster extends Cluster {
 	   * Draw the hull of the cluster. The hull of the cluster is its surrounding area, determined by their most peripheral nodes
 	   *
 	   */
-	  void drawHulls()
+	  void drawHull()
 		{
 		Overlapper bv=(Overlapper) myGraph.getApplet();
 		if(bv.drawDual)

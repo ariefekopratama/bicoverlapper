@@ -74,7 +74,7 @@ public class GeneAnnotation {
 			for(int i=0;i<aliases.size();i++)	al=al.concat(aliases.get(i)+", ");
 			form=form.concat("Alias:  "+al.substring(0, al.length()-2)+"\n");	
 			}
-		if(organism!=null && organism.length()>0)		form=form.concat("Org.:   "+organism+"\n");
+		if(organism!=null && organism.length()>0)		form=form.concat("Species:   "+organism+"\n");
 		if(description!=null && description.length()>0)	
 			{
 			form=form.concat("Desc.:  ");
@@ -105,9 +105,32 @@ public class GeneAnnotation {
 			
 			//2) Add them
 			form=form.concat("\nGO Terms:  ");
+			boolean add=false;
 			for(GOTerm go : goTerms)
+				if(go.ontology.equals("CC"))	{add=true; break;}
+			if(add)
 				{
-				form=form.concat("\n     "+go.term);
+				form=form.concat("\n  Cellular component");
+				for(GOTerm go : goTerms)
+					if(go.ontology.equals("CC"))	form=form.concat("\n     "+go.term);
+				}
+			add=false;
+			for(GOTerm go : goTerms)
+				if(go.ontology.equals("BP"))	{add=true; break;}
+			if(add)
+				{
+				form=form.concat("\n  Biological process");
+				for(GOTerm go : goTerms)
+					if(go.ontology.equals("BP"))	form=form.concat("\n     "+go.term);
+				}
+			add=false;
+			for(GOTerm go : goTerms)
+				if(go.ontology.equals("MF"))	{add=true; break;}
+			if(add)
+				{
+				form=form.concat("\n  Molecular function");
+				for(GOTerm go : goTerms)
+					if(go.ontology.equals("MF"))	form=form.concat("\n     "+go.term);
 				}
 			}
 		return form;

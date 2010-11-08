@@ -158,7 +158,7 @@ public class ForcedNode extends Node {
     	x0=(float)getX();
     	y0=(float)(int)getY();
     	w=10+(float)maxChars*5;
-    	h=(float)numLines*10;
+    	h=(float)(numLines*10.2)+4;
     	}
 	p.rect(x0,y0,w,h);
     	
@@ -202,13 +202,13 @@ public class ForcedNode extends Node {
         if(bv.isOnlyIntersecting())	inter=1;
         if(shownClusters.size()>inter)
 	        {
-	        Iterator<Cluster> itDraw=shownClusters.values().iterator();
+	        Iterator<Group> itDraw=shownClusters.values().iterator();
 	        ArrayList<CustomColor> colors=new ArrayList<CustomColor>();
 	        ArrayList<Integer> sizes=new ArrayList<Integer>();
 	        for (int j=0; itDraw.hasNext(); j++)	//Tomamos el tamaño de las porciones por cada color
 	           	{
 	        	MaximalCluster c=(MaximalCluster)itDraw.next();
-		    	ClusterSet r = c.myResultSet;
+		    	GroupSet r = c.myResultSet;
 		    	CustomColor col = r.myColor;
 		    	if(!colors.contains(col))
 		    		{

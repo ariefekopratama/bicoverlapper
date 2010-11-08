@@ -1755,7 +1755,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 								}
 							if(j==numC)		genes.add(Integer.valueOf(i));
 							}
-						System.out.println("Time to do selection: "+(System.currentTimeMillis()-t1)/1000.0);
+					//	System.out.println("Time to do selection: "+(System.currentTimeMillis()-t1)/1000.0);
 						}
 					}
 				//Si está pulsado Control, las restricciones en otras variables/selecciones anteriores no se tienen en cuenta
@@ -1769,7 +1769,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						if(add)		genes.add(Integer.valueOf(i));
 						}
 					}
-				System.out.println("Time to set selection "+(System.currentTimeMillis()-t)/1000.0);
+			//	System.out.println("Time to set selection "+(System.currentTimeMillis()-t)/1000.0);
 				t=System.currentTimeMillis();
 				
 				scrollSeleccionado = null;

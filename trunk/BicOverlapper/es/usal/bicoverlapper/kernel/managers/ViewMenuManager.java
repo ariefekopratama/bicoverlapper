@@ -90,7 +90,6 @@ public class ViewMenuManager implements ActionListener{
 				sesion.setTRN(ventana);
 				ventana.setLocation(config.getSizePanelCoordenadas().width+config.marginWidth*2,0);
 				panel.create();
-				//panel.create3d();
 				panel.run();
 			}
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s10"))){
@@ -126,6 +125,7 @@ public class ViewMenuManager implements ActionListener{
 				WordCloudDiagram panel = new WordCloudDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
+				//ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
 				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
 				sesion.setWordCloud(ventana);
 				panel.repaint();

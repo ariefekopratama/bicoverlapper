@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -205,7 +206,7 @@ ArrayList <MaximalCluster> clustersToRemove=null;
 ArrayList <Node> nodesToRemove=null;
 ArrayList <Edge> edgesToRemove=null;
 
-boolean drawArc=false;
+boolean drawArc=true;
 boolean drawHull=true;
 boolean drawTitle=false;
 boolean showCentroids=false;
@@ -213,7 +214,7 @@ boolean onlyIntersecting=true;
 boolean movie=true;
 boolean movieButActors=false;
 boolean sizeRelevant=true;
-boolean drawContour=true;
+boolean drawContour=false; //Now initially false :)
 boolean drawZones=false;
 
 boolean onlyConditions=false;
@@ -1127,11 +1128,11 @@ private void applyLayout(ForcedNode n)
 //métricas de manera particular
 public synchronized void doSugiyamaLayout() 
 	{
-	Iterator<ClusterSet> itGraph=g.getResults().values().iterator();//Hull drawing
+	Iterator<GroupSet> itGraph=g.getResults().values().iterator();//Hull drawing
 	
 	for (int i=0; i<g.getResults().size(); i++) 
 	  	{
-	    ClusterSet r = (ClusterSet)itGraph.next();
+	    GroupSet r = (GroupSet)itGraph.next();
 	    for(int j=0;j<r.getClusters().size();j++)
 	      	{
 	    	SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);
@@ -1184,10 +1185,10 @@ public synchronized void doSugiyamaLayout()
 	    		}
 	    
 	    	//3.7) Repulsion between center nodes of non-overlapped clusters
-	    	Iterator<ClusterSet> itGraph2=g.getResults().values().iterator();//Hull drawing
+	    	Iterator<GroupSet> itGraph2=g.getResults().values().iterator();//Hull drawing
 	    	for (int k=0; k<g.getResults().size(); k++) 
 		  	{
-		    ClusterSet r2 = (ClusterSet)itGraph2.next();
+		    GroupSet r2 = (GroupSet)itGraph2.next();
 		    for(int m=0;m<r2.getClusters().size();m++)
 		      	{
 		    	SugiyamaCluster c2=(SugiyamaCluster)r.getClusters().get(j);
@@ -1253,7 +1254,7 @@ public synchronized void doSugiyamaLayout()
 	itGraph=g.getResults().values().iterator();//Hull drawing
 	for (int i=0; i<g.getResults().size(); i++) 
 		{
-		ClusterSet r = (ClusterSet)itGraph.next();
+		GroupSet r = (GroupSet)itGraph.next();
 		for(int j=0;j<r.getClusters().size();j++)
 		  	{
 			SugiyamaCluster c=(SugiyamaCluster)r.getClusters().get(j);
@@ -1445,22 +1446,9 @@ void increaseOverview(double f)
  */
 protected void keyPressed() {
 	char c = Character.toLowerCase(key);
+	 
 	int temp=0;
 	switch(c){
-	/*case  '1'://radial2complete
-		if(radial)
-			{
-			g.radial2complete();
-			radial=false;
-			}
-		break;
-	case  '2'://radial2complete
-		if(!radial)
-			{
-			g.complete2radial();
-			radial=true;
-			}
-		break;*/
 	case '1':
 		decreaseG();
 		break;
@@ -1484,51 +1472,12 @@ protected void keyPressed() {
 		labelSize++;;
 		break;	
 		
-	//Change of node labels (relevance)
-	/*case '9':
-		this.g.intelligentFastHill();
-		break;
-	case '8':
-		this.setDrawExactGroups(!isDrawExactGroups());
-		break;
-	case '7':
-		setDrawTopography(!isDrawTopography());
-		break;*/
-			
 	case  '0'://redraw
 		this.paint(gr);
 		break;
 		
 	case 'a':
 		drawArc=!drawArc;
-		break;
-	case 'i'://fast hill improvement
-		
-		//if(g.dualNodes!=null && g.dualNodes.size()>0)	g.fastHillClimberRelocationDual(20, 1, false);
-		//else											//for(int i=20;i>0;i--)	this.g.fastHillClimberRelocation(i, 1, false);//No implica mejora
-													//	this.g.fastHillClimberRelocation(20, 1, false);
-		
-		
-		//this.g.fastHillClimber2();
-	   
-		
-		// this.g.gaRelocation();
-	    
-		break;
-	case 'g'://genetic algorithm improvement
-		//this.g.gaRelocation();
-		break;
-	case 'f'://convert to dual or normal
-	/*	if(g.dualNodes==null || this.g.dualNodes.size()==0)	
-			{
-			g.buildCompleteDualGraph();
-			drawNodes=false;
-			}
-		else					
-			{
-			g.dualNodes.clear();
-			drawNodes=true;
-			}*/
 		break;
 	case 'n':
 		drawNodes=!drawNodes;
@@ -1969,7 +1918,7 @@ protected void mouseMoved() {
     	{
     	for(int i=0;i<=this.numClusters;i++)
     		{
-    		Cluster mc=this.getClusterInPos(i);
+    		Group mc=this.getClusterInPos(i);
     		if(mc!=null && mc.hull!=null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label))	
     				{
     				g.getHoverClusters().put(mc.label, mc);
@@ -2072,7 +2021,7 @@ protected void mouseReleased() {
 			  	{
 				for(int i=0;i<this.numClusters;i++)
 			  		{
-			  		Cluster mc=this.getClusterInPos(i);
+			  		Group mc=this.getClusterInPos(i);
 			  		if(mc!=null && mc.hull!=null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label))
 			  			{
 			  			if(!keyPressed)	
@@ -2116,7 +2065,8 @@ protected void mouseReleased() {
 					 else
 					 	{	 
 						rightButtonNode.details="searching...";
-						this.getMicroarrayData().getGeneAnnotation(rightButtonNode.labelId, this, null);
+						//this.getMicroarrayData().getGeneAnnotation(rightButtonNode.labelId, this, null, true);
+						this.getMicroarrayData().getGeneAnnotations(new int[]{this.microarrayData.getGeneId(rightButtonNode.labelId)},this, true, null, null, true);
 					 	}
 				 	}
 				 else
@@ -2191,13 +2141,11 @@ protected void mouseDragged() {
 		float ypress=(mouseY-offsetY)/zoomFactor;
 		if(g.getDragNode()!=null)
 			{
-			 System.out.println("Posición anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
 			 g.getDragNode().setX(xpress);
 			 g.getDragNode().setY(ypress);
 			}
 		else	//Selección de área
 			{
-			//selectionArea.lineTo(xpress, ypress);
 			selectionArea.add(new Point2D.Double(xpress, ypress));
 			}
 	 	}
@@ -2255,7 +2203,7 @@ public int search(String text, boolean searchInGroups)
 		else			//group search
 			{
 			num=0;
-			for(ClusterSet r: g.getResults().values())
+			for(GroupSet r: g.getResults().values())
 				{
 				for(int i=0;i<r.getClusters().size();i++)
 					{
@@ -2442,8 +2390,6 @@ private void readClustersBicat()
 					}
 				}
 			l++;
-			if(l==175)
-				System.out.println("ending");
 			dataToken = data[l].split(delimiter);  //Columnas
 			if (dataToken.length >1)
 				{
@@ -2465,7 +2411,6 @@ private void readClustersBicat()
 				}
 			}
 		}
-	//this.numClusters--;
 	}
 
 
@@ -2570,7 +2515,6 @@ for (int l = 1; l < data.length; l++)
 	if (!skipNext && (data[l].length()>0 && dataToken.length == 1))		
 		{
 		resultLabels.add(dataToken[0]);
-		//n=Integer.valueOf(data[++l].split(delimiter)dataToken[0]).intValue();
 		if(n!=0)	
 			{
 			resultSets.add(n/3); 
@@ -2916,9 +2860,6 @@ Graph buildOrderedCompleteGraph()
 	if(row%2==0)	x=screenWidth*(areaInc-1)/2+row*cellWidth+cellWidth/2;				//dirección ->
 	else			x=screenWidth*(areaInc-1)/2+screenWidth-row*cellWidth-cellWidth/2;	//dirección <-
 
-/*	y=row*cellHeight+cellHeight/2;
-	if(col%2==0)	x=col*cellWidth+cellWidth/2;				//dirección ->
-	else			x=screenWidth-col*cellWidth-cellWidth/2;	//dirección <-*/
 	GraphPoint2D randomPos = new GraphPoint2D(x,y);
 	
 	for (int i = 0; i < c.getNodes().size(); i++) //Para cada nodo del cluster
@@ -2929,7 +2870,7 @@ Graph buildOrderedCompleteGraph()
 	   
 	   if (!list.contains(nodeLabel))
 	   		{
-		    double newX=randomPos.getX() -cellWidth/2+random((float)cellWidth);
+		    double newX=randomPos.getX()-cellWidth/2+random((float)cellWidth);
 		    double newY=randomPos.getY()-cellHeight/2+random((float)cellHeight);
 
 		    n.setPosition(new GraphPoint2D(newX,newY));
@@ -2949,14 +2890,14 @@ MaximalCluster[] orderClusters()
 	int []list=reorderClusters();
 	System.out.println("La lista de ordenación tiene "+list.length);
 	MaximalCluster[] cl=new MaximalCluster[list.length];
-	Iterator<ClusterSet> itOrder=g.getResults().values().iterator();
+	Iterator<GroupSet> itOrder=g.getResults().values().iterator();
 	int cont=0;
 	
 	//Put order in cluster objects
 	while(itOrder.hasNext())
 		{
-		ClusterSet r=itOrder.next();
-		ArrayList<Cluster> clusters1=r.getClusters();
+		GroupSet r=itOrder.next();
+		ArrayList<Group> clusters1=r.getClusters();
 		for(int i=0;i<clusters1.size();i++)
 			{
 			MaximalCluster c=(MaximalCluster)clusters1.get(i);
@@ -2993,7 +2934,7 @@ RadialCluster[] orderRadialClusters()
 	//Put order in cluster objects
 	while(itOrder.hasNext())
 		{
-		ClusterSet r=(ClusterSet)itOrder.next();
+		GroupSet r=(GroupSet)itOrder.next();
 		ArrayList clusters1=r.getClusters();
 		for(int i=0;i<clusters1.size();i++)
 			{
@@ -3021,7 +2962,7 @@ RadialCluster[] orderRadialClusters()
 	return clo;
 	}
 
-Cluster getClusterInPos(int pos)
+Group getClusterInPos(int pos)
 	{
 	//System.out.println("GetCluster in pos "+pos);
 	for(int i=0;i<resultSets.size();i++)
@@ -3031,8 +2972,8 @@ Cluster getClusterInPos(int pos)
 			pos-=numRS;
 		else			
 			{
-			Map<String,ClusterSet> m=g.getResults();
-			ClusterSet r=m.get(resultLabels.get(i));
+			Map<String,GroupSet> m=g.getResults();
+			GroupSet r=m.get(resultLabels.get(i));
 			try{return r.getClusters().get(pos);
 			}catch(Exception e){return null;}
 			}
@@ -3050,7 +2991,7 @@ MaximalCluster getClusterWithLabel(String label)
 	Iterator itClus=g.getResults().values().iterator();
 	while(itClus.hasNext())
 		{
-		ClusterSet r=(ClusterSet)itClus.next();
+		GroupSet r=(GroupSet)itClus.next();
 		for(int i=0;i<r.getClusters().size();i++)
 			{
 			MaximalCluster c=(MaximalCluster)r.getClusters().get(i);
@@ -3115,7 +3056,7 @@ void removeByThreshold()
 				Iterator itRNO=g.getResults().values().iterator();
 				while(itRNO.hasNext())
 					{
-					ClusterSet r=(ClusterSet)itRNO.next();
+					GroupSet r=(GroupSet)itRNO.next();
 					for(int m=0;m<r.getClusters().size();m++)//Si el nodo está en algún otro cluster
 						{
 						MaximalCluster c2=(MaximalCluster)r.getClusters().get(m);
@@ -3221,7 +3162,7 @@ void removeNonSelected(BiclusterSelection bs)
 		for(int k=0;k<lista.size();k++)//Para cada nodo del cluster
 			{
 			Node nr=(Node)lista.get(k);
-			Map<String, Cluster> map=nr.clusters;//cogemos los clusters en los que está
+			Map<String, Group> map=nr.clusters;//cogemos los clusters en los que está
 			boolean toRemove=true;
 			for(int j=0;j<list.length;j++)
 				{
@@ -3318,9 +3259,6 @@ void restoreClusters()
  */
 public void buildGraph()
 	{
-	//this.drawNodes=false;
-	//this.drawDual=true;
-	//this.drawHull=false;
 	totalTime=System.currentTimeMillis();
 	//Preliminary reading of biclusters and ordering
 	groupDelimiter=":";
@@ -3404,7 +3342,7 @@ public void clearGraph()
 Graph buildCompleteGraph() 
 	{
 	  Graph g;
-	  ClusterSet r = null;
+	  GroupSet r = null;
 	  MaximalCluster c = null;
 	  g = new Graph(this);
 	  
@@ -3413,8 +3351,9 @@ Graph buildCompleteGraph()
 	  cellWidth=screenWidth/Math.sqrt(numClusters);
 	  cellHeight=screenHeight/Math.sqrt(numClusters);
 	  double x,y;
-	  x=-cellWidth/2;
-	  y=cellHeight/2;
+	  
+	  x=screenWidth*(areaInc-1)*0.75-cellWidth/2;
+	  y=screenHeight*(areaInc-1)*0.75+cellHeight/2;
 	  
 	  //El contador de nodos usados en lugar de filas por columnas 
 	  nNodes = 0;
@@ -3425,7 +3364,7 @@ Graph buildCompleteGraph()
 	  for(int i=0;i<resultSets.size();i++)//Para cada result set
 	  	{
 		//New ResultSet
-		r = new ClusterSet();
+		r = new GroupSet();
 		r.setLabel((String)resultLabels.get(i));
 		
 		r.setColor(new CustomColor(paleta[color++]));
@@ -3473,6 +3412,8 @@ Graph buildCompleteGraph()
 		        
 			  c.addNode(n);
 			  }//each node in cluster
+			//TODO: determine if it has exactly the same elements that any other group to displace group labels
+			displaceLabel(c, g);
 			c.notifyNodesInCluster();
 			r.addCluster(c);
 		    clusterCount++;
@@ -3486,6 +3427,27 @@ Graph buildCompleteGraph()
 	  return g;
 	}
 
+private void displaceLabel(MaximalCluster mc, Graph graph)
+	{
+	if(graph==null || graph.getResults()==null) return;
+	Point2D.Double p=mc.getMiddlePoint();
+	Iterator<GroupSet> itGraph=graph.getResults().values().iterator();//Hull drawing
+	
+	for (int i=0; i<graph.getResults().size(); i++) 
+	  	{
+	    GroupSet r = (GroupSet)itGraph.next();
+	    for(int j=0;j<r.getClusters().size();j++)
+	      	{
+	    	MaximalCluster c=(MaximalCluster)r.getClusters().get(j);
+	    	if(c.getMiddlePoint().distance(p)<=0.1)
+	    		{
+	    		System.out.println("Displacement! "+c.label);
+	    		mc.labelDisplacement++;
+	    		}
+	      	}
+	  	}
+	}
+
 /**
  * Método para crear un caso de resultados de biclustering
  * @return	
@@ -3493,7 +3455,7 @@ Graph buildCompleteGraph()
 Graph buildSugiyamaGraph() 
 	{
 	  Graph g;
-	  ClusterSet r = null;
+	  GroupSet r = null;
 	  SugiyamaCluster c = null;
 	  g = new Graph(this);
 	  
@@ -3514,7 +3476,7 @@ Graph buildSugiyamaGraph()
 	  for(int i=0;i<resultSets.size();i++)//Para cada result set
 	  	{
 		//New ClusterSet
-		r = new ClusterSet();
+		r = new GroupSet();
 		r.setLabel((String)resultLabels.get(i));
 		
 		r.setColor(new CustomColor(paleta[color++]));
@@ -3934,7 +3896,7 @@ public void setPalette(java.awt.Color[] paleta)
 		{
 		for(int i=0;i<g.getResults().size();i++)
 			{
-			ClusterSet cs=g.getResults().get(resultLabels.get(i));
+			GroupSet cs=g.getResults().get(resultLabels.get(i));
 			cs.myColor=new CustomColor(this.paleta[color++]);
 			}
 		}
@@ -4129,7 +4091,7 @@ private void computeExcludedClusters()
 	for(int i=0;i<numClusters;i++)
 		{
 		try{
-		Cluster c=getClusterWithLabel("cluster"+i);
+		Group c=getClusterWithLabel("cluster"+i);
 		switch(thresholdType)
 			{
 			case 0: //overlap

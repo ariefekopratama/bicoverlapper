@@ -2,6 +2,7 @@ package es.usal.bicoverlapper.data;
 
 
 import es.usal.bicoverlapper.analysis.Analysis;
+import es.usal.bicoverlapper.data.MicroarrayData.AnnotationTask;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor;
@@ -137,7 +138,7 @@ public class MicroarrayData
 	/**
 	 * Session class into which this microarray data is loaded
 	 */
-	Session session=null;
+	//Session session=null;
 	
 	/**
 	 * Type of gene names used. If GENENAME, annotations are searched with Entrez Gene and QuickGO
@@ -186,7 +187,7 @@ public class MicroarrayData
 	public String chip;//kind of microarray chip (any official for Affymetrix permitted, by now), or kind of name taken by genes (geneID and ORF permitted)
 	public String organism;//Name of organism as registered in NCBI
 	public Map<Integer, GeneAnnotation> geneAnnotations;//Gene Annotations from NCBI and GeneOntology
-	public Map<String, GOTerm> GOTerms;//GO terms stored
+	public Map<String, GOTerm> GOTerms;//GO terms stored. The key is the go id
 	public boolean searchByR=false; //if there is information in the file about an available R package, gene annotations are taken from there, otherwise they're searched in NCBI
 	boolean annotationsRetrieved=false;
 	
@@ -203,6 +204,8 @@ public class MicroarrayData
 	public double[] minCols;
 	public double[] maxCols;
 	public double[] sdCols;
+	private AnnotationTask at;
+	private AnnotationProgressMonitor2 amd2;
 	
 	/**
 	 * Constructor from a file
@@ -225,6 +228,7 @@ public class MicroarrayData
 		experimentFactorValues=new HashMap<String,String[]>();
 		this.re=r;
 		
+		at=new AnnotationTask();
 		pmd.setTask(loadTask);
 		pmd.run();
 		if(mr!=null)
@@ -925,7 +929,7 @@ public class MicroarrayData
 				if(s.contains(what))
 					{
 					genes.add(getGeneId(s));
-					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					//System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
 					}
 				}
 			else
@@ -933,7 +937,7 @@ public class MicroarrayData
 				if(s.trim().equals(what.trim()))
 					{
 					genes.add(getGeneId(s));
-					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					//System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
 					}
 				}
 					
@@ -949,7 +953,7 @@ public class MicroarrayData
 			if(s.trim().equals(geneName.trim()))
 					{
 					ga=geneAnnotations.get(getGeneId(s));
-					System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
+					//System.out.println("Adding gene "+s+"\t"+getGeneId(s)+"\t"+this.getGeneNames()[getGeneId(s)]);
 					}
 			}
 		return ga;
@@ -1111,8 +1115,9 @@ public class MicroarrayData
 	    	    	Thread wt=new Thread() {
 	    				public void run() {
 	    					try{
-	    						annotTask=new AnnotationTask(new int[]{getGeneId(geneNames[0])});
-	    		    	    	annotTask.execute();
+	    						AnnotationTask at=new AnnotationTask(new int[]{getGeneId(geneNames[0])});
+	    		    	    	at.execute();
+	    						
 	    						}catch(Exception e){e.printStackTrace();}
 	    				}
 	    			};
@@ -1129,6 +1134,7 @@ public class MicroarrayData
 		    	    if(exp==null)	installPackage(exp, "annotate");
 		    	    
 		    	    exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/GOgroups.R\")");
+		    	    exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/geneAnnotation.R\")");
 		    	     
 	    	    	long t=System.currentTimeMillis();
 	    	    	if(!isBioMaRt) //in this case, the chip contains the name of the R annotation package
@@ -1150,8 +1156,7 @@ public class MicroarrayData
 	    	    		}
 	    	    	else	
 	    	    		{
-	    	    		exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/geneAnnotation.R\")");
-			    	    searchByR=true;
+	    	    		searchByR=true;
 			    	    }
 			        
 		    	    chip=chip.replace(".db", "");
@@ -1170,35 +1175,7 @@ public class MicroarrayData
 	public Map<Integer, GeneAnnotation> getGeneAnnotations() {
 		return geneAnnotations;
 	}
-	/**
-	 * Returns the gene annotations for the gene with the corresponding id.
-	 * Annotations are retrieved from BioConductor annotation package or by Entrez Gene and QuickGO 
-	 * if there was no annotation package or it cannot be successfully loaded. 
-	 * @param id "rowId" in the Prefuse Table for the desired gene
-	 */
-	public void getGeneAnnotation(Integer id)
-		{
-		getGeneAnnotations(new int[]{id},null,new Point(0,0));
-		}
-		
-	/**
-	 * Retrieves the gene annotations for the specified gene. It used an annotation task progress
-	 * monitor, so the results of the task are received by a GeneRequester.
-	 * @param gene name of the gene as it is in the "gene" field of the Prefuse tables
-	 * @param gr GeneRequester interface that received the results
-	 * @param p Point with the optional location of the task bar. If set to null, it is located at (0,0).
-	 */
-	public void getGeneAnnotation(String gene, GeneRequester gr, Point p)
-		{
-		int id=getGeneId(gene);
-		if(id<0)
-			{
-			System.err.println("Gene "+gene+" does not exist in the microarray");
-			return;
-			}
-		getGeneAnnotations(new int[]{id}, gr, p);
-		}
-
+	
 	/**
 	 * Returns the GOTerms associated to a group of genes (as a whole, not individually related
 	 * to each gene) up to a given p-value cutoff.
@@ -1456,16 +1433,6 @@ public class MicroarrayData
 	return null;
 	}
 
-	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location)
-		{
-		getGeneAnnotations(genes, gr, location, false);
-		}
-	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label)
-		{
-		annotTask.searchGO=true;
-		getGeneAnnotations(genes, gr, label, false);
-		}
-	
 	public void getGOTermsHypergeometric(LinkedList<Integer> genes, GeneRequester gr, Point location, String ontology) 
 	{
 	ht=new HypergeometricTestTask(genes, ontology);
@@ -1494,62 +1461,46 @@ public class MicroarrayData
 		int[] listgenes=new int[numGenes];
 		for(int i=0;i<numGenes;i++)		
 			listgenes[i]=i;
-		annotTask=new AnnotationTask(listgenes);
-		annotTask.searchGO=false;
-		annotTask.run();
+
+		getGeneAnnotations(listgenes, null, false, null, null, false);
 		}
 	
-	//public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, Point location, boolean pValues) 
-	public void getGeneAnnotations(int[] genes, GeneRequester gr, Point location, boolean pValues) 
+	public void getGeneAnnotations(int[] genes, GeneRequester gr, boolean showProgress, JLabel label, Point location, boolean searchGO) 
 		{
-		annotTask=new AnnotationTask(genes);
-		annotTask.searchGO=true;
-		/*if(location!=null)	amd=new AnnotationProgressMonitor(location);
-		else				amd=new AnnotationProgressMonitor(new Point(0,0));
-		amd.setTask(t);
-		amd.run();*/
-		if(location!=null)	
+		at=new AnnotationTask(genes);
+		at.searchGO=searchGO;
+		if(showProgress)
 			{
-			annotProgressMon=new AnnotationProgressMonitor(location);
-			annotProgressMon.setTask(annotTask);
-			annotProgressMon.run();
+			if(location!=null)	
+				{
+				annotProgressMon=new AnnotationProgressMonitor(location);
+				annotProgressMon.setTask(at);
+				annotProgressMon.run();
+				}
+			else
+				{
+				amd2=new AnnotationProgressMonitor2(label);
+				amd2.setTask(at);
+				amd2.run();
+				}
+			}
+		
+		if(gr!=null)
+			{
+			geneRequester=gr;
+			Thread wt=new Thread() {
+				public void run() {
+					try{geneRequester.receiveGeneAnnotations(at.get());}catch(Exception e){e.printStackTrace();}
+				}
+			};
+			wt.start();
 			}
 		else
 			{
-			AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(new JLabel());
-			amd2.setTask(annotTask);
-			amd2.run();
-			}
-		if(gr!=null)
-			{
-			geneRequester=gr;
-			Thread wt=new Thread() {
-				public void run() {
-					try{geneRequester.receiveGeneAnnotations(annotTask.get());}catch(Exception e){e.printStackTrace();}
-				}
-			};
-			wt.start();
+			at.execute();
 			}
 		}
-	public void getGeneAnnotations(LinkedList<Integer> genes, GeneRequester gr, JLabel label, boolean pValues) 
-		{
-		annotTask=new AnnotationTask(ArrayUtils.toIntArray(genes));
-		
-		annotTask.searchGO=true;
-		AnnotationProgressMonitor2 amd2=new AnnotationProgressMonitor2(label);
-		amd2.setTask(annotTask);
-		amd2.run();
-		if(gr!=null)
-			{
-			geneRequester=gr;
-			Thread wt=new Thread() {
-				public void run() {
-					try{geneRequester.receiveGeneAnnotations(annotTask.get());}catch(Exception e){e.printStackTrace();}
-				}
-			};
-			wt.start();
-			}
-		}
+	
 	public class HypergeometricTestTask extends SwingWorker<ArrayList<GOTerm>, Void>// implements Runnable
 		{
 		public LinkedList<Integer> genes;
@@ -1617,23 +1568,56 @@ public class MicroarrayData
 			t1=System.currentTimeMillis();
 			
 			REXP exp=null;
-			if(!chip.startsWith("org."))
+			
+			//In the case of BioMaRt, we must select the corresponding species package (org.*)
+			String annotationPackage=chip;
+			if(isBioMaRt)	annotationPackage=getAnnotationPackage();
+			
+			//Prepare universe
+			exp=re.eval("universe");
+			if(exp==null)
 				{
-				exp=re.eval("chipEntrezUniverse <- unique(unlist(mget("+universe+", "+chip+"ENTREZID, ifnotfound=NA)))");//TODO: Does not work with org.Sc.sgd.db
-				if(exp==null)
-					errorMessage=chip+" database does not have ENTREZIDs, hypergeometric test cannot be run";
-				exp=re.eval("selectedEntrezIds <- unlist(mget("+n+","+chip+"ENTREZID, ifnotfound=NA))");
-				}
-			else	//org. packages has as base ids the species ids, not the entrez ids.
+				if(!chip.startsWith("org."))
+					{
+					if(isBioMaRt) //ensembl ids -> the work is done via the corresponding species annotation package (org.*)
+						{
+						String env=annotationPackage.replace(".db", "ENSEMBL");
+						exp=re.eval("universe <- mappedkeys("+env+")");
+						exp=re.eval("ref=unlist(mget(universe, "+env+", ifnotfound=NA))");
+						}
+					else  // platform packages have as ids the probe ids
+						{
+						exp=re.eval("universe <- unique(unlist(mget("+universe+", "+chip+"ENTREZID, ifnotfound=NA)))");
+						if(exp==null)
+							errorMessage=chip+" database does not have ENTREZIDs, hypergeometric test cannot be run";
+						}
+					}
+				else	//species (org.) packages has as base ids special ids
+					{
+					System.out.println("org database!");
+					exp=re.eval("universe <- "+universe);
+					}
+		    	}
+			
+			//Prepare selected Ids
+			if(isBioMaRt)
 				{
-				System.out.println("org databasse!");
-				exp=re.eval("chipEntrezUniverse <- "+universe);
-				//if(exp==null)
-				//	errorMessage=chip+" database does not have ENTREZIDs, hypergeometric test cannot be run";
-				exp=re.eval("selectedEntrezIds <- "+n);
+				exp=re.eval("selected=names(ref)[which(ref %in% "+n+")]");
 				}
-		    exp=re.eval("params <- new(\"GOHyperGParams\", geneIds = selectedEntrezIds," +
-					"universeGeneIds = chipEntrezUniverse, annotation = \""+chip+"\"," +
+			else
+				{
+				if(!chip.startsWith("org."))//EntrezIDs on no org.* annotation packages
+					{
+					exp=re.eval("selected <- unlist(mget("+n+","+chip+"ENTREZID, ifnotfound=NA))");
+					}
+				else//species ids for org. packages
+					{
+					exp=re.eval("selected <- "+n);
+					}
+				}
+			
+			exp=re.eval("params <- new(\"GOHyperGParams\", geneIds = selected," +
+					"universeGeneIds = universe, annotation = \""+annotationPackage+"\"," +
 					"ontology = \""+ontology+"\", pvalueCutoff = "+cutoff+", conditional = FALSE," +
 					"testDirection = \"over\")");
 		    
@@ -1679,6 +1663,54 @@ public class MicroarrayData
 			}
 		}
 	
+	/**
+	 * Returns the corresponding annotation package for the organism of the loaded microarray
+	 * @return
+	 */
+	public String getAnnotationPackage()
+		{
+		String cad=null;
+		StringTokenizer st=new StringTokenizer(organism);
+		int numTokens=st.countTokens();
+		String abbv=""+st.nextToken().toUpperCase().charAt(0)+st.nextToken().toLowerCase().charAt(0);
+		if(numTokens==2)
+			{
+			//it works for everything except E. coli and Malaria
+			cad="org."+abbv+".eg.db";
+			
+			if(abbv.equals("Pf"))//this makes malaria
+				cad="org."+abbv+".plasmo.db";
+			if(cad.contains("Ec"))//this makes E. coli (default K12)
+				cad="org."+abbv+"K12.eg.db";
+			}
+		else
+			{
+			//this makes E. coli distinction
+			if(organism.contains("K12"))
+				cad="org."+abbv+"K12.eg.db";
+			else if(organism.contains("Sakai"))
+				cad="org."+abbv+"Sakai.eg.db";
+			}
+		return cad; 
+		}
+	
+	/**
+	 * Returns a list of Entrez IDs for every gene in the sample (if available).
+	 * NOTE: The returning list is unsorted
+	 * @return
+	 */
+	public String[] getEntrezIds()
+		{
+		Iterator<GeneAnnotation> it=geneAnnotations.values().iterator();
+		ArrayList<String> ret=new ArrayList<String>();
+		while(it.hasNext())
+			{
+			GeneAnnotation ga=it.next();
+			if(ga.entrezId!=null)	ret.add(ga.entrezId);
+			}
+		return ret.toArray(new String[ret.size()]);
+		}
+	
 	//**********************************************************************
 	public class AnnotationTask extends SwingWorker<ArrayList<GeneAnnotation>, Void>// implements Runnable
 	{
@@ -1692,32 +1724,27 @@ public class MicroarrayData
 		public ArrayList<GeneAnnotation> galist=null;
 		public boolean searchGO;
 		
+		public AnnotationTask()
+			{
+			genes=null;
+			galist=new ArrayList<GeneAnnotation>();
+			searchGO=true;
+			}
 		
 		public AnnotationTask(int id)
 			{
 			this.id=id;
+			searchGO=true;
 			}
-		//public AnnotationTask(LinkedList<Integer> genes)
+		
 		public AnnotationTask(int[] genes)
 			{
 			this.genes=genes;
 			galist=new ArrayList<GeneAnnotation>();
+			searchGO=true;
 			}
 		
-		/**
-		 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
-		 * @param list
-		 * @return
-		 */
-		private String getGroup(String[] list)
-			{
-			String ret="c(";
-			for(String i:list)
-				{
-				ret+="\""+i+"\",";
-				}
-			return ret.substring(0, ret.length()-1)+")";
-			}
+		
 		
 		/**
 		 * Annotations retrieved with method mget() from R
@@ -1726,6 +1753,9 @@ public class MicroarrayData
 		 */
 		public ArrayList<GeneAnnotation> getMultipleGeneAnnotationsR()
 		{
+		System.out.println("---getMultipleGeneAnnotationsR---");
+			
+		galist=new ArrayList<GeneAnnotation>();
 		int progress=0;
 		long t0=System.currentTimeMillis();
 		
@@ -1741,7 +1771,7 @@ public class MicroarrayData
 		group=group.substring(0, group.length()-1);
 		REXP exp=re.eval("group=c("+group+")");
 		
-		String[] names=null, descriptions=null;
+		String[] names=null, descriptions=null, entrezs=null;
     	
 		message="searching for gene names...";
 		System.out.println(message);
@@ -1781,7 +1811,12 @@ public class MicroarrayData
 	    		}
 	 		else
 	 			{
-	 			exp=re.eval("df=getBMGenes(group, species=\""+organism+"\", type=\""+chip+"\")");
+	 			if(re.eval("martEnsembl")==null)
+	 				exp=re.eval("martEnsembl=getEnsemblMart(species=\""+organism+"\")");
+	 			
+	 			//This first one is a bit faster but does not retireve entrez ids
+	 			exp=re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+organism+"\", type=\""+chip+"\")");
+	 			//exp=re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+chip+"\", attributes=c(\"ensembl_gene_id\",\"entrezgene\",\"hgnc_symbol\",\"description\"))$ids");
 	 			exp=re.eval("df[,\""+rname+"\"]");
 	 			if(exp!=null)
 	 				names=exp.asStringArray();
@@ -1794,10 +1829,10 @@ public class MicroarrayData
 	 			if(exp!=null)	
 	        		descriptions=exp.asStringArray();
 	 			
-	 			
-		    	
-			
-	 			}
+	 			exp=re.eval("df[,\"entrezgene\"]");
+	 			if(exp!=null)	
+	        		entrezs=exp.asStringArray();
+	  			}
 	 		}    	
  		
     	
@@ -1810,13 +1845,13 @@ public class MicroarrayData
  		
  		//3) Search for GO terms
  		RList go=null;
-    	if(searchGO)
+	    if(searchGO)
 	 		{
-    		int toRetrieve=0;
-    		String[] goids=exp.asStringArray();
+ 			int toRetrieve=0;
+    		String[] goids;
     	    ArrayList<GOTerm> got=new ArrayList<GOTerm>();
     	
-    	    
+    	    //Search by platform of by biomart
     		if(!isBioMaRt)
 	    		{
 		    	exp=re.eval("go=mget(group,"+chip+rgo+", ifnotfound=NA)");
@@ -1825,72 +1860,39 @@ public class MicroarrayData
 		    		{
 		    		go=exp.asList();
 		    		exp=re.eval("l=unique(unlist(go))");
-		    		exp=re.eval("l=l[grep(\"GO:.*\", l)]");
-
-		    	    long t1=System.currentTimeMillis();
-		    	    String n="c(\"";
-		    	    for(int i=0;i<goids.length;i++)	//Select the ones not already stored in java
-		    	    	{
-		    	    	GOTerm gt=GOTerms.get(goids[i]);
-		    	    	if(gt!=null)	got.add(gt);
-		    	    	else		
-		    	    		{
-		    	    		toRetrieve++;
-		    	    		n=n.concat(goids[i]+"\", \"");
-		    	    		}
-		    	    	}
-		    	    n=n.substring(0,n.length()-3)+")";
-		    	    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
-		    	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
-		    		
-		    	    //System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
-		    	    t1=System.currentTimeMillis();
-		    	    
-		    	    //Add new ones to java map
-		    	    exp=re.eval("got@terms");
-		    		String[] t=exp.asStringArray();
-		    		exp=re.eval("got@definitions");
-		    		String[] d=exp.asStringArray();
-		    		exp=re.eval("got@ontologies");
-		    		String[] o=exp.asStringArray();
-		    		exp=re.eval("got@ids");
-		    		String[] ids=exp.asStringArray();
-		    		exp=re.eval("got@evidences");
-		    		int[] evs=exp.asIntArray();
-		    		if(evs.length==0)
-		    			{
-		    			evs=new int[toRetrieve];
-		    			for(int i=0;i<evs.length;i++)	evs[i]=1;
-		    			}
-		    		
-		    		if(evs!=null && ids !=null && o!=null && d!=null && t!=null) 
-						{
-			    		for(int i=0;i<evs.length;i++)
-			    			{
-			    			if(!ids[i].equals("biological_process") && !ids[i].equals("molecular_function") && !ids[i].equals("cellular_component"))
-				    			{
-				    			message="adding term "+ids[i];
-				    			progress+=84.0/evs.length;
-				    	 		setProgress(progress);
-				    	 		
-				    			GOTerm gt=new GOTerm(t[i], ids[i], d[i], o[i], "", evs[i]);
-				    			GOTerms.put(ids[i], gt);
-				    			}
-			    			}
-			    		}
+		    		exp=re.eval("l[grep(\"GO:.*\", l)]");
 		    		}
-		    else
+	    		}
+    		else
 		    	{
 		    	//BIOMART SEARCH
-		    	exp=re.eval("df=getBMGO(group, species=\""+organism+"\", type=\""+chip+"\", GOtypes=c(\"go_biological_process_id\"))");
-	    	    exp=re.eval("unique(unlist(df[,c(\"go_cellular_component_id\", \"go_biological_process_id\", \"go_molecular_function_id\")]))");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
-
-	    	    //TODO: probably easy to merge a large part of the if and the else
+    			if(re.eval("martEnsembl")==null)
+	 				exp=re.eval("martEnsembl=getEnsemblMart(species=\""+organism+"\")");
+	 			
+		    	exp=re.eval("df=getBMGO(group, mart=martEnsembl, type=\""+chip+"\")");
+		    	exp=re.eval("df");
+		    	if(exp!=null)
+			    	{
+		    		go=exp.asList();
+		    	    exp=re.eval("unique(unlist(df))");
+			    	}
+		    	else
+		    		{
+		    		System.err.println("GO es null aqu’ ya!!"+re.eval("unique(unlist(df))"));
+		    		}
+		    	}
+    		
+    		//Either case, get GO definitions
+			if(exp!=null)
+				{
+	    		goids=exp.asStringArray();
 	    	    long t1=System.currentTimeMillis();
-		    	    String n="c(\"";
-		    	    for(int i=0;i<goids.length;i++)	//Select the ones not already stored in java
+	    	    String n="c(\"";
+	    	    for(int i=0;i<goids.length;i++)	//Select the ones not already stored in java
+	    	    	{
+	    	    	if(goids[i]!=null && goids[i].startsWith("GO:"))
 		    	    	{
-		    	    	GOTerm gt=GOTerms.get(goids[i]);
+	    	    		GOTerm gt=GOTerms.get(goids[i]);
 		    	    	if(gt!=null)	got.add(gt);
 		    	    	else		
 		    	    		{
@@ -1898,10 +1900,14 @@ public class MicroarrayData
 		    	    		n=n.concat(goids[i]+"\", \"");
 		    	    		}
 		    	    	}
-		    	    n=n.substring(0,n.length()-3)+")";
-		    	    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
-		        if(exp==null)	System.err.println("Error getting GO terms by ID with R");
+	    	    	}
+	    	    n=n.substring(0,n.length()-3)+")";
+	    	    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
+	    	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
 	    		
+	    	    //System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
+	    	    t1=System.currentTimeMillis();
+	    	    
 	    	    //Add new ones to java map
 	    	    exp=re.eval("got@terms");
 	    		String[] t=exp.asStringArray();
@@ -1934,11 +1940,9 @@ public class MicroarrayData
 			    			}
 		    			}
 		    		}
-	    	
-	 			
-		    	}
-		    	}//if(!biomart)
-    		}//if(searchGO)
+	    		}//if(exp!=null)
+		    }//if(searchGO)
+    	//System.out.println("GOTerms size: "+GOTerms.size()+ " go es "+go+" searchGO es "+searchGO);
     	
     	//4) Add all the new information to the genes
     	for(int g=0;g<genes.length;g++)
@@ -1953,27 +1957,11 @@ public class MicroarrayData
 				if(descriptions!=null)	ga.description=descriptions[g];
 				if(names!=null)			
 					{
-					//if(g>names.length || names[g]==null)
-					//	System.out.println("movid—n");
 					if(names[g]==null || names[g].equals("NA"))	ga.name=geneNames[g];//Set as gene name its id
 					else						ga.name=names[g];
 					}
+				if(entrezs!=null)	ga.entrezId=entrezs[g];
 				ga.id=geneNames[g];
-				//System.out.println(ga.name+" "+ga.description);
-				if(go!=null)
-					{
-					RList goterms=go.at(g).asList();
-					if(goterms!=null)
-						{
-						String[] goids=goterms.keys();
-						ga.goTerms=new ArrayList<GOTerm>();
-						for(int i=0;i<goids.length;i++)
-							{
-							GOTerm gt=GOTerms.get(goids[i]);
-							if(gt!=null)	ga.goTerms.add(gt);
-							}
-						}
-					}
 				geneAnnotations.put(id, ga);
 				}
 			else
@@ -1981,18 +1969,32 @@ public class MicroarrayData
 				if(descriptions!=null)	ga.description=descriptions[g];
 				if(names!=null)			ga.name=names[g];
 				ga.internalId=id;
-					
-				if(go!=null)
+				}
+			//In addition, if searched and found, we add the GO terms		
+			if(go!=null)
+				{
+				RList goterms=null;
+				String[] goids=null;
+				
+				if(isBioMaRt)
 					{
-					RList goterms=go.at(g).asList();
-					if(goterms!=null)
-						{
-						String[] goids=goterms.keys();
+					goids=go.at(g).asStringArray();
+					}
+				else			
+					{
+					goterms=go.at(ga.id).asList();
+					if(goterms!=null)	goids=goterms.keys();
+					}
+				if(goids!=null)
+					{
+					if(ga.goTerms==null)	
 						ga.goTerms=new ArrayList<GOTerm>();
-						for(int i=0;i<goids.length;i++)
+					for(int i=0;i<goids.length;i++)
+						{
+						if(goids[i].startsWith("GO:"))
 							{
 							GOTerm gt=GOTerms.get(goids[i]);
-							if(gt!=null)	
+							if(gt!=null && !ga.goTerms.contains(gt))	
 								if(!gt.term.equals("biological_process") && !gt.term.equals("molecular_function") && !gt.term.equals("cellular_component"))
 						    		ga.goTerms.add(gt);
 							}
@@ -2002,11 +2004,13 @@ public class MicroarrayData
 			galist.add(ga);
 			}
 
-    	//System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t0)/1000.0+" secs.");
+    	System.out.println("Finished: annotations retrieved in "+(System.currentTimeMillis()-t0)/1000.0+" secs.");
 		message="Finished: annotations retrieved in "+(System.currentTimeMillis()-t0)/1000.0+" secs.";
 		progress=100;
 		setProgress(progress);
-		
+
+		System.out.println("---END getMultipleGeneAnnotationsR---");
+
 		return galist;
 		}
 
@@ -2199,16 +2203,17 @@ public class MicroarrayData
 		
 		
 		@Override
-		//public Void doInBackground()
 		public ArrayList<GeneAnnotation> doInBackground()
 			{
-			if(searchByR)
-				//getGeneAnnotationR();
-				getMultipleGeneAnnotationsR();
-			else
-				getGeneAnnotationNCBI();
-			done();
-			return galist;
+			synchronized(re)
+				{
+				if(searchByR)
+					getMultipleGeneAnnotationsR();
+				else
+					getGeneAnnotationNCBI();
+				done();
+				 return galist;
+				}
 			}
 		
 		@Override
@@ -2333,7 +2338,7 @@ public class MicroarrayData
 	@Override
 	public Integer doInBackground() 
 		{
-		System.out.println("Memory reserved before loading: "+Sizeof.usedMemory());
+		//System.out.println("Memory reserved before loading: "+Sizeof.usedMemory());
 		int progress=0;
 		String name=path.replace("\\","/");
 		message="Reading matrix "+name.substring(name.lastIndexOf("/")+1, name.indexOf("."));
@@ -2399,7 +2404,7 @@ public class MicroarrayData
 			numConditions=levelsi.getColumnCount()-colHeader;
 			numGenes=levelsi.getRowCount()-rowHeader+1;
 			}
-		message=numGenes+" genes\n"+numConditions+" conditions";
+		message=numGenes+" rows\n"+numConditions+" columns";
 		progress+=60;
 		setProgress(progress);
 		
@@ -2409,7 +2414,7 @@ public class MicroarrayData
 		for(int i=0;i<numConditions;i++)	decimals[i]=nd;
 		columnOrder=new int[numConditions];
 		for(int i=0;i<numConditions;i++)	columnOrder[i]=i;
-		System.out.println("Microarray matrix with "+numGenes+" genes and "+numConditions+" conditions");
+		System.out.println("Matrix with "+numGenes+" rows and "+numConditions+" columns");
 	
 		
 		try{
@@ -2516,7 +2521,7 @@ public class MicroarrayData
 		
 		
 
-		message="Organism: "+organism+"\nPlatform: "+chip+"\nRetrieving gene annotations ...";
+		message="Organism: "+organism+"\nPlatform: "+chip+"\nRetrieving gene annotations ... (in background)";
 		progress+=10;
 		setProgress(progress);
 		

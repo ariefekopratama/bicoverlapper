@@ -2,11 +2,13 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
+S Data - MAPK1 (ENSG00000100030) fails when retrieving its go terms via biomaRt.
+		Solved, there was a problem with single gene search, that returned a matrix instead of a list
 Analysis - differential expression analysis. Close to solution.
 			S 1) Done efv vs efv
 			S 2) Done ef vs efv
 			3) Not done ef vs ef? necessary?
-Data -		Close session properly when a new matrix is loaded
+Data -		Close session properly when a new matrix is loaded. I think it's ok now
 S Data - 	Direct download from ArrayExpress (raw) + process it and save in the BicOverlapper format.
 Data - 		One step beyond, direct download and preprocessing of several experiments, either by ID list or by descriptive name!
 

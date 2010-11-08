@@ -178,7 +178,6 @@ private static final long serialVersionUID = 1L;
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
 			bv.buildGraph();
 			bv.init();
-			//bv.timeTest(100);
 			
 			JToolBar jtb=new JToolBar();
 			addButtons(jtb);
@@ -188,8 +187,7 @@ private static final long serialVersionUID = 1L;
 			GestorMouse gm=new GestorMouse();
 			bv.addMouseListener(gm);	
 			bv.addMouseWheelListener(gm);
-			GestorKey gk=new GestorKey();
-			bv.addKeyListener(gk);	
+			bv.addKeyListener(sesion);	
 			this.getWindow().setContentPane(this);
 			this.getWindow().pack();
 			}
@@ -912,17 +910,6 @@ private static final long serialVersionUID = 1L;
 		if(bv!=null)			bv.setPalette(paleta);
 		
 		}
-	
-	private class GestorKey implements KeyListener{
-		public void keyPressed(KeyEvent e)
-			{
-			System.out.println("Primero esto despues overlapper o algo");
-			if(e.getKeyCode()==90)		sesion.undo();
-			else if(e.getKeyCode()==89)	sesion.redo();
-			}
-		public void keyReleased(KeyEvent e){}
-		public void keyTyped(KeyEvent e){}
-		}
 
 	private class GestorMouse implements MouseListener, MouseWheelListener{
 		
@@ -981,5 +968,4 @@ private static final long serialVersionUID = 1L;
 		public void mouseMoved(MouseEvent e){}
 		public void mouseExited(MouseEvent e){}
 		}
-
 	}

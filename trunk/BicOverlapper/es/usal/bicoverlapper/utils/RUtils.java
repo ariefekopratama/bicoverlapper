@@ -19,13 +19,13 @@ public final class RUtils {
 		int[][] mat=new int[nrows][ncols];
 		for(int i=0;i<nrows;i++)	for(int j=0;j<ncols;j++)	mat[i][j]=0;
 		
-		for(ArrayList<String> l : list)
+		/*for(ArrayList<String> l : list)
 			{
 			for(String s : l)
 				{
 				System.out.println(s);
 				}
-			}
+			}*/
 		return mat;
 		}
 	/**

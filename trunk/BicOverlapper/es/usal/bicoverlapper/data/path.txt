@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/sybaris/data/fungi3/fungi3.txt
+/Users/rodri/Documents/investigacion/sybaris/data/fungi3/degsUP2.bic
