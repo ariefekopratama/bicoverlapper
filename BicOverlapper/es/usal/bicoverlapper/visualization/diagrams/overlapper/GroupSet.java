@@ -8,14 +8,14 @@ import es.usal.bicoverlapper.utils.CustomColor;
 
 
 /**
- * ClusterSet keeps track of all the (bi)clusters returned by certain (bi)clustering algorithm, or 
- * any other organization of cluster as a group that would be necessary
- * Each ClsuterSet has a representative color an label to distingish from other ClusterSets.
- * @author Roberto Therón and Rodrigo Santamaría
+ * This class holds a set of groups (of any class, but originally designed for (bi)clusters)
+ * A GroupSet is associated to a Graph into which its elements (treated as interconnected nodes) are represented.
+ * As of today, a GroupSet only differentiates from another in the color of its groups 
+ * @author Rodrigo Santamaria and Roberto Theron
  *
  */
-public class ClusterSet {
-	private ArrayList<Cluster> clusters;
+public class GroupSet {
+	private ArrayList<Group> clusters;
 	CustomColor myColor = null;
 	Graph myGraph = null;
 	String label = "";
@@ -24,15 +24,15 @@ public class ClusterSet {
 	 * Builds an empty ClusterSet
 	 *
 	 */
-	public ClusterSet() {
-		clusters = new ArrayList<Cluster>();
+	public GroupSet() {
+		clusters = new ArrayList<Group>();
 		}
 	
 	/**
 	 * Adds a new cluster to the ClusterSet
 	 * @param c Cluster to add to de ClusterSet
 	 */
-	public void addCluster(Cluster c){
+	public void addCluster(Group c){
 		clusters.add(c);   
 	}
 	
@@ -75,7 +75,7 @@ public class ClusterSet {
      * Gets all the Clusters in this ClusterSet as an ArrayList
      * @return	ArrayList with all the Clusters in the ClusterSet
      */
-	public ArrayList<Cluster> getClusters() {
+	public ArrayList<Group> getClusters() {
 		return clusters;
 	}
 
@@ -83,7 +83,7 @@ public class ClusterSet {
 	 * Sets all the clusters to be in this ClusterSet
 	 * @param clusters	ArrayList with all the Clusters to be in this ClusterSet
 	 */
-	public void setClusters(ArrayList<Cluster> clusters) {
+	public void setClusters(ArrayList<Group> clusters) {
 		this.clusters = clusters;
 	}
 	
@@ -91,7 +91,7 @@ public class ClusterSet {
 	 * Removes a Cluster from the ClusterSet, if it is in
 	 * @param c	Cluster to remove
 	 */
-	public void removeCluster(Cluster c)
+	public void removeCluster(Group c)
 		{
 		clusters.remove(c);
 		}

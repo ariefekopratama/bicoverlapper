@@ -146,6 +146,7 @@ public class SortPanel extends javax.swing.JFrame {
 				jList2.setModel(jList2Model);
 				jList2.setLayout(null);
 				jList2.setSelectedIndex(0);
+				jList2.setAutoscrolls(true);
 				jList2.setBorder(new LineBorder(new java.awt.Color(0,0,0), 1, false));
 			}
 			thisLayout.setVerticalGroup(thisLayout.createSequentialGroup()
@@ -159,7 +160,7 @@ public class SortPanel extends javax.swing.JFrame {
 				    .addComponent(jButton2, GroupLayout.Alignment.BASELINE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE, GroupLayout.PREFERRED_SIZE))
 				.addContainerGap());
 			thisLayout.setHorizontalGroup(thisLayout.createSequentialGroup()
-				.addContainerGap(21, 21)
+				.addContainerGap()
 				.addGroup(thisLayout.createParallelGroup()
 				    .addGroup(GroupLayout.Alignment.LEADING, thisLayout.createSequentialGroup()
 				        .addComponent(jButton1, GroupLayout.PREFERRED_SIZE, 62, GroupLayout.PREFERRED_SIZE)
@@ -169,10 +170,10 @@ public class SortPanel extends javax.swing.JFrame {
 				    .addGroup(GroupLayout.Alignment.LEADING, thisLayout.createSequentialGroup()
 				        .addComponent(jLabel2, GroupLayout.PREFERRED_SIZE, 99, GroupLayout.PREFERRED_SIZE)
 				        .addGap(0, 30, Short.MAX_VALUE))
-				    .addGroup(GroupLayout.Alignment.LEADING, thisLayout.createSequentialGroup()
-				        .addComponent(jList2, GroupLayout.PREFERRED_SIZE, 123, GroupLayout.PREFERRED_SIZE)
-				        .addGap(0, 6, Short.MAX_VALUE)))
-				.addContainerGap(26, 26));
+				    .addGroup(thisLayout.createSequentialGroup()
+				        .addComponent(jList2, GroupLayout.PREFERRED_SIZE, 129, GroupLayout.PREFERRED_SIZE)
+				        .addGap(0, 0, Short.MAX_VALUE)))
+				.addContainerGap(35, 35));
 
 			{
 				ListModel jList1Model = 
@@ -180,7 +181,7 @@ public class SortPanel extends javax.swing.JFrame {
 							new String[] { "Item One", "Item Two" });
 			}
 			pack();
-			this.setSize(176, 204);
+			this.setSize(160, 204);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -19,19 +19,20 @@ import es.usal.bicoverlapper.visualization.diagrams.HeatmapDiagram;
 
 
 /**
- * Abstract class for cluster representation. Methods to manage edges are left to child classes.
- * A cluster is any group of nodes, overlapped or not. For this documentation purposes,
+ * Abstract class for group representation. Methods to manage edges are left to child classes.
+ * A Group represents any group of elements (nodes), overlapped or not. For this documentation purposes,
  * cluster, bicluster and group are synonyms, although of course they actually mean very different things.
+ * This class evolved from representing biclusters (specific) to clusters and now just to groups (general)
  */
-public abstract class Cluster 
+public abstract class Group 
 	{
 	protected Graph myGraph = null;
-	protected ClusterSet myResultSet = null;
+	protected GroupSet myResultSet = null;
 	protected ArrayList<Node> clusterNodes;//Nodes in the cluster
 	protected ArrayList<DualNode> clusterDualNodes;
 	CustomColor labelColor = new CustomColor(0,200,200,150);
-	protected String label;
-	protected String title;//Just for film tests
+	protected String label;//Name of the group
+	public int labelDisplacement;//In the case of several groups with exactly the same elements, this is used to avoid label superposition
 	protected int order;
 	protected GraphPoint2D group[]=null; //Positions of all nodes in this cluster
 	Polygon hull=null;
@@ -40,7 +41,7 @@ public abstract class Cluster
 	/**
 	 * Builds an empty Cluster
 	 */
-	public Cluster() {
+	public Group() {
 		clusterNodes = new ArrayList<Node>();
 		clusterDualNodes = new ArrayList<DualNode>();
 	  }
@@ -280,11 +281,11 @@ public abstract class Cluster
 					{
 					Node dn2=list.get(i).to;
 					if(dn==dn2)	dn2=list.get(i).to;
-					Iterator<Cluster> itc=dn2.clusters.values().iterator();
+					Iterator<Group> itc=dn2.clusters.values().iterator();
 					int wide=0;
 					while(itc.hasNext())	
 						{
-						Cluster c=itc.next();
+						Group c=itc.next();
 						if(dn.clusters.containsKey(c.label))	wide++;
 						}
 					bv.stroke(wide);
@@ -302,7 +303,7 @@ public abstract class Cluster
 	 * Builds a cluster that correponds to the cluster set r
 	 * @param r	The ClusterSet in which this cluster is
 	 */  
-	public Cluster(ClusterSet r) {
+	public Group(GroupSet r) {
 			clusterNodes = new ArrayList<Node>();
 			clusterDualNodes = new ArrayList<DualNode>();
 			myResultSet = r;
@@ -314,7 +315,7 @@ public abstract class Cluster
 	 * @param r	ClusterSet in whith this cluster is
 	 * @param l	name for this cluster
 	 */
-	  public Cluster(ClusterSet r, String l) {
+	  public Group(GroupSet r, String l) {
 			clusterNodes = new ArrayList<Node>();
 			clusterDualNodes = new ArrayList<DualNode>();
 			myResultSet = r;
@@ -333,39 +334,26 @@ public abstract class Cluster
 		 draw(true, true);
 	  	}
 	  
-	  /**
-	   * Draw the hull of the cluster. The hull of the cluster is its surrounding area, determined by their most peripheral nodes
-	   *
-	   */
-	  void drawHulls()
-		{
+	  public void drawHull(CustomColor c)
+	  	{
 		Overlapper bv=(Overlapper) myGraph.getApplet();
 		int trans=Math.max(30, 255/myGraph.maxZones);
 		if(myGraph.maxZones==1)	trans=trans/2;
 		
-	    if(myGraph.getHoverClusters().containsKey(this.label))
-		 	{
-	    	Color c=bv.paleta[Overlapper.hoverColor];
-			bv.fill(c.getRed(), c.getGreen(), c.getBlue(), trans);
-			bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),250);
+		bv.fill(c.getR(), c.getG(), c.getB(), trans);
+		if(c==myResultSet.myColor)
+			{
+			bv.strokeWeight(1);
+			if(bv.isDrawContour()) bv.stroke(c.getR(), c.getG(), c.getB(),255);
+			else				   bv.noStroke();
 			}
-	    else
-	    	{
-	    	if(myGraph.getSelectedClusters().containsKey(this.label))
-	    	 	{
-	    		Color c=bv.paleta[Overlapper.selectionColor];
-				 bv.fill(c.getRed(), c.getGreen(), c.getBlue(), trans);
-				 bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
-		 		}
-	    	else
-	    	 	{
-	    		bv.fill(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(), myResultSet.myColor.getA());
-	    		bv.fill(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(), trans);
-				if(bv.isDrawContour()) bv.stroke(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(),255);
-				else				   bv.noStroke();
-		 	    }
-	 	   }
-			 
+		else
+			{
+			bv.strokeWeight(2);
+			bv.stroke(c.getR(), c.getG(), c.getB(),255);
+			}
+		
+	  		 
 		 int numNodes=0;
 		 Point2D.Double center=new Point2D.Double(0,0);//To make the hulls slightly larger
 		 for(int i=0;i<clusterNodes.size();i++)
@@ -394,7 +382,7 @@ public abstract class Cluster
 			 inflate3=true;
 		 	}
 		 
-		 group=new GraphPoint2D[numNodes];
+ 			group=new GraphPoint2D[numNodes];
 		 
 		  float meanx=0;
 		  float meany=0;
@@ -435,13 +423,11 @@ public abstract class Cluster
 			group[2]=convertRefFrame(new GraphPoint2D(n.getX(), n.getY()-10));
 			group[3]=convertRefFrame(new GraphPoint2D(n.getX()+10, n.getY()));
 			group[0]=convertRefFrame(new GraphPoint2D(n.getX(), n.getY()+10));
-			
 		  	}
 		  
 		  hullInScreen=true;//TODO: Sólo para pruebas de métricas!
 		  if(bv.isDrawingOverview() || hullInScreen)
 			  {
-		 // if(clusterNodes.size()>1)
 		  if(group.length>0)
 			  {
 			  presort(group);
@@ -449,8 +435,6 @@ public abstract class Cluster
 			  ArrayList<GraphPoint2D> groupHull;
 			  groupHull = chainHull_2D(group, group.length);
 			  
-			//  makeHullRound(groupHull, 200);//TODO: test phase
-		   //   bv.strokeWeight(1);//2 para fotos pequeñas
 			  bv.beginShape();
 			  for (int i=0; i<groupHull.size(); i++) 
 			  	{
@@ -461,114 +445,24 @@ public abstract class Cluster
 			         bv.vertex((float)p.getX(), (float)p.getY());
 			    }
 			  //Para cerrar la curva
-			  if(bv.isUseCurves())
-			     bv.curveVertex((float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getX(), (float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getY());
-			
-			  hull=bv.endShape(JProcessingPanel.CLOSE);
-			  bv.noStroke();
+				  if(bv.isUseCurves())
+				     bv.curveVertex((float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getX(), (float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getY());
+				
+				  hull=bv.endShape(JProcessingPanel.CLOSE);
+				  bv.noStroke();
+				  }
 			  }
-		  }
-		}
-	  //In this version nodes are too close to contours
-	 /* void drawHulls()
+ 
+	  	}
+	  /**
+	   * Draw the hull of the cluster. The hull of the cluster is its surrounding area, determined by their most peripheral nodes
+	   *
+	   */
+	  void drawHull()
 		{
-		Overlapper bv=(Overlapper) myGraph.getApplet();
-		int trans=255/myGraph.maxZones;
-		
- 	    if(myGraph.getHoverClusters().containsKey(this.label))
- 	 	{
-    	Color c=bv.paleta[Overlapper.hoverColor];
-		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), trans);
-		bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
+		drawHull(myResultSet.myColor);	
 		}
- 	    else
- 	    	{
- 	    	if(myGraph.getSelectedClusters().containsKey(this.label))
- 	    	 	{
- 	    		Color c=bv.paleta[Overlapper.selectionColor];
- 				 bv.fill(c.getRed(), c.getGreen(), c.getBlue(), trans);
- 				 bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
- 		 		}
- 	    	else
- 	    	 	{
- 	    		bv.fill(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(), myResultSet.myColor.getA());
- 	    		bv.fill(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(), trans);
- 				if(bv.isDrawContour()) bv.stroke(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(),255);
- 				else				   bv.noStroke();
- 		 	    }
-	 	   }
-			 
-		 int numNodes=0;
-			 
-		 for(int i=0;i<clusterNodes.size();i++)
-		 	{
-			Node n = (Node)clusterNodes.get(i);
-		    if(n.clusters.size()>=bv.nodeThreshold)	numNodes++;
-		 	}
-		 if(numNodes==2)	numNodes+=2;
-		 if(numNodes==1)	numNodes=4;
-			
-		 group=new GraphPoint2D[numNodes];
-		 
-		  float meanx=0;
-		  float meany=0;
-		  //----------------------------- HULL DRAWING --------------------------
-		  boolean hullInScreen=false;
-		  int cont=0;
-		  for (int i=0; i<clusterNodes.size(); i++) 
-		  	   {
-		       Node n = (Node)clusterNodes.get(i);
-		       if(n.clusters.size()>=bv.nodeThreshold)
-			       {
-			       if(!hullInScreen && !bv.isDrawingOverview() && pointInScreen((GraphPoint2D)n.getPosition()))	hullInScreen=true;
-		           group[cont++] = convertRefFrame((GraphPoint2D)n.getPosition());
-		           meanx+=n.getX();
-		    	   meany+=n.getY();
-			       }
-		  	  }
-		  if(clusterNodes.size()==2)//"inflate 2-groups
-			{
-			Line l=new Line(group[0].getX(), group[0].getY(), group[1].getX(), group[1].getY());
-			Point2D.Double p1=l.getPerpendicularPoint((group[0].getX()+group[1].getX())/2, (group[0].getY()+group[1].getY())/2, -10);
-			Point2D.Double p2=l.getPerpendicularPoint((group[0].getX()+group[1].getX())/2, (group[0].getY()+group[1].getY())/2, 10);
-			
-			//add two anchor points to improve the hull
-			group[numNodes-2]=new GraphPoint2D(p1.x, p1.y);
-			group[numNodes-1]=new GraphPoint2D(p2.x, p2.y);
-			}
-		  
-		  //hullInScreen=true;//TODO: Sólo para pruebas de métricas!
-		  
-		  if(bv.isDrawingOverview() || hullInScreen)
-		  {
-		  if(clusterNodes.size()>1)
-			  {
-			  presort(group);
-			  
-			  ArrayList<GraphPoint2D> groupHull;
-			  groupHull = chainHull_2D(group, group.length);
-			  
-			//  makeHullRound(groupHull, 200);//TODO: test phase
-		   //   bv.strokeWeight(1);//2 para fotos pequeñas
-			  bv.beginShape();
-			  for (int i=0; i<groupHull.size(); i++) 
-			  	{
-			      GraphPoint2D p = convertRefFrame((GraphPoint2D)groupHull.get(i));
-			      if(bv.isUseCurves()) 
-			    	 bv.curveVertex((float)p.getX(), (float)p.getY());
-			      else	  
-			         bv.vertex((float)p.getX(), (float)p.getY());
-			    }
-			  //Para cerrar la curva
-			  if(bv.isUseCurves())
-			     bv.curveVertex((float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getX(), (float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getY());
-			
-			  hull=bv.endShape(JProcessingPanel.CLOSE);
-			  bv.noStroke();
-			  }
-		  }
-		}*/
-
+	
 	  /**
 	   * Adds additional anchor points to avoid too polygonal hulls
 	   */
@@ -585,96 +479,6 @@ public abstract class Cluster
 			}
 	  	}
 	  
-	  /**
-	   * Draw the hull of the cluster. The hull of the cluster is its surrounding area, determined by their most peripheral nodes
-	   * (in this case, only dual nodes are considered
-	   *
-	   */
-	  /*
-	  void drawHullsDual()
-		{
- 	    Overlapper bv=(Overlapper) myGraph.getApplet();
-		  
- 	    if(myGraph.getHoverClusters().containsKey(this.label))
- 	 	{
- 	    	Color c=bv.paleta[Overlapper.hoverColor];
-			 bv.fill(c.getRed(), c.getGreen(), c.getBlue(), myResultSet.myColor.getA());
-			 bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
-	 	    }
-	    	
- 	    else
- 	    	{
- 	    	if(myGraph.getSelectedClusters().containsKey(this.label))
- 	    	 	{
- 	    		Color c=bv.paleta[Overlapper.selectionColor];
- 				 bv.fill(c.getRed(), c.getGreen(), c.getBlue(), myResultSet.myColor.getA());
- 				 bv.stroke(c.getRed(), c.getGreen(), c.getBlue(),255);
- 		 		}
- 	    	else
- 	    	 	{
- 				 bv.fill(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(), myResultSet.myColor.getA());
- 				 bv.stroke(myResultSet.myColor.getR(), myResultSet.myColor.getG(), myResultSet.myColor.getB(),255);
- 		 	    }
-	 	   }
-			 
-		 int numNodes=0;
-			 
-		 for(int i=0;i<clusterDualNodes.size();i++)
-		 	{
-			Node n = (Node)clusterDualNodes.get(i);
-		    if(n.clusters.size()>=bv.nodeThreshold)	numNodes++;
-		 	}
-		 if(numNodes<2)	return;
-		 group=new GraphPoint2D[numNodes];
-		 
-		  float meanx=0;
-		  float meany=0;
-		  //----------------------------- HULL DRAWING --------------------------
-		  boolean hullInScreen=false;
-		  int cont=0;
-		  for (int i=0; i<clusterDualNodes.size(); i++) 
-		  		{
-		       Node n = (Node)clusterDualNodes.get(i);
-		       if(n.clusters.size()>=bv.nodeThreshold)
-			       {
-			       if(!hullInScreen && !bv.isDrawingOverview() && pointInScreen((GraphPoint2D)n.getPosition()))	hullInScreen=true;
-		           group[cont++] = convertRefFrame((GraphPoint2D)n.getPosition());
-		           meanx+=n.getX();
-		    	   meany+=n.getY();
-			       }
-		  		}
-		  
-		  hullInScreen=true;//TODO: Sólo para pruebas de métricas!
-		  
-		  if(bv.isDrawingOverview() || hullInScreen)
-		  {
-		  if(clusterDualNodes.size()>1)
-			  {
-			  presort(group);
-			  
-			  ArrayList<GraphPoint2D> groupHull;
-			  groupHull = chainHull_2D(group, group.length);
-			  
-		      bv.strokeWeight(1);//2 para fotos pequeñas
-			  bv.beginShape();
-			  for (int i=0; i<groupHull.size(); i++) 
-			  	{
-			      GraphPoint2D p = convertRefFrame((GraphPoint2D)groupHull.get(i));
-			      if(bv.isUseCurves()) 
-			    	 bv.curveVertex((float)p.getX(), (float)p.getY());
-			      else	  
-			         bv.vertex((float)p.getX(), (float)p.getY());
-			    }
-			  //Para cerrar la curva
-			  if(bv.isUseCurves())
-			     bv.curveVertex((float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getX(), (float)(convertRefFrame((GraphPoint2D)groupHull.get(0))).getY());
-			
-			  hull=bv.endShape(JProcessingPanel.CLOSE);
-			  bv.noStroke();
-			  }
-		  }
-		}
-			*/
 	  
 	  void drawHullsDual()
 		{
@@ -776,36 +580,28 @@ public abstract class Cluster
 		{
 		Overlapper bv=(Overlapper) myGraph.getApplet();
 		  
-		//int lcs=Math.max(bv.getLabelClusterSize()+this.getNodes().size(), 60);
-		int lcs=Math.min(bv.getLabelClusterSize()+this.getNodes().size(), 90);
+		int lcs=(int)Math.min(bv.getLabelClusterSize()+this.getNodes().size()*0.5, 30);
 		float meanx=0;
 		float meany=0;
 		  
 		  
 		  //----------------------------- HULL DRAWING --------------------------
-		//  boolean hullInScreen=true;
 		  for (int i=0; i<clusterNodes.size(); i++) 
 		  		{
-			       Node n = (Node)clusterNodes.get(i);
-			  //     if(!hullInScreen && !bv.isDrawingOverview() && pointInScreen((GraphPoint2D)n.getPosition()))	hullInScreen=true;
-		           meanx+=n.getX();
-		    	   meany+=n.getY();
+			    Node n = (Node)clusterNodes.get(i);
+			    meanx+=n.getX();
+		    	meany+=n.getY();
 		  		}
-		  
-		  //if(bv.isDrawingOverview() || hullInScreen)	//TODO: En este caso, no creo que sea muy importante controlar si está o no dentro
 		  
 		  if(!bv.isDrawingOverview())	
 			  {
 			  if(getLabel()!=null)
 			  	{
-				 String fl=getLabel();//formatting the label if it's too long
-				 
 				bv.textAlign(JProcessingPanel.CENTER);
 				bv.textSize(lcs);
 				Color c=bv.paleta[Overlapper.bicLabelColor];
 	    		bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 150);
-				
-				bv.text( ArrayUtils.chopArray(getLabel().toUpperCase(), 5, " "), meanx/clusterNodes.size(), meany/clusterNodes.size());  
+				bv.text( ArrayUtils.chopArray(getLabel().toUpperCase(), 5, " "), meanx/clusterNodes.size(), lcs*labelDisplacement+(meany/clusterNodes.size()));  
 			  	}
 			  }
 		}
@@ -840,11 +636,11 @@ public abstract class Cluster
 			        if(bv.isOnlyIntersecting())	inter=1;
 			        if(n.shownClusters.size()>inter)
 				        {
-				        Iterator<Cluster> itDraw=n.shownClusters.values().iterator();
+				        Iterator<Group> itDraw=n.shownClusters.values().iterator();
 				        for (int j=0; itDraw.hasNext(); j++)
 				           	{
 				        	MaximalCluster c=(MaximalCluster)itDraw.next();
-					    	ClusterSet r = c.myResultSet;
+					    	GroupSet r = c.myResultSet;
 					    	CustomColor col = r.myColor;
 					    	bv.fill(col.getR(), col.getG(), col.getB(),100);
 					    	bv.strokeWeight(ns/3);
@@ -893,7 +689,6 @@ public abstract class Cluster
 			
 			if(!n.isDrawnAsLabel() && n.clusters.size()>=bv.nodeThreshold)
 			{
-			//if(bv.isDrawingOverview() || pointInScreen((GraphPoint2D)n.getPosition()))
 			if(!bv.isDrawingOverview())
 			{
 			if (n!=bv.g.getHoverNode() && !bv.g.getSelectedNodes().containsKey(n.getLabel()) && n.getImage().length()==0)
@@ -907,9 +702,7 @@ public abstract class Cluster
 		    	if(bv.isAbsoluteLabelSize())	finalTam=ls;
 	    		if(finalTam<0)	finalTam=0;
 		    	bv.textSize((int)finalTam);
-		    	//bv.text(n.getLabel(), (float)(Math.floor(n.getX())+1), (float)(Math.floor(n.getY()-n.getHeight())+1));
-			            
-
+		    	
 	        	if(n.isGene())	
 	        		bv.fill(cg.getRed(), cg.getGreen(), cg.getBlue(), cg.getAlpha());
 	        	else
@@ -1071,11 +864,11 @@ public abstract class Cluster
 			        if(bv.isOnlyIntersecting())	inter=1;
 			        if(n.getClusters().size()>inter)
 			        	{
-				        Iterator<Cluster> itDraw=n.getClusters().values().iterator();
+				        Iterator<Group> itDraw=n.getClusters().values().iterator();
 				        for (int j=0; itDraw.hasNext(); j++)
 				           	{
 				        	MaximalCluster c=(MaximalCluster)itDraw.next();
-					    	ClusterSet r = c.myResultSet;
+					    	GroupSet r = c.myResultSet;
 					    	CustomColor col = r.myColor;
 					    	bv.rectMode(JProcessingPanel.CENTER);
 					    	bv.fill(col.getR(), col.getG(), col.getB(),100);
@@ -1173,7 +966,7 @@ public abstract class Cluster
 	 * Sets the ClusterSet in which this node is
 	 * @param rs	the ClusterSet
 	 */
-    public void setClusterSet(ClusterSet rs) {
+    public void setClusterSet(GroupSet rs) {
         myResultSet = rs;
 	      }
     
@@ -1181,7 +974,7 @@ public abstract class Cluster
      * Returns the ClusterSet in which this node is
      * @return	the ClusterSet
      */
-    public ClusterSet getClusterSet() {
+    public GroupSet getClusterSet() {
 		return myResultSet;
 	}
 	
@@ -1534,7 +1327,7 @@ public abstract class Cluster
 	 * @param c The cluster with which compare
 	 * @return The number of nodes that c and this cluster have in common
 	 */
-	public int nodesInCommon(Cluster c)
+	public int nodesInCommon(Group c)
 		{
 		int ret=0;
 		for(int i=0;i<this.clusterNodes.size();i++)

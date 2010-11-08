@@ -290,7 +290,6 @@ class HeatmapFocusControl extends FocusControl
 	
 	void clear()
 		{
-		System.out.println("CLEAR");
 		//Set original ranks (the ids, or, in the case of conditions, the sorted ids)
 		//Y de la etiqueta
 		Iterator it2=visualization.items(fieldGeneLabels, "rowRank<0");
@@ -305,11 +304,8 @@ class HeatmapFocusControl extends FocusControl
 		while(it3.hasNext())
 			{
 			VisualItem itemLabel=((VisualItem)it3.next());
-			//itemLabel.setInt("colRank", itemLabel.getInt("id"));
 			itemLabel.setInt("colRank", sesion.getMicroarrayData().columnOrder[itemLabel.getInt("id")]);
-			//itemLabel.setInt("colRank", sesion.getMicroarrayData().getColumnOrder()[itemLabel.getInt("id")]);
 			}
-		//gl.initialOrder();
 		genesSeleccionados.clear();
 		condicionesSeleccionadas.clear();
 		}

@@ -20,11 +20,13 @@ public class Configuration {
 	public Dimension dimPanelDatos = new Dimension(350,300);
 	public Dimension dimPanelBubbles = new Dimension(300,300);
 	public Dimension dimPanelTRN = new Dimension(600,430);
-	public Dimension dimPanelHeatmap = new Dimension(310,610);
+	public Dimension dimPanelHeatmap = new Dimension(355,610);//for 1280x800
+	//public Dimension dimPanelHeatmap = new Dimension(310,610);
 	//private Dimension dimPanelHeatmap = new Dimension(300,610);
 	public Dimension dimPanelBubbleGraph = new Dimension(900,400);
 	public Dimension dimPanelDataSelection = new Dimension(740,560);
-	public Dimension dimPanelWordCloud = new Dimension(650,250);
+	//public Dimension dimPanelWordCloud = new Dimension(650,250);
+	public Dimension dimPanelWordCloud = new Dimension(355,250);//for 1280x800
 	
 	public int marginWidth=4; //margin of diagrams
 	private Point initPC, initHM, initWC, initBM, initO, initTRN;

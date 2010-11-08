@@ -7,7 +7,7 @@ import java.util.ArrayList;
  * @author Roberto Therón and Rodrigo Santamaría
  *
  */
-public class MaximalCluster extends Cluster {
+public class MaximalCluster extends Group {
   
 	/**
 	 * Builds an empty MaximalCluster
@@ -20,7 +20,7 @@ public class MaximalCluster extends Cluster {
    * Builds an empty MaximalCluster in the ClusterSet r
    * @param r	the ClusterSet in which the cluster is in
    */
-  public MaximalCluster(ClusterSet r) {
+  public MaximalCluster(GroupSet r) {
  	  super(r);
 	  } 
 
@@ -29,7 +29,7 @@ public class MaximalCluster extends Cluster {
    * @param r the ClusterSet in which the cluster is in
    * @param l the String used as label to name the Cluster
    */
-  public MaximalCluster(ClusterSet r, String l) {
+  public MaximalCluster(GroupSet r, String l) {
 	  super(r,l);
 	  } 
  

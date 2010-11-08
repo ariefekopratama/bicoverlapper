@@ -54,7 +54,7 @@ public class BicOverlapper {
 		      System.out.println("Substance failed to set");
 		    }
 		   
-		    
+		   System.out.println(System.getProperty("user.language"));
 		   Translator.instance=new Translator("en");
 		   Runtime runtime = Runtime.getRuntime();  
 		   System.out.println("max memory: " + runtime.maxMemory() / 1024);  

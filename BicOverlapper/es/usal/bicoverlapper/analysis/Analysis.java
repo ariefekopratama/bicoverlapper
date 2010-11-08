@@ -574,7 +574,6 @@ public class Analysis
     /**
 	 * Like limma, but in this case the differential expression analysis is performed for every
 	 * Experimental factor value on a experimental factor against a given factor value
-	 * TODO: make it iterative so we can do every single group/combination upon the selection
 	 * @param ef - experimental factor
 	 * @param efv - experimental factor value for differential expression against the rest
 	 * @param bh - if true, Benjamini and Hochberg correction to p-values is computed
@@ -615,6 +614,121 @@ public class Analysis
 			}
 		
 		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs, NA, bicNames=names(degs), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		return outFile;
+		}
+    /**
+	 * Like limmaEF, but in this case the differential expression analysis is performed for every
+	 * possible combination of experimental factor values of the experimental factor passed as argument
+	 * @param ef - experimental factor
+	 * @param bh - if true, Benjamini and Hochberg correction to p-values is computed
+	 * @param pvalue - threshold for statistical significance
+	 * @param elevel - threshold for differential expression (log10)
+	 * @param reg - regulation (can be up, down or all)
+	 */
+    public String limmaEFall(String ef, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+    	{
+    	if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("limma");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
+		System.out.println("degs=diffAnalysisEFall(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		exp=r.eval("degs=diffAnalysisEFall(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		if(exp==null)
+			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
+		//exp=r.eval("lr=list(rownames(m)[degs])");
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="limma"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.replace(".", "-");
+				outFile=outFile.concat(".bic");
+				}
+			}
+		String status="";
+		if(reg.equals("up"))	status="over-";
+		if(reg.equals("down"))	status="under-";
+		String desc="Differentially "+status+"expressed genes found with limma for every combination of EFVs on "+ef+" (dexp="+elevel+", p-val=10e-"+pvalue;
+		if(!bh) desc+=")";
+		else	desc+=" (BH corrected))"; 
+		if(description!=null && description.length()>0)	desc=description;
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs$degs, NA, bicNames=degs$names, biclusteringDescription=\""+desc+"\")");
+		return outFile;
+		}
+    
+
+    /**
+	 * Like limmaEFall, but now we perform  over every combination of EFVs FOR EACH EF on the microarray
+	 * @param bh - if true, Benjamini and Hochberg correction to p-values is computed
+	 * @param pvalue - threshold for statistical significance
+	 * @param elevel - threshold for differential expression (log10)
+	 * @param reg - regulation (can be up, down or all)
+	 */
+    public String limmaAll(boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+    	{
+    	if(!matrixLoaded)	loadMatrix();
+		loadRLibrary("limma");
+
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
+		exp=r.eval("efs=list()");
+		for(int i=0;i<microarrayData.experimentFactors.size();i++)
+			exp=r.eval("efs=c(efs, list("+RUtils.getRList(microarrayData.experimentFactorValues.get(microarrayData.experimentFactors.get(i)))+"))");
+		
+		System.out.println("degs=diffAnalysisAll(m, ef=efs, " +
+				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		exp=r.eval("degs=diffAnalysisAll(m, ef=efs, " +
+				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
+				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		if(exp==null)
+			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="limma"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.replace(".", "-");
+				outFile=outFile.concat(".bic");
+				}
+			}
+		String status="";
+		if(reg.equals("up"))	status="over-";
+		if(reg.equals("down"))	status="under-";
+		String[] desc=new String[microarrayData.experimentFactors.size()];
+		for(int i=0;i<desc.length;i++)
+			{
+			desc[i]="Differentially "+status+"expressed genes found with limma for every combination of EFVs on "+microarrayData.experimentFactors.get(i)+" (dexp="+elevel+", p-val=10e-"+pvalue;
+			if(!bh) desc[i]+=")";
+			else	desc[i]+=" (BH corrected))"; 
+			if(description!=null && description.length()>0)	desc[i]=description;
+			}
+	//TODO: check the previous code, convert to a list of lists writing
+		//exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs$degs, NA, bicNames=degs$names, biclusteringDescription=\""+desc+"\")");
+		exp=r.eval("lr=lapply(degs, function(x){x$deg})");
+		exp=r.eval("ln=lapply(degs, function(x){x$names})");
+		exp=r.eval("writeBiclusterResultsFromListArray(\""+outFile+"\", lr, listArrayColumns=NA, listArrayNames=ln, descriptions="+RUtils.getRList(desc)+")");
+
 		return outFile;
 		}
 	}

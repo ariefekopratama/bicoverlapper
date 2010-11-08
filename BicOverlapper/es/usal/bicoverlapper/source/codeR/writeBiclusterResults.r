@@ -86,3 +86,72 @@ writeBiclusterResultsFromList=function(fileName, listRows, listColumns=NA, bicNa
 			}
 	  }
   }
+  
+  
+# Write bicluster results to a text file from an array with different result sets list of rows and colums on each
+# fileName - path to the file were biclusters are written
+# listArrayRows - array list with information about rows. Each element of the list correspond to the the rows of the groups on a result set
+# listArrayColumns - array list with information about columns. Each element of the list correspond to the the columns of the groups on a result set
+# listArrayNames - array list with information about group names. Each element of the list correspond to the the names of the groups on a result set
+# biclusteringDescription - list of descriptions for each result set
+# append - if true, adds the bicluster results to previous information in the text file, if this exists. Default false.
+# delimiter - delimiter string between gene and condition names. Default " ".
+  writeBiclusterResultsFromListArray=function(fileName, listArrayRows, listArrayColumns=NA, listArrayNames=NA, descriptions=c(), append=FALSE, delimiter="\t")
+  {
+	  if(!is.na(listArrayColumns) && length(listArrayRows)!=length(listArrayColumns))
+		  stop("Number of result sets must be the same for columns and rows")
+	  
+	  else if(!is.na(listArrayNames) && length(listArrayRows)!=length(listArrayNames))
+		  stop("The number of result sets must be same for rows and group names")
+	  
+	  write(sum(sapply(listArrayRows, function(x){length(x)})), file = fileName, append = append)
+	  for(k in 1:length(listArrayRows))
+		  {
+		  if(length(descriptions)==length(listArrayRows))	biclusteringDescription=descriptions[k]
+		  else												biclusteringDescription=paste("ResultSet",k)
+		  
+		  
+		  listRows=listArrayRows[[k]]
+		  listColumns=NA
+		  if(!is.na(listArrayColumns))	listColumns=listArrayColumns[[k]]
+		  
+		  listNames=NA
+		  if(!is.na(listArrayNames))		listNames=listArrayNames[[k]]
+		  
+		  
+		#  writeBiclusterResultsFromList(fileName, listRows=listRows, listColumns=listColumns, 
+		#		  bicNames=listNames, biclusteringDescription=biclusteringDescription, append=ap)
+		  
+		  if(TRUE)
+		  {
+	     # write(length(listRows), file = fileName, append = append)
+	      write(biclusteringDescription, file = fileName, append = TRUE)
+		  for (i in 1:length(listRows)) {
+			  listar = listRows[[i]]
+			  cat(listar, "\n")
+			  if(!is.na(listColumns))
+			  {
+				  listac = listColumns[[i]]
+				  if(!is.na(listar) && !is.na(listac))
+				  {
+					  if(is.na(listNames))	write(c(length(listar), length(listac)), file = fileName, ncolumns = 2, append = TRUE, sep = delimiter)
+					  else					write(c(paste(listNames[[i]], ":", length(listar)), length(listac)), file = fileName, ncolumns = 2, append = TRUE, sep = delimiter)
+					  write(listar, file = fileName, ncolumns = length(listar), append = TRUE, sep = delimiter)
+					  write(listac, file = fileName, ncolumns = length(listac), append = TRUE, sep = delimiter)
+				  }
+			  }
+			  else
+			  {
+				  if(length(listar)>0 && !is.na(listar))
+				  {
+					  listac=c()
+					  if(is.na(listNames))	write(c(length(listar), length(listac)), file = fileName, ncolumns = 2, append = TRUE, sep = delimiter)
+					  else					write(c(paste(listNames[[i]], ":", length(listar)), length(listac)), file = fileName, ncolumns = 2, append = TRUE, sep = delimiter)
+					  write(listar, file = fileName, ncolumns = length(listar), append = TRUE, sep = delimiter)
+					  write(listac, file = fileName, append = TRUE, sep = delimiter)
+				  }
+			  }
+		  }
+	  }#if(FALSE) -> better to make it with the previous function
+	  }
+  }

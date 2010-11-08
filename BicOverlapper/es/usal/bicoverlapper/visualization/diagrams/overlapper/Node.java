@@ -45,8 +45,8 @@ public class Node {
 	  public boolean centerNode=false;
 
 	  
-	  Map<String,Cluster> clusters;//Lists of clusters where this node is
-	  Map<String,Cluster> shownClusters;//Lists of clusters where this node is that are being shown
+	  Map<String,Group> clusters;//Lists of clusters where this node is
+	  Map<String,Group> shownClusters;//Lists of clusters where this node is that are being shown
 	  Map<String,Node>	mates;//List of nodes connected to this node
 	  int[] roles=null;//TODO: quitar nº mágico, mirar lo de los oscars
 
@@ -56,8 +56,8 @@ public class Node {
 	   */
 	  public Node() {
 	    position= new GraphPoint2D();
-	    clusters=new TreeMap<String,Cluster>();	
-	    shownClusters=new TreeMap<String,Cluster>();	
+	    clusters=new TreeMap<String,Group>();	
+	    shownClusters=new TreeMap<String,Group>();	
 	    mates=new TreeMap<String,Node>();
 	  }
 	  
@@ -67,8 +67,8 @@ public class Node {
 	   */
 	  public Node(GraphPoint2D v) {
 		  	position = new GraphPoint2D(v.getX(), v.getY());
-		    clusters=new TreeMap<String,Cluster>();	
-		    shownClusters=new TreeMap<String,Cluster>();	
+		    clusters=new TreeMap<String,Group>();	
+		    shownClusters=new TreeMap<String,Group>();	
 		    mates=new TreeMap<String,Node>();
 		  }
 
@@ -81,8 +81,8 @@ public class Node {
 		  	position=new GraphPoint2D(v.getX(), v.getY());
 		    g=gr;
 		   // clusters=new TreeMap<String,MaximalCluster>();	
-		    clusters=new TreeMap<String,Cluster>();	
-		    shownClusters=new TreeMap<String,Cluster>();	
+		    clusters=new TreeMap<String,Group>();	
+		    shownClusters=new TreeMap<String,Group>();	
 		    mates=new TreeMap<String,Node>();
 		  }
 
@@ -99,7 +99,7 @@ public class Node {
 	   * Adds a Cluster to the lists of clusters (groups) in which this node is in
 	   * @param c	a Cluster in which the node will be
 	   */
-	  public void addCluster(Cluster c) 
+	  public void addCluster(Group c) 
 	  	{
 		clusters.put(c.getLabel(), c);
 		shownClusters.put(c.getLabel(), c);
@@ -140,7 +140,7 @@ public class Node {
 	   * Returns all the clusters in which this node is in
 	   * @return	A Map with the list of clusters. The key of the map is the name of the cluster
 	   */
-	 public Map<String,Cluster> getClusters() 
+	 public Map<String,Group> getClusters() 
 	  	{
 			  return clusters;
 	  	}

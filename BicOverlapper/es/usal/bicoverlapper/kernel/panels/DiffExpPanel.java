@@ -107,7 +107,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				OK.addActionListener(new java.awt.event.ActionListener() {
 					private AnalysisTask t;
 					/* Possible combinations:
-					 * 1) rest vs rest - error (or diffexp among every combination of efvs for every ef?)
+					 * 1) rest vs rest - diffexp among every combination of efvs for every ef
 					 * 2) efv1 vs efv2 (different efs) - error
 					 * 3) efv1 vs efv2 (same ef) - diff exp between both groups of samples. If one of the groups has only 1 sample, error
 					 * 4) efv vs rest - diff exp between the efv samples and the rest of samples
@@ -125,13 +125,13 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						boolean ne1=false;
 						String g1=group1.getSelectedValue().toString();
 						String g2=group2.getSelectedValue().toString();
-						if(g1.equals("rest") && g1.equals(g2))//1) both are rest
+						/*if(g1.equals("rest") && g1.equals(g2))//1) both are rest
 							{
 							JOptionPane.showMessageDialog(null,
 					                "Groups must be different",
 					                "Error",JOptionPane.ERROR_MESSAGE);
 							return;
-							}
+							}*/
 						if(!g1.startsWith(" ") && !g2.startsWith(" "))//both are efs
 							{
 							if(!g1.equals(g2))//8)
@@ -139,11 +139,6 @@ public class DiffExpPanel extends javax.swing.JFrame {
 								JOptionPane.showMessageDialog(null,
 						                "Experimental factors (efs) cannot be compared, choose ef values or the same ef",
 						                "Error",JOptionPane.ERROR_MESSAGE);
-								return;
-								}
-							else			//7)
-								{
-								//comparison among every combination of efvs of the ef
 								return;
 								}
 							}
@@ -204,10 +199,84 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						 b.setFilterOptions(null);
 						
 						//----------------------- EF case
-						//if((!efv1.equals("rest") && !efv1.startsWith(" ")) || (!efv2.equals("rest") && !efv2.startsWith(" ")))
-						 if(!efv1.equals("rest") && !efv2.equals("rest") && (efv1.equals(ef1) || efv2.equals(ef2)) && ef1.equals(ef2))//same ef, not rest
-							{ 	//TODO: 4b, 5, 6, 7
-							System.out.println("EF case");
+						 if(!ef1.equals("rest") && ef1.equals(ef2))
+						 	{
+							 //7) Same ef, do every possible combination
+							 System.out.println("Same EF case");
+							 ArrayList<Object> p=new ArrayList<Object>();
+							   p.add(ef1);
+							   p.add(correction.isSelected());
+							   p.add(new Double(pvalueValue.getText()).doubleValue());
+							   p.add(new Double(expressionValue.getText()).doubleValue());
+							   p.add(reg);
+							   p.add(fileName);
+							   p.add(description.getText());
+							
+							AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.LIMMAEFALL, p);
+							   apm.run();
+							   t=apm.getTask();
+							   Thread wt=new Thread() {
+									public void run() {
+										try{
+											String fileName=t.get();
+											if(fileName==null)	
+												JOptionPane.showMessageDialog(null,
+									                    "No biclusters found",
+									                    "Error",JOptionPane.ERROR_MESSAGE);
+											
+											else
+												{
+												if(fileName.indexOf("/")>-1)
+													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												else
+													session.reader.readBiclusterResults("",fileName, fileName, session);
+												}
+											}catch(Exception e){e.printStackTrace();}
+									}
+								};
+							wt.start();
+							setVisible(false);
+							
+						 	}
+						 else if(ef1.equals("rest") && ef2.equals(ef1))
+						 	{// case 1, rest vs rest, perform diffexp between every combination of efvs for each ef
+							 System.out.println("rest vs rest case");
+							 ArrayList<Object> p=new ArrayList<Object>();
+							   p.add(correction.isSelected());
+							   p.add(new Double(pvalueValue.getText()).doubleValue());
+							   p.add(new Double(expressionValue.getText()).doubleValue());
+							   p.add(reg);
+							   p.add(fileName);
+							   p.add(description.getText());
+							
+							AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.LIMMAALL, p);
+							   apm.run();
+							   t=apm.getTask();
+							   Thread wt=new Thread() {
+									public void run() {
+										try{
+											String fileName=t.get();
+											if(fileName==null)	
+												JOptionPane.showMessageDialog(null,
+									                    "No biclusters found",
+									                    "Error",JOptionPane.ERROR_MESSAGE);
+											
+											else
+												{
+												if(fileName.indexOf("/")>-1)
+													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												else
+													session.reader.readBiclusterResults("",fileName, fileName, session);
+												}
+											}catch(Exception e){e.printStackTrace();}
+									}
+								};
+							wt.start();
+							setVisible(false);
+						 	}
+						 else if(!efv1.equals("rest") && !efv2.equals("rest") && (efv1.equals(ef1) || efv2.equals(ef2)) && ef1.equals(ef2))//same ef, not rest
+							{ 	//TODO: 4b, 5, 6
+							System.out.println("EF vs EFV case");
 							String ef=null, efv=null;
 							if(efv1.equals(ef1)){ef=ef1; efv=efv2;}
 							else if(efv2.equals(ef2)){ef=ef2; efv=efv1;}
@@ -250,7 +319,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						else
 							{
 							//3,4) ---------------- EFVs case
-							System.out.println("EFV case");
+							System.out.println("EFV vs EFV case");
 							ArrayList<Object> p=new ArrayList<Object>();
 							   p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
 							   p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));

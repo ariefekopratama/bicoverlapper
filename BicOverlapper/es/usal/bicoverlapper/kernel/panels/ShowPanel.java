@@ -91,10 +91,13 @@ public class ShowPanel extends javax.swing.JFrame {
 				if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
 				if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
 				}
-			ListModel jList1Model = 
-				new DefaultComboBoxModel(rowNames.toArray(new String[0]));
-			jList1.setModel(jList1Model);
-			jList1.setSelectedIndex(0);
+			if(jList1.getModel().getSize()!=rowNames.size())
+				{
+				ListModel jList1Model = 
+					new DefaultComboBoxModel(rowNames.toArray(new String[0]));
+				jList1.setModel(jList1Model);
+				jList1.setSelectedIndex(0);
+				}
 		}
 		}
 	
@@ -135,18 +138,15 @@ public class ShowPanel extends javax.swing.JFrame {
 										{
 										if(s.equals(md.rname))	md.rowLabels[i]+=md.geneAnnotations.get(i).name+del;
 										if(s.equals(md.rdescription))	md.rowLabels[i]+=md.geneAnnotations.get(i).description+del;
+										if(s.equals("Entrez ID"))	md.rowLabels[i]+=md.geneAnnotations.get(i).entrezId+del;
 										if(md.rowLabels[i].length()==0) md.rowLabels[i]+=md.getGeneNames()[i]+del;
 										}
 									else				md.rowLabels[i]+=md.getGeneNames()[i]+del;
 									}
-								//System.out.println(md.rowLabels[i]);
 								if(!md.rowLabels[i].equals(del))			md.rowLabels[i]=md.rowLabels[i].substring(0, md.rowLabels[i].length()-3);
 								else										md.rowLabels[i]+=md.getGeneNames()[i];
 								}
-							//System.out.println("Done!");
 							session.changeLabels();
-							//md.changeLabels();
-							//session.updateAll();
 							setVisible(false);
 							}
 						}
@@ -178,6 +178,7 @@ public class ShowPanel extends javax.swing.JFrame {
 					GeneAnnotation a=ga.values().iterator().next();
 					if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
 					if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+					if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("Entrez ID");
 					}
 				ListModel jList1Model = 
 					new DefaultComboBoxModel(rowNames.toArray(new String[0]));

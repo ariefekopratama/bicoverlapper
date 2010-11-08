@@ -1,6 +1,6 @@
 # Performs a differential analysis, returning the group of genes that are
 # both among the ones with maximum differential expression and maximum pvalue
-# It also draws the corresponding volcano plot
+# It also draws the corresponding volcano plot if asked for it.
 # mt -  expression matrix
 # g1 - first group for the differential analysis (column numbers of mt)
 # nameG1 - name of the first group to appear in the volcano plot
@@ -24,23 +24,14 @@
 #				a BH corrected p-value of 0.0001 means a real probability of 0.0001% of being a false possitive.
 # print - if TRUE, the volcano plot is drawn
 # return - determines is all the DEGs are returned ("all") or only the up ("up") or down ("down") regulated. Default "all"
-# Author: Rodrigo
+
+# Author: Rodrigo Santamar’a rodri@usal.es
 ###############################################################################
-
-
-#diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestingNames=c(), yliminf=-7, ylimsup=7, limsup=0.2,liminf=-0.2)
 diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestingNames=c(), pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=TRUE, return ="all")
 {
 	Difference <- rowMeans(mt[,g1, drop=FALSE])-rowMeans(mt[,g2, drop=FALSE])#Ratio of expression of good prognosis against bad prognosis
 	Average <- rowMeans(mt[,union(g1,g2)])
-	
-	#yliminf <- min(Difference)
-	#ylimsup <- max(Difference)
-	#yliminf <- -7
-	#ylimsup <- 6
-	#limsup <- 0.2
-	#liminf <- -limsup
-	
+		
 	#Volcano plot
 	library(limma)
 	population.groups=factor(c(rep(nameG1, length(g1)),c(rep(nameG2, length(g2)))))
@@ -103,9 +94,8 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 			{
 			ii[which(Difference[ii]<0)]	
 			}
-		}
-		
-}
+		}	
+	}
 
 
 # Like above, but in this case several differential expression analyses are performed, 
@@ -139,11 +129,74 @@ diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 		}
 	degs=temp
 	names(degs)=names
-	#writeBiclusterResultsFromList(fileName, degs, NA, bicNames=names, biclusteringDescription=description)
 	degs
     }
+	
+	
+# As above, but in this case every possible differential expression analysis is performed, 
+# between every combination of efvs for a given ef
+# ef - character array with the efv for each sample (column) in matrix m (e.g. healthy healthy cancer1 cancer1 cancer2 cancer2)
+# Returns a list of arrays with the DEGs on each of these comparisons
+# TODO: Grep errors with expression symbols (e.g. "CD14+ mo" because of the +)
+diffAnalysisEFall=function(m, ef, interestingNames=c(),
+			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
+	{
+		conds=unique(ef)
+		
+		#1) perform differential expression analysis
+		degs=lapply(conds, function(x)
+					{
+					g1=grep(paste("^",x,"$",sep=""),ef)
+					lapply(conds[-which(conds==x)], function(y)
+						{
+						g2=grep(paste("^",y,"$",sep=""),ef)
+						print(paste(x,"vs",y))
+						print(g1)
+						print(g2)
+						rownames(m)[diffAnalysis(m, g1, nameG1=x, g2, nameG2=y, pvalT=pvalT, diffT=diffT, print=print, return=return)]
+						})
+					})
+			
+	 #2) set names for each group
+	names=lapply(conds, function(x)
+			{
+				lapply(conds[-which(conds==x)], function(y)
+						{
+						paste(x,"vs",y)
+						})
+			})
+	
+	#3) Unlist the second level of the list, give names, return
+	dl=list()
+	for(i in degs)
+		{
+			for(j in i)
+			{
+				dl=c(dl,list(j))
+			}
+		}
+	ret=c()
+	ret$names=unlist(names)
+	ret$degs=dl
+	ret	
+	}
 
 
+# As above, but in this case every possible differential expression analysis is performed, 
+# between every combination of efvs for A LIST OF EFS
+# ef - list of character arrays. Each character array corresponds to the efvs for a given ef, for each sample (column) in matrix m (e.g. healthy healthy cancer1 cancer1 cancer2 cancer2)
+# efNames - list with the names of the Experimental Factors
+# Returns a list where each element is a list of arrays, with the DEGs on each of these efs
+diffAnalysisAll=function(m, ef=list(), efNames=c(), interestingNames=c(),
+			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
+	{
+	ret=lapply(ef, function(x){
+		diffAnalysisEFall(m, ef=x, interestingNames, pvalT, diffT, byRank, numRank, BH.correct, print, return)
+		})
+	names(ret)=efNames
+	ret
+	}
+	
 
 
 

@@ -45,10 +45,10 @@ public class DualNode extends ForcedNode {
 	    subNodes=new TreeMap<String,Node>();
 	  }
   
-  public DualNode(Graph g, Map<String,Cluster> zone, Map<String, Node> sub)
+  public DualNode(Graph g, Map<String,Group> zone, Map<String, Node> sub)
   	{
 	super(g,new GraphPoint2D(0,0));
-	clusters=new HashMap<String,Cluster>();
+	clusters=new HashMap<String,Group>();
 	clusters.putAll(zone);
 	subNodes=new TreeMap<String,Node>();
 	subNodes.putAll(sub);
@@ -158,13 +158,13 @@ public class DualNode extends ForcedNode {
         if(numSectors>inter)
 	        {
         	shownClusters=this.subNodes.values().iterator().next().shownClusters;
-	        Iterator<Cluster> itDraw=shownClusters.values().iterator();
+	        Iterator<Group> itDraw=shownClusters.values().iterator();
 	        ArrayList<CustomColor> colors=new ArrayList<CustomColor>();
 	        ArrayList<Integer> sizes=new ArrayList<Integer>();
 	        for (int j=0; itDraw.hasNext(); j++)	//Tomamos el tamaño de las porciones por cada color
 	           	{
 	        	MaximalCluster c=(MaximalCluster)itDraw.next();
-		    	ClusterSet r = c.myResultSet;
+		    	GroupSet r = c.myResultSet;
 		    	CustomColor col = r.myColor;
 		    	if(!colors.contains(col))
 		    		{
@@ -270,10 +270,10 @@ public class DualNode extends ForcedNode {
   public int clustersInCommon(DualNode dn)
   	{
 	int num=0;
-	Iterator<Cluster> it=this.clusters.values().iterator();
+	Iterator<Group> it=this.clusters.values().iterator();
 	while(it.hasNext())
 		{
-		Cluster c=it.next();
+		Group c=it.next();
 		if(dn.clusters.containsKey(c.label))	num++;
 		}
 	return num;

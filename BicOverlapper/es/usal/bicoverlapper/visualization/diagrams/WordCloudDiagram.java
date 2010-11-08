@@ -47,6 +47,7 @@ import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 
+import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 
 public class WordCloudDiagram extends Diagram implements ActionListener,ChangeListener,MouseListener, GeneRequester
@@ -216,10 +217,15 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 							ont="CC";
 							break;
 						}
+					if(this.sesion.getMicroarrayData().isBioMaRt)
+						{
+						System.out.println("No annotation package especified, trying with "+sesion.getMicroarrayData().getAnnotationPackage());
+						sesion.analysis.loadRLibrary(sesion.getMicroarrayData().getAnnotationPackage());
+						}
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
 					}
-				else		
-					this.sesion.getMicroarrayData().getGeneAnnotations(sesion.getSelectedGenesBicluster(), this, this.menuCloud.progress);
+				else
+					{this.sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, this.menuCloud.progress, null, true);}
 				return;
 				}
 			else
@@ -232,7 +238,9 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	
 public void addWords()
 	{
+	long t1=System.currentTimeMillis();
 	int cont=0;
+	if(annot==null)	{System.err.println("WordCloudDiagram: addWords no annotations found"); return;}
 	
 	switch(this.menuCloud.text.getSelectedIndex())
 		{
@@ -267,6 +275,7 @@ public void addWords()
 							if(add)
 								{
 								String desc=go.term;
+								//System.out.println("Adding desc "+desc);
 								if(!added.contains(desc))
 									{
 									splitAndAdd(desc, 1, 1, this.colorSeleccion, true, added);
@@ -359,10 +368,14 @@ public void addWords()
 			break;
 		}
 	
-	synchronized(this){
+	System.out.println("Time in adding the words: "+(System.currentTimeMillis()-t1)/1000.0+" s");
+	
+	//synchronized(this){
 	textChanged=true;
 	if(this.getGraphics()!=null)	
 		this.paintComponent(this.getGraphics());
+	System.out.println("Time in painting: "+(System.currentTimeMillis()-t1)/1000.0+" s");
+	t1=System.currentTimeMillis();
 	menuCloud.setVisible(true);
 	menuCloud.repaint();
 	
@@ -373,18 +386,22 @@ public void addWords()
 		this.menuCloud.progress.setText(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
 		this.menuCloud.progress.setToolTipText("Annotations retrieved for "+cont+" of the "+sesion.getSelectedBicluster().getGenes().size()+" selected genes");
 		}
-	}
+	System.out.println("Time in the rest: "+(System.currentTimeMillis()-t1)/1000.0+" s");
+	//}
+	
 	}
 
-public void receiveGOTerms(ArrayList<GOTerm> goterms)
+public synchronized void receiveGOTerms(ArrayList<GOTerm> goterms)
 	{
+	System.out.println("receiveGOTerms");
 	this.got=goterms;
 	if(got==null)
 	      JOptionPane.showMessageDialog(this, "No relevant GO terms on hypergeometric test for onthology: "+(String)(menuCloud.ontology.getSelectedItem()), "Warning",JOptionPane.WARNING_MESSAGE);
 	addWords();
 	}
-public void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
+public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
 	{
+	System.out.println("receiveGeneAnnotations");
 	this.annot=annot;
 	addWords();
 	}
@@ -410,6 +427,7 @@ public void splitAndAdd(String desc, double value, double size, Color c, boolean
 	for(int j=0;j<dw.length;j++)
 		{
 		dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
+		dw[j]=dw[j]+" ";
 		if(!unique || !added.contains(dw[j]))
 			addWord(dw[j], value, size, c);
 		added.add(dw[j]);
@@ -674,7 +692,6 @@ public void addWord(String w, double value, double size, Color colorW)
 	
 	public void resize()
 		{
-		//System.out.println(this.getHeight()+" "+this.getWidth());
 		textChanged=true;
 		}
 	
@@ -700,6 +717,7 @@ public void addWord(String w, double value, double size, Color colorW)
 		double anchoTexto=0;
 		double maxAlto=0;
 		double maxAncho=0;
+		double separationSpace=1.5;
 		if(g2==null)	return;
 		FontRenderContext frc=g2.getFontRenderContext();
 		
@@ -711,6 +729,7 @@ public void addWord(String w, double value, double size, Color colorW)
 			Collections.sort(sortedWords);
 			}
 		if(sortedWords==null)	return;
+		
 		//1) Primera vuelta, chequeamos el tamaño
 		for(String w: sortedWords)
 			{			
@@ -719,16 +738,15 @@ public void addWord(String w, double value, double size, Color colorW)
 				{
 				String wc="";
 				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
-					wc=" "+w.concat("("+formatNumber(nW.value)+")");
+					wc=w.concat("("+formatNumber(nW.value)+")");
 				else
-					wc=" "+w.concat("("+(int)(nW.size)+") ");
+					wc=w.concat("("+(int)(nW.size)+")");
 				double num=nW.size;
 				
 				Font f=g2.getFont().deriveFont((float)num);
 				TextLayout texto = new TextLayout(wc,f,frc);
-				
 				altoTexto = texto.getBounds().getHeight();
-				anchoTexto = texto.getBounds().getWidth();
+				anchoTexto = texto.getBounds().getWidth()+separationSpace*nW.size;
 				if(x+anchoTexto>this.getWidth())	
 					{
 					x=0;	
@@ -752,8 +770,8 @@ public void addWord(String w, double value, double size, Color colorW)
 				}		
 			}
 		y+=maxAlto;//Si no el último salto no se tiene en cuenta.
+		
 		//2) Determinamos el factor de escala
-		//double scale=Math.min(Math.floor(this.getHeight()/y), Math.floor(this.getWidth()/maxAncho));
 		double scale=Math.min(this.getHeight()/y, this.getWidth()/maxAncho);
 		
 		//3) Segunda vuelta vuelta, con los tamaños adecuados
@@ -772,15 +790,15 @@ public void addWord(String w, double value, double size, Color colorW)
 				{
 				String wc="";
 				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
-					wc=" "+w.concat("("+formatNumber(nW.value))+")";
+					wc=w.concat("("+formatNumber(nW.value))+")";
 				else	
-					wc=" "+w.concat("("+(int)nW.size+") ");
+					wc=w.concat("("+(int)nW.size+")");
 				double num=nW.size;
 				Font f=g2.getFont().deriveFont((float)(num*scale));
 				TextLayout texto = new TextLayout(wc,f,frc);
 				
 				altoTexto = texto.getBounds().getHeight();
-				anchoTexto = texto.getBounds().getWidth();
+				anchoTexto = texto.getBounds().getWidth()+separationSpace*nW.size;
 				if(x+anchoTexto>this.getWidth())	//change to next line
 					{
 					//Sumamos a todas las de la línea anterior el maxAlto de esa linea
@@ -820,8 +838,8 @@ public void addWord(String w, double value, double size, Color colorW)
 			}
 		else	
 			{
-			if(scale>0.2)	scale-=0.1;
-			else			scale/=10;
+			if(scale>0.2)	scale*=0.5;
+			else			scale/=5;
 			}
 		}while(!end);
 		

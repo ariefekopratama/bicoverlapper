@@ -63,6 +63,7 @@ import es.usal.bicoverlapper.kernel.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.kernel.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.kernel.panels.SearchPanel;
 import es.usal.bicoverlapper.kernel.panels.ShowPanel;
+import es.usal.bicoverlapper.kernel.panels.SortPanel;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.Translator;
@@ -164,6 +165,7 @@ public class Session implements KeyListener {
 	public Analysis analysis= null;
 	private SearchPanel searchPanel;
 	private ShowPanel showPanel;
+	private SortPanel sortPanel;
 	
 	
 	
@@ -1054,7 +1056,17 @@ public class Session implements KeyListener {
 	
 	public void sort()
 		{
+		//Sorting columns
+		if(sortPanel==null)		sortPanel=new SortPanel(this);
+		else					sortPanel.updateLists();
+		sortPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		sortPanel.setTitle("Sort");
+		sortPanel.setAlwaysOnTop(true);
 		
+		//Display the window.
+		sortPanel.pack();
+		sortPanel.setLocation((getDesktop().getWidth()-sortPanel.getWidth())/2, (getDesktop().getHeight()-sortPanel.getHeight())/2);
+		sortPanel.setVisible(true);
 		}
 	
 	 /** Handle the key typed event from the text field. */
@@ -1074,8 +1086,7 @@ public class Session implements KeyListener {
     public void keyReleased(KeyEvent e) {
          if(ctrlPressed)
         	{
-        	 System.out.println(e.getKeyChar()+", "+e.getKeyCode());
-         	if(e.getKeyCode()==90)	undo();//crtl-Z
+         	if(e.getKeyCode()==90)		undo();//crtl-Z
         	else if(e.getKeyCode()==89)	redo();//ctrl-Y
         	else if(e.getKeyCode()==70) search();//ctrl-F
         	else if(e.getKeyCode()==76) show();//ctrl-L

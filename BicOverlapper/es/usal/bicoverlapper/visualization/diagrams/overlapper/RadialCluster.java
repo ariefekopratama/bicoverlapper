@@ -13,7 +13,7 @@ import es.usal.bicoverlapper.utils.GraphPoint2D;
  * @author Roberto Therón and Rodrigo Santamaría
  *
  */
-public class RadialCluster extends Cluster
+public class RadialCluster extends Group
 {
 private Node centerNode;
 private Overlapper bv;
@@ -32,7 +32,7 @@ public RadialCluster()
  * Builds an empty RadialCluster in the ClusterSet r
  * @param r ClusterSet in which this cluster is in 
  */
-public RadialCluster(ClusterSet r) 
+public RadialCluster(GroupSet r) 
 	{
 	super(r);
 	bv=(Overlapper)myGraph.getApplet();
@@ -43,7 +43,7 @@ public RadialCluster(ClusterSet r)
  * @param r ClusterSet in which this cluster is in 
  * @param c	MaximalCluster to copy as RadialCluster
  */
-public RadialCluster(ClusterSet r, MaximalCluster c) 
+public RadialCluster(GroupSet r, MaximalCluster c) 
 	{
 	super(r);
 	bv=(Overlapper)myGraph.getApplet();
@@ -111,7 +111,7 @@ public void buildEdges()
 /**
  * Overrides Cluster.drawHulls(). Center node is not taken into account to build the wrapping hull
  */
-public void drawHulls()
+public void drawHull()
 	{
 	 Overlapper bv=(Overlapper) myGraph.getApplet();
 	  

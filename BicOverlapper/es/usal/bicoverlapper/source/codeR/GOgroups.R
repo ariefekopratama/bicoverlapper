@@ -61,6 +61,7 @@ getGOTerm=function(id)
 #definitions: natural text with a definition of the term
 getGOTermsByGOID=function(goids)
 	{
+	require("GO.db")
 	setClass("goterms", representation(ids="character", evidences="integer", terms="character", ontologies="character", definitions="character"))
 	goterms=new("goterms")
 	

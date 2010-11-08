@@ -129,6 +129,7 @@ public void run()
 	frame.pack();
 	frame.setVisible(true);*/
 	task.execute();
+	//task.doInBackground();
 	}
 
 

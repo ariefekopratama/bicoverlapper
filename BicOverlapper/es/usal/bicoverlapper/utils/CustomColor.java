@@ -238,9 +238,9 @@ public class CustomColor {
 	  //Exact colors from Ware2004
 	  int colors[][]={
 			  {162,75,150},//purple
+			 	{80,82,217},//pale blue
+			  	{194,176,41},//pale yellow
 			 	{113,192,97},//green
-			  	{48,161,98},//orange
-			 	{54,100,173},//blue
 			 	{179, 71, 64},//dark red
 			 	{242,150,178},//pink
 			 	{158, 162, 152},//grey
