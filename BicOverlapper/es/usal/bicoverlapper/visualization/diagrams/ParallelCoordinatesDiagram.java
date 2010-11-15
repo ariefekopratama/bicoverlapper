@@ -123,8 +123,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private double[] minText;
 	private double[] currentTextInf;
 	private double[] currentTextSup;
-	//private boolean ejesRelativos = true; 
-	private boolean ejesRelativos = false; 
+	//private boolean ejesRelativos = true;//if true, each pc axis max/min correspond to the max/min only on this axis 
+	private boolean ejesRelativos = false; //if false, they correspond to the max/min for the whole set of axes
 	private boolean scrollFijado = false;
 	double anchoTextoCuota;
 	
@@ -165,7 +165,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
     // parametros del menu de configuracion
 	private static final int isEjesRelativos = 0;
 	private String[] textoParametros = {Translator.instance.configureLabels.getString("s28")+": "};
-	private Object[] parametros = {new Boolean(true)};
+	private Object[] parametros = {new Boolean(false)};
 	
 	// para el repintado selectivo
 	boolean moviendoEje=false;

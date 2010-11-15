@@ -31,6 +31,10 @@ public class GeneAnnotation {
 	 * NCBI gene id (entrezId)
 	 */
 	public String entrezId;
+	/**
+	 * Ensembl gene id (entrezId)
+	 */
+	public String ensemblId;
 	
 	/**
 	 * Gene type as in NCBI (by now not taken)

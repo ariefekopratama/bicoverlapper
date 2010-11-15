@@ -262,6 +262,8 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("select"));
 		JMenuItem menuAnalysisDifexp =
 			new JMenuItem(Translator.instance.menuLabels.getString("difexp"));
+		JMenuItem menuAnalysisBuildNetwork =
+			new JMenuItem(Translator.instance.menuLabels.getString("buildnet"));
 		
 		menuAnalysisSort.setMnemonic('S');
 		menuAnalysisSearch.setMnemonic('F');
@@ -279,6 +281,8 @@ public class BicOverlapperWindow extends JFrame{
 		analysisMenu.add(menuAnalysisISA);
 		analysisMenu.add(menuAnalysisXMotifs);
 		analysisMenu.add(menuAnalysisCChurch);
+		analysisMenu.addSeparator();
+		analysisMenu.add(menuAnalysisBuildNetwork);
 				
 		
 		menuAnalysisBimax.addActionListener(amm);
@@ -291,7 +295,8 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisSort.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
 		menuAnalysisDifexp.addActionListener(amm);
-					
+		menuAnalysisBuildNetwork.addActionListener(amm);
+						
 		// Creamos menu "Ver"
 		viewMenu = new JMenu(Translator.instance.menuLabels.getString("s2"));
 		viewMenu.setEnabled(false);

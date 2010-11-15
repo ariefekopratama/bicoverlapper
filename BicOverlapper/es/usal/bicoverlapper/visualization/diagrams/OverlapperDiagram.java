@@ -677,22 +677,7 @@ private static final long serialVersionUID = 1L;
 			{
 	    	bv.decreaseStiffness();
 		    }
-	   /* else if("resume".equals(e.getActionCommand()))
-			{
-	    	bv.setShowResume(!bv.isShowResume());
-		    }
-	    else if("centroids".equals(e.getActionCommand()))
-			{
-	    	bv.setShowCentroids(!bv.isShowCentroids());
-		    }
-	    else if("cast".equals(e.getActionCommand()))
-			{
-	    	String text=((JTextField)e.getSource()).getText(); 
-	
-			bv.setMaxCast(Integer.valueOf(text).intValue());
-			construirGrafo();
-			}*/
-	    else if("relative size".equals(e.getActionCommand()))
+	     else if("relative size".equals(e.getActionCommand()))
 			{
 	    	bv.setSizeRelevant(!bv.isSizeRelevant());
 			}
@@ -700,18 +685,7 @@ private static final long serialVersionUID = 1L;
 			{
 	    	configure(0);
 			}
-	   /* else if("show legend".equals(e.getActionCommand()))
-			{
-	    	bv.setShowLegend(!bv.isShowLegend());
-			}
-	    else if("show glyphs".equals(e.getActionCommand()))
-			{
-	    	JButton b=(JButton)e.getSource();
-	    	if(bv.isDrawGlyphs())	b.setIcon(loadIcon("images/withGlyphs.gif"));
-	    	else					b.setIcon(loadIcon("images/withoutGlyphs.gif"));
-	    	bv.setDrawGlyphs(!bv.isDrawGlyphs());
-			}*/
-	    else if("hide nodes".equals(e.getActionCommand()))
+	     else if("hide nodes".equals(e.getActionCommand()))
 			{
 	    	bv.setDrawNodes(!bv.isDrawNodes());
 			}
@@ -855,10 +829,6 @@ private static final long serialVersionUID = 1L;
 		c.gridy = 2;
 		c.ipadx = 10;
 		panelP.add(step,c);
-		
-		/*panelP.add(radioPanel);
-		panelP.add(new JLabel("value"));
-		panelP.add(value);*/
 		
 		if(this.sesion.getMicroarrayData()==null)	
 			{

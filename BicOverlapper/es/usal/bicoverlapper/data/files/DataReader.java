@@ -121,6 +121,9 @@ public class DataReader {
 		{
 		BufferedReader in =	new BufferedReader(new FileReader(fichero));
 		String variable = null;
+		BicOverlapperWindow window=sesion.mainWindow;
+		JDesktopPane desktop=sesion.getDesktop();
+		
 			
 		variable = in.readLine();
 		//En función de esto determinamos qué es:
@@ -158,6 +161,39 @@ public class DataReader {
 				{
 				Node n=trnd.getGraph().getNode(i);
 				n.setInt("id", i	);
+				}
+			}
+		
+		boolean error=false;//TODO: check possible errors
+		if(!error){
+			window.viewMenu.setEnabled(true);
+			window.menuViewTRN.setEnabled(true);
+			if(path!=null && path.length()>0)
+				{
+				try{
+					BufferedWriter pathWriter=new BufferedWriter(new FileWriter(sesion.reader.getPath("es/usal/bicoverlapper/data/path.txt")));
+					pathWriter.write(path);
+					pathWriter.close();
+					}catch(IOException ex){ex.printStackTrace();}
+				}
+				
+			if(window.getActiveWorkDesktop()==null)
+					window.addWorkDesktop(new WorkDesktop(desktop,sesion));
+			else			
+				{
+				JDesktopPane p=window.getActiveWorkDesktop().getPanel();
+				String title=window.getDesktop().getTitleAt(0);
+				if(title.contains(".bic") || title.contains(".tmp"))
+					{
+					if(title.endsWith(".bic") || title.endsWith(".tmp"))
+						{
+						if(title.contains("|"))	title=title.substring(0, title.lastIndexOf("|")).trim();
+						else					title="";
+						}
+					}
+				title=title+" | "+fichero.getName();
+				window.getDesktop().setTitleAt(0, title);
+				p.setName(title);
 				}
 			}
 		sesion.setTRNData(trnd);

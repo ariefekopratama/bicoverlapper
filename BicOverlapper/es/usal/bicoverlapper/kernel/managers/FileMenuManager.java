@@ -883,7 +883,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		if(!error)
 			{
 			// Actualizar las ventanas activas
-			//sesion.fileLoaded();
 			sesion.updateData();
 			
 			try{
@@ -895,22 +894,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			ventana.viewMenu.setEnabled(true);
 			ventana.menuViewTRN.setEnabled(true);
 			ventana.analysisMenu.setEnabled(true);
-			
-			if(addVista)	ventana.addWorkDesktop(new WorkDesktop(desktop,sesion));
-			else			
-				{
-				JDesktopPane p=ventana.getActiveWorkDesktop().getPanel();
-				if(p.getName().length()>0)	
-					{
-					ventana.getDesktop().setTitleAt(0, p.getName()+" | "+fichero.getName());
-					p.setName(p.getName()+" | "+fichero.getName());
-					}
-				else
-					{
-					ventana.getDesktop().setTitleAt(0, fichero.getName());
-					p.setName(fichero.getName());
-					}
-				}
 			}
 		}
 	

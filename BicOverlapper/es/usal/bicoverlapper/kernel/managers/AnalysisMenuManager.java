@@ -27,6 +27,7 @@ import es.usal.bicoverlapper.kernel.Configuration;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.panels.BimaxPanel;
+import es.usal.bicoverlapper.kernel.panels.BuildNetworkPanel;
 import es.usal.bicoverlapper.kernel.panels.CCPanel;
 import es.usal.bicoverlapper.kernel.panels.DiffExpPanel;
 import es.usal.bicoverlapper.kernel.panels.ISAPanel;
@@ -67,6 +68,7 @@ public class AnalysisMenuManager implements ActionListener{
 	private SelectPanel selectPanel=null;
 	private boolean ctrlPressed;
 	private DiffExpPanel difExpPanel;
+	private BuildNetworkPanel buildNetPanel;
 	
 	/**
 	 * Constructor to build a MenuManager
@@ -242,7 +244,7 @@ public class AnalysisMenuManager implements ActionListener{
 				if(difExpPanel==null)		difExpPanel=new DiffExpPanel(sesion);
 				//else					selectPanel.updateLists();
 				difExpPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-				difExpPanel.setTitle("Select Profiles");
+				difExpPanel.setTitle("Differential Expression Analysis");
 				difExpPanel.setAlwaysOnTop(true);
 				difExpPanel.setLocation((sesion.getDesktop().getWidth()-difExpPanel.getWidth())/2, (sesion.getDesktop().getHeight()-difExpPanel.getHeight())/2);
 				
@@ -250,6 +252,21 @@ public class AnalysisMenuManager implements ActionListener{
 				difExpPanel.pack();
 				difExpPanel.setVisible(true);
 				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("buildnet")))
+				{
+				//Show label names box
+				if(buildNetPanel==null)		buildNetPanel=new BuildNetworkPanel(sesion);
+				//else					selectPanel.updateLists();
+				buildNetPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				buildNetPanel.setTitle("Build Correlation Network");
+				buildNetPanel.setAlwaysOnTop(true);
+				buildNetPanel.setLocation((sesion.getDesktop().getWidth()-buildNetPanel.getWidth())/2, (sesion.getDesktop().getHeight()-buildNetPanel.getHeight())/2);
+				
+				//Display the window.
+				buildNetPanel.pack();
+				buildNetPanel.setVisible(true);
+				}
+		
 			}
 		}
 	

@@ -1086,6 +1086,7 @@ public class MicroarrayData
 	    	   		{
 	    		    chip=chip.substring(chip.indexOf(".")+1);
 		    	    if(organism.equals("Homo sapiens"))	rname="hgnc_symbol";
+		    	    else if(organism.equals("Schizosaccharomyces pombe")) rname="external_gene_id";
 	    		    else								rname="symbol";
 	    		    rdescription="description";
 	    		    isBioMaRt=true;
@@ -1100,8 +1101,7 @@ public class MicroarrayData
 	    		    rname="Term";
 	    		    rdescription="Definition";
 	    		    isGO=true;
-	    		    	
-	    	   		}
+	    		    }
 	 	       else
 	    	    	{
 	    	    	rname="SYMBOL";
@@ -1771,7 +1771,7 @@ public class MicroarrayData
 		group=group.substring(0, group.length()-1);
 		REXP exp=re.eval("group=c("+group+")");
 		
-		String[] names=null, descriptions=null, entrezs=null;
+		String[] names=null, descriptions=null, entrezs=null, ensembls=null;
     	
 		message="searching for gene names...";
 		System.out.println(message);
@@ -1814,12 +1814,16 @@ public class MicroarrayData
 	 			if(re.eval("martEnsembl")==null)
 	 				exp=re.eval("martEnsembl=getEnsemblMart(species=\""+organism+"\")");
 	 			
-	 			//This first one is a bit faster but does not retireve entrez ids
-	 			exp=re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+organism+"\", type=\""+chip+"\")");
-	 			//exp=re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+chip+"\", attributes=c(\"ensembl_gene_id\",\"entrezgene\",\"hgnc_symbol\",\"description\"))$ids");
-	 			exp=re.eval("df[,\""+rname+"\"]");
-	 			if(exp!=null)
-	 				names=exp.asStringArray();
+	 			if(!chip.equals("ensembl_gene_id"))//it's a bit slower if we don't search for ensembl gene ids
+	 				exp=re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+chip+"\", attributes=c(\"ensembl_gene_id\",\""+rname+"\",\"description\"))$ids");
+	 			else
+	 				exp=re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+organism+"\", type=\""+chip+"\")");
+	 			if(!chip.equals(rname))
+	 				{
+	 				exp=re.eval("df[,\""+rname+"\"]");
+		 			if(exp!=null)
+		 				names=exp.asStringArray();
+	 				}
 	 			message="searching for gene descriptions...";
 	        	System.out.println(message);
 	        	progress+=5;
@@ -1832,7 +1836,13 @@ public class MicroarrayData
 	 			exp=re.eval("df[,\"entrezgene\"]");
 	 			if(exp!=null)	
 	        		entrezs=exp.asStringArray();
-	  			}
+	 			if(!rname.equals("ensembl_gene_id"))
+	 				{
+		 			exp=re.eval("df[,\"entrezgene\"]");
+		 			if(exp!=null)	
+		        		ensembls=exp.asStringArray();
+	 				}
+	 			}
 	 		}    	
  		
     	
@@ -1961,6 +1971,8 @@ public class MicroarrayData
 					else						ga.name=names[g];
 					}
 				if(entrezs!=null)	ga.entrezId=entrezs[g];
+				if(ensembls!=null)	ga.ensemblId=entrezs[g];
+				
 				ga.id=geneNames[g];
 				geneAnnotations.put(id, ga);
 				}

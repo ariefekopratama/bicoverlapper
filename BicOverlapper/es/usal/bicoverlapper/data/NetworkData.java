@@ -32,7 +32,7 @@ public class NetworkData
 	private int nNodes = 0;
 	int nEdges = 0;
 	private LinkedList ffls=null;
-
+	
 	/**
 	 * Syntren File constructor. Builds a GML file from a Syntren file, saving it to disk and
 	 * building the TRNData
@@ -49,7 +49,6 @@ public class NetworkData
 			try{
 		g=gr.readGraph(f);
 			}catch(DataIOException dioe){System.out.println("Error reading "+f+": "+dioe.getMessage()); System.exit(1);}
-		
 	//	System.out.println("Hemos terminado de crear el grafo sin problemas");
 		System.out.println("Network with "+g.getNodeCount()+" nodes");
 		System.out.println("Network with "+g.getEdgeCount()+" edges");

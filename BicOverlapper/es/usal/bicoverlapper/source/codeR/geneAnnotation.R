@@ -15,7 +15,10 @@ getEnsemblMart=function(species="Homo sapiens")
 			specens=tolower(paste( substr(strsplit(species, " ")[[1]][1],0,1), strsplit(species, " ")[[1]][2], "_gene_ensembl", sep=""))
 	}
 	if(length(spec)==0)	stop("Species name is wrong")
-	mart = useMart("ensembl", dataset=specens)
+	if(species=="Schizosaccharomyces pombe")
+		mart = useMart("fungal_mart_6", dataset="spombe_eg_gene")
+	else
+		mart = useMart("ensembl", dataset=specens)
 	mart
 	}
 	
@@ -75,8 +78,11 @@ getBMatts=function(geneids=NA, mart=NA, type="ensembl_gene_id", attributes=c("en
 	
 	#there might be duplicated, we remove them
 	ret$ids=unique(ret$ids)
-	ret$ids=ret$ids[order(ret$ids[,"entrezgene"]),] #there might be more duplicated because of entrezgene
-	ret$ids=ret$ids[-which(duplicated(ret$ids[,type])),]
+	if("entrezgene" %in% attributes)
+		ret$ids=ret$ids[order(ret$ids[,"entrezgene"]),] #there might be more duplicated because of entrezgene
+	dup=which(duplicated(ret$ids[,type]))
+	if(length(dup)>0)
+		ret$ids=ret$ids[-dup,]
 	#they might be unsorted, so we make sure they are returned in the same order
 	rownames(ret$ids)=ret$ids[, type] 
 	#remove source info on description (to make the lines sorter)
