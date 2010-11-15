@@ -147,6 +147,7 @@ PropertyChangeListener, Runnable {
 		public final static int LIMMAEF=7;//diffexp between two efvs of a given ef 
 		public final static int LIMMAEFALL=8; //diffexp between all the efvs of a given ef
 		public final static int LIMMAALL=9;//diffexp between all the efvs for each ef
+		public final static int CORRELATION_NETWORK=10;//diffexp between all the efvs for each ef
 				
 		
 		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
@@ -289,6 +290,19 @@ PropertyChangeListener, Runnable {
 							((String)params.get(3)),
 							((String)params.get(4)),
 							((String)params.get(5))		); 
+					
+					break;
+				case CORRELATION_NETWORK:
+					System.out.println(((Double)params.get(0)).doubleValue());
+					System.out.println(((String)params.get(1)));
+					System.out.println(((Double)params.get(2)).doubleValue());
+					System.out.println(((String)params.get(3)));
+					
+					res=b.buildCorrelationNetwork(	
+							((Double)params.get(0)).doubleValue(), 
+							((String)params.get(1)),
+							((Double)params.get(2)).doubleValue(),
+							((String)params.get(3))		); 
 					
 					break;
 				

@@ -183,6 +183,7 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		maxCont=0;
 		Ajusta=true;
 		Enought=true;
+		
 		words.clear();
 		colorSeleccion=sesion.getSelectionColor();
 		
@@ -838,8 +839,8 @@ public void addWord(String w, double value, double size, Color colorW)
 			}
 		else	
 			{
-			if(scale>0.2)	scale*=0.5;
-			else			scale/=5;
+			if(scale>0.2)	scale*=0.2;
+			else			scale/=2;
 			}
 		}while(!end);
 		
@@ -1191,6 +1192,5 @@ public void addWord(String w, double value, double size, Color colorW)
 		public void setContText(TextLayout contText) {
 			this.contText = contText;
 		}
-		
 	}
 }

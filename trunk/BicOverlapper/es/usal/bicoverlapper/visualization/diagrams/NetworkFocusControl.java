@@ -49,9 +49,9 @@ class NetworkFocusControl extends FocusControl
 		this.sesion=session;
 		nodosSeleccionados=new LinkedList<Integer>();
 		condicionesSeleccionadas=new LinkedList<Integer>();
-		if(session.getMicroarrayData()!=null)
-			for(int i=0;i<session.getMicroarrayData().getNumConditions()-1;i++)//TODO: arreglar esto con nuevas cosas en BiclusterSelection, y no tener que andar seleccionando condiciones y marranadas
-				condicionesSeleccionadas.add((Integer)i);
+		//if(session.getMicroarrayData()!=null)
+		//	for(int i=0;i<session.getMicroarrayData().getNumConditions()-1;i++)//TODO: arreglar esto con nuevas cosas en BiclusterSelection, y no tener que andar seleccionando condiciones y marranadas
+		//		condicionesSeleccionadas.add((Integer)i);
 	
 		visualization=v;
 		}
@@ -76,6 +76,8 @@ class NetworkFocusControl extends FocusControl
     public void itemClicked(VisualItem item, MouseEvent e)
      	{
     	if ( !filterCheck(item) ) return;
+    	if(item.getGroup().equals("graph.edges"))	return; //By now, edge selection means nothing
+    	
         if ( UILib.isButtonPressed(e, button) &&
              e.getClickCount() == ccount )
         	{
@@ -84,14 +86,13 @@ class NetworkFocusControl extends FocusControl
                 Visualization vis = item.getVisualization();
                 TupleSet ts = vis.getFocusGroup(group);
 
-                
-                boolean ctrl = e.isControlDown();
-                if ( !ctrl ) //Este es el único que estará en el focus
+               // boolean ctrl = e.isControlDown();
+                boolean shift = e.isShiftDown();
+                if ( !shift ) //Este es el único que estará en el focus
                 	{
                 	curFocus = item;
                     ts.clear();//nuevo, para borrar mierda que se pudiera meter con los addItem
                     ts.setTuple(item);
-
                     nodosSeleccionados.clear();
                     nodosSeleccionados.add(Integer.valueOf(item.getInt("id")));
                    

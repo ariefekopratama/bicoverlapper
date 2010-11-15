@@ -182,7 +182,7 @@ public class NetworkDiagram extends Diagram {
 	ActionList color;
 	DataColorAction eFill, edges;
 	int[] palette = new int[]{ ColorLib.gray(0,0)};
-
+	
 	private SearchQueryBinding sq;
 
 	private ForceDirectedLayout fdl;
@@ -282,9 +282,17 @@ public class NetworkDiagram extends Diagram {
 		
 			
 		//Forma de las aristas (dirigidas, curvadas)
-		EdgeRenderer edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE,
-						                			Constants.EDGE_ARROW_FORWARD);
-		edgeRenderer.setArrowHeadSize(5,10);
+		EdgeRenderer edgeRenderer=null;
+		if(trnd.getGraph().isDirected())
+			{
+			edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE,
+							                			Constants.EDGE_ARROW_FORWARD);
+			edgeRenderer.setArrowHeadSize(5,10);
+			}
+		else
+			edgeRenderer = new EdgeRenderer(Constants.EDGE_TYPE_CURVE,
+        			Constants.EDGE_ARROW_NONE);
+
 		
 		//Renderer con etiquetas y aristas
 		v.setRendererFactory(new DefaultRendererFactory(r, edgeRenderer));

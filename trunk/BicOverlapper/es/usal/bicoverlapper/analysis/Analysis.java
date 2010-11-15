@@ -595,7 +595,6 @@ public class Analysis
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
-		//exp=r.eval("lr=list(rownames(m)[degs])");
 		
 		if(outFile.length()==0)	//tempfile
 			{
@@ -608,7 +607,6 @@ public class Analysis
 				outFile=outFile.replace("\\","/");
 				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
 					outFile=outFile.concat("/");
-				outFile=outFile.replace(".", "-");
 				outFile=outFile.concat(".bic");
 				}
 			}
@@ -652,7 +650,6 @@ public class Analysis
 				outFile=outFile.replace("\\","/");
 				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
 					outFile=outFile.concat("/");
-				outFile=outFile.replace(".", "-");
 				outFile=outFile.concat(".bic");
 				}
 			}
@@ -708,7 +705,6 @@ public class Analysis
 				outFile=outFile.replace("\\","/");
 				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
 					outFile=outFile.concat("/");
-				outFile=outFile.replace(".", "-");
 				outFile=outFile.concat(".bic");
 				}
 			}
@@ -723,12 +719,50 @@ public class Analysis
 			else	desc[i]+=" (BH corrected))"; 
 			if(description!=null && description.length()>0)	desc[i]=description;
 			}
-	//TODO: check the previous code, convert to a list of lists writing
-		//exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs$degs, NA, bicNames=degs$names, biclusteringDescription=\""+desc+"\")");
 		exp=r.eval("lr=lapply(degs, function(x){x$deg})");
 		exp=r.eval("ln=lapply(degs, function(x){x$names})");
 		exp=r.eval("writeBiclusterResultsFromListArray(\""+outFile+"\", lr, listArrayColumns=NA, listArrayNames=ln, descriptions="+RUtils.getRList(desc)+")");
 
 		return outFile;
 		}
+
+	public String buildCorrelationNetwork(double sdThreshold, String distanceMethod,
+			double distanceThreshold, String outFile) {
+		if(!matrixLoaded)	loadMatrix();
+		String error="";
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="correlationNetwork"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.concat(".gml");
+				}
+			}
+		
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/buildNetwork.R\")");
+		System.out.println("err=buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
+				"mat=m, distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
+				sdThreshold+", distanceThreshold="+distanceThreshold+")");
+				
+		exp=r.eval("buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
+				"mat=m, distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
+				sdThreshold+", distanceThreshold="+distanceThreshold+")");
+		
+		if(exp.asString()!=null && exp.asString().startsWith("Error"))
+			{
+			System.err.println("buildCorrelationNetwork: "+exp.asString());
+			JOptionPane.showMessageDialog(null,
+	                exp.asString(),
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		return outFile;
+	}
 	}

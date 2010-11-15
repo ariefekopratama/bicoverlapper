@@ -1865,8 +1865,6 @@ protected void mousePressed() {
    		}
 	  if(g.getDragNode()==null)//Hemos pinchado fuera de un nodo
 	  	{
-		//selectionArea = new Path2D.Double();
-		//selectionArea.moveTo(xpress,ypress);
 		selectionArea = new ArrayList<Point2D.Double>();
 		selectionArea.add(new Point2D.Double(xpress,ypress));
 		}
@@ -3168,8 +3166,6 @@ void removeNonSelected(BiclusterSelection bs)
 				{
 				if(list[j]>0)	//si para alguno de los clusters que se queda
 					{
-					//MaximalCluster c2=getClusterWithLabel("cluster"+j);
-					//if(c2!=c)
 					if(map.containsKey("cluster"+j) && !c.label.equals("cluster"+j))//está este nodo
 						{
 						toRemove=false;	//lo dejamos
@@ -3247,7 +3243,6 @@ void restoreClusters()
 	    		}
 			}
 	
-	//System.out.println("TRAS RESTAURAR "+g.getNodes().size()+" nodos y "+clusters.size()+" clusters");
 	this.numClusters=clusters.size();//TODO: deprecate numClusters por clusters.size()
 	return;
 	}
@@ -3497,13 +3492,10 @@ Graph buildSugiyamaGraph()
 			c.setLabel("cluster"+clusterCount);
 			if(groupNames!=null)	
 				c.setLabel(groupNames[clusterCount]);
-		//	System.out.println("Buscando cluster "+clusterCount+" de un total de "+this.numClusters);
 			for (int k = 0; k < clusters.get("cluster"+clusterCount).size(); k++) //Para cada nodo en el cluster
 			   {
 			   String nodeLabel =(String)clusters.get("cluster"+clusterCount).get(k);
 			   ForcedNode n;
-			   //System.out.println(nodeLabel);
-			
 			   if(!alreadyInGraph(g,nodeLabel))
 			   	  {
 				  n = new ForcedNode(new GraphPoint2D(x -cellWidth/2+random((float)cellWidth),y-cellHeight/2+random((float)cellHeight)));
@@ -4198,5 +4190,4 @@ public int getMaxLabelSize() {
 public void setMaxLabelSize(int maxLabelSize) {
 	this.maxLabelSize = maxLabelSize;
 }
-
 }

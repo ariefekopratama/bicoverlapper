@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/sybaris/data/fungi3/degsUP2.bic
+/Users/rodri/Documents/investigacion/sybaris/data/manuel/stress/stressScaleNorm.txt

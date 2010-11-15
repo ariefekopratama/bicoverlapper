@@ -287,10 +287,6 @@ public class Session implements KeyListener {
 			int posX = configVentana.getPosX(), posY = configVentana.getPosY();
 			Dimension dim = configVentana.getDim();			
 			
-			//boolean p=configVentana.isPersonas();
-			//this.setPersonas(configVentana.isPersonas());
-		//	System.out.println("Sesión tiene "+this.isPersonas);
-			
 			Vector<String> anclajes = new Vector<String>(0,1);
 			for(int j = 0; j < configVentana.getNumberOfHooks(); j++){
 				anclajes.add(configVentana.getHook(j));
@@ -1077,10 +1073,10 @@ public class Session implements KeyListener {
     /** Handle the key pressed event from the text field. */
     public void keyPressed(KeyEvent e) 
     	{
-         int keyCode = e.getKeyCode();
-         if(keyCode==17)//Ctrl
+        int keyCode = e.getKeyCode();
+        if(keyCode==17)//Ctrl
           	 ctrlPressed=true;
-    	}
+        }
     
     /** Handle the key released event from the text field. */
     public void keyReleased(KeyEvent e) {
@@ -1092,12 +1088,7 @@ public class Session implements KeyListener {
         	else if(e.getKeyCode()==76) show();//ctrl-L
         	else if(e.getKeyCode()==83) sort();//ctrl-S
         	}
-        else
-        	{
-            int keyCode = e.getKeyCode();
-            if(keyCode==17)//Ctrl
-           	ctrlPressed=false;
-        	}
+        ctrlPressed=false;
     }
     
 /**
@@ -1397,15 +1388,4 @@ public class Session implements KeyListener {
 	public void setSelectionColor(Color selectionColor) {
 		this.selectionColor = selectionColor;
 	}
-
-	/*public Analysis getBiclustering() {
-		return biclustering;
-	}
-
-	public void setBiclustering(Analysis biclustering) {
-		this.biclustering = biclustering;
-	}*/
-	
-	
-	
 }
