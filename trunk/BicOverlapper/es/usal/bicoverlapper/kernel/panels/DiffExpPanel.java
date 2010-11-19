@@ -125,13 +125,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						boolean ne1=false;
 						String g1=group1.getSelectedValue().toString();
 						String g2=group2.getSelectedValue().toString();
-						/*if(g1.equals("rest") && g1.equals(g2))//1) both are rest
-							{
-							JOptionPane.showMessageDialog(null,
-					                "Groups must be different",
-					                "Error",JOptionPane.ERROR_MESSAGE);
-							return;
-							}*/
+						
 						if(!g1.startsWith(" ") && !g2.startsWith(" "))//both are efs
 							{
 							if(!g1.equals(g2))//8)
@@ -142,7 +136,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 								return;
 								}
 							}
-						if(g1.equals("rest"))	{ef1="rest";ne1=true;}//4), 4b)
+						if(g1.equals("rest"))	{ef1=efv1="rest";ne1=true;}//4), 4b)
 						else
 							{
 							efv1=g1.toString().trim();
@@ -155,7 +149,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						String ef2=null;
 						String efv2=null;
 						boolean ne2=false;
-						if(g2.equals("rest"))	{ef2="rest";ne2=true;}
+						if(g2.equals("rest"))	{ef2="rest"; efv2="rest"; ne2=true;}
 						else
 							{
 							efv2=g2.toString().trim();
@@ -173,8 +167,6 @@ public class DiffExpPanel extends javax.swing.JFrame {
 					                "Error",JOptionPane.ERROR_MESSAGE);
 							return;
 							}
-						if(ef2.equals("rest"))	{efv2=efv1;ef2=ef1;}//4)
-						if(ef1.equals("rest"))	{efv1=efv2;ef1=ef2;}//4)
 						
 						String reg="";
 						switch(regulation.getSelectedIndex())
@@ -198,8 +190,57 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						 Analysis b=session.analysis;
 						 b.setFilterOptions(null);
 						
+						//EFV vs rest case
+						 /*if( (ef1.equals("rest") && !ef2.equals("rest") && !ef2.equals(efv2)) || (!ef1.equals("rest") && ef2.equals("rest") && !ef1.equals(efv1)) )
+						 	{
+							System.out.println("EFV vs rest case");
+							ArrayList<Object> p=new ArrayList<Object>();
+							if(!ef1.equals("rest"))
+								{
+								p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
+							    p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
+								}
+							else
+								{
+								p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
+							    p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
+								}
+						   p.add(correction.isSelected());
+						   p.add(new Double(pvalueValue.getText()).doubleValue());
+						   p.add(new Double(expressionValue.getText()).doubleValue());
+						   p.add(reg);
+						   p.add(fileName);
+						   p.add(description.getText());
+						
+							AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.LIMMA, p);
+							   apm.run();
+							   t=apm.getTask();
+							   Thread wt=new Thread() {
+									public void run() {
+										try{
+											String fileName=t.get();
+											if(fileName==null)	
+												JOptionPane.showMessageDialog(null,
+									                    "No biclusters found",
+									                    "Error",JOptionPane.ERROR_MESSAGE);
+											
+											else
+												{
+												if(fileName.indexOf("/")>-1)
+													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												else
+													session.reader.readBiclusterResults("",fileName, fileName, session);
+												}
+											}catch(Exception e){e.printStackTrace();}
+									}
+								};
+							wt.start();
+							setVisible(false);
+			
+								 
+						 	}
 						//----------------------- EF case
-						 if(!ef1.equals("rest") && ef1.equals(ef2))
+						else */if(!ef1.equals("rest") && ef1.equals(ef2) && efv1.equals(efv2))
 						 	{
 							 //7) Same ef, do every possible combination
 							 System.out.println("Same EF case");
@@ -320,9 +361,16 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							{
 							//3,4) ---------------- EFVs case
 							System.out.println("EFV vs EFV case");
+							String nameG1=efv1;
+							String nameG2=efv2;
+							if(ef2.equals("rest"))	{efv2=efv1;ef2=ef1;}//4)
+							if(ef1.equals("rest"))	{efv1=efv2;ef1=ef2;}//4)
+							
 							ArrayList<Object> p=new ArrayList<Object>();
 							   p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
 							   p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
+							   p.add(nameG1);
+							   p.add(nameG2);
 							   p.add(correction.isSelected());
 							   p.add(new Double(pvalueValue.getText()).doubleValue());
 							   p.add(new Double(expressionValue.getText()).doubleValue());

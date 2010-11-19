@@ -335,7 +335,7 @@ public class XMotifsPanel{
 						Analysis b=session.analysis;
 					    if(b.r==null)
 					    	{
-					    	b.loadR();
+					    	b.loadRscripts();
 					    	b.loadMatrix();
 					    	}
 						

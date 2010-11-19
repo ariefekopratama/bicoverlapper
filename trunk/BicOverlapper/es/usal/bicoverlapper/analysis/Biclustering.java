@@ -1,15 +1,7 @@
 package es.usal.bicoverlapper.analysis;
 
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-
-import javax.swing.JOptionPane;
-
 import org.rosuda.JRI.REXP;
-import org.rosuda.JRI.Rengine;
-
-import es.usal.bicoverlapper.data.MicroarrayData;
 
 /**
  * This class performs biclustering analysis by means of R 

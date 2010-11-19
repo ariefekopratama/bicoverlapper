@@ -1,27 +1,18 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
 import java.awt.BasicStroke;
-import java.awt.GridBagLayout;
-import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import prefuse.Constants;
 import prefuse.Display;
 import prefuse.Visualization;
 import prefuse.action.ActionList;
-import prefuse.activity.Activity;
 import prefuse.action.RepaintAction;
 import prefuse.action.ItemAction;
 import prefuse.action.assignment.ColorAction;
@@ -32,10 +23,7 @@ import prefuse.controls.PanControl;
 import prefuse.controls.ZoomControl;
 import prefuse.controls.ZoomToFitControl;
 import prefuse.controls.WheelZoomControl;
-import prefuse.controls.NeighborHighlightControl;
-import prefuse.controls.FocusControl;
 import prefuse.controls.HoverActionControl;
-import prefuse.data.Graph;
 import prefuse.data.Node;
 import prefuse.render.DefaultRendererFactory;
 import prefuse.render.EdgeRenderer;
@@ -43,14 +31,12 @@ import prefuse.render.LabelRenderer;
 import prefuse.util.ColorLib;
 import prefuse.visual.VisualItem;
 
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseEvent;
 
 //Search Panel
 import prefuse.data.query.SearchQueryBinding;
-import prefuse.data.search.RegexSearchTupleSet;
 import prefuse.data.search.SearchTupleSet;
 import prefuse.data.Table;
 import prefuse.util.FontLib;
@@ -65,44 +51,29 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GridBagConstraints;
 import java.beans.PropertyVetoException;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Vector;
 
 import javax.swing.SwingConstants;
 import javax.swing.BoxLayout;
 
-import org.rosuda.JRI.REXP;
-import org.rosuda.JRI.Rengine;
 
 
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.data.NetworkData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
-import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.configuration.panels.NetworkParameterConfigurationPanel;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
 import es.usal.bicoverlapper.utils.Translator;
-import es.usal.bicoverlapper.visualization.diagrams.BubblesDiagram.NodeStrokeAction;
-/*import diagramas.PanelCoordenadasParalelas.GestorCambioVars;
-import diagramas.PanelCoordenadasParalelas.GestorCursor;
-import diagramas.PanelCoordenadasParalelas.GestorScrolls;
-import diagramas.PanelCoordenadasParalelas.GestorSeleccionarTupla;
-import diagramas.PanelCoordenadasParalelas.Linea;*/
+
 import prefuse.controls.ControlAdapter;
 import prefuse.data.search.PrefixSearchTupleSet;//Search
 import prefuse.data.tuple.TupleSet;
-import prefuse.data.util.TableIterator;
 
 //Animación de color:
 import prefuse.activity.SlowInSlowOutPacer;
 import prefuse.action.animate.ColorAnimator;
-import prefuse.action.animate.PolarLocationAnimator;
 import prefuse.action.animate.QualityControlAnimator;
 import prefuse.action.animate.VisibilityAnimator;
 import prefuse.data.event.TupleSetListener;
@@ -212,7 +183,6 @@ public class NetworkDiagram extends Diagram {
 		int num = session.getNumTRNDiagrams();
 		this.setName("Biological Network "+num);
 		this.sesion = session;
-		//this.datos = session.getData();
 		this.trnd = session.getTRNData();
 		this.alto = (int)dim.getHeight();
 		this.ancho = (int)dim.getWidth();
@@ -830,8 +800,6 @@ public class NetworkDiagram extends Diagram {
 		filter.add(nodeColor);
     	v.putAction("filter", filter);
     	
-    	ActionList animate = (ActionList)v.getAction("layout");
-
 		this.run();
 		this.configurando = false;
 		

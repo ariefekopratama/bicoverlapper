@@ -12,13 +12,6 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Vector;
 
@@ -26,36 +19,10 @@ import javax.swing.JComponent;
 import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-
-import org.rosuda.JRI.Rengine;
-import org.w3c.dom.DOMImplementation;
-import org.w3c.dom.Document;
-import org.w3c.dom.DocumentType;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-
 
 import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.data.DataLayer;
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.data.NetworkData;
 import es.usal.bicoverlapper.data.files.DataReader;
 import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
@@ -92,25 +59,19 @@ import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
  */
 public class Session implements KeyListener {
 	
-	// Capa de datos para interaccion
-	private DataLayer capaDatos;
-	private boolean isPersonas=false;
-	
 	public DataReader reader;
 	public BicOverlapperWindow mainWindow;
 	
 	// Datos del fichero de trabajo
-	private MultidimensionalData datos 		= null;
 	private NetworkData  datosTRN 		= null;
 	private BubbleData datosBubble 	= null;
 	private MicroarrayData datosMicroarray 	= null;
 	private String biclusterDataFile = null;
-	//private Analysis biclustering =null;
 	
 	private boolean datosCargados;
-	private boolean datosTRNCargados;
+	private boolean networkDataLoaded;
 	private boolean datosBubbleCargados;
-	private boolean datosMicroarrayCargados;
+	private boolean expressionDataLoaded;
 	private boolean datosBiclusterCargados;
 //	Atributos para compartir de bicluster
 	private BiclusterSelection selectedBicluster=null;
@@ -181,7 +142,6 @@ public class Session implements KeyListener {
 		this.datosCargados = false;
 		this.desktop = desktop;
 		this.mainWindow = window;
-		this.capaDatos = new DataLayer(this);
 		this.ventanas = new Vector<DiagramWindow>(0,1);
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0,1);
 		
@@ -210,6 +170,18 @@ public class Session implements KeyListener {
 		return;
 	}
 	
+	public BicOverlapperWindow getMainWindow() {
+		return mainWindow;
+	}
+
+	public void setMainWindow(BicOverlapperWindow mainWindow) {
+		this.mainWindow = mainWindow;
+	}
+
+	public void setDesktop(JDesktopPane desktop) {
+		this.desktop = desktop;
+	}
+
 	/**
 	 * Devuelve la posicion donde crear una nueva ventana.
 	 * 
@@ -239,35 +211,33 @@ public class Session implements KeyListener {
 		return existe;
 		}
 	
-	/**
-	 * Returns the data layer of this Session
-	 * TODO: NOTE: The data layer is a typical multidimensional variables dataLayer
-	 * As such, only the expression levels are considered in this way, being genes (samples)
-	 * variables, and conditions (experiments) dimensions
-	 * @return <code>DataLayer</code> of this <code>Session</code>.
-	 */
-	public DataLayer getDataLayer(){
-		return this.capaDatos;
-	}
 	
 	/**
 	 * Restart the <code>Session</code> closing all registered Diagramas
 	 * NOTE: data sets are not deleted
 	 *
 	 */
-	public void restartSession(){
-		
+	public void restart(){
 		int numVentanas = ventanas.size();
 		if(numVentanas != 0){
 			for(int i = 0; i < numVentanas; i++){
 				DiagramWindow ventana = ventanas.firstElement();
 				ventana.dispose();
 			}
+		this.analysis.unloadMatrix();
+		this.biclusterDataFile=null;
+		this.datosBiclusterCargados=false;
+		this.contLog=0;
+		this.datosBubbleCargados=false;
+		this.datosBubble=null;
+		this.desktop=null;
+		this.expresionesCondicion=null;
+		
 		}
 		
 		this.grupoVentanasDefecto.clear();
 		this.numVentanaCoordenadasParalelas = 1;
-		analysis.unloadMatrix();
+		//TODO: maybe remove any thing that was left in R console?
 		}
 	
 	/**
@@ -277,7 +247,7 @@ public class Session implements KeyListener {
 	 */
 	public void setConfig(ConfigurationHandler config){
 		
-		this.restartSession();
+		restart();
 		
 		for(int i = 0; i < config.getSizeConfig(); i++){
 			
@@ -365,17 +335,6 @@ public class Session implements KeyListener {
 			ventana.setVisible(true);
 		}
 		
-		//System.out.println("Propagamos (')");
-		for(int i = 0; i < this.ventanas.size(); i++){
-			DiagramWindow ventana = ventanas.elementAt(i);
-			if(ventana.getHooks() != null){
-				ventana.setExclusiveGroupStatus(false);
-				if(ventana.getDiagram().getDataLayer() == this.capaDatos){
-					DataLayer capaDatos = new DataLayer(this.capaDatos);
-					ventana.propagar(capaDatos);
-				}
-			}
-		}
 	}
 	
 	
@@ -445,28 +404,6 @@ public class Session implements KeyListener {
 	 */
 	public void fileLoaded(){
 		JOptionPane.showMessageDialog(this.desktop,Translator.instance.configureLabels.getString("s36"),null,JOptionPane.INFORMATION_MESSAGE);		
-	}
-	
-	/**
-	 * Stablish the multidimentional data source for the Diagrams (expression levels)
-	 * TODO: THIS DATA LAYER WILL DISSAPEAR IN ORDER TO USE OTHER MORE SPECIFIC DATA LAYERS
-	 * BY NOW, ONLY ParallelCoordinatesDiagram MAKES USE OF IT
-	 * @param data <code>MultidimensionalData</code> with the whole data set of multidimensional variables
-	 */
-	public void setData(MultidimensionalData data) {
-		this.datos = data;
-		this.datosCargados = true;
-		this.capaDatos.setEjes(datos.fieldAt(0).getName(),datos.fieldAt(1).getName());
-		this.updateData();		
-	}
-	
-	/**
-	 * Returns MultidimensionalData of this Session
-	 * 
-	 * @return <code>MultidimensionalData</code> of this Session
-	 */
-	public MultidimensionalData getData() {
-		return this.datos;
 	}
 	
 	/**
@@ -648,18 +585,12 @@ public class Session implements KeyListener {
 	 */ 
 	void update(int[] idActualizables, boolean actualizarDatos) 
 			{
-		//	System.out.println("Tenemos "+this.grupoVentanasDefecto.size()+" ventanas en el grupo por defecto");
-			//for(int j=0;j<idActualizables.length;j++)	System.out.println("ID actualizable "+idActualizables[j]);
 			for(int i = 0; i < this.grupoVentanasDefecto.size(); i++)
 				{
 				DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
 				
-				//System.out.println("ID de nuestra ventana "+ventana.getId()+" con nombre "+ventana.getName());
 				if(ArrayUtils.contains(idActualizables,ventana.getId()))
-					{
-					//System.out.println("Actualizando panel coh id "+ventana.getId()+" y nombre "+ventana.getName());
 					ventana.updateDiagram();
-					}
 				}
 			}
 			
@@ -750,7 +681,7 @@ public class Session implements KeyListener {
 	 */
 	public void setTRNData(NetworkData TRNData) {
 		this.datosTRN = TRNData;
-		datosTRNCargados = true;
+		networkDataLoaded = true;
 		this.updateData();		
 	}
 
@@ -773,15 +704,6 @@ public class Session implements KeyListener {
 	}
 
 	/**
-	 * Sets the points selected in the multidimensional data
-	 * @param selec	selected points to be managed by the Session layer
-	 */
-	public void setSelectedPoints(TupleSelection selec)
-		{
-		this.getDataLayer().setPointSelection(selec);
-		}
-	
-	/**
 	 * Sets the points selected in the multidimensional data and updates
 	 * all the diagrams except those that contains in its name the text
 	 * specified
@@ -789,17 +711,16 @@ public class Session implements KeyListener {
 	 * @param selec	selected points
 	 * @param noUpdate	Diagrams that contains this String in its name won't be updated
 	 */
-	public void setSelectedPoints(TupleSelection selec, String noUpdate){
-		this.getDataLayer().setPointSelection(selec);
+/*	public void setSelectedPoints(TupleSelection selec, String noUpdate){
 		this.updateExcept(noUpdate);
-	}
+	}*/
 	
 	/**
 	 * Checks if TRNData are loaded
 	 * @return	true if TRNData are loaded
 	 */
 	public boolean TRNDataLoaded() {
-		return datosTRNCargados;
+		return networkDataLoaded;
 	}
 	
 	/**
@@ -931,20 +852,6 @@ public class Session implements KeyListener {
 		    	}
 			}
 		else	undoOrRedo=false;
-		TupleSelection sp=this.getDataLayer().getPointSelection(); 
-		if(this.getData()!=null)
-			{
-			if(sp==null)	sp=new TupleSelection("genes", "conditions", this.getData().getNumTuples());
-			for(int i=0;i<sp.getNumTuples();i++)		{sp.setX(i, false); sp.setY(i, false);}
-			if(selectedBic.getGenes().size()>0)
-				for(int i=0;i<selectedBic.getGenes().size();i++)
-					{
-					sp.setX(selectedBic.getGenes().get(i), true);
-					}
-			this.getDataLayer().setPointSelection(sp);
-			}
-			
-		
 		this.updateExcept(noUpdate);
 		}
 	
@@ -965,20 +872,6 @@ public class Session implements KeyListener {
 		    	}
 			}
 		else	undoOrRedo=false;
-		TupleSelection sp=this.getDataLayer().getPointSelection(); 
-		if(this.getData()!=null)
-			{
-			if(sp==null)	sp=new TupleSelection("genes", "conditions", this.getData().getNumTuples());
-			for(int i=0;i<sp.getNumTuples();i++)		{sp.setX(i, false); sp.setY(i, false);}
-			if(selectedBic.getGenes().size()>0)
-				for(int i=0;i<selectedBic.getGenes().size();i++)
-					{
-					sp.setX(selectedBic.getGenes().get(i), true);
-					}
-			this.getDataLayer().setPointSelection(sp);
-			}
-			
-		
 		this.updateOnly(onlyUpdate);
 		}
 	public void setSelectedBicluster(BiclusterSelection selectedBic) 
@@ -1154,7 +1047,7 @@ public class Session implements KeyListener {
 	 * @return	true if microarray data are loaded
 	 */
 	public boolean areMicroarrayDataLoaded() {
-		return datosMicroarrayCargados;
+		return expressionDataLoaded;
 	}
 
 	/**
@@ -1162,7 +1055,7 @@ public class Session implements KeyListener {
 	 * @param microarrayDataStatus	if it is true, microarray data status is set to loaded.
 	 */
 	public void setMicroarrayDataLoaded(boolean microarrayDataStatus) {
-		this.datosMicroarrayCargados = microarrayDataStatus;
+		this.expressionDataLoaded = microarrayDataStatus;
 	}
 
 	/**

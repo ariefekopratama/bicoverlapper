@@ -155,7 +155,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 						if(resultsFile!=null)			
 							{
 							fileName=resultsFile.getPath().replace("\\", "/");
-							if(!fileName.contains(".")) 	fileName=fileName.concat(".bic");
+							if(!fileName.contains(".")) 	fileName=fileName.concat(".gml");
 							}
 						else 
 							{

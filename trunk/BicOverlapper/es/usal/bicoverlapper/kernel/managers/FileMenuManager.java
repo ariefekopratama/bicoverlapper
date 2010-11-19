@@ -16,15 +16,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.StringTokenizer;
-import java.util.Vector;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
-import javax.swing.ProgressMonitor;
-import javax.swing.plaf.basic.BasicProgressBarUI;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -50,15 +45,8 @@ import org.xml.sax.SAXParseException;
 
 
 
-import es.usal.bicoverlapper.analysis.Analysis;
-import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.data.Field;
-import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MicroarrayRequester;
-import es.usal.bicoverlapper.data.MultidimensionalData;
-import es.usal.bicoverlapper.data.NetworkData;
 import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
-import es.usal.bicoverlapper.data.files.DataReader;
 import es.usal.bicoverlapper.data.files.GMLFilter;
 import es.usal.bicoverlapper.data.files.MicroarrayFilter;
 import es.usal.bicoverlapper.data.files.SyntrenFilter;
@@ -73,8 +61,6 @@ import es.usal.bicoverlapper.kernel.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.kernel.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.kernel.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.kernel.configuration.panels.DownloadPanel;
-import es.usal.bicoverlapper.utils.HelpPanel;
-import es.usal.bicoverlapper.utils.MicroarrayLoadProgressMonitor;
 import es.usal.bicoverlapper.utils.Translator;
 import es.usal.bicoverlapper.visualization.diagrams.WordCloudDiagram;
 
@@ -133,7 +119,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		selecFile.addChoosableFileFilter(new SyntrenFilter());
 		selecFile.addChoosableFileFilter(new GMLFilter());
 		selecFile.setCurrentDirectory(new File(defaultPath));
-		//selecFile.setLocale(new Locale("en"));
 		int returnval = selecFile.showDialog(
 				(Component)e.getSource(),"Load Network");
 		 
@@ -142,7 +127,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			//Si no hay TRN pero hay microarray dejamos en la misma sesión
 			fichero = selecFile.getSelectedFile();
 			path=fichero.getAbsolutePath();
-			//path=selecFile.getCurrentDirectory().getPath();
 			if(selecFile.getFileFilter().getDescription().contains("yntren"))
 					readTRN("syntren");
 			else	readTRN("gml");
@@ -176,7 +160,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		 
 		if(returnval == JFileChooser.APPROVE_OPTION) {
 			fichero = selecFile.getSelectedFile();
-			//path=selecFile.getCurrentDirectory().getPath();
 			path=fichero.getAbsolutePath();
 			readBiclustering();
 			}
@@ -270,7 +253,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		prepareDesktop();
 		boolean error=false;
 		try {
-			sesion.analysis.loadR();
+			sesion.analysis.loadRscripts();
 			sesion.analysis.downloadExperiment(id, path);
 			sesion.reader.readMicroarray(path, sesion, this);
 			sesion.microarrayPath=fichero.getAbsolutePath();
@@ -348,9 +331,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	 */
 	public void closeSession()
 		{
-		sesion=null;
+		sesion.restart();
 		ventana.getDesktop().removeAll();
-		ventana.remove(ventana.getActiveWorkDesktop().getPanel());
 		}
 	public void loadSession(File file){
 		
@@ -901,18 +883,16 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		{
 		desktop = new JDesktopPane();
 		desktop.setName(fichero.getName());
-		addVista=false;
 		
-		if(this.ventana.getActiveWorkDesktop()!=null)
-			{
-			addVista=false;
-			sesion = ventana.getActiveWorkDesktop().getSession();
-			sesion.restartSession();
-			}
-		else
+		if(sesion==null)
 			{
 			addVista=true;
 			sesion = new Session(desktop, ventana);
+			}
+		else
+			{
+			sesion.setDesktop(desktop);
+			sesion.setMainWindow(ventana);
 			}
 		
 		ventana.analysisMenu.setEnabled(false);

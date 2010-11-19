@@ -192,7 +192,7 @@ public class CustomColor {
    */
   
   /*
-   * NOTE: the best color from Ware1999 are
+   * NOTE: the best color from Ware1999 (p 126) are
    * Red, Green, Yellow, Blue, Black, White
    * Pink, Cyan, Gray, Orange, Brown, Purple
    * The first set of six must be chosen prior to the
@@ -217,23 +217,7 @@ public class CustomColor {
 	              {162,75,150},//purple
 	                        };
 		  */
-	 /* int  colors[][]  = {
-			//  {254,127,13},//orange
-			  {200,0,0},//orange
-			  {153,74,237},//morado
-		       {0, 0, 200},//blue
-			      	  {100,227,195},//spidrift
-			 	{244,238,224},//honeydew
-	           	  {200,100,255},//azul cielo
-			  {153,74,237},//morado
-			  {240,189,139},//marrón claro
-              {200, 0, 0},//red
-	             {0, 200, 0},//green
-                  {255,199,38},//yellow
-              {170,177,206},//malva
-              {199,30,199}, //fucsia
-           	{255,168,251}, //pink
-                        };*/
+	
 	  
 	  //Exact colors from Ware2004
 	  int colors[][]={

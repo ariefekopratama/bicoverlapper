@@ -79,14 +79,14 @@ public class DiagramWindow extends JInternalFrame {
 	}
 	
 	 
-	void propagar(DataLayer capaDatos){
+	/*void propagar(DataLayer capaDatos){
 		this.getDiagram().setDataLayer(capaDatos);
 		for(int i = 0; i < this.hooks.size(); i++){
 			DiagramWindow ventana = sesion.getDiagramWindow(this.hooks.elementAt(i));
 			if(ventana.getDiagram().getDataLayer() != capaDatos)
 				ventana.propagar(capaDatos);
 		}
-	}
+	}*/
 	
 	/**
 	 * Sets the update status for this DiagramWindow
@@ -168,7 +168,7 @@ public class DiagramWindow extends JInternalFrame {
 	// añade ventana a la lista de anclajes
 	/**
 	 * TODO: STILL IN DEVELOPMENT
-	 */
+	 *//*
 	public void addHook(DiagramWindow dw){
 		if((dw != null) && !this.hooks.contains(dw.getTitle())){
 			if(grupoDefault){
@@ -196,12 +196,12 @@ public class DiagramWindow extends JInternalFrame {
 			dw.addHook(this);
 		}
 	}
-	
+	*/
 	// elimina ventana de la lista de anclajes
 	/**
 	 * TODO: STILL IN DEVELOPMENT
 	 */
-	public void removeHook(DiagramWindow dw){
+	/*public void removeHook(DiagramWindow dw){
 		if((dw != null) && this.hooks.contains(dw.getTitle())){
 			for(int i = 0; i < this.hooks.size(); i++){
 				if(this.hooks.elementAt(i).equals(dw.getTitle())){
@@ -216,17 +216,17 @@ public class DiagramWindow extends JInternalFrame {
 				this.getDiagram().setDataLayer(sesion.getDataLayer());
 			}
 		}
-	}
+	}*/
 	
 	/**
 	 * Returns the data layer from the session, which includes all the different sources of data loaded
 	 * @return	the DataLayer
 	 * @deprecated
 	 */
-	public DataLayer getDataLayer()
+	/*public DataLayer getDataLayer()
 		{
 		return this.sesion.getDataLayer();
-		}
+		}*/
 	
 	void update(boolean flag, int[] updatableIds){
 		if(this.flag != flag)
@@ -296,7 +296,7 @@ public class DiagramWindow extends JInternalFrame {
 		public void internalFrameOpened(InternalFrameEvent e) {}
 
 		public void internalFrameClosing(InternalFrameEvent e) {
-			if(hooks!=null)
+			/*if(hooks!=null)
 				{	
 				int numAnclajes = hooks.size();
 				for(int i = 0; i < numAnclajes; i++)
@@ -304,7 +304,7 @@ public class DiagramWindow extends JInternalFrame {
 					DiagramWindow ventana = sesion.getDiagramWindow(hooks.firstElement());
 					ventana.removeHook(thisVentana);
 					}
-				}
+				}*/
 		}
 
 		public void internalFrameClosed(InternalFrameEvent e) {

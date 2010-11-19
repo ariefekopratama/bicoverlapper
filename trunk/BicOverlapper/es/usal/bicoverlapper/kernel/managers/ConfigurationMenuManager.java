@@ -72,14 +72,6 @@ public class ConfigurationMenuManager implements ActionListener{
 				if(i==posSel)	
 					panel.setSelectionColor(paleta[i]);
 			}
-			panel.collectParameters();
-			//panel.update();
-			
-			DiagramWindow ventana = panel.getWindow();
-			if(ventana != null){
-				ventana.addHook(addItem);
-				ventana.removeHook(removeItem);
-			}
 		}
 		else if(botonAccion.getText() == Translator.instance.configureLabels.getString("s10")){
 			ventanaConfig.dispose();

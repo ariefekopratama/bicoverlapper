@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -17,12 +16,9 @@ import javax.swing.JOptionPane;
 import prefuse.data.Node;
 
 import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.data.Field;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.MicroarrayRequester;
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.data.NetworkData;
-import es.usal.bicoverlapper.kernel.BicOverlapper;
 import es.usal.bicoverlapper.kernel.BicOverlapperWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
@@ -50,7 +46,7 @@ public class DataReader {
 	 * @throws FileNotFoundException
 	 * @throws IOException
 	 */
-	public void readDataFrame(File file,Session session) throws FileNotFoundException,IOException {
+	/*public void readDataFrame(File file,Session session) throws FileNotFoundException,IOException {
 		
 		MultidimensionalData datos = new MultidimensionalData();
 		
@@ -90,7 +86,7 @@ public class DataReader {
 			datos.addField(aux);			
 		}		
 		session.setData(datos);		
-	}
+	}*/
 
 	//----------------------------- FUNCIONES DE LECTURA MIAS ------------------------
 	/**
@@ -306,7 +302,7 @@ public class DataReader {
 	 * Lectura de fichero tradicional de las que usa Javi, modificado para que se adapte a Syntren
 	 * TODO: Un leerFichero más genérico que tenga en cuenta distintas opciones
 	 */
-	void leerFichero(String path, File fichero,Session sesion, int skipColumns) throws FileNotFoundException,IOException 
+	/*void leerFichero(String path, File fichero,Session sesion, int skipColumns) throws FileNotFoundException,IOException 
 		{
 		BufferedReader in =	new BufferedReader(new FileReader(fichero));
 		String variable = null;
@@ -332,14 +328,14 @@ public class DataReader {
 				
 			datos.addField(aux);			
 			}
-		sesion.setData(datos);		
-		}		
+		//sesion.setData(datos);		
+		}	*/	
 	
 
 	/*
 	 * Lectura de fichero para convertir a la estructura de javi
 	 */
-	private void leerFichero(String path, File fichero,Session sesion, boolean invert, boolean rowHeader, boolean topLeftWord, boolean colHeader, String delimiter) throws FileNotFoundException,IOException 
+	/*private void leerFichero(String path, File fichero,Session sesion, boolean invert, boolean rowHeader, boolean topLeftWord, boolean colHeader, String delimiter) throws FileNotFoundException,IOException 
 		{
 		BufferedReader in =	new BufferedReader(new FileReader(fichero));
 		String variable = null;
@@ -365,7 +361,7 @@ public class DataReader {
 					
 				datos.addField(aux);			
 				}
-			sesion.setData(datos);		
+			//sesion.setData(datos);		
 			}
 		else//each row is an individual (the usual case)
 			{
@@ -419,9 +415,9 @@ public class DataReader {
 				idarray[i]=idtuplas.get(i);
 				}
 			datos.setTupleNames(idarray);
-			sesion.setData(datos);
+			//sesion.setData(datos);
 			}
-		}		
+		}	*/	
 
 	
 	/**

@@ -35,6 +35,10 @@ import es.usal.bicoverlapper.utils.SplineFactory;
  * @author Rodrigo Santamaría
  */
 public abstract class JProcessingPanel extends JComponent implements Runnable{
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	Font fontA=null;
 	Graphics2D gr=null;
 	Color strokeColor=new Color(255,255,255,255);
@@ -278,9 +282,6 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	
 	public void diamond(float x, float y, float w, float h)
 		{
-		int xd=fixCoordinate((int)x,(int)w);
-		int yd=fixCoordinate((int)y,(int)h);
-		
 		if(drawStroke)
 			{
 			Color temp=gr.getColor();
@@ -290,7 +291,7 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 			this.vertex(x+w, y+h/2);
 			this.vertex(x+w/2, y+h);
 			this.vertex(x, y+h/2);
-			endShape(this.CLOSE);
+			endShape(JProcessingPanel.CLOSE);
 			gr.setColor(temp);
 			}
 		}

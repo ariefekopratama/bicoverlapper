@@ -1,12 +1,10 @@
 package es.usal.bicoverlapper.visualization.diagrams.overlapper;
 
 import java.awt.Image;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 
 
@@ -48,7 +46,6 @@ public class Node {
 	  Map<String,Group> clusters;//Lists of clusters where this node is
 	  Map<String,Group> shownClusters;//Lists of clusters where this node is that are being shown
 	  Map<String,Node>	mates;//List of nodes connected to this node
-	  int[] roles=null;//TODO: quitar nº mágico, mirar lo de los oscars
 
 	  /**
 	   * Builds an empty node

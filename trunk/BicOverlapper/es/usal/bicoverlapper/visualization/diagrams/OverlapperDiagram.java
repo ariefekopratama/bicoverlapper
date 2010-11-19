@@ -1,11 +1,8 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
 import java.awt.BorderLayout;
-import java.awt.Checkbox;
-import java.awt.CheckboxGroup;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.ComponentOrientation;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -23,35 +20,25 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.beans.PropertyVetoException;
 import java.net.URL;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Vector;
 
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
-import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
-import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.Translator;
-//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestoraddAnclaje;
-//import es.usal.bicoverlapper.visualization.diagrams.Diagram.GestorEliminarAnclaje;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Overlapper;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Graph;
 import es.usal.bicoverlapper.visualization.diagrams.overlapper.Node;
@@ -190,6 +177,9 @@ private static final long serialVersionUID = 1L;
 			bv.addKeyListener(sesion);	
 			this.getWindow().setContentPane(this);
 			this.getWindow().pack();
+			
+			if(sesion.getMicroarrayData()!=null)	
+				this.update();
 			}
 		}
 	

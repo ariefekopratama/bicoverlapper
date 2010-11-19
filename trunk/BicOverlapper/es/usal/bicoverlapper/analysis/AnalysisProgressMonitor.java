@@ -220,21 +220,27 @@ PropertyChangeListener, Runnable {
 				case LIMMA:
 					System.out.println(((Integer[])params.get(0))[0]);
 					System.out.println(((Integer[])params.get(1))[0]);
-					System.out.println(((Boolean)params.get(2)).booleanValue());
-					System.out.println(((Double)params.get(3)).doubleValue());
-					System.out.println(((Double)params.get(4)).doubleValue());
-					System.out.println(((String)params.get(5)));
-					System.out.println(((String)params.get(6)));
+					System.out.println(((String)params.get(2)));
+					System.out.println(((String)params.get(3)));
+					System.out.println(((Boolean)params.get(4)).booleanValue());
+					System.out.println(((Double)params.get(5)).doubleValue());
+					System.out.println(((Double)params.get(6)).doubleValue());
 					System.out.println(((String)params.get(7)));
+					System.out.println(((String)params.get(8)));
+					System.out.println(((String)params.get(9)));
 					
 					res=b.limma(	((Integer[])params.get(0)), 
 							((Integer[])params.get(1)), 
-							((Boolean)params.get(2)).booleanValue(),
-							((Double)params.get(3)).doubleValue(), 
-							((Double)params.get(4)).doubleValue(),
-							((String)params.get(5)),
-							((String)params.get(6)),
-							((String)params.get(7))		); 
+							
+							((String)params.get(2)),
+							((String)params.get(3)),
+							
+							((Boolean)params.get(4)).booleanValue(),
+							((Double)params.get(5)).doubleValue(), 
+							((Double)params.get(6)).doubleValue(),
+							((String)params.get(7)),
+							((String)params.get(8)),
+							((String)params.get(9))		); 
 					
 					break;
 				case LIMMAEF:

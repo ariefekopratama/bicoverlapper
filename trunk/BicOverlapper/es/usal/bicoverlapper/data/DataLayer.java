@@ -77,19 +77,19 @@ public class DataLayer {
 	 * @deprecated
 	 * @return {@link Field} in the x axis
 	 */
-	public Field getXaxis() {
+/*	public Field getXaxis() {
 		return sesion.getData().getField(ejeX);
 			
-	}
+	}*/
 	
 	/**
 	 * Returns the variable in the y axis
 	 * @deprecated
 	 * @return {@link Field} in the y axis
 	 */
-	public Field getYaxis() {
+	/*public Field getYaxis() {
 		return sesion.getData().getField(ejeY);
-	}
+	}*/
 	
 	
 	/**
@@ -97,10 +97,10 @@ public class DataLayer {
 	 * @param	name	name of the field
 	 * @return {@link Field} with the requested name
 	 */
-	public Field getAxis(String name) {
+	/*public Field getAxis(String name) {
 		return sesion.getData().getField(name);
 		
-	}
+	}*/
 	
 	/**
 	 * Returns the name of the dimension set at X axis

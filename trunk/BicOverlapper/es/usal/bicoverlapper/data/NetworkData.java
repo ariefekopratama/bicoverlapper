@@ -7,7 +7,6 @@ import prefuse.data.Graph;
 import prefuse.data.io.DataIOException;
 import prefuse.data.io.GraphMLReader;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import es.usal.bicoverlapper.data.files.SyntrenFilter;

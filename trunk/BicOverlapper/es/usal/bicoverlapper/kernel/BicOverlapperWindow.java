@@ -1,10 +1,6 @@
 package es.usal.bicoverlapper.kernel;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Graphics;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.image.BufferStrategy;
 import java.util.ArrayList;
 import java.util.Vector;
 

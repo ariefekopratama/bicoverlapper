@@ -8,44 +8,32 @@ import java.awt.Point;
 import java.awt.RenderingHints;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.ItemEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
-import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JPanel;
-import javax.swing.JButton;
-import javax.swing.JSlider;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
 import es.usal.bicoverlapper.data.GeneRequester;
-import es.usal.bicoverlapper.data.NCBIReader;
 import es.usal.bicoverlapper.data.GOTerm;
 import es.usal.bicoverlapper.data.GeneAnnotation;
-import es.usal.bicoverlapper.data.MultidimensionalData;
-import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
 
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
@@ -56,7 +44,6 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	//private MultidimensionalData datos;
 	private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
 		
 	// definicion de margenes del diagrama
@@ -778,6 +765,10 @@ public void addWord(String w, double value, double size, Color colorW)
 		//3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un bucle donde vamos disminuyendo poco a poco la escala
 		boolean end=false;
+		boolean increase=false;
+		//boolean increaseAnt=increase;
+		//boolean first=true;
+		
 		maxAncho=0;
 		do{
 		x=0;
@@ -833,14 +824,34 @@ public void addWord(String w, double value, double size, Color colorW)
 			w2.setY(w2.getY()+.75*maxAlto);
 			}
 		
-		if(y<=this.getHeight()-menuCloud.getBounds().height && x<=this.getWidth())	
+		int limitX=this.getWidth();
+		int limitY=this.getHeight()-menuCloud.getBounds().height;
+		//System.out.println("Occupied size: "+Math.floor((x/limitX)*100)+", "+Math.floor((y/limitY)*100));
+		
+		if( (y<=limitY && x<=limitX) )//smaller
 			{
 			end=true;
+			increase=true;
 			}
-		else	
+		else//larger
 			{
-			if(scale>0.2)	scale*=0.2;
-			else			scale/=2;
+			increase=false;
+			}
+
+		
+
+		if(!end)	
+			{
+			if(increase)	
+				{
+				System.out.println("Increase scale "+scale);
+				scale*=1.5;
+				}
+			else
+				{
+				System.out.println("Decrease scale "+scale);
+				scale/=1.5;
+				}
 			}
 		}while(!end);
 		
