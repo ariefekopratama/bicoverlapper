@@ -4,7 +4,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.Iterator;
 
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.visualization.diagrams.ExpressionRenderer;
 
@@ -190,7 +190,7 @@ class MicroGridDistortion extends Layout {
         
         
         //Versión que tiene en cuenta distorsiones previas
-    	BiclusterSelection sb=s.getSelectedBicluster();
+    	Selection sb=s.getSelectedBicluster();
     	int colSelected=0;
     	int rowSelected=0;
     	if(sb!=null)

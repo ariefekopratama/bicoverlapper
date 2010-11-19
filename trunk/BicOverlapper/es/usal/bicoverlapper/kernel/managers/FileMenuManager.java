@@ -53,7 +53,7 @@ import es.usal.bicoverlapper.data.files.SyntrenFilter;
 import es.usal.bicoverlapper.data.files.TextFileFilter;
 import es.usal.bicoverlapper.data.files.XmlFileFilter;
 import es.usal.bicoverlapper.kernel.BicOverlapperWindow;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Configuration;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
@@ -518,7 +518,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			Element condition = (Element) conditions.item(i);
 			c.add(new Integer(condition.getFirstChild().getNodeValue()));
 			}
-		BiclusterSelection bs=new BiclusterSelection(g,c);
+		Selection bs=new Selection(g,c);
 		if(bs.getGenes().size()>0 || bs.getConditions().size()>0)
 			sesion.setSelectedBiclustersExcept(bs, "");
 		} catch (ParserConfigurationException pce) {
@@ -799,7 +799,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		
 		if(ventana.getActiveWorkDesktop()!=null && ventana.getActiveWorkDesktop().getSession().getSelectedBicluster()!=null)
 			{
-			BiclusterSelection bs=ventana.getActiveWorkDesktop().getSession().getSelectedBicluster();
+			Selection bs=ventana.getActiveWorkDesktop().getSession().getSelectedBicluster();
 			
 			bw.write(bs.getGenes().size()+" "+bs.getConditions().size());
 			bw.newLine();

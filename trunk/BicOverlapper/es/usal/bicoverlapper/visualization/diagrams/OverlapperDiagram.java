@@ -35,7 +35,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
 import es.usal.bicoverlapper.utils.Translator;
@@ -917,7 +917,7 @@ private static final long serialVersionUID = 1L;
 			if(!currentGenes.equals(genes) || !currentConditions.equals(conditions))
 				if(genes.size()>0 || conditions.size()>0)//Only if it's not the navigation area!!
 				{
-				 BiclusterSelection bs=new BiclusterSelection(genes,conditions);
+				 Selection bs=new Selection(genes,conditions);
 				 sesion.setSelectedBiclustersExcept(bs, "lapper");
 				 currentGenes=genes;
 				 currentConditions=conditions;

@@ -30,7 +30,7 @@ public class NetworkData
 	//Properties of graph
 	private int nNodes = 0;
 	int nEdges = 0;
-	private LinkedList ffls=null;
+	private LinkedList<int[]> ffls=null;
 	
 	/**
 	 * Syntren File constructor. Builds a GML file from a Syntren file, saving it to disk and
@@ -128,7 +128,7 @@ public class NetworkData
      */
     private void countFFLs()
         {
-        ffls=new LinkedList();
+        ffls=new LinkedList<int[]>();
         for(int i=0;i<nNodes;i++)
             for(int j=0;j<nNodes;j++)
                 {
@@ -158,7 +158,7 @@ public class NetworkData
      * STILL IN DEVELOPMENT
      * @return A linked list of int[3] arrays with the three node ids in the FFL
      */
-	public LinkedList getFFLs()
+	public LinkedList<int[]> getFFLs()
 		{
 		return ffls;
 		}

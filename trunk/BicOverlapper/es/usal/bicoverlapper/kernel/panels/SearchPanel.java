@@ -42,7 +42,7 @@ import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
 import es.usal.bicoverlapper.data.files.TextFileFilter;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.WorkDesktop;
 import es.usal.bicoverlapper.utils.Translator;
@@ -156,7 +156,7 @@ public class SearchPanel{
 					if(session!=null)	
 						{
 						
-						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
+						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
 							session.setSelectedBiclustersExcept(sb,"");
@@ -205,10 +205,10 @@ public class SearchPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						BiclusterSelection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
+						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
-							BiclusterSelection csb=session.getSelectedBicluster();
+							Selection csb=session.getSelectedBicluster();
 							if(csb!=null)
 								{
 								csb.getGenes().addAll(sb.getGenes());

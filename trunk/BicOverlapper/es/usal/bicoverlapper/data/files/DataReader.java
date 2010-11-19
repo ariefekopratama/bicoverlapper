@@ -38,55 +38,6 @@ public class DataReader {
 		if(System.getProperty("os.name").contains("indows"))	OS=WINDOWS;
 		else													OS=LINUX;//it includes macOSX, now with Linux paths
 		}
-	/**
-	 * Reads <code>file</code> as a data frame
-	 * 
-	 * @param file <code>File</code> to read
-	 * @param session <code>Session</code> linked to the data
-	 * @throws FileNotFoundException
-	 * @throws IOException
-	 */
-	/*public void readDataFrame(File file,Session session) throws FileNotFoundException,IOException {
-		
-		MultidimensionalData datos = new MultidimensionalData();
-		
-		datos.setFileName(file.getName());
-		
-		BufferedReader in =	new BufferedReader(new FileReader(file));
-		String variable = null;
-		
-		variable = in.readLine();
-		Vector<String> vect = new Vector<String>(0,1);
-		
-		if(isVar(variable,vect)){
-			Field aux = new Field((String)vect.elementAt(0));
-			
-			for(int i = 1; i < vect.size(); i++)
-				aux.addData(Double.valueOf((String)vect.elementAt(i)).doubleValue());
-			
-			datos.addField(aux);
-			datos.setTupleNames(null);
-		}else{
-			String[] id = new String[vect.size()];
-			for(int i = 0; i < id.length; i++)
-				id[i] = (String)vect.elementAt(i);
-			
-			datos.setTupleNames(id);
-		}
-		
-		while((variable = in.readLine()) != null) {
-			StringTokenizer tokens = new StringTokenizer(variable, ",");
-			
-			Field aux = new Field(tokens.nextToken());
-			
-			while(tokens.hasMoreTokens()) {
-				aux.addData(Double.valueOf(tokens.nextToken()).doubleValue());
-			}
-			
-			datos.addField(aux);			
-		}		
-		session.setData(datos);		
-	}*/
 
 	//----------------------------- FUNCIONES DE LECTURA MIAS ------------------------
 	/**
@@ -297,129 +248,6 @@ public class DataReader {
 			}
 		}
 	
-//	public void biclusterResults
-	/*
-	 * Lectura de fichero tradicional de las que usa Javi, modificado para que se adapte a Syntren
-	 * TODO: Un leerFichero más genérico que tenga en cuenta distintas opciones
-	 */
-	/*void leerFichero(String path, File fichero,Session sesion, int skipColumns) throws FileNotFoundException,IOException 
-		{
-		BufferedReader in =	new BufferedReader(new FileReader(fichero));
-		String variable = null;
-		
-		variable = in.readLine();
-		
-		MultidimensionalData datos = new MultidimensionalData();
-		datos.setFileName(fichero.getName());
-		int numExp=0;//TODO: Nosotros no tenemos con Syntren nombres para cada experimento/dimensión así que cogemos y ponemos simplemente un número
-		
-		//Luego pasamos al resto de las filas, que se van a considerar siempre como variables y no como nombres de nada	
-		while((variable = in.readLine()) != null) 
-			{
-			StringTokenizer tokens = new StringTokenizer(variable, "\t");
-				
-			Field aux = new Field((new Integer(numExp++).toString()));
-			
-			for(int i=0;i<skipColumns;i++)	tokens.nextToken();//Pasamos de los de la columna con nombres de genes	
-			while(tokens.hasMoreTokens()) 
-				{
-				aux.addData(Double.valueOf(tokens.nextToken()).doubleValue());
-				}
-				
-			datos.addField(aux);			
-			}
-		//sesion.setData(datos);		
-		}	*/	
-	
-
-	/*
-	 * Lectura de fichero para convertir a la estructura de javi
-	 */
-	/*private void leerFichero(String path, File fichero,Session sesion, boolean invert, boolean rowHeader, boolean topLeftWord, boolean colHeader, String delimiter) throws FileNotFoundException,IOException 
-		{
-		BufferedReader in =	new BufferedReader(new FileReader(fichero));
-		String variable = null;
-		MultidimensionalData datos = new MultidimensionalData();
-		datos.setFileName(fichero.getName());
-		
-		if(invert)	//Cada fila es una variable
-			{
-			variable = in.readLine();
-			
-			int numExp=0;
-			//Luego pasamos al resto de las filas, que se van a considerar siempre como variables y no como nombres de nada	
-			while((variable = in.readLine()) != null) 
-				{
-				StringTokenizer tokens = new StringTokenizer(variable, "\t");
-					
-				Field aux = new Field((new Integer(numExp++).toString()));
-				
-				while(tokens.hasMoreTokens()) 
-					{
-					aux.addData(Double.valueOf(tokens.nextToken()).doubleValue());
-					}
-					
-				datos.addField(aux);			
-				}
-			//sesion.setData(datos);		
-			}
-		else//each row is an individual (the usual case)
-			{
-			String cad=null;
-			if(colHeader)//The first row is the column header, with expression names
-				{
-				cad=in.readLine();
-				StringTokenizer tokens = new StringTokenizer(cad, delimiter);
-				if(topLeftWord)	tokens.nextToken();//Avoid square word if any
-				while(tokens.hasMoreTokens()) //Add all variables
-					{
-					Field aux = new Field(tokens.nextToken());
-					datos.addField(aux);			
-					}
-				}
-			
-			LinkedList <String>idtuplas=null;
-			if(rowHeader)		idtuplas=new LinkedList<String>();
-			
-			while((cad=in.readLine())!=null)
-				{	
-				StringTokenizer tokens = new StringTokenizer(cad, delimiter);
-				if(datos.getNumFields()==0)//There was no header, adding generic header
-					{
-					for(int i=0;i<tokens.countTokens();i++)
-						{
-						Field aux = new Field("C"+i);
-						datos.addField(aux);			
-						}
-					}
-				if(rowHeader)//then first token is the individual's name.
-					{
-					String id=tokens.nextToken();
-					idtuplas.add(id);
-					}
-				if(tokens.countTokens()!=datos.getNumFields())
-					{
-					System.err.println("Bad format file, line length does not match with number of variables");
-					System.exit(1);
-					}
-				for(int i=0;i<datos.getNumFields();i++)
-					{
-					String s=tokens.nextToken();
-					datos.fieldAt(i).addData(new Double(s).doubleValue());
-					}
-				}
-			
-			String[] idarray=new String[idtuplas.size()];
-			for(int i=0;i<idtuplas.size();i++)
-				{
-				idarray[i]=idtuplas.get(i);
-				}
-			datos.setTupleNames(idarray);
-			//sesion.setData(datos);
-			}
-		}	*/	
-
-	
 	/**
 	 * Metodo que nos parsea el parametro <code>variable</code> para obtener los datos contenidos y 
 	 * devolverlos en el parametro <code>vect</code>. Ademas nos devuelve un boolean, cuando dicho boolean es <code>true</code> nos
@@ -430,7 +258,7 @@ public class DataReader {
 	 * @param vect Vector de <code>String</code> que contiene el parseo de <code>variable</code>.
 	 * @return Devuelve un <code>true</code> si el parseo produce una variable, y devuelve <code>false</code> si el parseo
 	 * produce las etiquetas de las tuplas. 
-	 */
+	 *//*
 	private boolean isVar(String variable, Vector<String> vect) {
 		StringTokenizer tokens = new StringTokenizer(variable,",");
 		boolean isVar = true;
@@ -449,6 +277,6 @@ public class DataReader {
 			vect.addElement(valor);
 		}		
 		return isVar;
-	}
+	}*/
 
 }

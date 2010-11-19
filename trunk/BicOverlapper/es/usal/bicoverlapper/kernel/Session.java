@@ -74,10 +74,10 @@ public class Session implements KeyListener {
 	private boolean expressionDataLoaded;
 	private boolean datosBiclusterCargados;
 //	Atributos para compartir de bicluster
-	private BiclusterSelection selectedBicluster=null;
-	private BiclusterSelection hoveredBicluster=null;
+	private Selection selectedBicluster=null;
+	private Selection hoveredBicluster=null;
 	
-	private LinkedList<BiclusterSelection> selectionLog=null;
+	private LinkedList<Selection> selectionLog=null;
 	private int contLog=-1;
 	
 	private boolean cambioGenes;
@@ -145,8 +145,8 @@ public class Session implements KeyListener {
 		this.ventanas = new Vector<DiagramWindow>(0,1);
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0,1);
 		
-		selectionLog=new LinkedList<BiclusterSelection>();
-		selectionLog.add(new BiclusterSelection(new LinkedList<Integer>(), new LinkedList<Integer>()));
+		selectionLog=new LinkedList<Selection>();
+		selectionLog.add(new Selection(new LinkedList<Integer>(), new LinkedList<Integer>()));
 		contLog=0;
 		//With black background
 		//this.selectionColor=Color.BLUE;
@@ -360,7 +360,7 @@ public class Session implements KeyListener {
 		LinkedList<Integer> conditions=new LinkedList<Integer>();
 		for(int j=0;j<datosMicroarray.getNumConditions();j++)			conditions.add(Integer.valueOf(j));
 		
-		BiclusterSelection bs=new BiclusterSelection(genes, conditions);
+		Selection bs=new Selection(genes, conditions);
 		this.setSelectedBiclustersExcept(bs, "");
 		}
 	
@@ -783,7 +783,7 @@ public class Session implements KeyListener {
 	 * Returns the bicluster(s) selected
 	 * @return	BiclusterSelection with genes and conditions in biclusters selected
 	 */
-	public BiclusterSelection getSelectedBicluster() 
+	public Selection getSelectedBicluster() 
 		{
 		return selectedBicluster;
 		}
@@ -833,7 +833,7 @@ public class Session implements KeyListener {
 	 * @param	selectedBic	BiclusterSelecteon with genes and conditions contained in the biclusters selected
 	 * @param noUpdate	Updates all Diagrams except those that contains this String
 	 */
-	public void setSelectedBiclustersExcept(BiclusterSelection selectedBic, String noUpdate) 
+	public void setSelectedBiclustersExcept(Selection selectedBic, String noUpdate) 
 		{
 		this.selectedBicluster = selectedBic;
 		if(!undoOrRedo)
@@ -855,7 +855,7 @@ public class Session implements KeyListener {
 		this.updateExcept(noUpdate);
 		}
 	
-	public void setSelectedBiclustersOnly(BiclusterSelection selectedBic, String onlyUpdate) 
+	public void setSelectedBiclustersOnly(Selection selectedBic, String onlyUpdate) 
 		{
 		this.selectedBicluster = selectedBic;
 		if(!undoOrRedo)
@@ -874,7 +874,7 @@ public class Session implements KeyListener {
 		else	undoOrRedo=false;
 		this.updateOnly(onlyUpdate);
 		}
-	public void setSelectedBicluster(BiclusterSelection selectedBic) 
+	public void setSelectedBicluster(Selection selectedBic) 
 		{
 		this.selectedBicluster = selectedBic;
 		}
@@ -989,19 +989,19 @@ public class Session implements KeyListener {
 	 * @param	hoveredBic	BiclusterSelecteon with genes and conditions contained in the biclusters selected
 	 * @param responsible	Name of the view responsible of the selection
 	 */
-	public void setHoveredBicluster(BiclusterSelection hoveredBic, String responsible) 
+	public void setHoveredBicluster(Selection hoveredBic, String responsible) 
 		{
 		this.hoveredBicluster = hoveredBic;
 		}
 	
-	public BiclusterSelection getHoveredBicluster()
+	public Selection getHoveredBicluster()
 		{
 		return hoveredBicluster;
 		}
 	/*
 	 * Se llama en Bubble cuando se le selecciona alguna burbuja
 	 */
-	void setSelectedHeatmapBiclusters(BiclusterSelection selectedBic) 
+	void setSelectedHeatmapBiclusters(Selection selectedBic) 
 		{
 		this.selectedBicluster = selectedBic;
 		this.update("Bubble");

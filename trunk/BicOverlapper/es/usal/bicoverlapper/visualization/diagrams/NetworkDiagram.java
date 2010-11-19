@@ -61,7 +61,7 @@ import javax.swing.BoxLayout;
 
 
 import es.usal.bicoverlapper.data.NetworkData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.configuration.panels.NetworkParameterConfigurationPanel;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
@@ -899,8 +899,8 @@ public class NetworkDiagram extends Diagram {
 					System.out.println("for condition "+i);
 					selc.clear();
 					selc.add(i);
-					BiclusterSelection bs=new BiclusterSelection(selg, selc);
-					BiclusterSelection bsant=new BiclusterSelection(new LinkedList<Integer>(), new LinkedList<Integer>());
+					Selection bs=new Selection(selg, selc);
+					Selection bsant=new Selection(new LinkedList<Integer>(), new LinkedList<Integer>());
 					if(sesion!=null && sesion.getSelectedBicluster()!=null)	bsant=sesion.getSelectedBicluster();
 					
 					sesion.setSelectedBiclustersOnly(bs, "etwork");

@@ -12,68 +12,6 @@ import java.util.Vector;
 public abstract class DataUtils {
 
 	/**
-	 * Returns a matrix with normalized data
-	 * 
-	 * @param data Data to normalize
-	 * @return double matrix with normalized data
-	 */
-	/*public static double[][] normalize(MultidimensionalData data){
-				
-		double[][] matrizDatosNorm = new double[data.getNumTuples()][data.getNumFields()];
-		double[] media = avg(data);
-		double[] desviacion = desv(data,media);
-		
-		for(int i = 0, var = 0; i < data.getNumFields(); i++){
-			for(int j = 0; j < data.getNumTuples(); j++){
-				matrizDatosNorm[j][var] = (data.fieldAt(i).getData(j)-media[i])/desviacion[i];					
-			}
-			var++;			
-		}
-		return matrizDatosNorm;
-	}	*/
-
-	/**
-	 * Returns an array with average for each variable in MultidimensionalData
-	 * 
-	 * @param data <code>MultidimensionalData</code> with variable to average
-	 * @return double array with average for all the dimensions of each variable
-	 */
-	/*public static double[] avg(MultidimensionalData data){
-		double[] media = new double[data.getNumFields()];
-		double suma = 0;
-		int n = 0;
-		for(int i = 0; i < data.getNumFields(); i++){
-			for(int j = 0; j < data.getNumTuples(); j++,n++){
-				suma += data.fieldAt(i).getData(j);
-			}
-			media[i] = suma/n;
-			suma = n = 0;			
-		}
-		return media;
-	}	*/
-
-	/**
-	 * Returns an array with deviation for each variable in MultidimensionalData
-	 * 
-	 * @param data <code>MultidimensionalData</code> with variables to compute their deviation
-	 * @param mean double array with means for each variable
-	 * @return double array with deviations from the mean for each variable
-	 */
-	/*public static double[] desv(MultidimensionalData data, double[] mean){
-		double[] desviacion = new double[data.getNumFields()];
-		int n = 0;
-		double suma = 0;
-		for(int i = 0; i < data.getNumFields(); i++){
-			for(int j = 0; j < data.getNumTuples(); j++,n++){
-				suma += Math.abs(data.fieldAt(i).getData(j)-mean[i]);
-			}
-			desviacion[i] = suma/n;
-			suma = n = 0;			
-		}
-		return desviacion;
-	}*/
-	
-	/**
 	 * Returns the mean of a vector
 	 * @param vect <code>Vector<Double></code> to compute the mean
 	 * @return <code>double</code> with the mean of vect.

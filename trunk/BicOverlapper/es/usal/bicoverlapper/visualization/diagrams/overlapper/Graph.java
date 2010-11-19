@@ -19,7 +19,7 @@ import es.usal.bicoverlapper.analysis.geneticAlgorithms.GAThread;
 import es.usal.bicoverlapper.analysis.geneticAlgorithms.GeneticAlgorithm;
 import es.usal.bicoverlapper.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
 import gishur.core.SimpleList;
@@ -977,7 +977,7 @@ public void drawSelectedHulls()
 			}
   	}
   
-  void updateSelection(BiclusterSelection bs)
+  void updateSelection(Selection bs)
   	{
     Overlapper bv=(Overlapper)applet;
 	selectedNodes.clear();

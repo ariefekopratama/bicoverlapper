@@ -6,10 +6,8 @@ import java.util.LinkedList;
 import java.util.Vector;
 
 
-import es.usal.bicoverlapper.data.Field;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.TupleSelection;
 
 import prefuse.Visualization;
 import prefuse.controls.FocusControl;
@@ -123,7 +121,7 @@ class HeatmapFocusControl extends FocusControl
 							condicionesSeleccionadas.add((Integer)i);
 							}
 	                	//TODO: Progress bar or something? Takes about 10s for 6000 genes
-	                	sesion.setSelectedBiclustersExcept(new BiclusterSelection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
+	                	sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
 	                	//this.addItems(genesSeleccionados, condicionesSeleccionadas);
 		            	//runActivity(vis);
 	        			}
@@ -161,7 +159,7 @@ class HeatmapFocusControl extends FocusControl
 		                	}
 		                
 		                this.addItems(genesSeleccionados, condicionesSeleccionadas);
-		            	sesion.setSelectedBiclustersExcept(new BiclusterSelection(genesSeleccionados, condicionesSeleccionadas), "Heatmap");
+		            	sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, condicionesSeleccionadas), "Heatmap");
 		        
 		            runActivity(vis);
 		         	}

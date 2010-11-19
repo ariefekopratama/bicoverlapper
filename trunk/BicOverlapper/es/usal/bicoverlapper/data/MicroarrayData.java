@@ -1,7 +1,7 @@
 package es.usal.bicoverlapper.data;
 
 
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor2;
 import es.usal.bicoverlapper.utils.HypergeometricTestProgressMonitor;
@@ -90,6 +90,7 @@ public class MicroarrayData
 	Table expressions;//Expresion levels, each one as tuple (gene, condition, level)
 	/**
 	 * matrix with expression levels replicated, to quicken some arithmetic operations
+	 * TODO: remove, may lead to memory problems in large matrices
 	 */
 	public double matrix[][];
 	Table geneLabels;
@@ -810,7 +811,7 @@ public class MicroarrayData
 	 * @param where
 	 * @param exact if exact is true, it searches for exact matches of the string what (only for gene names search)
 	 */
-	public BiclusterSelection search(String what, int where, boolean exact)
+	public Selection search(String what, int where, boolean exact)
 		{
 		LinkedList<Integer> genes=new LinkedList<Integer>();
 		LinkedList<Integer> conditions=new LinkedList<Integer>();
@@ -834,7 +835,7 @@ public class MicroarrayData
 			}
 		System.out.println("found "+genes.size()+" genes and "+conditions.size()+" conditions");
 		System.out.println("Time for the search: "+(System.currentTimeMillis()-t)/1000.0);
-		return new BiclusterSelection(genes, conditions);
+		return new Selection(genes, conditions);
 		}
 	
 	public LinkedList<Integer> searchAnnotations(String what, LinkedList<Integer> alreadyIn)
@@ -1025,8 +1026,7 @@ public class MicroarrayData
 	 *
 	 */
 	private class AnnotationStartThread extends Thread{
-		   long minPrime;
-	         AnnotationStartThread() {
+		     AnnotationStartThread() {
 	         }
 	         
 	         /**
@@ -1341,13 +1341,13 @@ public class MicroarrayData
 	public GOTerm getGOTermByID(String goid)
 		{
 		REXP exp=null;
-	    long t1=System.currentTimeMillis();
-	    String n="c(\"";
+	   // long t1=System.currentTimeMillis();
+	    //String n="c(\"";
 	    exp=re.eval("got=getGOTerm(\""+goid+"\")");
 	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
 		
 	   // System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
-	    t1=System.currentTimeMillis();
+	  //  t1=System.currentTimeMillis();
 	    
 	    exp=re.eval("got@terms");
 		if(exp==null)	return null;
@@ -1361,7 +1361,7 @@ public class MicroarrayData
 		exp=re.eval("got@evidences");
 		int evs=1;
 		
-		ArrayList<GOTerm> got=new ArrayList<GOTerm>();
+	//	ArrayList<GOTerm> got=new ArrayList<GOTerm>();
 		if(ids !=null && o!=null && d!=null && t!=null) 
 			{
 			//System.out.println("El resto tarda "+(System.currentTimeMillis()-t1));
@@ -1375,7 +1375,7 @@ public class MicroarrayData
 	public ArrayList<GOTerm> getGOTermsRbyID(String[] goids)
 	{
 	REXP exp=null;
-    long t1=System.currentTimeMillis();
+   // long t1=System.currentTimeMillis();
     ArrayList<GOTerm> got=new ArrayList<GOTerm>();
     int toRetrieve=0;
     
@@ -1389,16 +1389,11 @@ public class MicroarrayData
     		toRetrieve++;
     		n=n.concat(goids[i]+"\", \"");
     		}
-//    		if(i<goids.length-1)	n=n.concat(goids[i]+"\", \"");
-//	    	else					n=n.concat(goids[i]+"\")");
     	}
     n=n.substring(0,n.length()-3)+")";
     exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
     if(exp==null)	System.err.println("Error getting GO terms by ID with R");
 	
-   // System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
-    t1=System.currentTimeMillis();
-    
     exp=re.eval("got@terms");
 	if(exp==null)	return null;
 	String[] t=exp.asStringArray();
@@ -1896,7 +1891,6 @@ public class MicroarrayData
 			if(exp!=null)
 				{
 	    		goids=exp.asStringArray();
-	    	    long t1=System.currentTimeMillis();
 	    	    String n="c(\"";
 	    	    for(int i=0;i<goids.length;i++)	//Select the ones not already stored in java
 	    	    	{
@@ -1915,9 +1909,6 @@ public class MicroarrayData
 	    	    exp=re.eval("got=getGOTermsByGOID("+n+")");//<-tarda entre 30 y 100ms, lo cual puede hacer más de un minuto para arrays de 10000 genes
 	    	    if(exp==null)	System.err.println("Error getting GO terms by ID with R");
 	    		
-	    	    //System.out.println("La parte de R tarda "+(System.currentTimeMillis()-t1));
-	    	    t1=System.currentTimeMillis();
-	    	    
 	    	    //Add new ones to java map
 	    	    exp=re.eval("got@terms");
 	    		String[] t=exp.asStringArray();
@@ -2106,25 +2097,13 @@ public class MicroarrayData
 		 		ga=geneAnnotations.get(genes[g]);
 		 		if(ga==null)
 			 		{
-		 			long t2=System.currentTimeMillis();
-					
-			 		IdListType list=null;
+		 	 		IdListType list=null;
 			 		if(chip.equals("GeneName"))//if chip is GeneName
-						{
-			 		//	System.out.println("searching for "+gene+"[gene] AND \""+organism+"\"[organism]");
 				 		list=NCBIReader.eGeneQuery(gene+"[gene] AND \""+organism+"\"[organism]");
-						}
 			 		else if(chip.equals("GeneID"))
-			 			{
-			 	//		System.out.println("searching for "+gene+"[uid] AND \""+organism+"\"[organism]");
 				 		list=NCBIReader.eGeneQuery(gene+"[uid] AND \""+organism+"\"[organism]");
-			 			}
 			 		else if(chip.equals("anything"))
-			 			{
-					 	//		System.out.println("searching for "+gene+"[uid] AND \""+organism+"\"[organism]");
 						list=NCBIReader.eGeneQuery(gene+" AND \""+organism+"\"[organism]");
-					 	}
-			 		
 					
 			 		if(list!=null && list.getId()!=null)
 						{
@@ -2136,7 +2115,6 @@ public class MicroarrayData
 							}
 						
 						message="Annotations found, collecting ...";
-				 		//progress+=100*0.5/genes.size();
 						progress+=100*0.5/genes.length;
 						if(progress>=100)	progress=99;
 				 		setProgress((int)progress);
@@ -2147,11 +2125,9 @@ public class MicroarrayData
 						ga=new GeneAnnotation();
 						ga.id=gene;
 						
-						//geneAnnotations.put(genes.get(g), ga);
 						geneAnnotations.put(genes[g], ga);
 						
 						message="Nothing found for gene "+gene;
-						//progress+=100*0.5/genes.size();
 						progress+=100*0.5/genes.length;
 						if(progress>=100)	progress=99;
 				 		setProgress((int)progress);
@@ -2190,17 +2166,12 @@ public class MicroarrayData
 					          	}
 					          }
 							ga.id=gene;
-				//			System.out.println(ga.name+": "+ga.description);
-							//geneAnnotations.put(genes.get(g), ga);
 							geneAnnotations.put(genes[g], ga);
 							}
 			 			}
-			 	//	System.out.println("Annotations for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
-			 		t2=System.currentTimeMillis();
 					
 			 		//Try to retrieve GOTerms via QuickGO
 			 		getTermsQuickGO(ga, true);
-			 //		System.out.println("GO terms for "+gene+" in "+(System.currentTimeMillis()-t2)/1000.0+" secs.");
 			 		}
 		 		galist.add(ga);
 				}
@@ -2695,7 +2666,6 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 	progress+=10;
 	
 	String description="";
-	double t1=System.currentTimeMillis();
 	DelimitedTextTableReader tr=new DelimitedTextTableReader("\t");
 	System.out.println(path);
 	tr.setHasHeader(true);
@@ -2778,11 +2748,7 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 		else	for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString();
 		}
 	}catch(Exception e){System.err.println("Error reading file "+path); e.printStackTrace(); System.exit(1);}
-	double t2=System.currentTimeMillis();
-	//if(numGenes<=maxGenes)	maxGenes=1;
 	
-	
-	//System.out.println("Descripciï¿½n: "+description);
 	if(description.contains("/"))
 		{
 		chip=description.substring(description.indexOf("/")+1);
@@ -2811,11 +2777,9 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 
 	if(invert)	levels=invert(levelsi);	//OJO: Para el caso de que estï¿½n invertidos (SynTReN por ejemplo)
 	else		levels=levelsi;
-	t1=System.currentTimeMillis();
+
 	
 	expressions=convert(levels, rowHeader, colHeader);
-	
-	t2=System.currentTimeMillis();
 	
 	sparseGeneLabels=new Table();
 	sparseGeneLabels.addColumn("name", String.class);
