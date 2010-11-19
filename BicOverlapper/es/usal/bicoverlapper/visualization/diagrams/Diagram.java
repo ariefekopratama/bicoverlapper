@@ -40,7 +40,7 @@ public abstract class Diagram extends JPanel {
 	private static final long serialVersionUID = -8369598516391096478L;
 	
 	private Session sesion;
-	private DataLayer capaDatos = null;
+	//private DataLayer capaDatos = null;
 	private Point ventanaPos;
 	private DiagramWindow ventanaPanel;
 	private JInternalFrame ventanaConfig;
@@ -93,7 +93,7 @@ public abstract class Diagram extends JPanel {
 	 */
 	public void setSession(Session session){
 		this.sesion = session;
-		this.capaDatos = sesion.getDataLayer();
+	//	this.capaDatos = sesion.getDataLayer();
 	}
 	
 	/**
@@ -110,18 +110,18 @@ public abstract class Diagram extends JPanel {
 	 * 
 	 * @param dataLayer <code>DataLayer</code> to link to the Panel
 	 */
-	public void setDataLayer(DataLayer dataLayer){
+	/*public void setDataLayer(DataLayer dataLayer){
 		this.capaDatos = dataLayer;
-	}
+	}*/
 	
 	/**
 	 * Returns the <code>DataLayer</code> linked to the Diagram
 	 * 
 	 * @return <code>DataLayer</code> asociada con el panel.
 	 */
-	public DataLayer getDataLayer(){
+	/*public DataLayer getDataLayer(){
 		return this.capaDatos;
-	}
+	}*/
 	
 	/**
 	 * Sets the top-left point of the diagram

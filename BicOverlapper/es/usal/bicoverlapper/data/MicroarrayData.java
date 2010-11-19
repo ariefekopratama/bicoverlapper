@@ -1,13 +1,9 @@
 package es.usal.bicoverlapper.data;
 
 
-import es.usal.bicoverlapper.analysis.Analysis;
-import es.usal.bicoverlapper.data.MicroarrayData.AnnotationTask;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
-import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor;
 import es.usal.bicoverlapper.utils.AnnotationProgressMonitor2;
-import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.HypergeometricTestProgressMonitor;
 import es.usal.bicoverlapper.utils.MicroarrayLoadProgressMonitor;
 import es.usal.bicoverlapper.utils.RUtils;
@@ -27,13 +23,11 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
@@ -43,7 +37,6 @@ import javax.swing.SwingWorker;
 
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RList;
-import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
 
 import prefuse.data.Table;
@@ -694,6 +687,13 @@ public class MicroarrayData
 		return constance;
 		}
 	
+	/**
+	 * Returns the euclidean distance between two points
+	 * @param p1 first point
+	 * @param p2 second point
+	 * @return euclidean distance
+	 * TODO: move to utils
+	 */
 	private double euclideanDistance(double[] p1, double[] p2)
 	{
 	double ret=0;
@@ -2938,6 +2938,7 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 	 * Returns the ids of the conditions that have the corresponding experimental factor value for a given experimental factor
 	 * @param ef - experimental factor to be checked
 	 * @param efv - experimental factor value that have the conditions to be returned
+	 * @param notEqual - if true, returns all the conditions except the ones corresponding to the efv for ef 
 	 * @return
 	 */
 	public Integer[] getConditions(String ef, String efv, boolean notEqual)

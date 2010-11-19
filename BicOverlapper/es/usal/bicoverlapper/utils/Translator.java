@@ -1,14 +1,13 @@
 package es.usal.bicoverlapper.utils;
 
-import java.net.URL;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
  * This class manage Resource Bundles with translated names of labels that appear in 
- * the application (menu names, window tittles, etc.)
- * STILL IN DEVELOPMENT: by now, only english texts exist.
- * @author Rodrigo Santamaría
+ * the application (menu names, window titles, etc.)
+ * STILL IN DEVELOPMENT: by now, only English texts exist.
+ * @author Rodrigo Santamaria
  *
  */
 public class Translator {

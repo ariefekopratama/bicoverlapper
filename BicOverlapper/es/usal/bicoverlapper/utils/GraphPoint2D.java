@@ -22,13 +22,13 @@ public class GraphPoint2D implements GraphPoint{
 
 	/**
 	 * Constructor that set position of the point to (x,y)
-	 * @param x_	x coordinate
-	 * @param y_	y coordinate
+	 * @param x	x coordinate
+	 * @param y	y coordinate
 	 */
-	public GraphPoint2D(double x_, double y_) {
+	public GraphPoint2D(double x, double y) {
 		
-		x = x_;
-		y = y_;
+		this.x = x;
+		this.y = y;
   	}
 
 	
@@ -78,10 +78,10 @@ public class GraphPoint2D implements GraphPoint{
 	 * @param x_	x coordinate
 	 * @param y_	y coordinate
 	 */
-	public void setXY(double x_, double y_) {
-		x = x_;
-		y = y_;
-	}
+	public void setXY(double x, double y) {
+		this.x = x;
+		this.y = y;
+		}
 	
 	/**
 	 * Sets the new coordinates of this point to the ones of the point passed as parameter

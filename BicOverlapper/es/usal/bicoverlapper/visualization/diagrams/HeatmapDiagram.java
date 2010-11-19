@@ -1,27 +1,17 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
-import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics2D;
 import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.beans.PropertyVetoException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
-import javax.swing.BoxLayout;
 import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
@@ -29,18 +19,11 @@ import prefuse.Constants;
 import prefuse.Display;
 import prefuse.Visualization;
 import prefuse.action.ActionList;
-import prefuse.action.ItemAction;
 import prefuse.action.RepaintAction;
 import prefuse.action.assignment.ColorAction;
 import prefuse.action.assignment.DataColorAction;
-import prefuse.action.assignment.DataSizeAction;
-import prefuse.action.assignment.SizeAction;
-import prefuse.action.assignment.StrokeAction;
-import prefuse.action.distortion.BifocalDistortion;
 import prefuse.action.layout.Layout;
-import prefuse.controls.AnchorUpdateControl;
 import prefuse.controls.ControlAdapter;
-import prefuse.controls.HoverActionControl;
 import prefuse.controls.PanControl;
 import prefuse.controls.WheelZoomControl;
 import prefuse.controls.ZoomControl;
@@ -51,14 +34,11 @@ import prefuse.render.AbstractShapeRenderer;
 import prefuse.render.LabelRenderer;
 import prefuse.render.Renderer;
 import prefuse.render.RendererFactory;
-import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
-import prefuse.util.DataLib;
 import prefuse.util.ui.UILib;
 import prefuse.visual.VisualItem;
 
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.data.MultidimensionalData;
 import es.usal.bicoverlapper.kernel.BiclusterSelection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
@@ -66,7 +46,6 @@ import es.usal.bicoverlapper.kernel.configuration.panels.HeatmapParameterConfigu
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
 import es.usal.bicoverlapper.utils.Sizeof;
 import es.usal.bicoverlapper.utils.Translator;
-import es.usal.bicoverlapper.visualization.diagrams.NetworkDiagram.NodeColorAction;
 
 /**
  * This diagram represents a Microarray data matrix as the typical expression level heatmap.
@@ -82,7 +61,7 @@ private static final long serialVersionUID = 1L;
 	
 	// atributos del panel del diagrama
 	private Session sesion;
-	MultidimensionalData datos;  //  @jve:decl-index=0:
+//	MultidimensionalData datos;  //  @jve:decl-index=0:
 	private int alto;
 	private int ancho;
 	boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
@@ -268,14 +247,10 @@ private static final long serialVersionUID = 1L;
     	
       t1=System.currentTimeMillis();
 		
-      	try{Sizeof.runGC(1);}catch(Exception e){e.printStackTrace();}
-        System.out.println("Memory before ordinal map "+Sizeof.usedMemory());
-    	//TODO: The retrieval of this ordinal map basically is a new copy of the whole matrix, which means a 
-        //complete killing of the thing in large experiments (50000x70 matrices, for example), for a max mem of 1024
-        
-      exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-      exprColor.setMaxScale(md.max);
-      exprColor.setMinScale(md.min);
+      	//TODO: If max!=-(min), the filling won't be the middle color for average values.
+      exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+      //exprColor.setMaxScale(md.max);
+      //exprColor.setMinScale(md.min);
       
     	/*  exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
         Map m_omap = DataLib.ordinalMap(md.getExpressions(), "level");

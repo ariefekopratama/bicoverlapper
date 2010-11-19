@@ -3,7 +3,6 @@ package es.usal.bicoverlapper.analysis;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
@@ -59,20 +58,22 @@ public class Analysis
 	
 	public void startR()
 		{
-		
 		System.out.println("Library is: "+System.getProperty("java.library.path"));
     	System.out.println("Creating Rengine (with arguments)");
 	    System.out.println("R_HOME is: "+System.getenv("R_HOME"));
-        r=new Rengine(new String[]{"--vanilla"}, false, null);
-        System.out.println("Rengine created, waiting for R");
-		// the engine creates R in a new thread, so we should wait until it's ready
-        if (!r.waitForR()) 
-        	{
-            System.err.println("Cannot load R");
-            return;
-        	}
+	    if(r==null || !r.isAlive())
+		    {
+	        r=new Rengine(new String[]{"--vanilla"}, false, null);
+	        System.out.println("Rengine created, waiting for R");
+			// the engine creates R in a new thread, so we should wait until it's ready
+	        if (!r.waitForR()) 
+	        	{
+	            System.err.println("Cannot load R");
+	            return;
+	        	}
+		    }
 	    System.out.println("R started");
-	    loadR();
+	    loadRscripts();
 	    System.out.println("required R/Bioconductor libraries loaded");
 	    }
 	
@@ -82,14 +83,10 @@ public class Analysis
 	 * It also loads some internal r scripts that extend the biclust package.
 	 * TODO: LoadR and loadMatrix should possibly be loaded with the microarra, we should check the memory/loadtime trade-off
 	 */
-	public void loadR() //TODO: maybe good to make it in background or load the big libraries (GO.db, etc) on demand.
+	public void loadRscripts()
 		{
 		if(r==null)	{System.err.println("No R console started");	return;}
-		/*loadRLibrary("biclust");
-		loadRLibrary("isa2");
-		loadRLibrary("GO.db");
-		loadRLibrary("GOstats");*/
-	       	
+		   	
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/binarize.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/helpers.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
@@ -537,7 +534,7 @@ public class Analysis
 	 * @param elevel - threshold for differential expression (log10)
 	 * @param reg - regulation (can be up, down or all)
 	 */
-    public String limma(Integer[] group1, Integer[] group2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+    public String limma(Integer[] group1, Integer[] group2, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
     	{
     	if(!matrixLoaded)	loadMatrix();
 		loadRLibrary("limma");
@@ -566,8 +563,16 @@ public class Analysis
 				outFile=outFile.concat(".bic");
 				}
 			}
+		String status="under- or over-";
+		if(reg.equals("up"))	status="over-";
+		if(reg.equals("down"))	status="under-";
+		String desc="Differentially "+status+"expressed genes found with limma in "+nameGroup1+" respect to "+nameGroup2+" (dexp="+elevel+", p-val=10e-"+pvalue;
+		if(!bh) desc+=")";
+		else	desc+=" (BH corrected))"; 
+		if(description!=null && description.length()>0)	desc=description;
+
 		
-		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", lr, NA, bicNames=c(\"DEGs\"), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", lr, NA, bicNames=c(\""+nameGroup1+" vs "+nameGroup2+"\"), biclusteringDescription=\""+desc+"\")");
 		return outFile;
 		}
     
@@ -610,8 +615,16 @@ public class Analysis
 				outFile=outFile.concat(".bic");
 				}
 			}
+		String status="under- or over-";
+		if(reg.equals("up"))	status="over-";
+		if(reg.equals("down"))	status="under-";
+		String desc="Differentially "+status+"expressed genes found with limma for "+ef+" respect to other experimental factor values on "+ef+" (dexp="+elevel+", p-val=10e-"+pvalue;
+		if(!bh) desc+=")";
+		else	desc+=" (BH corrected))"; 
+		if(description!=null && description.length()>0)	desc=description;
 		
-		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs, NA, bicNames=names(degs), biclusteringDescription=\"DEGs found with limma via BicOverlapper\")");
+		
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", degs, NA, bicNames=names(degs), biclusteringDescription=\""+desc+"\")");
 		return outFile;
 		}
     /**
@@ -653,7 +666,7 @@ public class Analysis
 				outFile=outFile.concat(".bic");
 				}
 			}
-		String status="";
+		String status="under- or over-";
 		if(reg.equals("up"))	status="over-";
 		if(reg.equals("down"))	status="under-";
 		String desc="Differentially "+status+"expressed genes found with limma for every combination of EFVs on "+ef+" (dexp="+elevel+", p-val=10e-"+pvalue;
@@ -708,7 +721,7 @@ public class Analysis
 				outFile=outFile.concat(".bic");
 				}
 			}
-		String status="";
+		String status="under- or over-";
 		if(reg.equals("up"))	status="over-";
 		if(reg.equals("down"))	status="under-";
 		String[] desc=new String[microarrayData.experimentFactors.size()];
@@ -747,7 +760,7 @@ public class Analysis
 			}
 		
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/buildNetwork.R\")");
-		System.out.println("err=buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
+		System.out.println("buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
 				"mat=m, distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
 				sdThreshold+", distanceThreshold="+distanceThreshold+")");
 				
@@ -760,6 +773,14 @@ public class Analysis
 			System.err.println("buildCorrelationNetwork: "+exp.asString());
 			JOptionPane.showMessageDialog(null,
 	                exp.asString(),
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		else if(exp==null)
+			{
+			System.err.println("buildCorrelationNetwork: Error");
+			JOptionPane.showMessageDialog(null,
+	                "An error occurred while building the correlation network",
 	                "Error",JOptionPane.ERROR_MESSAGE);
 			return null;
 			}

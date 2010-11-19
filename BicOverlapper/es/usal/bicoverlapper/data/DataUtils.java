@@ -17,7 +17,7 @@ public abstract class DataUtils {
 	 * @param data Data to normalize
 	 * @return double matrix with normalized data
 	 */
-	public static double[][] normalize(MultidimensionalData data){
+	/*public static double[][] normalize(MultidimensionalData data){
 				
 		double[][] matrizDatosNorm = new double[data.getNumTuples()][data.getNumFields()];
 		double[] media = avg(data);
@@ -30,7 +30,7 @@ public abstract class DataUtils {
 			var++;			
 		}
 		return matrizDatosNorm;
-	}	
+	}	*/
 
 	/**
 	 * Returns an array with average for each variable in MultidimensionalData
@@ -38,7 +38,7 @@ public abstract class DataUtils {
 	 * @param data <code>MultidimensionalData</code> with variable to average
 	 * @return double array with average for all the dimensions of each variable
 	 */
-	public static double[] avg(MultidimensionalData data){
+	/*public static double[] avg(MultidimensionalData data){
 		double[] media = new double[data.getNumFields()];
 		double suma = 0;
 		int n = 0;
@@ -50,7 +50,7 @@ public abstract class DataUtils {
 			suma = n = 0;			
 		}
 		return media;
-	}	
+	}	*/
 
 	/**
 	 * Returns an array with deviation for each variable in MultidimensionalData
@@ -59,7 +59,7 @@ public abstract class DataUtils {
 	 * @param mean double array with means for each variable
 	 * @return double array with deviations from the mean for each variable
 	 */
-	public static double[] desv(MultidimensionalData data, double[] mean){
+	/*public static double[] desv(MultidimensionalData data, double[] mean){
 		double[] desviacion = new double[data.getNumFields()];
 		int n = 0;
 		double suma = 0;
@@ -71,7 +71,7 @@ public abstract class DataUtils {
 			suma = n = 0;			
 		}
 		return desviacion;
-	}
+	}*/
 	
 	/**
 	 * Returns the mean of a vector

@@ -6,14 +6,14 @@
 #					TODO: add "mutual information" as distance method
 #ÊdistanceThreshold - the method adds an edge for every two nodes with a distance lower
 #					  than mean(distances)-distanceThreshold*sd(distances)
-# Author: rodri
+# Author: Rodrigo Santamar’a Vicente
 ###############################################################################
 buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean", deviationThreshold=2, distanceThreshold=2)
 	{
 	#0) Select only elements with some change
 	#TODO: mutual information?
 	if(length(which(c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowsky", "mutualinfo")==distanceMethod))!=1)
-		stop(paste("Error: distance must be one of the following:", cat(c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowsky", "mutualinfo"), sep=", ")))
+		return(paste("Error: distance must be one of the following:", cat(c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowsky", "mutualinfo"), sep=", ")))
 	if(distanceMethod=="mutualinfo")
 		require(bioDist)
 	
@@ -22,7 +22,7 @@ buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean",
 	mat0=mat[which(sds>dt),]
 	dim(mat0)
 	if(dim(mat0)[1]>2000)
-		stop("Error: networks with more than 2000 nodes are not allowed, rise up the filtering threshold")
+		return("Error: networks with more than 2000 nodes are not allowed, rise up the filtering threshold")
 	
 	#1) Perform distance computations
 	#euclidean, maximum, manhattan, canberra, binary, minkowsky, mutualinfo
@@ -32,15 +32,18 @@ buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean",
 		dd=dist(mat0, method=distanceMethod)
 	
 	attr(dd, "Size")
-	distanceThreshold=mean(dd)-2*sd(dd)
+	dt=mean(dd)-distanceThreshold*sd(dd)
 	
 	#list relationships below distance threshold
 	t0=proc.time()
 	dm=as.matrix(dd)
 	tal=apply(dm,1,function(x)
 			{
-			selec=which(x<distanceThreshold)
+			selec=which(x<dt)
 			})
+	if(length(tal)==0)
+		return(paste("Error: no nodes with distance below", distanceThreshold, "deviations of average distance for nodes deviated above", deviationThreshold," from average expression. Either raise deviation or distance thresholds."))
+	
 	st=which(as.array(sapply(tal, function(x){length(x)}))>1)
 	tal=tal[st]
 	ic=c(); jc=c()

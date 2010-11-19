@@ -25,8 +25,8 @@ import java.util.HashMap;
 public class AnchorLayout implements LayoutManager2 {
 
 	private int preferredWidth, preferredHeight, minHeight, minWidth;
-	private HashMap constraintMap = new HashMap();
 	private boolean sizesCalculated = false;
+	private HashMap constraintMap = new HashMap();
 	private Container container;
 
 	public AnchorLayout() {
