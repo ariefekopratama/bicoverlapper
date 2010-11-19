@@ -4,7 +4,7 @@ import com.jgoodies.forms.layout.FormLayout;
 
 import es.usal.bicoverlapper.data.GeneAnnotation;
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
 
 import java.awt.BorderLayout;

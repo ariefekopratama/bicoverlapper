@@ -1,19 +1,14 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Vector;
 
 
-import es.usal.bicoverlapper.data.Field;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.TupleSelection;
 
 import prefuse.Visualization;
 import prefuse.controls.FocusControl;
-import prefuse.util.ui.UILib;
 import prefuse.visual.VisualItem;
 
 /**
@@ -131,7 +126,7 @@ class HeatmapHoverControl extends FocusControl
             	condicionesSeleccionadas.add(item.getInt("colId"));
             	}
             addItemsForHover(genesSeleccionados, condicionesSeleccionadas);
-        	sesion.setHoveredBicluster(new BiclusterSelection(genesSeleccionados, condicionesSeleccionadas), "Heatmap");
+        	sesion.setHoveredBicluster(new Selection(genesSeleccionados, condicionesSeleccionadas), "Heatmap");
             
         runActivity(vis);
     	}

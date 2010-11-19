@@ -5,10 +5,9 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 
 import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.data.Field;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+//import es.usal.bicoverlapper.data.Field;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.TupleSelection;
 
 import prefuse.Visualization;
 import prefuse.controls.FocusControl;
@@ -70,7 +69,7 @@ class BubbleFocusControl extends FocusControl
      * @param bs	BiclusterSelection with the genes and conditions selected
      * TODO: STILL IN DEVELOPMENT
      */
-    void setSelectedBiclustersUnion(BiclusterSelection bs)
+    void setSelectedBiclustersUnion(Selection bs)
 	    {
     	if(visualization!=null && sesion!=null && sesion.getSelectedBicluster()!=null)	//version modo OR
 			//Se eligen todos los biclusters que tengan alguno de los genes o condiciones que vienen
@@ -122,7 +121,7 @@ class BubbleFocusControl extends FocusControl
      * Selects all biclusters that contains all the genes and conditions in the selection
      * @param bs	BiclusterSelection with the genes and conditions selected
      */
-    void setSelectedBiclustersIntersection(BiclusterSelection bs)
+    void setSelectedBiclustersIntersection(Selection bs)
 	    {
     	if(visualization!=null && sesion!=null && sesion.getSelectedBicluster()!=null)	//version modo OR
 			//Se eligen todos los biclusters que tengan alguno de los genes o condiciones que vienen
@@ -195,7 +194,7 @@ class BubbleFocusControl extends FocusControl
                     nodosSeleccionados.clear();
                     nodosSeleccionados.add(item.getRow());
                     
-                  	sesion.setSelectedBiclustersExcept(new BiclusterSelection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
+                  	sesion.setSelectedBiclustersExcept(new Selection(getListFrom((ArrayList)item.get("genes"),true),getListFrom((ArrayList)item.get("conditions"),false)), "Bubble");
 	            	}
                 else if ( ts.containsTuple(item) ) //Ya estaba, lo quitamos, tanto si hay ctrl como si no
                 	{

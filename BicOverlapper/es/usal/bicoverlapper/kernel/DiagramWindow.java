@@ -12,7 +12,6 @@ import javax.swing.event.InternalFrameEvent;
 import javax.swing.event.InternalFrameListener;
 
 
-import es.usal.bicoverlapper.data.DataLayer;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.visualization.diagrams.Diagram;
 

@@ -13,7 +13,7 @@ import java.util.LinkedList;
  * list empty or to fill it with all the conditions (analogous for conditions)
  * 
  */
-public class BiclusterSelection {
+public class Selection {
         private LinkedList <Integer> genes;
         private LinkedList <Integer> conditions;
         
@@ -22,7 +22,7 @@ public class BiclusterSelection {
          * @param g     Genes in the bicluster as a LinkedList of Integers that are genes internal ids
          * @param c Conditions in the bicluster as a LinkedList of Integers that are conditions internal ids
          */
-        public BiclusterSelection(LinkedList<Integer> g, LinkedList<Integer> c)
+        public Selection(LinkedList<Integer> g, LinkedList<Integer> c)
                 {
                 genes=g;
                 conditions=c;

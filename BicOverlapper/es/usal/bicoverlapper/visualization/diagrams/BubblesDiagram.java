@@ -57,7 +57,7 @@ import javax.swing.BoxLayout;
 
 
 import es.usal.bicoverlapper.data.BubbleData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
@@ -181,7 +181,7 @@ public class BubblesDiagram extends Diagram {
 	 */
 	public void update()
 		{
-		BiclusterSelection bs=sesion.getSelectedBicluster();
+		Selection bs=sesion.getSelectedBicluster();
 		//currentBiclusters.setSelectedBiclustersUnion(bs);
 		currentBiclusters.setSelectedBiclustersIntersection(bs);
 		v.run("color");

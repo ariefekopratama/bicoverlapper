@@ -20,7 +20,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
-import es.usal.bicoverlapper.data.DataLayer;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationListener;

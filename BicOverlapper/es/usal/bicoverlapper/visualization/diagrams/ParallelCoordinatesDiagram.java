@@ -38,9 +38,8 @@ import javax.swing.JTextField;
 
 
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.TupleSelection;
 import es.usal.bicoverlapper.kernel.managers.ConfigurationMenuManager;
 import es.usal.bicoverlapper.utils.Line;
 import es.usal.bicoverlapper.utils.Translator;
@@ -801,7 +800,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		
 		t2=System.currentTimeMillis();
 		
-		BiclusterSelection selecBic = this.sesion.getSelectedBicluster();
+		Selection selecBic = this.sesion.getSelectedBicluster();
 		float maxSelecY[]=new float[numC];
 		float minSelecY[]=new float[numC];
 		
@@ -1401,7 +1400,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 		
 		public void mouseClicked(MouseEvent e) {
-			BiclusterSelection selecBic=sesion.getSelectedBicluster();
+			Selection selecBic=sesion.getSelectedBicluster();
 			if(!scrollFijado && sesion.areMicroarrayDataLoaded() && selecBic!=null && (selecBic.getGenes().size()>0))
 			         {
                     int zonaSelec = 2;
@@ -1428,7 +1427,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	                        		genes.add(tuplaSeleccionada);
 	                        		for(int k=0;k<numC;k++)
 			        						conditions.add(Integer.valueOf(ordenVars[k]));
-			        				sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+			        				sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
 	        						tuplaSeleccionada=-1;
 			        				update();
 	        						break;
@@ -1439,7 +1438,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		
 		public void mouseMoved(MouseEvent e)
 			{
-			BiclusterSelection selecBic=sesion.getSelectedBicluster();
+			Selection selecBic=sesion.getSelectedBicluster();
 			if(sesion.areMicroarrayDataLoaded() && selecBic!=null && (selecBic.getGenes().size()>0))
 		        {
                 int zonaSelec = 2;
@@ -1544,7 +1543,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			conditions.add(Integer.valueOf(j));
 		
 
-		sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+		sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
 		//update();
 		repaint();
 		}
@@ -1831,7 +1830,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					
 				System.out.println("Time to set selected bicluster "+(System.currentTimeMillis()-t)/1000.0);
 				
-				sesion.setSelectedBiclustersExcept(new BiclusterSelection(genes,conditions), "arallel");
+				sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
 				//fitScrolls();//By now, trying without fitting the scrolls, it gives clearer lines
 				repaint();
 			}

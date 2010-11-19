@@ -39,7 +39,7 @@ import prefuse.util.ui.UILib;
 import prefuse.visual.VisualItem;
 
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.DiagramWindow;
 import es.usal.bicoverlapper.kernel.Session;
 import es.usal.bicoverlapper.kernel.configuration.panels.HeatmapParameterConfigurationPanel;
@@ -114,7 +114,7 @@ private static final long serialVersionUID = 1L;
 	StrokeColorAction strokeColor;
 	ColorAction rectangleStrokeColor;
 	
-	BiclusterSelection bicAnt=null;//para evitar bucles infinitos create-update
+	Selection bicAnt=null;//para evitar bucles infinitos create-update
 
 	private HorizontalLineLayout xlabels;
 

@@ -4,12 +4,10 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-//import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -21,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
@@ -30,11 +27,10 @@ import es.usal.bicoverlapper.data.GOTerm;
 import es.usal.bicoverlapper.data.GeneAnnotation;
 import es.usal.bicoverlapper.data.GeneRequester;
 import es.usal.bicoverlapper.data.MicroarrayData;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.utils.ArrayUtils;
 import es.usal.bicoverlapper.utils.CustomColor;
 import es.usal.bicoverlapper.utils.GraphPoint2D;
-import es.usal.bicoverlapper.visualization.diagrams.Diagram;
 
 
 import prefuse.data.Table;
@@ -691,7 +687,7 @@ void insertDetails()
  * @param	bs	BiclusterSelection to update the graph
  *
  */
-public void updateGraph(BiclusterSelection bs)
+public void updateGraph(Selection bs)
 	{
 	this.getGraph().updateSelection(bs);
 	this.getGraph().updateLabels();
@@ -3096,7 +3092,7 @@ void removeByThreshold()
  * 
  * @return	a list with the number of genes and conditions that bicluster i has from the selected ones
  */
-private int[] selectionList(BiclusterSelection bs)
+private int[] selectionList(Selection bs)
 	{
 	int list[]=new int[numClusters];
 	ArrayList<String> b=null;
@@ -3113,7 +3109,7 @@ private int[] selectionList(BiclusterSelection bs)
  * Deletes all clusters that haven't any of the genes or conditions in BiclusterSelection
  *
  */
-void removeNonSelected(BiclusterSelection bs)
+void removeNonSelected(Selection bs)
 	{
 	//System.out.println("REMOVE non Selected -----------------------------");
 	//System.out.println("Nº de clusters "+clusters.size());

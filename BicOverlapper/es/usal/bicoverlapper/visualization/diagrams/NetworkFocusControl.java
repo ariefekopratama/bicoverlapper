@@ -1,13 +1,10 @@
 package es.usal.bicoverlapper.visualization.diagrams;
 
 import java.awt.event.MouseEvent;
-import java.util.Iterator;
 import java.util.LinkedList;
 
-import es.usal.bicoverlapper.data.Field;
-import es.usal.bicoverlapper.kernel.BiclusterSelection;
+import es.usal.bicoverlapper.kernel.Selection;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.kernel.TupleSelection;
 
 import prefuse.Visualization;
 import prefuse.controls.FocusControl;
@@ -30,9 +27,7 @@ class NetworkFocusControl extends FocusControl
     private LinkedList<Integer> nodosSeleccionados;
     private LinkedList<Integer> condicionesSeleccionadas;//all, allways
     private Visualization visualization;
-	private Field ejeX, ejeY;//Los ejes que sean nos dan un poco igual, siempre que sea alguna de las condiciones
-	private TupleSelection puntosSelec;
-    
+	
 	/**
 	 * Constructor
 	 * @param session	Session to which this controller has to listen/update for changes
@@ -96,23 +91,23 @@ class NetworkFocusControl extends FocusControl
                     nodosSeleccionados.clear();
                     nodosSeleccionados.add(Integer.valueOf(item.getInt("id")));
                    
-                    sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, condicionesSeleccionadas), "Network");
+                    sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, condicionesSeleccionadas), "Network");
                 	}
 
                 else if ( ts.containsTuple(item) ) //Ya estaba, lo quitamos, tanto si hay ctrl como si no
                 	{
                 	nodosSeleccionados.remove(Integer.valueOf(item.getInt("id")));
                 	ts.removeTuple(item);
-                	if(nodosSeleccionados.size()==0)	sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, new LinkedList<Integer>()), "Network");
+                	if(nodosSeleccionados.size()==0)	sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, new LinkedList<Integer>()), "Network");
                 	else								
                 		{
-                		sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, condicionesSeleccionadas), "Network");
+                		sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, condicionesSeleccionadas), "Network");
                 		}
                 	}
                	else 
                 	{
                 	nodosSeleccionados.add(Integer.valueOf(item.getInt("id")));
-                	sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, condicionesSeleccionadas), "Network");
+                	sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, condicionesSeleccionadas), "Network");
                     ts.addTuple(item);
                 	}
                 runActivity(vis);
@@ -128,8 +123,8 @@ class NetworkFocusControl extends FocusControl
                 
             	//nodosSeleccionados.remove(nodosSeleccionados.indexOf(item.getRow()));
                 nodosSeleccionados.remove(nodosSeleccionados.indexOf(item.getInt("id")));
-            	if(nodosSeleccionados.size()==0)	sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, new LinkedList<Integer>()), "Network");
-            	else								sesion.setSelectedBiclustersExcept(new BiclusterSelection(nodosSeleccionados, condicionesSeleccionadas), "Network");
+            	if(nodosSeleccionados.size()==0)	sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, new LinkedList<Integer>()), "Network");
+            	else								sesion.setSelectedBiclustersExcept(new Selection(nodosSeleccionados, condicionesSeleccionadas), "Network");
                 runActivity(vis);
             	}
         	}
