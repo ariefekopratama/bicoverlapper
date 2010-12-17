@@ -78,7 +78,7 @@ public class Analysis
 	    }
 	
 	/**
-	 * Loads the libraries in R. An R console must have been started in the sesion to do this.
+	 * Loads the libraries in R. An R console must have been started in the session to do this.
 	 * Right now, the library to load is "biclust"
 	 * It also loads some internal r scripts that extend the biclust package.
 	 * TODO: LoadR and loadMatrix should possibly be loaded with the microarra, we should check the memory/loadtime trade-off
@@ -144,6 +144,11 @@ public class Analysis
 				else		names=names.concat("\""+microarrayData.conditionNames[i]+"\")");
 				}
 			exp=r.eval("colnames(m)<-"+names);
+			
+			exp=r.eval("eset=new(\"ExpressionSet\", exprs=m, annotation=\""+this.getMicroarrayData().chip+"\")");
+			for(String ef:this.getMicroarrayData().experimentFactors)
+				exp=r.eval("eset$FactorValue."+ef+"="+RUtils.getRList(getMicroarrayData().experimentFactorValues.get(ef)));
+			exp=r.eval("rm(m)");
 			matrixLoaded = true;
 			}
 		else{System.err.println("No matrix loaded"); return;}
@@ -157,7 +162,7 @@ public class Analysis
 		{
 		if(r!=null)	
 			{
-			r.eval("rm(m)");
+			r.eval("rm(eset)");
 			}
 		}
 	/**
@@ -181,8 +186,8 @@ public class Analysis
 		
 		String lowCad="TRUE";
 		if(under==false)	lowCad="FALSE";
-		if(percentage)	exp=r.eval("loma<- binarizeByPercentage(m,"+threshold+", error=0.1, gap=(max(m)-min(m))/1000, low="+lowCad+")");
-		else			exp=r.eval("loma<- binarize(m,"+threshold+", low="+lowCad+")");
+		if(percentage)	exp=r.eval("loma<- binarizeByPercentage(exprs(eset),"+threshold+", error=0.1, gap=(max(exprs(eset))-min(exrps(eset))/1000, low="+lowCad+")");
+		else			exp=r.eval("loma<- binarize(exprs(eset),"+threshold+", low="+lowCad+")");
 		exp=r.eval("res <- biclust(x=loma, method=BCBimax(), minr="+minr+", minc="+minc+", number="+maxNumber+")");
 		exp=r.eval("res@Number");
 		if(exp==null)
@@ -218,7 +223,7 @@ public class Analysis
 		filter();
 		exp=r.eval("length(res2)");
 		//TODO: if length>0
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), featureNames(eset), sampleNames(eset))");
 		exp=r.eval("rm(loma)");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
@@ -289,8 +294,7 @@ public class Analysis
 		exp=r.eval("res2=convertclust(res)");
 		filter();
 		exp=r.eval("length(res2)");
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
-		//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), featureNames(eset), sampleNames(eset))");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
 		return outFile;
@@ -318,8 +322,7 @@ public class Analysis
 		if(!matrixLoaded)	loadMatrix();
 		loadRLibrary("isa2");
 		
-		//exp=r.eval("res <- isa(m, thr.row="+rowThreshold+", thr.col="+colThreshold+", no.seeds="+numSeeds+")");
-		exp=r.eval("res <- isa(m, no.seeds="+numSeeds+")");
+		exp=r.eval("res <- isa(exprs(eset), no.seeds="+numSeeds+")");
 		exp=r.eval("res$columns");
 		if(exp==null)
 			{
@@ -360,7 +363,7 @@ public class Analysis
 		exp=r.eval("res2=convertISAclust(res, row.thr="+rowThreshold+", col.thr="+colThreshold+")");
 		filter();
 		exp=r.eval("length(res2)");
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), featureNames(eset), sampleNames(eset))");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
 		return outFile;
@@ -423,8 +426,7 @@ public class Analysis
 		exp=r.eval("res2=convertclust(res)");
 		filter();
 		exp=r.eval("length(res2)");
-		//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
-		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
+		exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"),  featureNames(eset), sampleNames(eset))");
 		exp=r.eval("rm(dima)");
 		exp=r.eval("rm(res)");
 		exp=r.eval("rm(res2)");
@@ -482,8 +484,7 @@ public class Analysis
 	exp=r.eval("res2=convertclust(res)");
 	filter();
 	exp=r.eval("length(res2)");
-	//exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", rownames(m), colnames(m))");
-	exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"), rownames(m), colnames(m))");
+	exp=r.eval("writeBiclusterResults(\""+outFile+"\", res2, \""+description.replace(" ", "_")+"\", paste(\"B\",+c(1:length(res2)), sep=\"\"),  featureNames(eset), sampleNames(eset))");
 	exp=r.eval("rm(res)");
 	exp=r.eval("rm(res2)");
 	return outFile;
@@ -500,14 +501,18 @@ public class Analysis
 		{
 		if(r==null)		{ System.err.println("no R console"); return null; }
 		if(microarrayData==null)		{ System.err.println("no microarray data"); return null; }
-		
+		if(!matrixLoaded)	loadMatrix();
+	
 		//ArrayList<Integer> neighbors=new ArrayList<Integer>();
-		//exp=r.eval("d=dist(m[c("+gene+",genes),])[1:length(genes)]");
-		//exp=r.eval("genes[order(d)]");
-		r.eval("d=sapply(rownames(m), function(x){      sqrt(sum((m[x,]-m[\""+gene+"\",])*(m[x,]-m[\""+gene+"\",])))     })");
-		//exp=r.eval("rownames(m)[order(d)][2:"+(threshold+1)+"]");//the first one is actually itself
-		exp=r.eval("rownames(m)[order(d)][1:"+(threshold+1)+"]");//the first one is actually itself
-		return(exp.asStringArray());
+		exp=r.eval("d=sapply(featureNames(eset), function(x){      sqrt(sum((exprs(eset)[x,]-exprs(eset)[\""+gene+"\",])*(exprs(eset)[x,]-exprs(eset)[\""+gene+"\",])))     })");
+		exp=r.eval("featureNames(eset)[order(d)][1:"+(threshold+1)+"]");//the first one is actually itself
+		if(exp!=null)
+			return(exp.asStringArray());
+		else 
+			{
+			System.err.println("Error: getSimilarProfiles returned null");
+			return null;
+			}
 		}
 
 	public void downloadExperiment(String id, String path) 
@@ -541,12 +546,12 @@ public class Analysis
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
 		for(int i=0;i<group1.length;i++)  group1[i]=group1[i]+1;
 		for(int i=0;i<group2.length;i++)  group2[i]=group2[i]+1;
-		exp=r.eval("degs=diffAnalysis(m, "+RUtils.getRList(group1)+", nameG1=\"Group 1\", "+RUtils.getRList(group2)+", nameG2=\"Group 2\", " +
+		exp=r.eval("degs=diffAnalysis(exprs(eset), "+RUtils.getRList(group1)+", nameG1=\"Group 1\", "+RUtils.getRList(group2)+", nameG2=\"Group 2\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 						"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
-		exp=r.eval("lr=list(rownames(m)[degs])");
+		exp=r.eval("lr=list(featureNames(eset)[degs])");
 		
 		if(outFile.length()==0)	//tempfile
 			{
@@ -592,10 +597,10 @@ public class Analysis
 		loadRLibrary("limma");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
-		System.out.println("degs=diffAnalysisEF(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
+		System.out.println("degs=diffAnalysisEF(exprs(eset), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
-		exp=r.eval("degs=diffAnalysisEF(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
+		exp=r.eval("degs=diffAnalysisEF(exprs(eset), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
 		if(exp==null)
@@ -642,15 +647,14 @@ public class Analysis
 		loadRLibrary("limma");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
-		System.out.println("degs=diffAnalysisEFall(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
+		System.out.println("degs=diffAnalysisEFall(exprs(eset), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
-		exp=r.eval("degs=diffAnalysisEFall(m, ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
+		exp=r.eval("degs=diffAnalysisEFall(exprs(eset), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
-		//exp=r.eval("lr=list(rownames(m)[degs])");
 		
 		if(outFile.length()==0)	//tempfile
 			{
@@ -696,11 +700,11 @@ public class Analysis
 		for(int i=0;i<microarrayData.experimentFactors.size();i++)
 			exp=r.eval("efs=c(efs, list("+RUtils.getRList(microarrayData.experimentFactorValues.get(microarrayData.experimentFactors.get(i)))+"))");
 		
-		System.out.println("degs=diffAnalysisAll(m, ef=efs, " +
+		System.out.println("degs=diffAnalysisAll(exprs(eset), ef=efs, " +
 				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
-		exp=r.eval("degs=diffAnalysisAll(m, ef=efs, " +
+		exp=r.eval("degs=diffAnalysisAll(exprs(eset), ef=efs, " +
 				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
 				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
@@ -739,10 +743,17 @@ public class Analysis
 		return outFile;
 		}
 
+    /**
+     * Builds a network that links nodes with a correlation lower than a given threshold
+     * @param sdThreshold
+     * @param distanceMethod - method used to compute the correlation ("euclidean", etc)
+     * @param distanceThreshold
+     * @param outFile - file where the resulting network is to be written. If an empty string, a random name with .tmp extension is given to the file
+     * @return
+     */
 	public String buildCorrelationNetwork(double sdThreshold, String distanceMethod,
 			double distanceThreshold, String outFile) {
 		if(!matrixLoaded)	loadMatrix();
-		String error="";
 		
 		if(outFile.length()==0)	//tempfile
 			{
@@ -761,11 +772,11 @@ public class Analysis
 		
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/buildNetwork.R\")");
 		System.out.println("buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
-				"mat=m, distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
+				"mat=exprs(eset), distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
 				sdThreshold+", distanceThreshold="+distanceThreshold+")");
 				
 		exp=r.eval("buildCorrelationNetwork(gmlFile=\""+outFile+"\", "+
-				"mat=m, distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
+				"mat=exprs(eset), distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
 				sdThreshold+", distanceThreshold="+distanceThreshold+")");
 		
 		if(exp.asString()!=null && exp.asString().startsWith("Error"))
@@ -786,4 +797,200 @@ public class Analysis
 			}
 		return outFile;
 	}
+	
+	/**
+	 * Performs Gene Set Enrichment Analysis via BioConductor package GSEAlm
+	 * @param filterCutoff Percentage of genes with low differential expression that should be discarded for the analysis
+	 * @param minGenesInGS Minimum number of genes in the epxression matrix that should be in the GeneSet in order to consider it
+	 * @param type Type of gene set. By now, only "GO" and "KEGG" are allowed. Soon "PubMed" also
+	 * @param sd Only the gene sets with a difference of p-values between the two compared conditions above the mean plus this number times the standard deviation will be returned
+	 * @param ef Experimental Factor for which the enrichment is computed
+	 * @param efv1 One of the experimental factor values for the enrichment
+	 * @param efv2 The other experimental factor value for the enrichment
+	 * @param outFile Path to the file where the results will be stored
+	 * @return
+	 */
+	public String gsea(double filterCutoff, int minGenesInGS, String type, double sdThreshold, String ef,String efv1, String efv2,String outFile, String description)
+		{
+		if(!matrixLoaded)	loadMatrix();
+		
+		if(outFile.length()==0)	//tempfile
+			{
+			outFile="gsea"+(int)(100000*Math.random())+".tmp"; 
+			}
+		else
+			{
+			if(!outFile.contains("."))	//automatic name
+				{
+				outFile=outFile.replace("\\","/");
+				if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+					outFile=outFile.concat("/");
+				outFile=outFile.concat(".bic");
+				}
+			}
+
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/getGeneSet.R\")");
+		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/GSEA.R\")");
+		exp=r.eval("en="+getMicroarrayData().chip+type);                
+		exp=r.eval("ret=gsea(eset=eset, filterCutoff="+filterCutoff/100+", envir=en, type=\""+type+"\", model=~as.factor(FactorValue."+ef+"), ef=eset$FactorValue."+ef+", efv1=\""+efv1+"\", efv2=\""+efv2+"\", sdThreshold="+sdThreshold+", outputPath=\""+outFile+"\")");
+		
+		if(exp!=null && exp.asString()!=null && exp.asString().startsWith("Error"))
+			{
+			System.err.println("GSEA: "+exp.asString());
+			JOptionPane.showMessageDialog(null,
+	                exp.asString(),
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		else if(exp==null)
+			{
+			System.err.println("GSEA: Error");
+			JOptionPane.showMessageDialog(null,
+	                "An error occurred while computing GSEA",
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		
+		//Write results
+		String groups="gene sets";
+		if(type.equals("GO"))	groups="GO terms";
+		if(type.equals("PATH"))	groups="KEGG pathways";
+		String desc="Differentially enriched "+groups+" found with GSEAlm for "+efv1+" respect to "+efv2+" (min number of genes in the set="+minGenesInGS+", only sets above "+sdThreshold+" stdevs from the average difference in p-values)";
+		if(description!=null && description.length()>0)	desc=description;
+		exp=r.eval("writeBiclusterResultsFromList(\""+outFile+"\", ret, NA, bicNames=names(ret), biclusteringDescription=\""+desc+"\")");
+	
+		return outFile;
+		}
+	
+/**
+ * Performs Gene Set Enrichment Analysis via BioConductor package GSEAlm
+ * @param filterCutoff Percentage of genes with low differential expression that should be discarded for the analysis
+ * @param minGenesInGS Minimum number of genes in the epxression matrix that should be in the GeneSet in order to consider it
+ * @param type Type of gene set. By now, only "GO" and "KEGG" are allowed. Soon "PubMed" also
+ * @param sd Only the gene sets with a difference of p-values between the two compared conditions above the mean plus this number times the standard deviation will be returned
+ * @param ef Experimental Factor for which the enrichment is computed
+ * @param efv1 One of the experimental factor values for the enrichment
+ * @param efv2 The other experimental factor value for the enrichment
+ * @param outFile Path to the file where the results will be stored
+ * @return
+ */
+public String gseaEF(double filterCutoff, double minGenesInGS, String type, double sdThreshold, String ef,String efv,String outFile, String description)
+	{
+	if(!matrixLoaded)	loadMatrix();
+	
+	if(outFile.length()==0)	//tempfile
+		{
+		outFile="gsea"+(int)(100000*Math.random())+".tmp"; 
+		}
+	else
+		{
+		if(!outFile.contains("."))	//automatic name
+			{
+			outFile=outFile.replace("\\","/");
+			if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+				outFile=outFile.concat("/");
+			outFile=outFile.concat(".bic");
+			}
+		}
+
+	exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/getGeneSet.R\")");
+	exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/GSEA.R\")");
+	exp=r.eval("en="+getMicroarrayData().chip+type);                
+	exp=r.eval("ret=gseaEF(eset, filterCutoff="+filterCutoff/100+", envir=en, model=~as.factor(FactorValue."+ef+"), ef=eset$FactorValue."+ef+", efv=\""+efv+"\", type=\""+type+"\", sdThreshold="+sdThreshold+", outputPath=\""+outFile+"\")");
+	
+	if(exp!=null && exp.asString()!=null && exp.asString().startsWith("Error"))
+		{
+		System.err.println("GSEA: "+exp.asString());
+		JOptionPane.showMessageDialog(null,
+                exp.asString(),
+                "Error",JOptionPane.ERROR_MESSAGE);
+		return null;
+		}
+	else if(exp==null)
+		{
+		System.err.println("GSEA: Error");
+		JOptionPane.showMessageDialog(null,
+                "An error occurred while computingGSEA",
+                "Error",JOptionPane.ERROR_MESSAGE);
+		return null;
+		}
+	
+	//Write results
+	String groups="gene sets";
+	if(type.equals("GO"))	groups="GO terms";
+	if(type.equals("PATH"))	groups="KEGG pathways";
+	String desc1="Differentially enriched "+groups+" found with GSEAlm for";
+	String desc2="on "+ef+" (min number of genes in the set="+minGenesInGS+", only sets above "+sdThreshold+" stdevs from the average difference in p-values)";
+	exp=r.eval("labels=paste(\""+desc1+"\",ret$names,\""+desc2+"\")");
+	exp=r.eval("ln=lapply(ret$degs, function(x){names(x)})");
+	exp=r.eval("writeBiclusterResultsFromListArray(fileName=\""+outFile+"\", listArrayRows=ret$degs, listArrayNames=ln, descriptions=labels)");
+
+	return outFile;
 	}
+
+/**
+ * Performs Gene Set Enrichment Analysis via BioConductor package GSEAlm, in this case, it compares every two consecutive efvs on a given ef,
+ * which is quite useful for example in the case of time series
+ * @param filterCutoff Percentage of genes with low differential expression that should be discarded for the analysis
+ * @param minGenesInGS Minimum number of genes in the epxression matrix that should be in the GeneSet in order to consider it
+ * @param type Type of gene set. By now, only "GO" and "KEGG" are allowed. Soon "PubMed" also
+ * @param sd Only the gene sets with a difference of p-values between the two compared conditions above the mean plus this number times the standard deviation will be returned
+ * @param ef Experimental Factor for which the enrichment is computed
+ * @param outFile Path to the file where the results will be stored
+ * @return
+ */
+public String gseaProg(double filterCutoff, double minGenesInGS, String type, double sdThreshold, String ef,String outFile, String description)
+	{
+	if(!matrixLoaded)	loadMatrix();
+	
+	if(outFile.length()==0)	//tempfile
+		{
+		outFile="gsea"+(int)(100000*Math.random())+".tmp"; 
+		}
+	else
+		{
+		if(!outFile.contains("."))	//automatic name
+			{
+			outFile=outFile.replace("\\","/");
+			if(!outFile.endsWith("\\") && !outFile.endsWith("/"))
+				outFile=outFile.concat("/");
+			outFile=outFile.concat(".bic");
+			}
+		}
+
+	exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/getGeneSet.R\")");
+	exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/GSEA.R\")");
+	exp=r.eval("en="+getMicroarrayData().chip+type);                
+	exp=r.eval("ret=gseaProg(eset, filterCutoff="+filterCutoff/100+", envir=en, model=~as.factor(FactorValue."+ef+"), ef=eset$FactorValue."+ef+", type=\""+type+"\", sdThreshold="+sdThreshold+", outputPath=\""+outFile+"\")");
+	
+	if(exp!=null && exp.asString()!=null && exp.asString().startsWith("Error"))
+		{
+		System.err.println("GSEA: "+exp.asString());
+		JOptionPane.showMessageDialog(null,
+                exp.asString(),
+                "Error",JOptionPane.ERROR_MESSAGE);
+		return null;
+		}
+	else if(exp==null)
+		{
+		System.err.println("GSEA: Error");
+		JOptionPane.showMessageDialog(null,
+                "An error occurred while computingGSEA",
+                "Error",JOptionPane.ERROR_MESSAGE);
+		return null;
+		}
+	
+	//Write results
+	String groups="gene sets";
+	if(type.equals("GO"))	groups="GO terms";
+	if(type.equals("PATH"))	groups="KEGG pathways";
+	String desc1="Differentially enriched "+groups+" found with GSEAlm for";
+	String desc2="between consecutive values on "+ef+" (min number of genes in the set="+minGenesInGS+", only sets above "+sdThreshold+" stdevs from the average difference in p-values)";
+	exp=r.eval("labels=paste(\""+desc1+"\",ret$names,\""+desc2+"\")");
+	exp=r.eval("ln=lapply(ret$degs, function(x){names(x)})");
+	exp=r.eval("writeBiclusterResultsFromListArray(fileName=\""+outFile+"\", listArrayRows=ret$degs, listArrayNames=ln, descriptions=labels)");
+
+	return outFile;
+	}
+
+}

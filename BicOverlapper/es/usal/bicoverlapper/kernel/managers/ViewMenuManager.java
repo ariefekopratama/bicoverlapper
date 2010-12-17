@@ -56,6 +56,8 @@ public class ViewMenuManager implements ActionListener{
 				Dimension dim = config.getSizePanelCoordenadas();
 				ParallelCoordinatesDiagram panel = new ParallelCoordinatesDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
+				ventana.setLocation(config.initPC.x, config.initPC.y);
+				
 				panel.setWindow(ventana);
 				
 				sesion.setParallelCoordinates(ventana);
@@ -65,7 +67,7 @@ public class ViewMenuManager implements ActionListener{
 				BubblesDiagram panel = new BubblesDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				ventana.setLocation(config.dimPanelCoordenadas.width+config.dimPanelHeatmap.width+config.marginWidth*4, 0);
+				ventana.setLocation(config.dimParallelCoordinatesWindow.width+config.dimHeatmapWindow.width+config.marginInternalWindowWidth*4, 0);
 				sesion.setBubbles(ventana);
 				panel.createAxisLayout();
 				panel.run();
@@ -77,7 +79,8 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
-				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
+				//ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
+				ventana.setLocation(config.initTRN.x, config.initTRN.y);
 				panel.create();
 				panel.run();
 			//	System.out.println("Terminamos la vista");
@@ -88,7 +91,8 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
-				ventana.setLocation(config.getSizePanelCoordenadas().width+config.marginWidth*2,0);
+				//ventana.setLocation(config.getSizePanelCoordenadas().width+config.marginWidth*2,0);
+				ventana.setLocation(config.initHM.x, config.initHM.y);
 				panel.create();
 				panel.run();
 			}
@@ -97,6 +101,7 @@ public class ViewMenuManager implements ActionListener{
 				OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
+				//ventana.setSize(config.getDimPanelBiclusVis());
 				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
 				
 				sesion.setBubbleGraph(ventana);
@@ -107,14 +112,12 @@ public class ViewMenuManager implements ActionListener{
 			}
 			else if(e.getActionCommand().equals("Bicluster Bubble Graph")){
 				Dimension dim = config.getDimPanelBiclusVis();
-				//BiclusVisPanel panel = new BiclusVisPanel(sesion, dim, true);
 				OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				sesion.setBubbleGraph(ventana);
-				ventana.setLocation(0, config.getSizePanelCoordenadas().height);
-				
-				//panel.setPersonas(sesion.isPersonas());
+				//ventana.setLocation(0, config.getSizePanelCoordenadas().height);
+				ventana.setLocation(config.initO.x, config.initO.y);
 				
 				panel.create();
 				panel.run();
@@ -126,7 +129,8 @@ public class ViewMenuManager implements ActionListener{
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
 				//ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
-				ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
+				//ventana.setLocation(0, config.getSizePanelCoordenadas().height+30);
+				ventana.setLocation(config.initWC.x, config.initWC.y);
 				sesion.setWordCloud(ventana);
 				panel.repaint();
 				}

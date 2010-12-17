@@ -32,7 +32,7 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 	Difference <- rowMeans(mt[,g1, drop=FALSE])-rowMeans(mt[,g2, drop=FALSE])#Ratio of expression of good prognosis against bad prognosis
 	Average <- rowMeans(mt[,union(g1,g2)])
 		
-	#Volcano plot
+	#Limma analysis
 	library(limma)
 	population.groups=factor(c(rep(nameG1, length(g1)),c(rep(nameG2, length(g2)))))
 	design=model.matrix(~population.groups)
@@ -104,10 +104,9 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 # ef - character array with the efv for each sample (column) in matrix m (e.g. healthy healthy cancer1 cancer1 cancer2 cancer2)
 # efv - efv to check against the rest (e.g. cancer 1)
 # Returns a list of arrays with the DEGs on each of these comparisons
-# TODO: Grep errors with expression symbols (e.g. "CD14+ mo" because of the +)
+# TODO: Grep errors with regular expression symbols (e.g. "CD14+ mo" because of the +)
 diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
-		pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all",
-		fileName=NA, description="")
+		pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
     {
 	g1=grep(paste("^",efv,"$",sep=""),ef)
 	conds=unique(ef)

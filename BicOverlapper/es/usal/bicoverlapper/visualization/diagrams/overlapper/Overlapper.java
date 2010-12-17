@@ -2133,15 +2133,37 @@ protected void mouseDragged() {
 		move=true;
 		float xpress=(mouseX-offsetX)/zoomFactor;
 		float ypress=(mouseY-offsetY)/zoomFactor;
-		if(g.getDragNode()!=null)
+		if(g.getSelectedNodes()!=null && g.getDragNode()!=null && g.getSelectedNodes().size()>0)	//selected nodes
 			{
-			 g.getDragNode().setX(xpress);
-			 g.getDragNode().setY(ypress);
+			Iterator<Node> it=g.getSelectedNodes().values().iterator();
+			double mainX=-1;
+			double mainY=-1;
+			while(it.hasNext())
+				{	
+				Node n=it.next();
+				if(mainX<0)
+					{
+					mainX=n.getX();
+					mainY=n.getY();
+					}
+				n.setX(n.getX()-mainX+xpress);
+				n.setY(n.getY()-mainY+ypress);
+				}
 			}
-		else	//Selección de área
+		else	//drag node or selection line
 			{
-			selectionArea.add(new Point2D.Double(xpress, ypress));
-			}
+			if(g.getDragNode()!=null)
+				{
+				 System.out.println("Posici—n anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
+				 g.getDragNode().setX(xpress);
+				 g.getDragNode().setY(ypress);
+				}
+			else	//Selecci—n de ‡rea
+				{
+			//	System.out.println("Modificando ‡rea");
+				selectionArea.add(new Point2D.Double(xpress, ypress));
+				}
+		}
 	 	}
 	}
 

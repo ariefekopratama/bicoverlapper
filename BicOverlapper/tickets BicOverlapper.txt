@@ -2,7 +2,29 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
-Session - After closing a dataset, the program freezes when opening a new one
+- S Remove License and Help panel by web browser
+- Remove Bubble map
+-> Option to write report with what's done
+-Shift+click in selection narrow the columns! (HM)
+-> GSEA encapsulated. Problem due to lmPerGene factor.
+     S I solved it by dividing the method in two. Now I solved it to a single one!
+     S Make it combinational, by now, EFV vs EF and EFV vs rest
+-> Different stored favorite paths for networks, groups and matrices
+-> Something+click on a gene -> go to ncbi webpage searched by that gene. Via www.ncbi.nlm.nih.gov/gene/entrezID
+	S: Done for HM. Method is MicroarrayData.browseEntrezGene
+	By now:
+	 -click for new selection (all except WC and PC)
+	 -drag for new selection (PC)
+	 
+	 -shift+click is to add to selection (O, N, HM)
+	  
+	 -right click to show additional info (O) -> it will better become go to EntrezGene webpage for the gene (O,HM,PC,N)
+	 -ctrl+click to get similar profiles (HM)
+	 -ctrl+drag for selection having into account only this threshold (PC)
+	 
+	  -Right click on background to get visualization options (HM, PC)
+	  
+-> Session - After closing a dataset, the program freezes when opening a new one
 S Data - MAPK1 (ENSG00000100030) fails when retrieving its go terms via biomaRt.
 		Solved, there was a problem with single gene search, that returned a matrix instead of a list
 S Analysis - differential expression analysis. Close to solution.

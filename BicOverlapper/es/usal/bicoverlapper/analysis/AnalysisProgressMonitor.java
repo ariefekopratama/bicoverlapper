@@ -143,12 +143,15 @@ PropertyChangeListener, Runnable {
 		public final static int XMOTIFS=3; 
 		public final static int SPECTRAL=4; 
 		public final static int ISA=5; 
-		public final static int LIMMA=6; 
-		public final static int LIMMAEF=7;//diffexp between two efvs of a given ef 
+		public final static int LIMMA=6; //diffexp between two efvs of a given ef
+		public final static int LIMMAEF=7;//diffexp between an efv and every other efv of a given ef 
 		public final static int LIMMAEFALL=8; //diffexp between all the efvs of a given ef
 		public final static int LIMMAALL=9;//diffexp between all the efvs for each ef
 		public final static int CORRELATION_NETWORK=10;//diffexp between all the efvs for each ef
-				
+		public final static int GSEA=11;//gsea between two efvs of a given ef
+		public final static int GSEAEF=12;//diffexp between an efv and every other efv of a given ef
+		public final static int GSEAPROG=13;//diffexp between an every pair of consecutive efvs on a given ef (for example, useful with time)
+					
 		
 		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
 			{
@@ -311,7 +314,72 @@ PropertyChangeListener, Runnable {
 							((String)params.get(3))		); 
 					
 					break;
-				
+				case GSEA:
+					System.out.println(((Double)params.get(0)).doubleValue());
+					System.out.println(((Integer)params.get(1)).intValue());
+					System.out.println(((String)params.get(2)));
+					System.out.println(((Double)params.get(3)).doubleValue());
+					System.out.println(((String)params.get(4)));
+					System.out.println(((String)params.get(5)));
+					System.out.println(((String)params.get(6)));
+					System.out.println(((String)params.get(7)));
+					System.out.println(((String)params.get(8)));
+						
+						
+					res=b.gsea(	((Double)params.get(0)).doubleValue(), 
+							((Integer)params.get(1)).intValue(),
+							((String)params.get(2)),
+							((Double)params.get(3)).doubleValue(), 
+							((String)params.get(4)),
+							((String)params.get(5)),
+							((String)params.get(6)), 
+							((String)params.get(7)),
+							((String)params.get(8))
+							); 
+					
+					break;
+				case GSEAEF:
+					System.out.println(((Double)params.get(0)).doubleValue());
+					System.out.println(((Integer)params.get(1)).intValue());
+					System.out.println(((String)params.get(2)));
+					System.out.println(((Double)params.get(3)).doubleValue());
+					System.out.println(((String)params.get(4)));
+					System.out.println(((String)params.get(5)));
+					System.out.println(((String)params.get(6)));
+					System.out.println(((String)params.get(7)));
+					
+						
+					res=b.gseaEF(	((Double)params.get(0)).doubleValue(), 
+							((Integer)params.get(1)).intValue(),
+							((String)params.get(2)),
+							((Double)params.get(3)).doubleValue(), 
+							((String)params.get(4)),
+							((String)params.get(5)),
+							((String)params.get(6)), 
+							((String)params.get(7))
+							); 
+					
+					break;
+				case GSEAPROG:
+					System.out.println(((Double)params.get(0)).doubleValue());
+					System.out.println(((Integer)params.get(1)).intValue());
+					System.out.println(((String)params.get(2)));
+					System.out.println(((Double)params.get(3)).doubleValue());
+					System.out.println(((String)params.get(4)));
+					System.out.println(((String)params.get(5)));
+					System.out.println(((String)params.get(6)));
+					
+						
+					res=b.gseaProg(	((Double)params.get(0)).doubleValue(), 
+							((Integer)params.get(1)).intValue(),
+							((String)params.get(2)),
+							((Double)params.get(3)).doubleValue(), 
+							((String)params.get(4)),
+							((String)params.get(5)),
+							((String)params.get(6)) 
+							); 
+					
+					break;
 				case SPECTRAL:
 					break;
 				}

@@ -119,12 +119,8 @@ writeBiclusterResultsFromList=function(fileName, listRows, listColumns=NA, bicNa
 		  if(!is.na(listArrayNames))		listNames=listArrayNames[[k]]
 		  
 		  
-		#  writeBiclusterResultsFromList(fileName, listRows=listRows, listColumns=listColumns, 
-		#		  bicNames=listNames, biclusteringDescription=biclusteringDescription, append=ap)
-		  
 		  if(TRUE)
 		  {
-	     # write(length(listRows), file = fileName, append = append)
 	      write(biclusteringDescription, file = fileName, append = TRUE)
 		  for (i in 1:length(listRows)) {
 			  listar = listRows[[i]]

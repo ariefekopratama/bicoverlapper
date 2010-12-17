@@ -356,6 +356,8 @@ public abstract class Group
 	  		 
 		 int numNodes=0;
 		 Point2D.Double center=new Point2D.Double(0,0);//To make the hulls slightly larger
+		 ArrayList<Point2D.Double> additionalPoints=new ArrayList<Point2D.Double>();//TODO: in order to add new points if necessary
+		 
 		 for(int i=0;i<clusterNodes.size();i++)
 		 	{
 			Node n = (Node)clusterNodes.get(i);
@@ -364,6 +366,7 @@ public abstract class Group
 		    	numNodes++;
 		    	center.x+=n.getX();
 		    	center.y+=n.getY();
+		    	//ep.add(new Point2D.Double(n.getX(),n.getY()));
 		    	}
 		 	}
 		 center.x/=numNodes;
@@ -390,7 +393,7 @@ public abstract class Group
 		  boolean hullInScreen=false;
 		  int cont=0;
 		  for (int i=0; i<clusterNodes.size(); i++) 
-		  	   {
+		 	   {
 		       Node n = (Node)clusterNodes.get(i);
 		       if(n.clusters.size()>=bv.nodeThreshold)
 			       {
@@ -439,6 +442,7 @@ public abstract class Group
 			  for (int i=0; i<groupHull.size(); i++) 
 			  	{
 			      GraphPoint2D p = convertRefFrame((GraphPoint2D)groupHull.get(i));
+			      //bv.ellipse((int)p.getX(), (int)p.getY(), 5, 5);
 			      if(bv.isUseCurves()) 
 			    	 bv.curveVertex((float)p.getX(), (float)p.getY());
 			      else	  
@@ -1205,11 +1209,35 @@ public abstract class Group
 	            Hu[++top] = P[minmin];  // push joining endpoint onto stack
 
 	        realSize = top + 1;
-	        ArrayList<GraphPoint2D> hull = new ArrayList<GraphPoint2D>(Hu.length);
+	        //ArrayList<GraphPoint2D> hull = new ArrayList<GraphPoint2D>(Hu.length);
+	        ArrayList<GraphPoint2D> hull = new ArrayList<GraphPoint2D>();
+	        double mX=0;
+	        double mY=0;
 	        for (int h=0; h < realSize; h++)
-	            hull.add(Hu[h]);
+	        	{
+	        	mY+=Hu[h].y;
+	        	mX+=Hu[h].x;
+	        	hull.add(Hu[h]);
+	        	}
+	        mY/=hull.size();
+	        mX/=hull.size();
+	        
 
-	      
+	      //Add additional points among very distant ones
+	        GraphPoint2D pant=hull.get(0);
+	        GraphPoint2D p=null;
+	        for(i=1;i<hull.size();i++)
+	        	{
+	        	p=hull.get(i);
+	        	double d=Point2D.Double.distance(p.x, p.y, pant.x, pant.y);
+	        	if(d>100)
+	        		{
+	        		Line ml=new Line(mX, mY, (p.x+pant.x)/2, (p.y+pant.y)/2);
+		        	Point2D.Double ap=ml.getProlongationPoint(20);
+		        	hull.add(i,new GraphPoint2D(ap.x,ap.y));
+	        		}
+	        	pant=p;	
+	        	}
 	        return hull;
 	    }
 

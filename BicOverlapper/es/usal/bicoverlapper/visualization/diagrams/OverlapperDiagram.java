@@ -158,16 +158,17 @@ private static final long serialVersionUID = 1L;
 	public void create()
 		{
 			{
+			JToolBar jtb=new JToolBar();
+			addButtons(jtb);
+			
 			bv=new Overlapper();
 			bv.setPalette(paleta);
 			bv.setDataFile(sesion.getBiclusterDataFile());
-			bv.setup(ancho,alto);//, sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());
+			bv.setup(ancho,alto-jtb.getBounds().height);//, sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
 			bv.buildGraph();
 			bv.init();
 			
-			JToolBar jtb=new JToolBar();
-			addButtons(jtb);
 			this.getWindow().add(bv, BorderLayout.CENTER);
 			this.getWindow().add(jtb, BorderLayout.SOUTH);
 

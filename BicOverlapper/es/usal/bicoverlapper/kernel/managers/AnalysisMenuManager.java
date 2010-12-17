@@ -30,6 +30,7 @@ import es.usal.bicoverlapper.kernel.panels.BimaxPanel;
 import es.usal.bicoverlapper.kernel.panels.BuildNetworkPanel;
 import es.usal.bicoverlapper.kernel.panels.CCPanel;
 import es.usal.bicoverlapper.kernel.panels.DiffExpPanel;
+import es.usal.bicoverlapper.kernel.panels.GSEAPanel;
 import es.usal.bicoverlapper.kernel.panels.ISAPanel;
 import es.usal.bicoverlapper.kernel.panels.PlaidPanel;
 import es.usal.bicoverlapper.kernel.panels.SearchPanel;
@@ -69,6 +70,7 @@ public class AnalysisMenuManager implements ActionListener{
 	private boolean ctrlPressed;
 	private DiffExpPanel difExpPanel;
 	private BuildNetworkPanel buildNetPanel;
+	private GSEAPanel gseaPanel;
 	
 	/**
 	 * Constructor to build a MenuManager
@@ -266,7 +268,21 @@ public class AnalysisMenuManager implements ActionListener{
 				buildNetPanel.pack();
 				buildNetPanel.setVisible(true);
 				}
-		
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("gsea")))
+				{
+				//Show label names box
+				if(gseaPanel==null)		gseaPanel=new GSEAPanel(sesion);
+				//else					selectPanel.updateLists();
+				gseaPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				gseaPanel.setTitle("Gene Set Enrichment Analysis");
+				gseaPanel.setAlwaysOnTop(true);
+				gseaPanel.setLocation((sesion.getDesktop().getWidth()-gseaPanel.getWidth())/2, (sesion.getDesktop().getHeight()-gseaPanel.getHeight())/2);
+				
+				//Display the window.
+				gseaPanel.pack();
+				gseaPanel.setVisible(true);
+				}
+	
 			}
 		}
 	
