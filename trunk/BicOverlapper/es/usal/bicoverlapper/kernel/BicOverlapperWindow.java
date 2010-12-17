@@ -260,6 +260,8 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("difexp"));
 		JMenuItem menuAnalysisBuildNetwork =
 			new JMenuItem(Translator.instance.menuLabels.getString("buildnet"));
+		JMenuItem menuAnalysisGSEA =
+			new JMenuItem(Translator.instance.menuLabels.getString("gsea"));
 		
 		menuAnalysisSort.setMnemonic('S');
 		menuAnalysisSearch.setMnemonic('F');
@@ -271,6 +273,7 @@ public class BicOverlapperWindow extends JFrame{
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisSelect);
 		analysisMenu.add(menuAnalysisDifexp);
+		analysisMenu.add(menuAnalysisGSEA);
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisBimax);
 		analysisMenu.add(menuAnalysisPlaid);
@@ -291,6 +294,7 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisSort.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
 		menuAnalysisDifexp.addActionListener(amm);
+		menuAnalysisGSEA.addActionListener(amm);
 		menuAnalysisBuildNetwork.addActionListener(amm);
 						
 		// Creamos menu "Ver"
@@ -383,7 +387,7 @@ public class BicOverlapperWindow extends JFrame{
 
 //		 Creamos menu Ayuda
 		JMenu helpMenu =  new JMenu(Translator.instance.menuLabels.getString("s23"));
-		HelpMenuManager gestorMenuAyuda = new HelpMenuManager(this);
+		HelpMenuManager gestorMenuAyuda = new HelpMenuManager();
 
 		
 		//Añadimos item "Abrir Microarray" al menu "Archivo"

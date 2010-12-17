@@ -451,7 +451,26 @@ public class MicroarrayData
 		return form;
 		//TODO: Properly finish the from for samples
 		}
-	
+
+	/**
+	 * Given a geneId, searches for its Entrez ID and opens a browser with the corresponding EntrezGene webpage
+	 * @param geneId
+	 */
+	public void browseEntrezGene(int geneId)
+		{
+		try{
+			GeneAnnotation g=this.geneAnnotations.get(geneId);
+			if(g.entrezId==null || g.entrezId.length()==0)
+				{
+				System.err.println("No entrez id for the gene "+g.name+". Opening entrez gene home page");
+				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene"));
+				}
+			else
+				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene/"+g.entrezId));
+		}catch(Exception ex){ex.printStackTrace();}
+		
+		}
+
 	/**
 	 * Returns the table with expression levels
 	 * @return	Table with expression levels
@@ -1799,12 +1818,17 @@ public class MicroarrayData
 			     	//2) Search for gene descriptions
 			        exp=re.eval("unlist(mget(group,"+chip+rdescription+", ifnotfound=NA))");
 			        if(exp!=null)
-			        	{
 			       		descriptions=exp.asStringArray();
-			    		}
-	 				}
+			      //2) Search for gene descriptions
+			        exp=re.eval("unlist(mget(group,"+chip+"ENTREZID, ifnotfound=NA))");
+			        if(exp!=null)
+			       		entrezs=exp.asStringArray();
+			        exp=re.eval("unlist(mget(group,"+chip+"ENSEMBL, ifnotfound=NA))");
+			        if(exp!=null)
+			       		ensembls=exp.asStringArray();
+			    	}
 	    		}
-	 		else
+	 		else//-------------------------------------BioMaRt
 	 			{
 	 			if(re.eval("martEnsembl")==null)
 	 				exp=re.eval("martEnsembl=getEnsemblMart(species=\""+organism+"\")");
@@ -1962,7 +1986,7 @@ public class MicroarrayData
 					else						ga.name=names[g];
 					}
 				if(entrezs!=null)	ga.entrezId=entrezs[g];
-				if(ensembls!=null)	ga.ensemblId=entrezs[g];
+				if(ensembls!=null)	ga.ensemblId=ensembls[g];
 				
 				ga.id=geneNames[g];
 				geneAnnotations.put(id, ga);

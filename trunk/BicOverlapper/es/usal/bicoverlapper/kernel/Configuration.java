@@ -12,24 +12,29 @@ import java.awt.Point;
 public class Configuration {
 	
 	public Dimension dimAplicacion = new Dimension(1300,800);//1000x600
+	
+	public Dimension dimParallelCoordinatesWindow = new Dimension(900,300);
+	public Dimension dimNetworkWindow = new Dimension(600,430);
+	public Dimension dimHeatmapWindow = new Dimension(355,610);//for 1280x800
+	public Dimension dimOverlapperWindow = new Dimension(900,400);
+	public Dimension dimWordCloudWindow = new Dimension(355,250);//for 1280x800
+	
+	
+	public Dimension dimDataWindow = new Dimension(350,300);
 	public Dimension dimPanelPuntos = new Dimension(900,300);
-	public Dimension dimPanelCoordenadas = new Dimension(900,300);
 	public Dimension dimPanelHistograma = new Dimension(350,300);
 	public Dimension dimPanelMapeo = new Dimension(350,300);
 	public Dimension dimPanelDendrograma = new Dimension(900,300);
-	public Dimension dimPanelDatos = new Dimension(350,300);
 	public Dimension dimPanelBubbles = new Dimension(300,300);
-	public Dimension dimPanelTRN = new Dimension(600,430);
-	public Dimension dimPanelHeatmap = new Dimension(355,610);//for 1280x800
-	//public Dimension dimPanelHeatmap = new Dimension(310,610);
-	//private Dimension dimPanelHeatmap = new Dimension(300,610);
-	public Dimension dimPanelBubbleGraph = new Dimension(900,400);
 	public Dimension dimPanelDataSelection = new Dimension(740,560);
-	//public Dimension dimPanelWordCloud = new Dimension(650,250);
-	public Dimension dimPanelWordCloud = new Dimension(355,250);//for 1280x800
 	
-	public int marginWidth=4; //margin of diagrams
-	private Point initPC, initHM, initWC, initBM, initO, initTRN;
+	
+	public int marginInternalWindowWidth=3+3; //margin of diagrams
+	public int marginInternalWindowHeight=20+3; //margin of diagrams
+	public int marginExternalWindowWidth=4+4;
+	public int marginExternalWindowHeight=70+4;
+	
+	public Point initPC, initHM, initWC, initBM, initO, initTRN;
 	
 	static final int NoId = 0;
 	static final int DiagramaPuntosId = 1;
@@ -56,7 +61,22 @@ public class Configuration {
 	
 	public Configuration()
 		{
+		//TODO: give values to dimensions depending on screen size
+		dimAplicacion=java.awt.Toolkit.getDefaultToolkit().getScreenSize();//user screen size
+		Dimension dimDesktop=new Dimension(dimAplicacion.width-marginExternalWindowWidth, dimAplicacion.height-marginExternalWindowHeight);
+		System.out.println("Screen size: "+dimDesktop.width+", "+dimDesktop.height);
+		dimParallelCoordinatesWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.40));
+		dimHeatmapWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height)-marginInternalWindowHeight);
+		dimOverlapperWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.60)-40);
+		dimNetworkWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.66));
+		dimWordCloudWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.34));
+		dimPanelBubbles=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.34));
 		
+		initPC=new Point(0,0);
+		initHM=new Point(initPC.x+dimParallelCoordinatesWindow.width,0);
+		initO=new Point(0, initPC.y+dimParallelCoordinatesWindow.height-43);
+		initTRN=initO;
+		initWC=new Point(initO.x+dimOverlapperWindow.width,(int)(dimDesktop.height)-dimWordCloudWindow.height-32);
 		}
 	/**
 	 * Devuelve la dimension por defecto de la ventana principal de la aplicacion.
@@ -82,8 +102,8 @@ public class Configuration {
 	 * @return default <code>Dimension</code> for Parallel Coordinates Diagrams 
 	 */
 	public Dimension getSizePanelCoordenadas() {
-		return dimPanelCoordenadas;
-	}
+		return new Dimension(dimParallelCoordinatesWindow.width-marginInternalWindowWidth, dimParallelCoordinatesWindow.height-marginInternalWindowHeight);
+		}
 
 	/**
 	 * Devuelve la dimension por defecto del panel del diagrama del histograma.
@@ -91,8 +111,8 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto del panel del diagrama del histograma.
 	 */
 	Dimension getSizePanelHistograma() {
-		return dimPanelHistograma;
-	}
+		return new Dimension(dimHeatmapWindow.width-marginInternalWindowWidth, dimHeatmapWindow.height-marginInternalWindowHeight);
+		}
 
 	/**
 	 * Devuelve la dimension por defecto del panel del diagrama del mapeo de color.
@@ -118,7 +138,7 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto de la ventana de datos.
 	 */
 	Dimension getSizePanelDatos() {
-		return dimPanelDatos;
+		return dimDataWindow;
 	}
 	
 	/**
@@ -140,11 +160,11 @@ public class Configuration {
 	 * @return default <code>Dimension</code> for TRN Diagrams 
 	 */
 	public Dimension getDimPanelTRN() {
-		return dimPanelTRN;
+		return new Dimension(dimNetworkWindow.width-marginInternalWindowWidth, dimNetworkWindow.height-marginInternalWindowHeight);
 	}
 
 	void setDimPanelTRN(Dimension dimPanelTRN) {
-		this.dimPanelTRN = dimPanelTRN;
+		this.dimNetworkWindow = dimPanelTRN;
 	}
 
 	/**
@@ -153,11 +173,11 @@ public class Configuration {
 	 * @return default <code>Dimension</code> for Microarray Heatmap Diagrams 
 	 */
 	public Dimension getDimPanelHeatmap() {
-		return dimPanelHeatmap;
-	}
+		return new Dimension(dimHeatmapWindow.width-marginInternalWindowWidth, dimHeatmapWindow.height-marginInternalWindowHeight);
+		}
 
 	void setDimPanelHeatmap(Dimension dimPanelHeatmap) {
-		this.dimPanelHeatmap = dimPanelHeatmap;
+		this.dimHeatmapWindow = dimPanelHeatmap;
 	}
 
 	/**
@@ -166,8 +186,8 @@ public class Configuration {
 	 * @return default <code>Dimension</code> for BiclusVis Diagrams 
 	 */
 	public Dimension getDimPanelBiclusVis() {
-		return dimPanelBubbleGraph;
-	}
+		return new Dimension(dimOverlapperWindow.width-marginInternalWindowWidth, dimOverlapperWindow.height-marginInternalWindowHeight);
+		}
 	
 	/**
 	 * Returns the initial dimension for BiclusVis Diagrams
@@ -175,15 +195,15 @@ public class Configuration {
 	 * @return default <code>Dimension</code> for BiclusVis Diagrams 
 	 */
 	public Dimension getDimPanelWordCloud() {
-		return dimPanelWordCloud;
-	}
+		return new Dimension(dimWordCloudWindow.width-marginInternalWindowWidth, dimWordCloudWindow.height-marginInternalWindowHeight);
+		}
 	void setDimPanelWordCloud(Dimension dimPanelWords) {
-		this.dimPanelWordCloud = dimPanelWords;
+		this.dimWordCloudWindow = dimPanelWords;
 	}
 
 
 	void setDimPanelBubbleGraph(Dimension dimPanelBubbleGraph) {
-		this.dimPanelBubbleGraph = dimPanelBubbleGraph;
+		this.dimOverlapperWindow = dimPanelBubbleGraph;
 	}
 
 	Dimension getDimPanelDataSelection() {

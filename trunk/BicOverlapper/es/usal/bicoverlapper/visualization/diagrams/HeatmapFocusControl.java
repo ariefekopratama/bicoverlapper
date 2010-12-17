@@ -92,7 +92,7 @@ class HeatmapFocusControl extends FocusControl
      	{
         if ( !filterCheck(item) ) return;
        
-	        if ( UILib.isButtonPressed(e, button) &&
+	        if ( (UILib.isButtonPressed(e, button) || e.getButton()==MouseEvent.BUTTON3) &&
 	             e.getClickCount() == ccount )
 	        	{
 	        	Visualization vis = item.getVisualization();
@@ -106,7 +106,8 @@ class HeatmapFocusControl extends FocusControl
                 else if(item.getGroup().equals(fieldConditionLabels))  	condicionSeleccionada=true;
                 
                 
-	        	 if(e.isShiftDown()) //Do a search+selection of similar patterns
+	        	// if(e.isShiftDown()) //Do a search+selection of similar patterns
+                if(e.isControlDown()) //Do a search+selection of similar patterns
 		         	{
 	        		if(genSeleccionado)
 	        			{
@@ -126,13 +127,16 @@ class HeatmapFocusControl extends FocusControl
 		            	//runActivity(vis);
 	        			}
 		         	}
-	        	 else
+                else if(e.getButton()==MouseEvent.BUTTON3)
+                	{
+                	sesion.getMicroarrayData().browseEntrezGene(item.getInt("actualId"));
+                	}
+                else
 	        	 	{
 		            if ( item != curFocus ) //Añadimos al foco uno que no es el último añadido
 		            	{
-		                
-		                boolean ctrl = e.isControlDown();
-		                if ( !ctrl ) //Este es el unico que estara en el focus
+	                	//if(!e.isControlDown())
+	            		if(!e.isShiftDown())
 		                	{
 		                	curFocus = item;
 		                    clear();

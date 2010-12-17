@@ -274,6 +274,7 @@ public class Session implements KeyListener {
 			case es.usal.bicoverlapper.kernel.Configuration.PARALLEL_COORDINATES_ID:
 				ParallelCoordinatesDiagram panelC = new ParallelCoordinatesDiagram(this, dim);
 				ventana = new DiagramWindow(this,this.getDesktop(),panelC);
+				ventana.setSize(dim);
 				this.setParallelCoordinates(ventana);
 				break;
 			case es.usal.bicoverlapper.kernel.Configuration.HEATMAP_ID:

@@ -190,7 +190,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * @param dim <code>Dimension</code> with default diagram's dimensions.
 	 */
 	public ParallelCoordinatesDiagram(Session sesion, Dimension dim){
-		int num = sesion.getNumParallelCoordinatesDiagrams();
+	//public ParallelCoordinatesDiagram(Session sesion){
+			int num = sesion.getNumParallelCoordinatesDiagrams();
 		paleta[ParallelCoordinatesDiagram.colorVarSelec]=sesion.getSelectionColor().darker();
 		paleta[ParallelCoordinatesDiagram.colorBicluster]=sesion.getSelectionColor().brighter();
 		paleta[ParallelCoordinatesDiagram.colorLineaMarcada]=sesion.getHoverColor();
@@ -837,7 +838,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							float y1=(float)tuplas[i][ordenVars[j]].getY();
 							
 							if(j==0)	gpLineasSelecBic.moveTo(x1, y1);
-							else		gpLineasSelecBic.lineTo(x1, y1);
+							else		
+								gpLineasSelecBic.lineTo(x1, y1);
+//								{
+//								if(i>0)
+//									{
+//									float x0=(float)tuplas[i-1][j].getX();
+//									float y0=(float)tuplas[i-1][ordenVars[j]].getY();
+//									gpLineasSelecBic.quadTo(x0,y0,x1, y1);
+//									}
+//								}
 							}
 						}
 					}

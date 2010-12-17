@@ -874,8 +874,7 @@ private static final long serialVersionUID = 1L;
                 while ( iter.hasNext() ) 
 	            	{
                     VisualItem item = (VisualItem)iter.next();
-               System.out.println(item.getString("name"));
-	                if(nc==condOrder.length || nc==0)
+                    if(nc==condOrder.length || nc==0)
      	                {
 	                	item.setSize(normals); 
 	                	item.setEndSize(normals); 

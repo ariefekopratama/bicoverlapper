@@ -125,7 +125,9 @@ public class DualNode extends ForcedNode {
     p.rectMode(Overlapper.CENTER);
 
   	p.ellipse((float)position.getX(), (float)position.getY(), radius, radius);
-  	
+  	Color cnb=p.paleta[Overlapper.hoverNodeLabelColor];
+	p.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
+  	p.text(""+subNodes.size(), (float)position.getX(), (float)position.getY());
     this.setDrawn(true);
   }
   

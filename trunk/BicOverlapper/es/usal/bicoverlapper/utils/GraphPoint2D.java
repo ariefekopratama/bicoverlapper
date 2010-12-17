@@ -3,11 +3,12 @@ package es.usal.bicoverlapper.utils;
 
 /**
  * 2D Point with some operations implemented
+ * TODO: Mejor que usar esta usar Point2D.Double. Si acaso, cambiarla a int o short
  * @author Roberto Therón
  */
 public class GraphPoint2D implements GraphPoint{
-	private double x;
-	private double y;
+	public double x;
+	public double y;
 	
 	
   	/**
