@@ -1,9 +1,6 @@
 package es.usal.bicoverlapper.kernel.panels;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -19,15 +16,10 @@ import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import es.usal.bicoverlapper.analysis.Analysis;
 import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor;
@@ -35,7 +27,6 @@ import es.usal.bicoverlapper.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.data.MicroarrayData;
 import es.usal.bicoverlapper.data.files.BiclusterResultsFilter;
 import es.usal.bicoverlapper.kernel.Session;
-import es.usal.bicoverlapper.utils.RUtils;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -449,7 +440,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 						if(writeToFile.isSelected())	
 							{
 							try{
-								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/groupsPath.txt"));
 								defaultPath=pathReader.readLine();
 								}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
 							select.setEnabled(true);

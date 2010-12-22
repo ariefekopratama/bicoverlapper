@@ -118,7 +118,7 @@ public class DataReader {
 			if(path!=null && path.length()>0)
 				{
 				try{
-					BufferedWriter pathWriter=new BufferedWriter(new FileWriter(sesion.reader.getPath("es/usal/bicoverlapper/data/path.txt")));
+					BufferedWriter pathWriter=new BufferedWriter(new FileWriter(sesion.reader.getPath("es/usal/bicoverlapper/data/networkPath.txt")));
 					pathWriter.write(path);
 					pathWriter.close();
 					}catch(IOException ex){ex.printStackTrace();}
@@ -219,7 +219,7 @@ public class DataReader {
 			if(path!=null && path.length()>0)
 				{
 				try{
-					BufferedWriter pathWriter=new BufferedWriter(new FileWriter(sesion.reader.getPath("es/usal/bicoverlapper/data/path.txt")));
+					BufferedWriter pathWriter=new BufferedWriter(new FileWriter(sesion.reader.getPath("es/usal/bicoverlapper/data/groupsPath.txt")));
 					pathWriter.write(path);
 					pathWriter.close();
 					}catch(IOException ex){ex.printStackTrace();}

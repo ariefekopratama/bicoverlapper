@@ -753,7 +753,9 @@ public class NetworkDiagram extends Diagram {
 	/**
 	 * Notifies the end of configuration
 	 */
-	public void endConfig(){
+	public void endConfig(boolean ok){
+		if(!ok)	{configurando=false; return;}
+		
 		sesion.setSelectionColor(paleta[NetworkDiagram.selectionColor]);
 		sesion.setSearchColor(paleta[NetworkDiagram.searchColor]);
 		sesion.setHoverColor(paleta[NetworkDiagram.hoverColor]);

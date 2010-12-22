@@ -76,9 +76,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	private BufferedReader pathReader;
 	private BufferedWriter pathWriter;
 
-	private BufferedReader recentReader;
-	private BufferedWriter recentWriter;
-	
 	private MicroarrayFilter microFilter=new MicroarrayFilter();
 	
 	public Session sesion;
@@ -107,14 +104,15 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	public void actionPerformed(ActionEvent e) {
 		
 		String defaultPath="";
-		try{
-			pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
-			defaultPath=pathReader.readLine();
-			if(defaultPath==null)	defaultPath="";
-			}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
 		
 		if(e.getActionCommand().equals("Load Network"))
 		{
+			try{
+				pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/networkPath.txt"));
+				defaultPath=pathReader.readLine();
+				if(defaultPath==null)	defaultPath="";
+				}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
+			
 		JFileChooser selecFile = new JFileChooser();
 		selecFile.addChoosableFileFilter(new SyntrenFilter());
 		selecFile.addChoosableFileFilter(new GMLFilter());
@@ -134,6 +132,12 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	}
 	else if(e.getActionCommand().equals("Load Expression Data"))
 		{
+		try{
+			pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/matrixPath.txt"));
+			defaultPath=pathReader.readLine();
+			if(defaultPath==null)	defaultPath="";
+			}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
+		
 		JFileChooser selecFile = new JFileChooser();
 		selecFile.addChoosableFileFilter(microFilter);
 		File f=new File(defaultPath);
@@ -151,6 +155,12 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	}
 	else if(e.getActionCommand().equals("Load Groups"))
 		{
+		try{
+			pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/groupsPath.txt"));
+			defaultPath=pathReader.readLine();
+			if(defaultPath==null)	defaultPath="";
+			}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
+		
 		JFileChooser selecFile = new JFileChooser();
 		selecFile.addChoosableFileFilter(new BiclusterResultsFilter());
 		selecFile.setCurrentDirectory(new File(defaultPath));
@@ -288,7 +298,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			// Actualizar las ventanas activas		
 			sesion.microarrayPath=fichero.getAbsolutePath();
 			try{
-			pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/path.txt"));
+			pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/matrixPath.txt"));
 			pathWriter.write(sesion.microarrayPath);
 			pathWriter.close();
 			}catch(IOException ex){ex.printStackTrace();}
@@ -868,7 +878,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			sesion.updateData();
 			
 			try{
-				pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/path.txt"));
+				pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/networkPath.txt"));
 				pathWriter.write(path);
 				pathWriter.close();
 				}catch(IOException ex){ex.printStackTrace();}

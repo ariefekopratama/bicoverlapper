@@ -831,7 +831,8 @@ private static final long serialVersionUID = 1L;
 		}
 	
 	
-	public void endConfig(){
+	public void endConfig(boolean ok){
+		if(!ok)	{configurando=false; return;}
 		
 		System.out.println("Opción "+thresholdOption+", "+value.getText());
 		float temp=new Float(value.getText()).floatValue();

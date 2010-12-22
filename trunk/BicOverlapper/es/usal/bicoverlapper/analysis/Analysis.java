@@ -50,7 +50,7 @@ public class Analysis
 	public Analysis()
 		{
 		try{
-			BufferedReader	pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+			BufferedReader	pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/matrixPath.txt"));
 			defaultPath=pathReader.readLine();
 			startR();
 		}catch(Exception e){e.printStackTrace();}
@@ -186,7 +186,7 @@ public class Analysis
 		
 		String lowCad="TRUE";
 		if(under==false)	lowCad="FALSE";
-		if(percentage)	exp=r.eval("loma<- binarizeByPercentage(exprs(eset),"+threshold+", error=0.1, gap=(max(exprs(eset))-min(exrps(eset))/1000, low="+lowCad+")");
+		if(percentage)	exp=r.eval("loma<- binarizeByPercentage(exprs(eset),"+threshold+", error=0.1, gap=(max(exprs(eset))-min(exprs(eset))/1000, low="+lowCad+")");
 		else			exp=r.eval("loma<- binarize(exprs(eset),"+threshold+", low="+lowCad+")");
 		exp=r.eval("res <- biclust(x=loma, method=BCBimax(), minr="+minr+", minc="+minc+", number="+maxNumber+")");
 		exp=r.eval("res@Number");
@@ -261,7 +261,7 @@ public class Analysis
 		if(!matrixLoaded)	loadMatrix();
 		loadRLibrary("biclust");
 		
-		exp=r.eval("res <- biclust(x=m, method=BCPlaid(), cluster=\""+cluster+"\", row.release="+rrel+", col.release="+crel+")");
+		exp=r.eval("res <- biclust(x=exprs(eset), method=BCPlaid(), cluster=\""+cluster+"\", row.release="+rrel+", col.release="+crel+")");
 		exp=r.eval("res@Number");
 		if(exp==null)
 			{
@@ -314,6 +314,7 @@ public class Analysis
 	 */
 	public String isa2(float rowThreshold, float colThreshold, int numSeeds, String outFile, String description)
 		{
+		//TODO: ISA sometimes returns 1 column biclusters!
 		if(r==null)	
 			{
 			System.err.println("No R console");
@@ -392,7 +393,7 @@ public class Analysis
 		String boolCad="TRUE";
 		if(quantiles==false)	boolCad="FALSE";
 		
-		exp=r.eval("dima=discretize(x=m, nof="+disc+", quant="+boolCad+")");
+		exp=r.eval("dima=discretize(x=exprs(eset), nof="+disc+", quant="+boolCad+")");
 		exp=r.eval("res <- biclust(x=dima, method=BCXmotifs(), ns="+ns+", nd="+nd+", sd="+sd+", alpha="+alpha+", number="+number+")");
 		exp=r.eval("res@Number");
 		if(exp==null)
@@ -450,7 +451,7 @@ public class Analysis
 		
 		
 
-	exp=r.eval("res <- biclust(x=m, method=BCCC(), delta="+delta+", alpha="+alpha+", number="+number+")");
+	exp=r.eval("res <- biclust(x=exprs(eset), method=BCCC(), delta="+delta+", alpha="+alpha+", number="+number+")");
 	exp=r.eval("res@Number");
 	if(exp==null)
 		{

@@ -2,16 +2,19 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
-- S Remove License and Help panel by web browser
+-> Check if analysis are working after change from m to eset: everything fine except for isa and bimax
+S Move all the biclustering options to a single entry, then submenu
+S Remove License and Help panel by web browser
 - Remove Bubble map
 -> Option to write report with what's done
 -Shift+click in selection narrow the columns! (HM)
--> GSEA encapsulated. Problem due to lmPerGene factor.
+S GSEA encapsulated. Problem due to lmPerGene factor.
      S I solved it by dividing the method in two. Now I solved it to a single one!
      S Make it combinational, by now, EFV vs EF and EFV vs rest
--> Different stored favorite paths for networks, groups and matrices
+S Different stored favorite paths for networks, groups and matrices
 -> Something+click on a gene -> go to ncbi webpage searched by that gene. Via www.ncbi.nlm.nih.gov/gene/entrezID
-	S: Done for HM. Method is MicroarrayData.browseEntrezGene
+	S: Done for HM, PC in alt+click. Method is MicroarrayData.browseEntrezGene
+	-: Need to be done for N and O, at least (wordcloud for go terms?)
 	By now:
 	 -click for new selection (all except WC and PC)
 	 -drag for new selection (PC)
@@ -56,7 +59,7 @@ PC, HM -> Sort columns by different EFVs. Exhaustive check on PC, Errors in HM
 			PC if columns are sorted and then a bicluster is selected, the sorting is not kept.
 			S HM initial sorting for the whole matrix (only worked for selected biclusters, and labels). Now solved
 
-PC -> when resize: lines get out of limits, or limits shrink: solved, and data computations moved to the MicroarrayData class
+PC S -> when resize: lines get out of limits, or limits shrink: solved, and data computations moved to the MicroarrayData class
 
 BicOverlapper -> High dimensionality matrices. I'm trying with our merging, with ~50000x70, and experiencing several troubles.
 				S It's specially because of the bad use of resources on parallel coordinates, that has been to some extent reduced. 

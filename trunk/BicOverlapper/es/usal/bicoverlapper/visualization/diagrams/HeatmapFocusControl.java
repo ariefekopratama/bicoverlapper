@@ -106,8 +106,7 @@ class HeatmapFocusControl extends FocusControl
                 else if(item.getGroup().equals(fieldConditionLabels))  	condicionSeleccionada=true;
                 
                 
-	        	// if(e.isShiftDown()) //Do a search+selection of similar patterns
-                if(e.isControlDown()) //Do a search+selection of similar patterns
+	            if(e.isControlDown()) //Do a search+selection of similar patterns
 		         	{
 	        		if(genSeleccionado)
 	        			{
@@ -123,11 +122,9 @@ class HeatmapFocusControl extends FocusControl
 							}
 	                	//TODO: Progress bar or something? Takes about 10s for 6000 genes
 	                	sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
-	                	//this.addItems(genesSeleccionados, condicionesSeleccionadas);
-		            	//runActivity(vis);
 	        			}
 		         	}
-                else if(e.getButton()==MouseEvent.BUTTON3)
+                else if(e.isAltDown())
                 	{
                 	sesion.getMicroarrayData().browseEntrezGene(item.getInt("actualId"));
                 	}
