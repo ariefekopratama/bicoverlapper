@@ -72,12 +72,14 @@ public class ConfigurationMenuManager implements ActionListener{
 				if(i==posSel)	
 					panel.setSelectionColor(paleta[i]);
 			}
+			ventanaConfig.dispose();
+			panel.endConfig(true);
 		}
 		else if(botonAccion.getText() == Translator.instance.configureLabels.getString("s10")){
 			ventanaConfig.dispose();
+			panel.endConfig(false);
 		}
-		ventanaConfig.dispose();
-		panel.endConfig();
+		
 	}
 	
 	/**

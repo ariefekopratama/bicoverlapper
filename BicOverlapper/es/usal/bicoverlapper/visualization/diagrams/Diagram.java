@@ -504,7 +504,7 @@ public abstract class Diagram extends JPanel {
 	/**
 	 * Commits the color configuration changes
 	 */
-	public void endConfig(){};
+	public void endConfig(boolean ok){};
 	
 	/**
 	 * Updates the color configuration with the sesion configuration information

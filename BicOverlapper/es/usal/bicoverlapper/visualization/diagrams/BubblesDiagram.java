@@ -481,7 +481,9 @@ public class BubblesDiagram extends Diagram {
 		}	
 	}		
 	
-	public void endConfig(){
+	public void endConfig(boolean ok){
+		if(!ok)	{configurando=false; return;}
+		
 		sesion.setSelectionColor(paleta[BubblesDiagram.selectionColor]);
 		sesion.setSearchColor(paleta[BubblesDiagram.searchColor]);
 		sesion.setHoverColor(paleta[BubblesDiagram.hoverColor]);

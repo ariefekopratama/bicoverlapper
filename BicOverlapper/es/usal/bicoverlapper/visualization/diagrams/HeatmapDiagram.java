@@ -1017,8 +1017,8 @@ private static final long serialVersionUID = 1L;
 	/**
 	 * Notifies the end of configuration
 	 */
-	public void endConfig(){
-		
+	public void endConfig(boolean ok){
+		if(!ok)	{configurando=false; return;}
 		sesion.setSelectionColor(paleta[HeatmapDiagram.selectionColor]);
 		sesion.setHoverColor(paleta[HeatmapDiagram.hoverColor]);
 				
@@ -1032,40 +1032,17 @@ private static final long serialVersionUID = 1L;
 	    exprColor.setMaxScale(md.max);
 	    exprColor.setMinScale(md.min);
 	      
-      	/*exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
-      	Map m_omap = DataLib.ordinalMap(md.getExpressions(), "level");
-      	Object[] ar=m_omap.keySet().toArray();
-      	List<Object> al=Arrays.asList(ar);
-      	List<Double> ad=new ArrayList<Double>();
-      	for(Object o : al)    		
-      		{
-      		ad.add((Double)o);
-      		}
-      	Collections.sort(ad);
-      	exprColor.setOrdinalMap(ad.toArray());*/
-      //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
-		
-		
-	//	rectangleStrokeColor=new ColorAction("rectangle", VisualItem.STROKECOLOR, sesion.getSelectionColor().getRGB());
-		ActionList color = (ActionList)v.getAction("color");
+	    ActionList color = (ActionList)v.getAction("color");
 		color.remove(exprColor);
-		//color.remove(strokeColor);
 		color.add(exprColor);
-		//color.add(strokeColor);
 		
 		
 		v.putAction("color", color);
 
-		//ActionList colorRectangle= (ActionList)v.getAction("colorRectangle");
-		//colorRectangle.remove(rectangleStrokeColor);
-		//colorRectangle.add(rectangleStrokeColor);
-
-		//v.putAction("colorRectangle", colorRectangle);
 		currentLevels.numNeighbors=new Integer(((HeatmapParameterConfigurationPanel)this.getPanelParametros()).getNumNeighbors().getText()).intValue();
 		
 		
 		this.run();
-		//this.repaint();
 		sesion.updateConfigExcept(this.getName());
 		this.configurando = false;
 	}

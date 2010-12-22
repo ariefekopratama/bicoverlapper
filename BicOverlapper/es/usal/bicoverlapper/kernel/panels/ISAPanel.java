@@ -281,7 +281,7 @@ public class ISAPanel extends javax.swing.JFrame {
 						if(jCheckBox.isSelected())	
 						{
 							try{
-								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/groupsPath.txt"));
 								defaultPath=pathReader.readLine();
 							}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
 							jCheckBox1.setEnabled(true);

@@ -216,7 +216,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 						if(write.isSelected())	
 							{
 							try{
-								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+								BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/networkPath.txt"));
 								defaultPath=pathReader.readLine();
 								}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
 							write.setEnabled(true);

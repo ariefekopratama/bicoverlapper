@@ -238,6 +238,9 @@ public class BicOverlapperWindow extends JFrame{
 		AnalysisMenuManager amm = new AnalysisMenuManager(this);
 		analysisMenu=new JMenu(Translator.instance.menuLabels.getString("analysis"));
 		analysisMenu.setEnabled(false);
+		JMenu analysisMenuBiclustering =
+			new JMenu(Translator.instance.menuLabels.getString("biclustering"));
+		
 		JMenuItem menuAnalysisBimax =
 			new JMenuItem(Translator.instance.menuLabels.getString("bimax"));
 		JMenuItem menuAnalysisPlaid =
@@ -248,6 +251,12 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("xmotifs"));
 		JMenuItem menuAnalysisCChurch =
 			new JMenuItem(Translator.instance.menuLabels.getString("cc"));
+		analysisMenuBiclustering.add(menuAnalysisBimax);
+		analysisMenuBiclustering.add(menuAnalysisPlaid);
+		analysisMenuBiclustering.add(menuAnalysisISA);
+		analysisMenuBiclustering.add(menuAnalysisXMotifs);
+		analysisMenuBiclustering.add(menuAnalysisCChurch);
+		
 		JMenuItem menuAnalysisSearch =
 			new JMenuItem(Translator.instance.menuLabels.getString("search"));
 		JMenuItem menuAnalysisShow =
@@ -274,12 +283,7 @@ public class BicOverlapperWindow extends JFrame{
 		analysisMenu.add(menuAnalysisSelect);
 		analysisMenu.add(menuAnalysisDifexp);
 		analysisMenu.add(menuAnalysisGSEA);
-		analysisMenu.addSeparator();
-		analysisMenu.add(menuAnalysisBimax);
-		analysisMenu.add(menuAnalysisPlaid);
-		analysisMenu.add(menuAnalysisISA);
-		analysisMenu.add(menuAnalysisXMotifs);
-		analysisMenu.add(menuAnalysisCChurch);
+		analysisMenu.add(analysisMenuBiclustering);
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisBuildNetwork);
 				

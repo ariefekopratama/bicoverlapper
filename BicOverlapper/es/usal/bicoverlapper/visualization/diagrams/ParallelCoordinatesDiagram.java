@@ -112,6 +112,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private boolean settingSlope;
 	private Point p2;
 
+	private boolean browsing=false;
+
 	
 	// atributos propios de la representacion del diagrama
 	private int longEjeX;
@@ -1348,6 +1350,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 */
 	public void configure(){
 		if(!configurando){
+			
 			configurando = true;
 			
 			// Obtenemos y configuramos la ventana de configuracion
@@ -1363,16 +1366,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			this.crearPanelParametros();
 			
 			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
-		//	JPanel panelAnclajes = this.getPanelAnclajes(sesion, gestor);
-		//	JPanel panelParametros = this.getPanelParametros();
 			JPanel panelBotones = this.getPanelBotones(gestor);
 			
 			// Configuramos la ventana de configuracion
-			
 			this.initPanelConfig(panelColor, null, null, panelBotones);
 							
 			// Mostramos la ventana de configuracion
-			
 			ventanaConfig.setLocation(getPosition());
 			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1")+" "+this.getName());
 			sesion.getDesktop().add(ventanaConfig);
@@ -1388,12 +1387,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	/**
 	 * Notifies the end of configuration
+	 * ok - if true, the configuration must end with a change in configuration parameteres
 	 */
-	public void endConfig(){
-		sesion.setSelectionColor(paleta[ParallelCoordinatesDiagram.colorVarSelec]);
-		sesion.updateConfigExcept(this.getName());
-		repaintAll=true;
-		paintComponent(getGraphics());
+	public void endConfig(boolean ok){
+		if(ok)
+			{
+			sesion.setSelectionColor(paleta[ParallelCoordinatesDiagram.colorVarSelec]);
+			sesion.updateConfigExcept(this.getName());
+			repaintAll=true;
+			paintComponent(getGraphics());
+			}
 		this.configurando = false;
 	}
 	
@@ -1430,16 +1433,29 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	                                break;
 	                                }
 	                            }
+	                         
+	            			System.out.println("tupla es "+tuplaSeleccionada);
 	                        if(tuplaSeleccionada != -1)
 	                        		{
-	                        		LinkedList<Integer> genes=new LinkedList<Integer>();
-	                        		LinkedList<Integer> conditions=new LinkedList<Integer>();
-	                        		genes.add(tuplaSeleccionada);
-	                        		for(int k=0;k<numC;k++)
-			        						conditions.add(Integer.valueOf(ordenVars[k]));
-			        				sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
-	        						tuplaSeleccionada=-1;
-			        				update();
+		                        	if(e.isAltDown())
+			                			{
+			                	    	browsing=true;
+			                	    	System.out.println("Browsing "+tuplaSeleccionada);
+			                	    	sesion.getMicroarrayData().browseEntrezGene(tuplaSeleccionada);
+			                	    	return;
+			                			}
+		                        	else
+		                        		{
+			            				browsing=false;
+				            			LinkedList<Integer> genes=new LinkedList<Integer>();
+		                        		LinkedList<Integer> conditions=new LinkedList<Integer>();
+		                        		genes.add(tuplaSeleccionada);
+		                        		for(int k=0;k<numC;k++)
+				        						conditions.add(Integer.valueOf(ordenVars[k]));
+				        				sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
+		        						tuplaSeleccionada=-1;
+				        				update();
+				        				}
 	        						break;
 	                    			}
 	             		}                     
@@ -1547,11 +1563,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					}
 				}
 			
+		
 		repaintAll=true;
 		
 		for(int j=0;j<numC;j++)
 			conditions.add(Integer.valueOf(j));
 		
+		
+
 
 		sesion.setSelectedBiclustersExcept(new Selection(genes,conditions), "arallel");
 		//update();
@@ -1570,6 +1589,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	// Clase gestora del cambio de variables (cambia las posiciones de los ejes)
 	private class GestorCambioVars implements MouseListener, MouseMotionListener{
 
+		
 		public void mouseClicked(MouseEvent e) {}
 
 		public void mousePressed(MouseEvent e) {
@@ -1612,42 +1632,32 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				
 				if(posSeleccionada != nuevaPosicion)
 					{
-					int[] aux = new int[numC];
-					aux[nuevaPosicion] = varSeleccionada;
-										
-					if(nuevaPosicion < posSeleccionada){
-						
-						for(int i = nuevaPosicion+1; i < (posSeleccionada+1); i++){
-							aux[i] = ordenVars[i-1];							
+						{
+						int[] aux = new int[numC];
+						aux[nuevaPosicion] = varSeleccionada;
+											
+						if(nuevaPosicion < posSeleccionada){
+							
+							for(int i = nuevaPosicion+1; i < (posSeleccionada+1); i++){
+								aux[i] = ordenVars[i-1];							
+							}
+							
+							for(int i = nuevaPosicion; i < (posSeleccionada+1); i++){
+								ordenVars[i] = aux[i];
+							}
 						}
-						
-						for(int i = nuevaPosicion; i < (posSeleccionada+1); i++){
-							ordenVars[i] = aux[i];
-						}
-					}
-					else{
-						
-						for(int i = posSeleccionada; i < nuevaPosicion; i++){
-							aux[i] = ordenVars[i+1];
-						}
-						
-						for(int i = posSeleccionada; i < (nuevaPosicion+1); i++){
-							ordenVars[i] = aux[i];
+						else{
+							
+							for(int i = posSeleccionada; i < nuevaPosicion; i++){
+								aux[i] = ordenVars[i+1];
+							}
+							
+							for(int i = posSeleccionada; i < (nuevaPosicion+1); i++){
+								ordenVars[i] = aux[i];
+							}
 						}
 					}
 
-					/*double auxCotaSup = cotaSup[posSeleccionada], auxCotaInf = cotaInf[posSeleccionada];
-					cotaSup[posSeleccionada] = cotaSup[nuevaPosicion];
-					cotaSup[nuevaPosicion] = auxCotaSup;
-					cotaInf[posSeleccionada] = cotaInf[nuevaPosicion];
-					cotaInf[nuevaPosicion] = auxCotaInf;
-					
-					double auxYSup = scrollSup[posSeleccionada].y, auxYInf = scrollInf[posSeleccionada].y;
-					scrollSup[posSeleccionada].y = scrollSup[nuevaPosicion].y;
-					scrollSup[nuevaPosicion].y = auxYSup;
-					scrollInf[posSeleccionada].y = scrollInf[nuevaPosicion].y;
-					scrollInf[nuevaPosicion].y = auxYInf;
-					*/
 					actualizarTuplas=true;
 				}
 				ejeReferencia = null;
@@ -1656,11 +1666,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				gpLineasFondo=null;
 				
 				atributosIniciados = false;
-				//calcularAtributos();
-				//trasladarScrolls();
 				atributosIniciados = true;
 				repaintAll=true;
-				//update();
 				repaint();
 				
 			}
