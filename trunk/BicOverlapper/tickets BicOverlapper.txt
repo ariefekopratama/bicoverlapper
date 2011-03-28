@@ -2,11 +2,45 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
--> Check if analysis are working after change from m to eset: everything fine except for isa and bimax
+-
+- Download from AE: Check different experiments: currently ArrayExpress() only works for raw data from 96% of platforms...
+		- Progress bar
+		- Testing with simple, 4 samples, MEXP, Sc experiments:
+		- E-MEXP-328, 1498 works (YGS98)
+		- E-MEXP-2678 works (Yeast_2)
+		
+		- E.MEXP-906		-> ArrayExpress R package
+		- E-MEXP-919 fails  -> ArrayExpress R package
+		- 
+-> Session one session per microarray data load is working fine, except for the related R matrix. We can only have one console, so only the last R matrix is running.
+			S we should solve that with several R matrix with different names.
+			Now it loads and separates perfectly (on R and on Java level different sessions with different data, all with a single R console but storing different R matrices
+			S Biclustering/TRN results titles wont's go to the active working desktop but to the first one (however results are perfectly loaded)
+			-> Diselect menu options depending on the active workshop --> BicOverlapper.initDesktop
+			-> In the end, proper control of changes between tabs.
+-> GSEA and DEA only work if you have replicates... -> allow GSEA-like analysis just with profile selection? workaround for limma/gsea to work with a single replicate
+		The best way is ot provide a method of merging samples by EF, and then apply GSEA.
+D Sort: numeric problem -> there's a walkaround if resorted by the columnID
+-> Overlapper: towards a drastic simplification of the view:
+		- Exhaustive checking for bugs
+		- Optimize forces (+- done)
+		S Remove/simplify options bar
+		S Display by default dual node setting
+		S Selection of groups on dual node setting
+		S Selection of groups with line drawing
+		S Drag dual nodes
+		S Not to show gene/cond labels if not asked for it
+		S Show bicluster names by default?
+-> Overlapper: zoom: almost solved but there's still some displacement 
+S Analysis.loadMatrix now computes median, quantiles and outliers (it is used by now only by PC.drawBoxplots)
+S PC now have the option to draw boxplots
+S Bicluster filtering problems solved
+S Check if analysis are working after change from m to eset: everything fine except for isa and bimax
 S Move all the biclustering options to a single entry, then submenu
+----
 S Remove License and Help panel by web browser
-- Remove Bubble map
--> Option to write report with what's done
+D Remove Bubble map -> let's keep it by now
+-> Option to write report with what's done (Juantxi)
 -Shift+click in selection narrow the columns! (HM)
 S GSEA encapsulated. Problem due to lmPerGene factor.
      S I solved it by dividing the method in two. Now I solved it to a single one!
@@ -27,14 +61,14 @@ S Different stored favorite paths for networks, groups and matrices
 	 
 	  -Right click on background to get visualization options (HM, PC)
 	  
--> Session - After closing a dataset, the program freezes when opening a new one
+S Session - After closing a dataset, the program freezes when opening a new one.
+				It was because we tried to reopen R console. Only one console will be running, despite of the number of datasets opened
 S Data - MAPK1 (ENSG00000100030) fails when retrieving its go terms via biomaRt.
 		Solved, there was a problem with single gene search, that returned a matrix instead of a list
 S Analysis - differential expression analysis. Close to solution.
 			S 1) Done efv vs efv
 			S 2) Done ef vs efv
 			S 3) Not done ef vs ef
-Data -		Close session properly when a new matrix is loaded. I think it's ok now
 S Data - 	Direct download from ArrayExpress (raw) + process it and save in the BicOverlapper format.
 Data - 		One step beyond, direct download and preprocessing of several experiments, either by ID list or by descriptive name!
 

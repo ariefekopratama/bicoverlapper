@@ -422,15 +422,11 @@ public class BimaxPanel{
 			jButton1.setText("Run Bimax");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
+					session=session.mainWindow.getActiveWorkDesktop().getSession();
 					if(session!=null)	
 						{
 						Analysis b=session.analysis;
-					    if(b.r==null)
-					    	{
-					    	b.loadRscripts();
-					    	b.loadMatrix();
-					    	}
-						
+					    
 						String fileName="";
 						if(resultsFile!=null)			
 							{

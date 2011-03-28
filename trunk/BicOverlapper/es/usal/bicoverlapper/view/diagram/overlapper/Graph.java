@@ -441,6 +441,13 @@ public class Graph {
   public Map<String,Node> getNodes() {
     return nodes;
   }
+  /**
+   * Returns all non-center nodes in this graph
+   * @return A map with all nodes in the graph. The key is a String with node labels
+   */
+  public Map<Integer,DualNode> getDualNodes() {
+    return dualNodes;
+  }
   
   /**
    * Add a center node to the Graph. A center node is a dummy node, that can be used as centroid for a group.
@@ -534,7 +541,7 @@ public class Graph {
 						if(bv.isDrawClusterLabels())	c.drawHullLabels();
 						break;
 					case NODELABEL:
-						if(bv.isShowLabel())			c.drawNodeLabels();
+						if(bv.isShowLabel() && !bv.drawDual)			c.drawNodeLabels();
 						break;
 					case EDGE:
 						if(bv.isShowEdges())
@@ -1794,8 +1801,12 @@ public void addSelectedNodes(Map<String,Node> selectedNodes)
 	this.selectedNodes.putAll(selectedNodes);
 	}
 public void addSelectedDualNode(DualNode dn)
+{
+selectedDualNodes.put(dn.label, dn);
+}
+public Map<String,DualNode> getSelectedDualNodes()
 	{
-	selectedDualNodes.put(dn.label, dn);
+	return selectedDualNodes;
 	}
 /**
  * Returns all selected clusters
@@ -2785,12 +2796,12 @@ void buildCompleteDualGraph()
 						SpringEdge e=new SpringEdge(dn, dn2);
 						e.setGraph(this);
 						//e.nl=this.getApplet().getEdgeLength()+(dn.getGroupRadius()+dn2.getGroupRadius());
-						e.nl=(dn.getGroupRadius()+dn2.getGroupRadius())*1.5;
+						e.nl=(dn.getGroupRadius()+dn2.getGroupRadius())*1.1;
 						//e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size();
 						int clustersInCommon=dn2.clustersInCommon(dn);
 						//e.k=this.getApplet().getStiffness()*dn.subNodes.size()*dn2.subNodes.size();
 						e.k=this.getApplet().getStiffness()*clustersInCommon*(dn.subNodes.size()+dn2.subNodes.size());
-						e.width=clustersInCommon-1;
+						e.width=clustersInCommon;
 						//System.out.println("Longitud para edge de "+e.nl+", radios de "+dn.getGroupRadius()+" y "+dn2.getGroupRadius());
 						if(!dualEdges.containsValue(e) && !dualEdges.containsValue(new SpringEdge(dn2, dn)))	
 							{

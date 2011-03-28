@@ -77,6 +77,7 @@ public class Configuration {
 		initO=new Point(0, initPC.y+dimParallelCoordinatesWindow.height-43);
 		initTRN=initO;
 		initWC=new Point(initO.x+dimOverlapperWindow.width,(int)(dimDesktop.height)-dimWordCloudWindow.height-32);
+		initBM=initO;
 		}
 	/**
 	 * Devuelve la dimension por defecto de la ventana principal de la aplicacion.

@@ -129,7 +129,7 @@ public class DataReader {
 			else			
 				{
 				JDesktopPane p=window.getActiveWorkDesktop().getPanel();
-				String title=window.getDesktop().getTitleAt(0);
+				String title=window.getDesktop().getTitleAt(window.getDesktop().getSelectedIndex());
 				if(title.contains(".bic") || title.contains(".tmp"))
 					{
 					if(title.endsWith(".bic") || title.endsWith(".tmp"))
@@ -139,7 +139,7 @@ public class DataReader {
 						}
 					}
 				title=title+" | "+fichero.getName();
-				window.getDesktop().setTitleAt(0, title);
+				window.getDesktop().setTitleAt(window.getDesktop().getSelectedIndex(), title);
 				p.setName(title);
 				}
 			}
@@ -230,7 +230,8 @@ public class DataReader {
 			else			
 				{
 				JDesktopPane p=window.getActiveWorkDesktop().getPanel();
-				String title=window.getDesktop().getTitleAt(0);
+				
+				String title=window.getDesktop().getTitleAt(window.getDesktop().getSelectedIndex());
 				if(title.contains(".bic") || title.contains(".tmp"))
 					{
 					if(title.endsWith(".bic") || title.endsWith(".tmp"))
@@ -242,7 +243,7 @@ public class DataReader {
 				title=title+" | "+fileName;
 				//window.getDesktop().setTitleAt(0, p.getName()+" | "+fileName);
 				//p.setName(p.getName()+" | "+fileName);
-				window.getDesktop().setTitleAt(0, title);
+				window.getDesktop().setTitleAt(window.getDesktop().getSelectedIndex(), title);
 				p.setName(title);
 				}
 			}

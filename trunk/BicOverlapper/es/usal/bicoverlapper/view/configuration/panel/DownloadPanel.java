@@ -50,17 +50,6 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 	private FileMenuManager fmm;
 	private JLabel jLabel1;
 
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(new DownloadPanel());
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-	}
 	
 	public DownloadPanel() {
 		super();
@@ -82,6 +71,7 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 				name = new JLabel();
 				getContentPane().add(name, new CellConstraints("1, 1, 1, 1, default, default"));
 				name.setText("Accession name of the experiment (e.g. E-MEXP-328)   ");
+				name.setToolTipText("Only experiments with raw data from main platforms are supported in the current version");
 				name.setBounds(6, 10, 368, 14);
 			}
 			{
@@ -137,7 +127,7 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 			JFileChooser selecFile = new JFileChooser();
 			selecFile.addChoosableFileFilter(new TextFileFilter());
 			try{
-				BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+				BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/matrixPath.txt"));
 				selecFile.setCurrentDirectory(new File(pathReader.readLine()));
 				}catch(Exception ex){ex.printStackTrace();}
 			
@@ -171,7 +161,7 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 		if(jTextField1.equals(arg0.getSource()))
 	    	{
 	    	try{
-	    	BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/path.txt"));
+	    	BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/matrixPath.txt"));
 			String defaultPath=pathReader.readLine();
 			defaultPath=defaultPath.replace("\\", "/");
 			defaultPath=defaultPath.substring(0, defaultPath.lastIndexOf("/"))+"/";

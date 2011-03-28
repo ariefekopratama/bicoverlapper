@@ -11,6 +11,7 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.RenderingHints;
+import java.awt.Stroke;
 import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -18,6 +19,7 @@ import java.awt.event.MouseMotionListener;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
@@ -111,6 +113,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	
 	private Point p1;
 	private boolean settingSlope;
+	private boolean drawBox=true; //true if we draw boxplots, false if we draw density areas
 	private Point p2;
 
 	private boolean browsing=false;
@@ -301,20 +304,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	    
 	if(repaintAll)	//Repintamos toda la pantalla
 		{
-	//	System.out.println("FULL REDRAW");
-		
 		long t=System.currentTimeMillis();
 		drawFondo((Graphics2D)g);
-		//System.out.println("drawBackground took "+(System.currentTimeMillis()-t)/1000.0);
 		t=System.currentTimeMillis();
 		
 		if(sesion.areMicroarrayDataLoaded())
 			{
 			drawLineas(gbBuffer);
-	
 			this.diagramaPintado = true;
 			}
-		//System.out.println("drawLines took "+(System.currentTimeMillis()-t)/1000.0);
 		t=System.currentTimeMillis();
 		
 		//		 Se ha creado la gráfica completa ya no se debe hacer otro repintado
@@ -329,25 +327,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		img  = createImage(backBuffer.getSource());
 		// Intercambio la imagen (rendering de doble buffer)
 		g.drawImage(backBuffer,0,0,this);	  
-	
-		//System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-		
 		drawScrolls((Graphics2D)g);
-		
-		//System.out.println("drawScrolls took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
 		
 		drawEjes((Graphics2D)g);
 		
-		//System.out.println("drawAxes took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
 		drawEtiquetas((Graphics2D)g);
-		
-		//System.out.println("drawLabels took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
 		}
 	else	//Son cambios menores, no hace falta repintar todo
 		{
@@ -357,26 +341,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		//dibujo la base (las líneas)
      	gbBuffer.drawImage(img,0,0,this);
      	
-     	//System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
-     	//ahora dibujo todo lo demás, que no es necesario meterlo en la imagen
+      	//ahora dibujo todo lo demás, que no es necesario meterlo en la imagen
      	//(además, si meto los scrols, por ejemplo, luego se me duplicarían al moverlos)
      	drawScrolls(gbBuffer);
      	
-     	//System.out.println("drawScrolls took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
-		drawEjes(gbBuffer);
-		
-		//System.out.println("drawAxes took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
+     	drawEjes(gbBuffer);
+     	
 		drawEtiquetas(gbBuffer);
 		
-		//System.out.println("drawLabels took "+(System.currentTimeMillis()-t)/1000.0);
-		t=System.currentTimeMillis();
-	
 		g.drawImage(backBuffer, 0,0,this);
 		scrollMoved=false;
 		
@@ -622,10 +594,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			else
 				g2.drawImage(scrollDown, (int)scrollSup[i].getX(), (int)scrollSup[k].getY(), null);
 			
-			//Rectangle2D.Double r2=(Rectangle2D.Double)scrollInf[i].clone();
-			//r2.y=scrollInf[k].y;
-			//g2.draw(r2);
-			//g2.draw(scrollInf[k]);
 			if((varScroll == i) && (scrollPos== Inf))
 				g2.drawImage(scrollSelecUp, (int)scrollInf[i].getX(), (int)scrollInf[k].getY(), null);
 			else
@@ -638,6 +606,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void drawEtiquetas(Graphics2D g2) {
 		double altoTexto;
 		double anchoTexto;
+		System.out.println("DRAW ETIQUETAS");
 		
 		// representamos la cota asociada con el scroll fijado
 		if(scrollFijado && (varScroll != -1))
@@ -692,6 +661,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		else			sele = new TextLayout("selected: 0", g2.getFont(), g2.getFontRenderContext());	
 		altoTexto = sele.getBounds().getHeight();
 		anchoTexto = sele.getBounds().getWidth();
+		System.out.println("imprimimos: sele a "+(ancho-anchoTexto-10)+", "+10);
 		sele.draw(g2,(float)(ancho-anchoTexto-10), (float)(10));
 		
 		// representamos los valores de referencia de la escala
@@ -742,7 +712,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			minimo.draw(g2,x,(float)(alto-margenInf));
 			}
 			
-		//imag2.setFont(oldFont);
 		g2.setFont(new Font("Arial",Font.BOLD,11));			
 
 		// representamos las etiquetas de las condiciones
@@ -789,7 +758,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 	private void drawLineas(Graphics2D g2) {
-		
+		System.out.println("DRAW LINEAS");
 		GeneralPath gpLineas=new GeneralPath();
 		GeneralPath gpLineasSelec=new GeneralPath();
 		GeneralPath gpLineasSelecBic=new GeneralPath();
@@ -843,14 +812,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							if(j==0)	gpLineasSelecBic.moveTo(x1, y1);
 							else		
 								gpLineasSelecBic.lineTo(x1, y1);
-//								{
-//								if(i>0)
-//									{
-//									float x0=(float)tuplas[i-1][j].getX();
-//									float y0=(float)tuplas[i-1][ordenVars[j]].getY();
-//									gpLineasSelecBic.quadTo(x0,y0,x1, y1);
-//									}
-//								}
 							}
 						}
 					}
@@ -891,99 +852,21 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			    qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 			    gbTemp.setRenderingHints(qualityHints);   
 			drawFondo(gbTemp);
-			int maxFold=2;
-			for(int s=maxFold;s>=0;s--)
-				{
-				int []px=new int[numC*2];
-				int []py=new int[numC*2];
-				//if(ejesRelativos)
-					{
-					for(int i=0;i<numC;i++)	//upper points
-						{
-						int k=ordenVars[i];
-						//double val=Math.min(sesion.getMicroarrayData().averageCols[k]+sesion.getMicroarrayData().sdCols[k]*(s+1), sesion.getMicroarrayData().maxCols[k]);
-						double val=Math.min(sesion.getMicroarrayData().averageCols[k]+sesion.getMicroarrayData().sdCols[k]*(s+1), max[k]);
-						//py[i]=(int)(Math.max(margenSup+(sesion.getMicroarrayData().maxCols[k]-val)*ratio[k], margenSup));
-						py[i]=(int)(Math.max(margenSup+(max[k]-val)*ratio[k], margenSup));
-						px[i]=(int)(margenIzq+intervaloVar*i);
-						}
-					for(int i=0;i<numC;i++)	//lower points
-						{
-						int c=numC-i-1;
-						int k=ordenVars[c];
-						//double val=Math.max(sesion.getMicroarrayData().averageCols[k]-sesion.getMicroarrayData().sdCols[k]*(s+1), sesion.getMicroarrayData().minCols[k]);
-						double val=Math.max(sesion.getMicroarrayData().averageCols[k]-sesion.getMicroarrayData().sdCols[k]*(s+1), min[k]);
-						//py[i+numC]=(int)(Math.min(margenSup+(sesion.getMicroarrayData().maxCols[k]-val)*ratio[k], margenSup+this.longEjeY));
-						py[i+numC]=(int)(Math.min(margenSup+(max[k]-val)*ratio[k], margenSup+this.longEjeY));
-						px[i+numC]=(int)(margenIzq+intervaloVar*(c));
-						}
-					}
-				/*else
-					{
-					for(int i=0;i<numC;i++)	//upper points
-						{
-						int k=ordenVars[i];
-						double val=Math.min(sesion.getMicroarrayData().averageCols[k]+sesion.getMicroarrayData().sdCols[k]*(s+1), sesion.getMicroarrayData().maxCols[k]);
-						py[i]=(int)(Math.max(margenSup+(sesion.getMicroarrayData().max-val)*ratio[k], margenSup));
-						px[i]=(int)(margenIzq+intervaloVar*i);
-						}
-					for(int i=0;i<numC;i++)	//lower points
-						{
-						int c=numC-i-1;
-						int k=ordenVars[c];
-						double val=Math.max(sesion.getMicroarrayData().averageCols[k]-sesion.getMicroarrayData().sdCols[k]*(s+1), sesion.getMicroarrayData().minCols[k]);
-						py[i+numC]=(int)(Math.min(margenSup+(sesion.getMicroarrayData().max-val)*ratio[k], margenSup+this.longEjeY));
-						px[i+numC]=(int)(margenIzq+intervaloVar*(c));
-						}
-					}*/
-				int grey=220-40*(maxFold-s);
-				gbTemp.setPaint(new Color(grey,grey,grey));
-				gbTemp.fillPolygon(px,py,px.length);
-				}//OK
 			
-			if(min!=null && max!=null)
-				{
-				int []linex=new int[numC];
-				upy=new int[numC];
-				doy=new int[numC];
-				int [] meany=new int[numC];
-				int grey=170;
-				for(int i=0;i<numC;i++)
-					{
-					/*
-					 * int k=ordenVars[i];
-					upy[i]=(int)(Math.max(margenSup+(sesion.getMicroarrayData().maxCols[k]-max[k])*ratio[k], margenSup));
-					linex[i]=(int)(margenIzq+intervaloVar*i);
-					doy[i]=(int)(Math.min(margenSup+(sesion.getMicroarrayData().maxCols[k]-min[k])*ratio[k], margenSup+this.longEjeY));
-					meany[i]=(int)(Math.min(margenSup+(sesion.getMicroarrayData().maxCols[k]-sesion.getMicroarrayData().averageCols[k])*ratio[k], margenSup+this.longEjeY));
-					
-					 */
-					int k=ordenVars[i];
-					upy[i]=(int)(Math.max(margenSup+(max[k]-sesion.getMicroarrayData().maxCols[k])*ratio[k], margenSup));
-					linex[i]=(int)(margenIzq+intervaloVar*i);
-					doy[i]=(int)(Math.min(margenSup+(max[k]-sesion.getMicroarrayData().minCols[k])*ratio[k], margenSup+this.longEjeY));
-					meany[i]=(int)(Math.min(margenSup+(max[k]-sesion.getMicroarrayData().averageCols[k])*ratio[k], margenSup+this.longEjeY));
-					}
-				gbTemp.setPaint(new Color(grey,grey,grey));
-				gbTemp.drawPolyline(linex,upy,linex.length);
-				gbTemp.drawPolyline(linex,doy,linex.length);
-				gbTemp.setPaint(new Color(240,240,240));
-				gbTemp.drawPolyline(linex,meany,linex.length);
-				}//OK
+			//drawEjes(gbTemp);
+			//drawDensityAreas(gbTemp);
+			if(drawBox)	drawBoxplots(gbTemp);
+			else		drawDensityAreas(gbTemp);
+				
 			}
 		
 		
-		//System.out.println("---Time to draw background shapes"+(System.currentTimeMillis()-t2)/1000.0);
-		t2=System.currentTimeMillis();
 		g2.drawImage(imgFondo,0,0,this);
 	
-		t2=System.currentTimeMillis();
-		if(this.settingSlope && p1!=null && p2!=null)
-			g2.draw(new Line2D.Float(p1.x, p1.y, p2.x, p2.y));
+		//TODO: improve or remove slope selection
+		//if(this.settingSlope && p1!=null && p2!=null)
+		//	g2.draw(new Line2D.Float(p1.x, p1.y, p2.x, p2.y));
 		
-		//System.out.println("---Time to draw slope"+(System.currentTimeMillis()-t2)/1000.0);
-		t2=System.currentTimeMillis();
-	
 		if(selecBic==null)
 			{
 			g2.setPaint(this.sesion.getSelectionColor());
@@ -1028,9 +911,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			}
 		
 		
-		//System.out.println("---Time to draw selected lines"+(System.currentTimeMillis()-t2)/1000.0);
-		t2=System.currentTimeMillis();
-	
 		if(tuplaSeleccionada > -1)
 			{
 			g2.setPaint(paleta[colorLineaMarcada]);
@@ -1041,12 +921,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				}
 			g2.setStroke(new BasicStroke(1f)); 
 			}
-		
-		//System.out.println("---Time to draw hovered line"+(System.currentTimeMillis()-t2)/1000.0);
-		t2=System.currentTimeMillis();
-	
-		//System.out.println("Draw lineas tarda "+(t2-t1)/1000);
-	}
+		}
 
 	//As above, but gives only the line between the corresponding vars
 	private GeneralPath getLine(int i, int beginVar, int endVar)
@@ -1066,6 +941,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	
 	private void drawFondo(Graphics2D g2) {
+		System.out.println("DRAW FONDO");
 		g2.setPaint(paleta[colorFondo]);
 	    Rectangle2D.Double fondo =
 			new Rectangle2D.Double(0,0,ancho,alto);
@@ -1074,23 +950,184 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	}
 	
 	private void drawEjes(Graphics2D g2) {
-				
+				System.out.println("DRAW EJES");
 		g2.setPaint(paleta[colorEje]);
 		
 		for(int i = 0; i < numC; i++){
 			Line2D.Double ejeY = new Line2D.Double(margenIzq+intervaloVar*i,margenSup,
 										   margenIzq+intervaloVar*i,alto-margenInf);
 			ejesVars[i] = ejeY;
-			g2.draw(ejeY);
+			if(!drawBox)	g2.draw(ejeY);
+			
 		}
-		Line2D.Double ejeX = new Line2D.Double(margenIzq,alto-margenInf,ancho-margenDer,alto-margenInf);
+		/*Line2D.Double ejeX = new Line2D.Double(margenIzq,alto-margenInf,ancho-margenDer,alto-margenInf);
 		g2.draw(ejeX);
 		if(ejeReferencia != null){
 			g2.setPaint(paleta[colorEjeSelec]);
 			g2.draw(ejeReferencia);
-		}
+		}*/
 	}
 		
+	/**
+	 * A mix of drawEjes and drawLineas that draws boxplots, maybe something more familiar to microarray analysts
+	 * Typically, a boxplot uses median and percentiles 25th and 75th. Our boxplot, by now, is using mean and
+	 * +- 1 standard deviation.
+	 * TODO: use median and percentiles instead of mean and deviations
+	 * @param g2
+	 */
+	private void drawBoxplots(Graphics2D g2) {
+		
+		g2.setPaint(paleta[colorEje]);
+		upy=new int[numC];
+		doy=new int[numC];
+		float dash1[] = {10.0f};
+	
+		BasicStroke dashed = new BasicStroke(1.0f,
+	                                          BasicStroke.CAP_BUTT,
+	                                          BasicStroke.JOIN_MITER,
+	                                          10.0f, dash1, 0.0f);
+	    Stroke stant=g2.getStroke();
+	
+		for(int i = 0; i < numC; i++)
+			{
+			//Dibujamos el eje, invisible en este caso
+			Line2D.Double ejeY = new Line2D.Double(margenIzq+intervaloVar*i,margenSup,
+										   margenIzq+intervaloVar*i,alto-margenInf);
+			ejesVars[i] = ejeY;
+			g2.setColor(Color.WHITE);
+			g2.draw(ejeY);
+			g2.setColor(Color.BLACK);
+			
+			
+			double w=intervaloVar*0.5;
+			
+			int k=ordenVars[i];
+			upy[i]=(int)(Math.max(margenSup+(max[k]-sesion.getMicroarrayData().maxCols[k])*ratio[k], margenSup));
+			doy[i]=(int)(Math.min(margenSup+(max[k]-sesion.getMicroarrayData().minCols[k])*ratio[k], margenSup+this.longEjeY));
+			
+			//With mean and sd
+			/*
+			double mean=sesion.getMicroarrayData().averageCols[k];
+			double sd=sesion.getMicroarrayData().sdCols[k];
+			double bottom=Math.min(mean-sd, max[k]);
+			double middle=Math.min(mean, max[k]);
+			double top=Math.min(mean+sd, max[k]);
+			double totalBottom=Math.min(sesion.getMicroarrayData().minCols[k], max[k]);
+			double totalTop=Math.min(sesion.getMicroarrayData().maxCols[k], max[k]);
+			double y1=(int)(Math.max(margenSup+(max[k]-top)*ratio[k], margenSup));
+			double y2=(int)(Math.max(margenSup+(max[k]-bottom)*ratio[k], margenSup));
+			double x=margenIzq+intervaloVar*i-intervaloVar*0.25;
+			*/
+			
+			//with median and quantiles
+			if(sesion.getMicroarrayData().median==null)	
+				sesion.analysis.loadMatrix(sesion.getMicroarrayData().name);
+			double median=sesion.getMicroarrayData().median[k];
+			double q75=sesion.getMicroarrayData().q75[k];
+			double q25=sesion.getMicroarrayData().q25[k];
+			double bottom=Math.min(q25, max[k]);
+			double middle=Math.min(median, max[k]);
+			double top=Math.min(q75, max[k]);
+			//double totalBottom=Math.min(sesion.getMicroarrayData().minCols[k], max[k]);
+			//double totalTop=Math.min(sesion.getMicroarrayData().maxCols[k], max[k]);
+			double totalBottom=Math.min(q25-sesion.getMicroarrayData().iqr[k]*sesion.getMicroarrayData().whiskerRange, max[k]);	//not the absolute min/max but a factor*IQR
+			double totalTop=Math.min(q75+sesion.getMicroarrayData().iqr[k]*sesion.getMicroarrayData().whiskerRange, max[k]);
+			double y1=(int)(Math.max(margenSup+(max[k]-top)*ratio[k], margenSup));
+			double y2=(int)(Math.max(margenSup+(max[k]-bottom)*ratio[k], margenSup));
+			double x=margenIzq+intervaloVar*i-intervaloVar*0.25;
+			
+			
+			//Drawing whiskers
+		    g2.setStroke(dashed);
+			Line2D.Double l=new Line2D.Double(x+intervaloVar*0.25,margenSup+(max[k]-totalTop)*ratio[k],x+intervaloVar*0.25,margenSup+(max[k]-top)*ratio[k]);
+			g2.draw(l);
+			g2.setStroke(stant);
+			l=new Line2D.Double(x+intervaloVar*0.15,margenSup+(max[k]-totalTop)*ratio[k],x+intervaloVar*0.35,margenSup+(max[k]-totalTop)*ratio[k]);
+			g2.draw(l);
+			
+			g2.setStroke(dashed);
+			l=new Line2D.Double(x+intervaloVar*0.25,margenSup+(max[k]-bottom)*ratio[k],x+intervaloVar*0.25,margenSup+(max[k]-totalBottom)*ratio[k]);
+			g2.draw(l);
+			g2.setStroke(stant);
+			l=new Line2D.Double(x+intervaloVar*0.15,margenSup+(max[k]-totalBottom)*ratio[k],x+intervaloVar*0.35,margenSup+(max[k]-totalBottom)*ratio[k]);
+			g2.draw(l);
+			
+			
+			//Drawing the box
+			Rectangle2D.Double r= new Rectangle2D.Double(x,y1,w,Math.abs(y2-y1));
+			g2.setColor(Color.BLACK);
+			g2.draw(r);
+			
+			
+			//Drawing mean line
+			l=new Line2D.Double(x,margenSup+(max[k]-middle)*ratio[k],x+intervaloVar*0.5,margenSup+(max[k]-middle)*ratio[k]);
+			g2.draw(l);
+			
+			//Drawing outliers
+			int[] ou=sesion.getMicroarrayData().outliers.get(k);
+			int er=1;//ellipse radius
+			for(int d:ou)
+				{
+				Ellipse2D.Double e;
+				e=new Ellipse2D.Double(x+intervaloVar*0.25-er*0.5, tuplas[d-1][k].y-er*0.5,er,er);
+				g2.draw(e);
+				}
+			}
+	}
+
+	private void drawDensityAreas(Graphics2D g2)
+		{
+		int maxFold=2;
+		
+		for(int s=maxFold;s>=0;s--)
+			{
+			int []px=new int[numC*2];
+			int []py=new int[numC*2];
+			for(int i=0;i<numC;i++)	//upper points
+				{
+				int k=ordenVars[i];
+				double val=Math.min(sesion.getMicroarrayData().averageCols[k]+sesion.getMicroarrayData().sdCols[k]*(s+1), max[k]);
+				py[i]=(int)(Math.max(margenSup+(max[k]-val)*ratio[k], margenSup));
+				px[i]=(int)(margenIzq+intervaloVar*i);
+				}
+			for(int i=0;i<numC;i++)	//lower points
+				{
+				int c=numC-i-1;
+				int k=ordenVars[c];
+				double val=Math.max(sesion.getMicroarrayData().averageCols[k]-sesion.getMicroarrayData().sdCols[k]*(s+1), min[k]);
+				py[i+numC]=(int)(Math.min(margenSup+(max[k]-val)*ratio[k], margenSup+this.longEjeY));
+				px[i+numC]=(int)(margenIzq+intervaloVar*(c));
+				}
+		
+			int grey=220-40*(maxFold-s);
+			g2.setPaint(new Color(grey,grey,grey));
+			g2.fillPolygon(px,py,px.length);
+			}//OK
+		
+		if(min!=null && max!=null)
+			{
+			int []linex=new int[numC];
+			upy=new int[numC];
+			doy=new int[numC];
+			int [] meany=new int[numC];
+			int grey=170;
+			for(int i=0;i<numC;i++)
+				{
+				int k=ordenVars[i];
+				upy[i]=(int)(Math.max(margenSup+(max[k]-sesion.getMicroarrayData().maxCols[k])*ratio[k], margenSup));
+				linex[i]=(int)(margenIzq+intervaloVar*i);
+				doy[i]=(int)(Math.min(margenSup+(max[k]-sesion.getMicroarrayData().minCols[k])*ratio[k], margenSup+this.longEjeY));
+				meany[i]=(int)(Math.min(margenSup+(max[k]-sesion.getMicroarrayData().averageCols[k])*ratio[k], margenSup+this.longEjeY));
+				}
+			g2.setPaint(new Color(grey,grey,grey));
+			g2.drawPolyline(linex,upy,linex.length);
+			g2.drawPolyline(linex,doy,linex.length);
+			g2.setPaint(new Color(240,240,240));
+			g2.drawPolyline(linex,meany,linex.length);
+			}//OK
+		}
+	
+	
 	public int getId(){
 		return es.usal.bicoverlapper.controller.kernel.Configuration.PARALLEL_COORDINATES_ID;
 	}
@@ -1127,24 +1164,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	public void update() {
 		repaintAll=true;
 		gpLineasFondo=null;
-		//long t1=System.currentTimeMillis();
-		//fitScrolls();
-		//System.out.println("fit scrolls tarda "+(System.currentTimeMillis()-t1));
-		//t1=System.currentTimeMillis();
 		
 		fitSelectedConditions();
 		
 		atributosIniciados = false;
-		//calcularAtributos();
 		atributosIniciados = true;
 	
-		//System.out.println("calcular atributos tarda "+(System.currentTimeMillis()-t1));
-		//t1=System.currentTimeMillis();
 		if(sesion.getSelectedConditionsBicluster()==null || sesion.getSelectedConditionsBicluster().size()==0 || sesion.getSelectedConditionsBicluster().size()==sesion.getMicroarrayData().getNumConditions())
 				this.explicitDenyOfTupleUpdate=true;//We don't need to resort samples, which is very time consuming (about 5s for a 5000genes x 70 samples)
 		repaint();
-		
-		//System.out.println("repintar tarda "+(System.currentTimeMillis()-t1));
 	}
 	
 	/**
@@ -1936,7 +1964,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					Rectangle2D.Double ri=(Rectangle2D.Double)scrollInf[i].clone();
 					ri.y=scrollInf[k].y;
 				
-					//if(inScroll(e.getPoint(), scrollSup[i], 5, true) || inScroll(e.getPoint(),scrollInf[i],5, false)) 
 					if(inScroll(e.getPoint(), rs, 5, true) || inScroll(e.getPoint(),ri,5, false)) 
 						{
 						zonaScroll = true;

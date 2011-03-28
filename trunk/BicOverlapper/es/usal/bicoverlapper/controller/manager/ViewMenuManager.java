@@ -67,7 +67,8 @@ public class ViewMenuManager implements ActionListener{
 				BubblesDiagram panel = new BubblesDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,sesion.getDesktop(),panel);
 				panel.setWindow(ventana);
-				ventana.setLocation(config.dimParallelCoordinatesWindow.width+config.dimHeatmapWindow.width+config.marginInternalWindowWidth*4, 0);
+				//ventana.setLocation(config.dimParallelCoordinatesWindow.width+config.dimHeatmapWindow.width+config.marginInternalWindowWidth*4, 0);
+				ventana.setLocation(config.initBM.x, config.initBM.y);
 				sesion.setBubbles(ventana);
 				panel.createAxisLayout();
 				panel.run();

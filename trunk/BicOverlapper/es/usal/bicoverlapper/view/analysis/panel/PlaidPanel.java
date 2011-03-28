@@ -355,13 +355,9 @@ public class PlaidPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
+						session=session.mainWindow.getActiveWorkDesktop().getSession();
 						Analysis b=session.analysis;
-					    if(b.r==null)
-					    	{
-					    	b.loadRscripts();
-					    	b.loadMatrix();
-					    	}
-						
+					    
 						String fileName="";
 						if(resultsFile!=null)			
 							{

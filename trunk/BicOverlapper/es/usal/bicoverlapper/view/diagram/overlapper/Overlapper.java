@@ -12,16 +12,19 @@ import java.awt.geom.Point2D;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
+import prefuse.data.Table;
 import es.usal.bicoverlapper.controller.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
@@ -31,9 +34,6 @@ import es.usal.bicoverlapper.model.geometry.GraphPoint2D;
 import es.usal.bicoverlapper.model.goterm.GOTerm;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 import es.usal.bicoverlapper.utils.color.CustomColor;
-
-
-import prefuse.data.Table;
 
 
 /**
@@ -47,29 +47,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	private static final long serialVersionUID = 1L;
 
 //Main variables
-/**
- * Screen height of the drawing area in pixels
- */
-int screenHeight = 700;//1500
-int screenWidth = 1000;//2000
-int nNodes;
-private int nodeSize = 17;
-private int labelSize = 5;//antes 5
-private int maxLabelSize=20;
-private int labelClusterSize=labelSize*2;//antes *3
-private double edgeLength = 100;
-double stepEdgeLength = 2;
-double G = 10; //Gravity (clusters de ~20 nodos)
-//double G = 10; //Gravity (clusters de 200+ nodos)
-double stepG = 0.5;
-double D = 2.0; //Depth of the well
-double K = D/100000;//Para pelis parece que este funciona
-double stepK = 0.00005;
-//private double stiffness = 0.001;//Clusters >200 nodos
-private double stiffness = 0.001;//Clusters >20 nodos
-//private double stiffness = 0.3;//Sugiyama
-double stepStiffness = 0.0005;
-private double closeness = nodeSize; 
+
 
 protected ArrayList<Point2D.Double> selectionArea = null;
 //protected Path2D.Double selectionArea = null;
@@ -132,11 +110,9 @@ float magnifierLength;
 float magnifierHeight;
 float xTopMagnifier;
 float yTopMagnifier;
-float factor = 0.1f;
+float factor = 0.1f;//Factor de la magnificaci—n (10% del ‡rea total)
 float areaInc = 2.0f;//Este hay que ir multiplicándolo y dividir por lo mismo que se multiplique esto el factor
 int maxArea=16;
-float totalWidth=areaInc*screenWidth;
-float totalHeight=areaInc*screenHeight;
 float xTopDrawingRect;
 float yTopDrawingRect;
 
@@ -145,7 +121,6 @@ boolean movingMagnifier = false;
 float offsetX = 0;
 float offsetY = 0; 
 
-boolean drawNodes=true;
 float scapeForce=100;
 
 
@@ -176,7 +151,6 @@ boolean drawingOverview=false;
 boolean showResume=true;
 boolean showUnconnected=false;
 boolean initialOrdering=false;
-boolean computeDualLayout=false;
 
 float threshold=0;	//Shows only clusters that fulfill threshold criteria
 int thresholdType=0; //depending of this variable, threshold refers to degree of overlap (0), size of the biclusters (1) or consistency of the biclusters (2)
@@ -202,6 +176,8 @@ ArrayList <MaximalCluster> clustersToRemove=null;
 ArrayList <Node> nodesToRemove=null;
 ArrayList <Edge> edgesToRemove=null;
 
+//Detailed mode (genes and conds prioritized)
+/*
 boolean drawArc=true;
 boolean drawHull=true;
 boolean drawTitle=false;
@@ -212,10 +188,86 @@ boolean movieButActors=false;
 boolean sizeRelevant=true;
 boolean drawContour=false; //Now initially false :)
 boolean drawZones=false;
-
+boolean drawErrors=false;
+boolean drawDual=false;
+boolean antialias=true;
 boolean onlyConditions=false;
 boolean onlyGenes=false;
-	
+boolean drawNodes=true;
+
+// * Screen height of the drawing area in pixels
+int screenHeight = 700;//1500
+int screenWidth = 1000;//2000
+float totalWidth=areaInc*screenWidth;
+float totalHeight=areaInc*screenHeight;
+
+int nNodes;
+private int nodeSize = 17;
+private int labelSize = 5;//antes 5
+private int maxLabelSize=20;
+private int labelClusterSize=labelSize*2;//antes *3
+private double edgeLength = 100;
+double stepEdgeLength = 2;
+double G = 10; //Gravity (clusters de ~20 nodos)
+//double G = 10; //Gravity (clusters de 200+ nodos)
+double stepG = 0.5;
+double D = 2.0; //Depth of the well
+double K = D/100000;//Para pelis parece que este funciona
+double stepK = 0.00005;
+//private double stiffness = 0.001;//Clusters >200 nodos
+private double stiffness = 0.001;//Clusters >20 nodos
+//private double stiffness = 0.3;//Sugiyama
+double stepStiffness = 0.0005;
+private double closeness = nodeSize; 
+
+boolean computeDualLayout=false;
+
+	*/
+//Naked mode (groups and intersections prioritized)
+//Screen height of the drawing area in pixels
+int screenHeight = 700;//1500
+int screenWidth = 1000;//2000
+float totalWidth=areaInc*screenWidth;
+float totalHeight=areaInc*screenHeight;
+
+int nNodes;
+private int nodeSize = 17;
+private int labelSize = 5;//antes 5
+private int maxLabelSize=20;
+private int labelClusterSize=labelSize*2;//antes *3
+private double edgeLength = 100;
+double stepEdgeLength = 2;
+double G = 10; //Gravity (clusters de ~20 nodos)
+double stepG = 0.5;
+double D = 2.0; //Depth of the well
+double K = D/100000;//Para pelis parece que este funciona
+double stepK = 0.0005;
+private double stiffness = 0.001;//Clusters >20 nodos
+double stepStiffness = 0.0005;
+private double closeness = nodeSize; 
+
+//Boolean drawing options
+boolean drawNodes=true;
+boolean drawArc=true;
+boolean drawHull=true;
+boolean drawTitle=true;
+boolean showCentroids=false;
+boolean onlyIntersecting=true;
+boolean movie=true;
+boolean movieButActors=false;
+boolean sizeRelevant=true;
+boolean drawContour=false; //Now initially false :)
+boolean drawZones=false;
+boolean drawErrors=false;
+boolean drawDual=true;
+boolean antialias=true;
+boolean onlyConditions=false;
+boolean onlyGenes=false;
+boolean computeDualLayout=true;
+
+
+
+
 GraphPoint2D vf=new GraphPoint2D();//Vector para la aplicación de fuerzas en el layout
 
 float memory; //Cantidad de memoria que nos queda
@@ -230,9 +282,7 @@ int numImproves=0;
 final int maxCount=40;
 int stopCount=maxCount;
 LinkedList<Float> improveList=new LinkedList<Float>();
-boolean drawErrors=false;
-boolean drawDual=false;
-boolean antialias=true;
+
 
 
 //configuracion de color
@@ -325,8 +375,10 @@ public void setup() {
   magnifierHeight = screenHeight * factor;
   xTopMagnifier=xTopOverviewBox+(overviewBoxLength/areaInc)/2;
   yTopMagnifier = yTopOverviewBox+(overviewBoxHeight/areaInc)/2;
-  offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor); 
-  offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor); 
+//offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor); 
+  //offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor); 
+  offsetX = (xTopOverviewBox - xTopMagnifier) * (zoomFactor / factor); 
+  offsetY = (yTopOverviewBox - yTopMagnifier) * (zoomFactor / factor); 
   
   // Functions Box
   functionsBoxLength = screenWidth / 2;
@@ -346,7 +398,7 @@ public void setup() {
   
 	  
  //Handles
-  handles = new Handle[handleNum];
+ /* handles = new Handle[handleNum];
   for(int i=0; i<handleNum; i++) 
     handles[i] = new Handle(handleSize*2, (handleSize*2)*i +handleSize, 0 , handleSize, handles, this);
   
@@ -373,7 +425,7 @@ public void setup() {
   handles[3].setMaxValue(K+(handleLength*stepK));
   handles[3].setCurrentValue(K);
   handles[3].moveHandle(K);
-
+*/
   fontA = new Font("Arial", Font.BOLD, 10);
   textAlign(CENTER); //El alineamiento de texto no se puede hacer directamente con JPanel, ni especificar la fuente
 	}
@@ -484,19 +536,15 @@ public synchronized void paintComponent(Graphics g)
 
    	    this.setBackground(paleta[this.backgroundColor]);
 	    
-	    G = handles[0].currentValue;
-	    stiffness = handles[1].currentValue;
-	    edgeLength = handles[2].currentValue; 
-        K = handles[3].currentValue;
-      
-        pushMatrix(); 
+	    pushMatrix(); 
         translate(offsetX,offsetY);
         scale(zoomFactor);	//TODO: probando todavía
         this.g.draw(priorities);
   	    popMatrix();
   	    iteracion++;
   	    
-  	    if(showOverview)	  	    drawOverview();
+  	    if(showOverview)	  	    
+  	    	drawOverview();
 	   
 	   if(img != null)
 	  	{
@@ -515,9 +563,9 @@ public synchronized void paintComponent(Graphics g)
 
 public void run()
 {
-int delay = 0; //milliseconds
+int delay = 100; //milliseconds
 
-ActionListener taskPerformerLayout = new ActionListener() {
+   ActionListener taskPerformerLayout = new ActionListener() {
       public void actionPerformed(ActionEvent evt) {
     	  long ts=System.currentTimeMillis();
     	  if(!pauseSimulation)
@@ -528,7 +576,7 @@ ActionListener taskPerformerLayout = new ActionListener() {
       }
   };
   
- 	new Timer(delay, taskPerformerLayout).start();
+    new Timer(delay, taskPerformerLayout).start();
 	
 	ActionListener taskPerformer = new ActionListener() {
 	    public void actionPerformed(ActionEvent evt) {
@@ -536,54 +584,9 @@ ActionListener taskPerformerLayout = new ActionListener() {
 	    	}
 	};
  
-new Timer(delay, taskPerformer).start();
+	new Timer(delay, taskPerformer).start();
 }
 
-/*
-public void run()
-{
-	
-int delay = 0; //milliseconds
-totalTime=System.currentTimeMillis();
-
-ActionListener taskPerformerLayout = new ActionListener() {
-      public void actionPerformed(ActionEvent evt) {
-    	//  long ts=System.currentTimeMillis();
-    	  if(!pauseSimulation)
-        	  	{
-    		  	//if(!sugiyama)	
-        	  		doLayout();
-    		  	//else			doSugiyamaLayout();
-        	  	}
-      }
-  };
-  
- 	new Timer(delay, taskPerformerLayout).start();
-	
-	ActionListener taskPerformer = new ActionListener() {
-	    public void actionPerformed(ActionEvent evt) {
-	    	if(pauseSimulation)
-	    	 {
-	    	 repaint();
-	    	 }
-	    }
-	    
-	};
- 
-new Timer(delay, taskPerformer).start();
-  
-}*/
-/*
-try{
-	this.doLinLogLayout();
-	ActionListener taskPerformer = new ActionListener() {
-		public void actionPerformed(ActionEvent evt) {
-			repaint();
-		}
-	};
-new Timer(delay, taskPerformer).start();
-	}catch(Exception e){e.printStackTrace();}
-	*/
 
 /**
  * Checks the improvement of the new iteration and stops the drawing if the layout has reached to a no-improvement behavior
@@ -757,7 +760,6 @@ void drawOverview()
   popMatrix();
   
   stroke(fg.getRed(), fg.getGreen(), fg.getBlue());
-//stroke(255);
   noFill();
   rect(xTopOverviewBox, yTopOverviewBox, overviewBoxLength, overviewBoxHeight);
   
@@ -807,206 +809,6 @@ protected int lock(int val, int minv, int maxv)
  * 	1) All nodes connected are attracted by a Spring force
  * 	2) Every node is repulsed by every other node by a Gravitational force
  */
-/*
-public synchronized void doLayout() 
-	{
-	//----------------------- spring forces -------------------------
-	//calculate spring forces on each node
-	if(radial)
-	  	{
-		//Fuerzas entre nodos
-		it=g.getNodes().values().iterator();
-			
-		while(it.hasNext())
-		  	{
-			ForcedNode n=(ForcedNode)it.next();
-			n.setForce(nullVector);
-			
-			TreeMap<String,Edge> edges = g.getEdgesFrom(n);	//Ojo, hace un new de TreeMap, pero sólo la primera vez
-			Iterator<Edge> ie=edges.values().iterator();
-		    while(ie.hasNext())
-		    	{
-		    	SpringEdge e=(SpringEdge)ie.next();
-		    	GraphPoint2D f = e.getForceFrom();
-		    	n.applyForce(f);
-		    	}
-		    
-		    edges = g.getEdgesTo(n);
-			ie=edges.values().iterator();
-			while(ie.hasNext())
-		    	{
-		    	SpringEdge e=(SpringEdge)ie.next();
-		    	GraphPoint2D f = e.getForceTo();
-			   	n.applyForce(f);
-		    	}
-		   }
-			
-		//Para los nodos centrales
-		it=g.getCenterNodes().values().iterator();
-		while(it.hasNext())
-		   	{
-			//Sólo tenemos que coger fuerzas from de los centrales
-		    ForcedNode n = (ForcedNode)it.next();
-		    n.setForce(nullVector);
-		   
-			TreeMap<String,Edge> edges = g.getEdgesFrom(n);
-			Iterator<Edge> ie=edges.values().iterator();
-		    while(ie.hasNext())
-		    	{
-		    	SpringEdge e=(SpringEdge)ie.next();
-		    	GraphPoint2D f = e.getForceFrom();
-		    	n.applyForce(f);
-		    	}
-		    }
-	  	}//del if radial
-	else
-		{
-//		Fuerzas entre nodos
-		it=g.getNodes().values().iterator();
-		while(it.hasNext())	{((ForcedNode)it.next()).setForce(nullVector);}
-		it=g.getNodes().values().iterator();
-		while(it.hasNext())
-		  	{
-			ForcedNode n=(ForcedNode)it.next();
-			 
-			TreeMap<String,Edge> edges = g.getEdgesFrom(n);
-			//Otra manera, siempre que hacemos el from, aplicamos a los to,
-			//de modo que no hay que hacer el to para ninguno
-			Iterator<Edge> ie=edges.values().iterator();
-		    while(ie.hasNext())
-		    	{
-		    	SpringEdge e=(SpringEdge)ie.next();
-		    	GraphPoint2D f = e.getForceFrom();
-		    	n.applyForce(f);
-		    	ForcedNode m=(ForcedNode)e.getTo();
-		    	f.invert();
-		    	m.applyForce(f);
-		    	}
-		  
-		   }
-		}
-	  
-	  //--------------------- expansion forces ----------------------
-	  //calculate the anti-gravitational forces on each node
-	  //this is the N^2 shittiness that needs to be optimized
-	  if(!radial)
-	  	{
-		it=g.getNodes().values().iterator();
-		//  System.out.println("Nodos: "+g.getNodes().size());
-		for (int i=0; i<g.getNodes().size()-1; i++) //N(N-1)/2 complexity
-	  		{
-			//System.out.print(i+" ");
-			ForcedNode a = (ForcedNode)it.next();
-			{
-			Iterator<Node> it2=g.getNodes().values().iterator();
-			for(int j=0;j<=i;j++)	it2.next();	//El mejor modo que he encontrado de aplicar el n(n-1)/2
-			for (int j=i+1; j<g.getNodes().size() && it2.hasNext(); j++) 
-				{
-				ForcedNode b = (ForcedNode)it2.next();
-				double dx = b.getX() - a.getX();
-			    double dy = b.getY() - a.getY();
-			   
-			    if(dx!=0)
-			    	{ //don't divide by zero.
-				    
-			    	double r = sqrt((float) (dx*dx + dy*dy));
-			        
-			    	//if (!a.isInSameCluster(b))
-			    	//if(!sameCluster[i][j])	//El resultado es el mismo aunque apliquemos a los de dentro, y reducimos a la mitad el tiempo del layout en modo completo
-			    	if(r>0.1)//To avoid extremely high forces
-			    	//if(r>(b.getRelevance()+a.getRelevance()))
-			       		{
-			       		double f = -G*(a.getMass()*b.getMass()/(r*r));
-			       	//	double f = -G/(r*r);
-				    	//vf = new Vector2D(dx*f, dy*f);
-			       		
-			       		vf.setX(dx*f);
-			       		vf.setY(dy*f);
-			       		//vf.setX(f);
-			       		//vf.setY(f);
-			       		a.applyForce(vf); 
-				    	vf.invert();
-				    	b.applyForce(vf);
-			       		}
-			    	}
-		    	}
-			}//if raro
-		  	}//Expansion forces
-	  	}//Complete case
-	  else//Radial case
-	  	{
-		it=g.getCenterNodes().values().iterator();
-		for (int i=0; i<g.getCenterNodes().size()-1; i++) //N(N-1)/2 complexity
-			 {
-			 ForcedNode a = (ForcedNode)it.next();
-			 Iterator<Node> it2=g.getCenterNodes().values().iterator();
-			 for(int j=0;j<=i;j++)	it2.next();	
-			 for (int j=i+1; j<g.getCenterNodes().size(); j++) 
-		 	   	{
-				ForcedNode b = (ForcedNode)it2.next();
-		    	double dx = b.getX() - a.getX();
-			    double dy = b.getY() - a.getY();
-			    if(dx!=0)
-			    	{ //don't divide by zero.
-			       	double r = sqrt((float) (dx*dx + dy*dy));
-			       	double f = -G*(a.getMass()*b.getMass()/(r*r));//Aquí si que importan las masas.
-			       	vf.setX(dx*f);
-			       	vf.setY(dy*f);
-			       	a.applyForce(vf);
-			    	vf.invert();
-			    	b.applyForce(vf);
-			       	}
-		    	}
-		  	}//Expansion forces
-	  	}//radial case
-	  
-	  boolean zoomed=false;
-	  //move nodes according to forces
-	  //Peripheral nodes
-	  it=g.getNodes().values().iterator();
-	  for (int i=0; i<g.getNodes().size(); i++) 
-	  	{
-	    ForcedNode n = (ForcedNode)it.next();
-	          
-	    if (n != g.getDragNode() && !n.isFixed())	    
-	    	{
-	    	while(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	
-	    		n.setForce(nullVector);
-	    	if(n.getForce().getX()>scapeForce || n.getForce().getY()>scapeForce )	n.fix(true);
-	    	n.getPosition().add(n.getForce());
-	    	}
-		if(!radial)
-	    	{
-	    	if(areaInc>=maxArea)
-			{
-			if(n.getX()<100)	n.setX(100);
-			if(n.getY()<100)	n.setY(100);
-			if(n.getX()>totalWidth-100)		n.setX(totalWidth-100);
-			if(n.getY()>totalHeight-100)	n.setY(totalHeight-100);
-			}
-		
-		    if(!zoomed)
-		    	{
-		    	if(areaInc<maxArea && (n.getPosition().getX()>totalWidth || n.getPosition().getY()>totalHeight ||
-		    		n.getPosition().getX()<0 || n.getPosition().getY()<0 )) 
-		    		{
-		    		increaseOverview(2);
-			    	zoomed=true;
-			    	}
-		    	}
-	    	}
-	  	}// del for
-	  
-	  //Center nodes if existing
-	  it=g.getCenterNodes().values().iterator();
-	  for (int i=0; i<g.getCenterNodes().size(); i++) 
-	  	{
-	    ForcedNode n = (ForcedNode) it.next();
-	    n.getPosition().add(n.getForce());
-	  	}
-	}
-	*/
-//Variación del anterior.
 //Ahora en está mal hecho, ya que se aplican las fuerzas antes de asegurar que todas las fuerzas se le 
 //han aplicado, pero quiero ver si eso afecta sustancialmente, ya que si no lo hace en una iteración lo hace para la
 //siguiente, ganamos tiempo (la ganancia es poco importante no obstante) y, sobre todo, tengo todo preparado para aplicar 
@@ -1282,7 +1084,7 @@ public synchronized void doLinLogLayout()
  */
 public synchronized void doDualLayout()
 	{	
-	this.stiffness=1;
+	//this.stiffness=1;
 	sumOfForces=0;
 	Iterator<DualNode> it=g.dualNodes.values().iterator();
 	for (int i=0; i<g.dualNodes.size(); i++) //N(N-1)/2 complexity
@@ -1325,8 +1127,7 @@ public synchronized void doDualLayout()
 				    	vf.invert();
 				    	b.applyForce(vf);
 				       	sumOfForces+=Math.abs(Math.sqrt(vf.getX()*vf.getX()+vf.getY()*vf.getY()));
-						 
-			       		}
+				   		}
 			    	}
 			    	
 				}
@@ -1458,7 +1259,6 @@ protected void keyPressed() {
 		drawTitle=!drawTitle;
 		break;
 	case '4':
-		//additionMode=!additionMode;
 		increaseStiffness();
 		break;	
 	case '5':
@@ -1565,8 +1365,8 @@ protected void keyPressed() {
  */
 public void increaseStiffness()
 	{
-	stiffness += 0.0005;
-    handles[1].moveHandle(stiffness);
+	stiffness += stepStiffness;
+    //handles[1].moveHandle(stiffness);
     System.out.println("Stiffness "+stiffness);
     }
 
@@ -1576,9 +1376,9 @@ public void increaseStiffness()
  */
 public void decreaseStiffness()
 	{
-	if (stiffness >= 0.0005) 
-        stiffness-= 0.0005;
-    handles[1].moveHandle(stiffness);
+	if (stiffness >= stepStiffness) 
+        stiffness-= stepStiffness;
+    //handles[1].moveHandle(stiffness);
     System.out.println("Stiffness "+stiffness);
   }
 
@@ -1710,7 +1510,7 @@ public void pause()
 public void zoomIn()
 	{
 	//System.out.println("Incremento overview en un factor "+(zoomFactor+0.1)/zoomFactor);
-	increaseZoom(0.1);
+	zoom(0.1);
 	//System.out.println("Factor de zooom "+zoomFactor);
 	}
 
@@ -1721,40 +1521,21 @@ public void zoomIn()
  */
 public void zoomOut()
 	{
-	//System.out.println("Incremento overview en un factor "+(zoomFactor-0.1)/zoomFactor);
-	increaseZoom(-0.1);
-
-	//System.out.println("Factor de zooom "+zoomFactor);
+	zoom(-0.1);
 	}
 
-private void increaseZoom(double f)
+private void zoom(double f)
 	{
-	//float totalHeightAnt=this.totalHeight;
-	//float totalWidthAnt=this.totalWidth;
-	
-	//----------nuevo
 	totalHeight-=f*totalHeight;
 	totalWidth-=f*totalWidth;
-	//screenHeight-=f*screenHeight;
-	//screenWidth-=f*screenWidth;
 	zoomFactor+=f;
 	
-	//------------
-	//float marcoAlto=(float)(totalHeight-totalHeightAnt)/2.0f;
-    //float marcoAncho=(float)(totalWidth-totalWidthAnt)/2.0f;
-    
-    //Centramos
-    /*Iterator<Node> itOver=g.getNodes().values().iterator();
-    while(itOver.hasNext())
-    	{
-    	ForcedNode n=(ForcedNode)itOver.next();
-    	n.setX((float)n.getX()+marcoAncho);
-        n.setY((float)n.getY()+marcoAlto);
-        }
-    
-    offsetX+=marcoAncho;
-    offsetY+=marcoAlto;*/
-	//System.out.println("Con zoom"+zoomFactor+", screen is "+getOffsetX()+", "+getOffsetY()+", "+getScreenHeight()+", "+getScreenWidth());
+	//Sincroniza pantalla peque–a con grande, pero no deja exactamente en el mismo sitio en el que estaba la visualizaci—n
+	xTopMagnifier-=f*(xTopOverviewBox-xTopMagnifier);//El secreto est‡ en c—mo modificar xTop/yTop correctamente...
+	yTopMagnifier-=f*(yTopOverviewBox-yTopMagnifier);
+	offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor); 
+	offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor); 
+	
 	}
 
 void increaseEdgeLength()
@@ -1763,10 +1544,10 @@ edgeLength += 1;
 handles[2].moveHandle(edgeLength, false);	
 }
 void decreaseEdgeLength()
-{
-edgeLength -= 1;
-handles[2].moveHandle(edgeLength, false);	
-}
+	{
+	edgeLength -= 1;
+	//handles[2].moveHandle(edgeLength, false);	
+	}
 
 /**
  * Increases G constant for gravitational force by 0.5 
@@ -1774,8 +1555,8 @@ handles[2].moveHandle(edgeLength, false);
  */
 public void increaseG()
 	{
-	G += 0.5;
-	handles[0].moveHandle(G, false);	
+	G += stepG;
+	//handles[0].moveHandle(G, false);	
     System.out.println("G "+G);
 	}
 /**
@@ -1784,8 +1565,8 @@ public void increaseG()
  */
 public void decreaseG()
 	{
-	if (G >= 0.5) G -= 0.5;
-	handles[0].moveHandle(G, false);	
+	if (G >= stepG) G -= stepG;
+	//handles[0].moveHandle(G, false);	
     System.out.println("G "+G);
 	}
 
@@ -1849,12 +1630,18 @@ protected void mousePressed() {
   	  {
 		float xpress=(mouseX-offsetX)/zoomFactor;
 		float ypress=(mouseY-offsetY)/zoomFactor;
-	
-	  for(Node n : g.getNodes().values())
+	  
+		Collection c;
+		if(drawDual)	c=g.getDualNodes().values();
+		else			c=g.getNodes().values();
+		
+		for(Object o : c)
 	  	{
+		Node n=(Node) o;
 	    if (n.containsPoint(xpress, ypress)) 
 		     {
 			 if(n.isFixed() && mouseButton!=RIGHT)	n.fix(false);
+			 System.out.println("Pillamos nodo "+n.label);
 			 g.setDragNode(n);
 			 break;
 			 }
@@ -1876,9 +1663,9 @@ protected void mouseMoved() {
 
   if (g.getDragNode() == null) 
   	{
-    float xpress=(mouseX-offsetX)/zoomFactor;
-	float ypress=(mouseY-offsetY)/zoomFactor;
-	if(!this.drawDual)
+	  float xpress=(mouseX-offsetX)/zoomFactor;
+		float ypress=(mouseY-offsetY)/zoomFactor;
+			if(!this.drawDual)
 		{
 		Iterator<Node> itMM=g.getNodes().values().iterator();
 		for(int i=0; i<g.getNodes().size(); i++) 
@@ -1967,18 +1754,41 @@ protected void mouseReleased() {
 		{
 		g.clearSelectedNodes();
 		g.getSelectedClusters().clear();
-		Iterator<Node> it=g.getNodes().values().iterator();
-		while(it.hasNext())
+		
+		if(!drawDual)
 			{
-			Node n=it.next();
-			
-			Polygon pol=new Polygon();
-			for(Point2D.Double p: selectionArea)	pol.addPoint((int)p.x, (int)p.y);
-			if(pol.contains(n.getX(), n.getY()))
+			Iterator<Node> it=g.getNodes().values().iterator();
+			while(it.hasNext())
 				{
-				g.addSelectedNode(n);
-				nodeSelected=true;
+				Node n=it.next();
+				
+				Polygon pol=new Polygon();
+				for(Point2D.Double p: selectionArea)	pol.addPoint((int)p.x, (int)p.y);
+				if(pol.contains(n.getX(), n.getY()))
+					{
+					g.addSelectedNode(n);
+					nodeSelected=true;
+					}
 				}
+			}
+		else
+			{
+			g.clearSelectedDualNodes();
+			Iterator<DualNode> it=g.getDualNodes().values().iterator();
+			while(it.hasNext())
+				{
+				DualNode n=it.next();
+				
+				Polygon pol=new Polygon();
+				for(Point2D.Double p: selectionArea)	pol.addPoint((int)p.x, (int)p.y);
+				if(pol.contains(n.getX(), n.getY()))
+					{
+					g.addSelectedDualNode(n);
+					g.addSelectedNodes(n.subNodes);
+					nodeSelected=true;
+					}
+				}
+			
 			}
 		selectionArea=null;
 		}
@@ -1986,9 +1796,9 @@ protected void mouseReleased() {
 
   if (!move && (mouseX < this.xTopOverviewBox || mouseY > (this.yTopOverviewBox+this.overviewBoxHeight)) )
 	 {
-	 float xpress=(mouseX-offsetX)/zoomFactor;
-	 float ypress=(mouseY-offsetY)/zoomFactor;
-	 if(!drawDual)
+	  	 float xpress=(mouseX-offsetX)/zoomFactor;
+		 float ypress=(mouseY-offsetY)/zoomFactor;
+		 if(!drawDual)
 		 {
 		 Iterator<Node> itMouse=g.getNodes().values().iterator();
 		
@@ -2059,7 +1869,6 @@ protected void mouseReleased() {
 					 else
 					 	{	 
 						rightButtonNode.details="searching...";
-						//this.getMicroarrayData().getGeneAnnotation(rightButtonNode.labelId, this, null, true);
 						this.getMicroarrayData().getGeneAnnotations(new int[]{this.microarrayData.getGeneId(rightButtonNode.labelId)},this, true, null, null, true);
 					 	}
 				 	}
@@ -2076,7 +1885,7 @@ protected void mouseReleased() {
 		System.out.println("Selection of dual node"); 
 		Iterator<DualNode> itMM=g.dualNodes.values().iterator();
 		
-		 for(int i=0; i<g.dualNodes.size(); i++) 
+		 for(int i=0; i<g.dualNodes.size(); i++) //--------- dual node selection
 	    	{
 			DualNode n = (DualNode)itMM.next();
 		    if (n.containsPoint(xpress, ypress)) 
@@ -2086,10 +1895,31 @@ protected void mouseReleased() {
 		    	g.getSelectedClusters().clear();
 		    	
 		    	g.addSelectedDualNode(n);
-				g.addSelectedNodes(n.subNodes);	
+				g.addSelectedNodes(n.subNodes);
+				nodeSelected=true;
 	  		    break;
 		      	}
 	    	}
+		 if(!nodeSelected && this.drawHull)	//---------- group selection
+		  	{
+			for(int i=0;i<this.numClusters;i++)
+		  		{
+		  		Group mc=this.getClusterInPos(i);
+		  		if(mc!=null && mc.hull!=null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label))
+		  			{
+		  			if(!keyPressed)	
+						{
+						g.clearSelectedNodes();
+						g.clearSelectedDualNodes();
+						g.getSelectedClusters().clear();
+						}
+					
+		  			g.getSelectedClusters().put(mc.label, mc);
+		  			for(int j=0;j<mc.getNodes().size();j++)
+		  				g.addSelectedNode(mc.getNode(j));	
+		  			}
+		  		}
+		  	}
 	    if(!itMM.hasNext())	g.setHoverNode(null);
 	 	}
 	  }//if !move
@@ -2123,8 +1953,8 @@ protected void mouseDragged() {
 				      yTopMagnifier = 0;
 			   
 			   //Factor applied to calculate the offset in the real graph
-				offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor*zoomFactor); 
-				offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor*zoomFactor); 
+				offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor); 
+				offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor); 
 				}
 			}	    
 		}
@@ -2133,9 +1963,14 @@ protected void mouseDragged() {
 		move=true;
 		float xpress=(mouseX-offsetX)/zoomFactor;
 		float ypress=(mouseY-offsetY)/zoomFactor;
-		if(g.getSelectedNodes()!=null && g.getDragNode()!=null && g.getSelectedNodes().size()>0)	//selected nodes
+		
+		Collection c;
+		if(drawDual)	c=g.getSelectedDualNodes().values();
+		else			c=g.getSelectedNodes().values();
+		
+		if(c!=null && g.getDragNode()!=null && c.size()>0)	//selected nodes
 			{
-			Iterator<Node> it=g.getSelectedNodes().values().iterator();
+			Iterator<Node> it=c.iterator();
 			double mainX=-1;
 			double mainY=-1;
 			while(it.hasNext())
@@ -2154,13 +1989,12 @@ protected void mouseDragged() {
 			{
 			if(g.getDragNode()!=null)
 				{
-				 System.out.println("Posici—n anterior del nodo "+g.getDragNode().getX()+", "+g.getDragNode().getY());
 				 g.getDragNode().setX(xpress);
 				 g.getDragNode().setY(ypress);
+				 if(drawDual)	((DualNode)g.getDragNode()).positionSubNodes();
 				}
 			else	//Selecci—n de ‡rea
 				{
-			//	System.out.println("Modificando ‡rea");
 				selectionArea.add(new Point2D.Double(xpress, ypress));
 				}
 		}
@@ -2742,24 +2576,10 @@ Graph buildOrderedRadialGraph()
 	  RadialCluster[] clu=orderRadialClusters();//Añade un campo orden a cada cluster
 		
 	  
-	  
-	  //Cambiamos las dimensiones máximas del área de dibujo en función del número de clusters
-		offsetX=-(screenWidth*(areaInc-1)/2);
-		offsetY=-(screenHeight*(areaInc-1)/2);
-		  
 	  //Uniform distribution of clusters
 	  double cellWidth, cellHeight;//Screen initial areas for each cluster
 	  double clustersPerRow=Math.ceil(Math.sqrt(numClusters));
-	  /*if(numClusters<40)
-		  {
-		  cellWidth=screenWidth/clustersPerRow;
-		  cellHeight=screenHeight/clustersPerRow;
-		  }
-	  else
-	  	  {
-		  cellWidth=totalWidth/clustersPerRow;
-		  cellHeight=totalHeight/clustersPerRow;
-		  }*/
+	  
 	  float e=totalWidth*totalHeight/numClusters;
 	  while(e<100000 && areaInc<maxArea)//Espacio mínimo que quiero que tenga cada cluster
 	  	{
@@ -2771,10 +2591,6 @@ Graph buildOrderedRadialGraph()
 	  cellWidth=totalWidth/clustersPerRow;
 	  cellHeight=totalHeight/clustersPerRow;
 	  
-	  
-	  
-	  System.out.println("Cuadrícula de "+clustersPerRow+"x"+clustersPerRow+" con dimensiones "+cellWidth+"x"+cellHeight);
-		  
 	  double x,y;
 	  x=-cellWidth/2;
 	  y=cellHeight/2;
@@ -2800,11 +2616,8 @@ Graph buildOrderedRadialGraph()
 		else			x=screenWidth*(areaInc-1)/2+screenWidth-row*cellWidth-cellWidth/2;	//dirección <-
 		GraphPoint2D randomPos = new GraphPoint2D(x,y);
 		c.getCenterNode().setPosition(randomPos);
-		//float radio=5*c.getPeripheralNodes().size();
-		//float pasoAngular=TWO_PI/c.getPeripheralNodes().size();
 		float radio=5*c.getNodes().size();
 		float pasoAngular=TWO_PI/c.getNodes().size();
-		//System.out.println("Colocando "+((Node)c.getCenterNode()).getLabel()+" en pos "+x+","+y);
 		
 		for (int i = 0; i < c.getNodes().size(); i++) //Para cada nodo del cluster
 		   {
@@ -3326,7 +3139,6 @@ public void timeTest(int numTimes)
 		System.out.println("Time for running "+i+" is "+took+" and it took "+cont+" iterations");
 		pauseSimulation=false;
 		total+=took;
-		//g.draw(this.priorities);
 		}
 	System.out.println("Average is"+total/numTimes);
 	}

@@ -134,8 +134,10 @@ public class BicOverlapperWindow extends JFrame{
 		    
 		    this.desktop.addChangeListener(new ChangeListener(){
 				public void stateChanged(ChangeEvent e) {
+					System.out.println("Tab="+desktop.getSelectedIndex());
+					//TODO: update menu options selection state
 					actualizarTabPreview();
-					if(!vistas.isEmpty())
+					if(!vistas.isEmpty() && desktop.getSelectedIndex()>=0)
 						vistaActiva = vistas.elementAt(desktop.getSelectedIndex());				
 				}			
 			});
@@ -264,6 +266,8 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("show"));
 		JMenuItem menuAnalysisSort =
 			new JMenuItem(Translator.instance.menuLabels.getString("sort"));
+		JMenuItem menuAnalysisMerge =
+			new JMenuItem(Translator.instance.menuLabels.getString("merge"));
 		JMenuItem menuAnalysisSelect =
 			new JMenuItem(Translator.instance.menuLabels.getString("select"));
 		JMenuItem menuAnalysisDifexp =
@@ -276,10 +280,12 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisSort.setMnemonic('S');
 		menuAnalysisSearch.setMnemonic('F');
 		menuAnalysisShow.setMnemonic('L');
+		menuAnalysisMerge.setMnemonic('M');
 		
 		analysisMenu.add(menuAnalysisSearch);
 		analysisMenu.add(menuAnalysisShow);
 		analysisMenu.add(menuAnalysisSort);
+		analysisMenu.add(menuAnalysisMerge);
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisSelect);
 		analysisMenu.add(menuAnalysisDifexp);
@@ -297,6 +303,7 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisSearch.addActionListener(amm);
 		menuAnalysisShow.addActionListener(amm);
 		menuAnalysisSort.addActionListener(amm);
+		menuAnalysisMerge.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
 		menuAnalysisDifexp.addActionListener(amm);
 		menuAnalysisGSEA.addActionListener(amm);
@@ -462,11 +469,12 @@ public class BicOverlapperWindow extends JFrame{
 		wd.getPanel().putClientProperty(SubstanceLookAndFeel.TABBED_PANE_CLOSE_BUTTONS_PROPERTY,Boolean.TRUE);
 		this.vistas.add(wd);
 		this.desktop.addTab(wd.getPanel().getName(), wd.getPanel());
-		this.desktop.setSelectedIndex(vistas.size()-1);
+		
+		this.desktop.setSelectedIndex(desktop.getTabCount()-1);
 		this.setActiveWorkDesktop(wd);
 		this.actualizarTabPreview();
+		
 	}
-	
 	/**
 	 * Stablishes the active WorkDesktop
 	 * 

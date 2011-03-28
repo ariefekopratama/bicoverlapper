@@ -185,8 +185,9 @@ public class GSEAPanel extends javax.swing.JFrame {
 							{
 							if(writeToFile.isSelected())	fileName=defaultPath;
 							}
-						 Analysis b=session.analysis;
-						 b.setFilterOptions(null);
+						session=session.mainWindow.getActiveWorkDesktop().getSession();
+						Analysis b=session.analysis;
+						b.setFilterOptions(null);
 						
 						//------------------ EF case
 						 

@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Random;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
@@ -81,7 +82,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	public Session sesion;
 	private String path;
 	private boolean addVista;
-	private File fichero;
+	public File fichero;
 	private JDesktopPane desktop;
 	private boolean loadingSession;
 	private Document documento;
@@ -153,6 +154,10 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			readMicroarray();
 			}
 	}
+	else if(e.getActionCommand().equals("Internal Load Expression Data"))
+		{
+		readMicroarray(sesion.microarrayPath);
+		}
 	else if(e.getActionCommand().equals("Load Groups"))
 		{
 		try{
@@ -289,6 +294,9 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		
 		}
 	
+	/**
+	 * Finish the load of a matrix
+	 */
 	public void receiveMatrix(int status)
 	{
 		System.out.println("Finished microarray data reading with status: "+status);
@@ -302,6 +310,9 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			pathWriter.write(sesion.microarrayPath);
 			pathWriter.close();
 			}catch(IOException ex){ex.printStackTrace();}
+			
+			sesion.updateData();
+			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
 			
 				
 			ventana.analysisMenu.setEnabled(true);
@@ -328,8 +339,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					p.setName(fichero.getName());
 					}
 				}
-			sesion.updateData();
-			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
+			
+			
 			if(loadingSession)
 				loadSessionAfterMicroarray();
 			}
@@ -889,7 +900,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			}
 		}
 	
-	private void prepareDesktop()
+	public void prepareDesktop()
 		{
 		desktop = new JDesktopPane();
 		desktop.setName(fichero.getName());
@@ -901,8 +912,9 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			}
 		else
 			{
-			sesion.setDesktop(desktop);
-			sesion.setMainWindow(ventana);
+			//TODO: Maybe it's better to limit to just one dataset
+			addVista=true;
+			sesion = new Session(desktop, ventana);
 			}
 		
 		ventana.analysisMenu.setEnabled(false);
@@ -911,7 +923,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	
 	public void readMicroarray()
 		{
-		boolean error=false;
 		prepareDesktop();
 		System.out.println("---desktop ready, session started");
 		try {
@@ -922,21 +933,50 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			JOptionPane.showMessageDialog(null,
                     "File not found: "+fichero.getName(),
                     "Error",JOptionPane.ERROR_MESSAGE);
-				error=true;
 			} catch (IOException e2) 
 			{
 			JOptionPane.showMessageDialog(null,
                     "I/O Error: "+e2.getMessage(),
                     "Error",JOptionPane.ERROR_MESSAGE);
-			error=true;
 			} catch (Exception e3) 
 			{
 			JOptionPane.showMessageDialog(null,
 	                "Format Error: "+e3.getMessage(),
 	                "Error",JOptionPane.ERROR_MESSAGE);
-			error=true;
 			}
 		}
+	
+	/**
+	 * Reads a micorarray from a given path, but does not modify the internal path variable
+	 * @param path
+	 */
+	public void readMicroarray(String path)
+	{
+	prepareDesktop();
+	boolean error=false;
+	try {
+		sesion.analysis.loadRscripts();
+		sesion.reader.readMicroarray(path, sesion, this);
+		sesion.microarrayPath=fichero.getAbsolutePath();
+		} catch (FileNotFoundException e1) {
+		JOptionPane.showMessageDialog(null,
+                "File not found: "+fichero.getName(),
+                "Error",JOptionPane.ERROR_MESSAGE);
+			error=true;
+		} catch (IOException e2) 
+		{
+		JOptionPane.showMessageDialog(null,
+                "I/O Error: "+e2.getMessage(),
+                "Error",JOptionPane.ERROR_MESSAGE);
+		error=true;
+		} catch (Exception e3) 
+		{
+		JOptionPane.showMessageDialog(null,
+                "Format Error: "+e3.getMessage(),
+                "Error",JOptionPane.ERROR_MESSAGE);
+		error=true;
+		}
+	}
 	
 	public void readBiclustering()
 		{

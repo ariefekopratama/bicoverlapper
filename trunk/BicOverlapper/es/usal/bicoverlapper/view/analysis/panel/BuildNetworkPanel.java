@@ -143,13 +143,6 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 					private AnalysisTask t;
 					
 					public void actionPerformed(java.awt.event.ActionEvent e) {
-						/*if(!g1.equals(g2))
-							{
-							JOptionPane.showMessageDialog(null,
-					                "Experimental factors (efs) cannot be compared, choose ef values or the same ef",
-					                "Error",JOptionPane.ERROR_MESSAGE);
-							return;
-							}*/
 						
 						String fileName="";
 						if(resultsFile!=null)			
@@ -161,6 +154,8 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 							{
 							if(write.isSelected())	fileName=defaultPath;
 							}
+						session=session.mainWindow.getActiveWorkDesktop().getSession();
+						
 						 Analysis b=session.analysis;
 						 b.setFilterOptions(null);
 						

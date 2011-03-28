@@ -28,6 +28,7 @@ import es.usal.bicoverlapper.model.bubble.BubbleData;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 import es.usal.bicoverlapper.model.network.NetworkData;
 import es.usal.bicoverlapper.utils.color.CustomColor;
+import es.usal.bicoverlapper.view.analysis.panel.MergePanel;
 import es.usal.bicoverlapper.view.analysis.panel.SearchPanel;
 import es.usal.bicoverlapper.view.analysis.panel.ShowPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SortPanel;
@@ -129,6 +130,7 @@ public class Session implements KeyListener {
 	private SearchPanel searchPanel;
 	private ShowPanel showPanel;
 	private SortPanel sortPanel;
+	private MergePanel mergePanel;
 	
 	
 	
@@ -140,7 +142,7 @@ public class Session implements KeyListener {
 	 * @param desktop <code>JDesktopPane</code> linked to this <code>Session</code>.
 	 */
 	public Session(JDesktopPane desktop, BicOverlapperWindow window){
-		analysis=new Analysis();
+		analysis=new Analysis(null);
 		this.datosCargados = false;
 		this.desktop = desktop;
 		this.mainWindow = window;
@@ -183,6 +185,14 @@ public class Session implements KeyListener {
 	public void setDesktop(JDesktopPane desktop) {
 		this.desktop = desktop;
 	}
+	
+	/**
+	 * Properly closes the session, including the R console
+	 */
+	public void close()
+		{
+		analysis.r.end();
+		}
 
 	/**
 	 * Devuelve la posicion donde crear una nueva ventana.
@@ -959,6 +969,21 @@ public class Session implements KeyListener {
 		sortPanel.pack();
 		sortPanel.setLocation((getDesktop().getWidth()-sortPanel.getWidth())/2, (getDesktop().getHeight()-sortPanel.getHeight())/2);
 		sortPanel.setVisible(true);
+		}
+	
+	public void merge()
+		{
+		//Show label names box
+		if(mergePanel==null)		mergePanel=new MergePanel(this);
+		else						mergePanel.updateLists();
+		mergePanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		mergePanel.setTitle("Merge Samples");
+		mergePanel.setAlwaysOnTop(true);
+		
+		//Display the window.
+		mergePanel.pack();
+		mergePanel.setLocation((getDesktop().getWidth()-mergePanel.getWidth())/2, (getDesktop().getHeight()-mergePanel.getHeight())/2);
+		mergePanel.setVisible(true);
 		}
 	
 	 /** Handle the key typed event from the text field. */

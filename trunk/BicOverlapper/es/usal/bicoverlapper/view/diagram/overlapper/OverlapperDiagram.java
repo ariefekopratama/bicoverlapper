@@ -156,19 +156,20 @@ private static final long serialVersionUID = 1L;
 	public void create()
 		{
 			{
-			JToolBar jtb=new JToolBar();
-			addButtons(jtb);
+			//JToolBar jtb=new JToolBar();
+			//addButtons(jtb);
 			
 			bv=new Overlapper();
 			bv.setPalette(paleta);
 			bv.setDataFile(sesion.getBiclusterDataFile());
-			bv.setup(ancho,alto-jtb.getBounds().height);//, sesion.getHoverColor(), sesion.getSelectionColor(), sesion.getSearchColor());
+			//bv.setup(ancho,alto-jtb.getBounds().height);
+			bv.setup(ancho,alto);
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
 			bv.buildGraph();
 			bv.init();
 			
 			this.getWindow().add(bv, BorderLayout.CENTER);
-			this.getWindow().add(jtb, BorderLayout.SOUTH);
+			//this.getWindow().add(jtb, BorderLayout.SOUTH);
 
 			GestorMouse gm=new GestorMouse();
 			bv.addMouseListener(gm);	
@@ -410,15 +411,6 @@ private static final long serialVersionUID = 1L;
 		this.getWindow().setVisible(true); // show the window
 		}
 	
-	/*
-	public void actualizarDatos() 
-		{
-		//TODO: Actualizar lo que sea necesario cogiéndolo de sesión.getXXX()
-
-	//	this.repaint();		
-		}*/
-	
-	
 	public void resize()
 		{
 		bv.resize(this.ancho, this.alto);
@@ -436,20 +428,7 @@ private static final long serialVersionUID = 1L;
 		else		bv.updateGraph();
 		}
 	
-	/**
-	 * Builds the graph with the actual selection
-	 * @deprecated
-	 * TODO: reprogram this method
-	 */
-	public void createGraph()
-		{
-		if(bv==null)	
-			{
-			create();
-			run();
-			}
-		}
-
+	
 	/**
 	 * Returns the id for this kind of panel
 	 */
@@ -746,7 +725,7 @@ private static final long serialVersionUID = 1L;
 				{
 				constancet.setEnabled(true);
 				constancet.setText("Constance threshold");
-				bv.setMicroarrayData(sesion.getMicroarrayData());//TODO: Esto de duplicar todo el microarray es regulero
+				bv.setMicroarrayData(sesion.getMicroarrayData());
 				}
 			value.setText(""+bv.getThresholdValue());
 			return this.getPanelParametros();
@@ -768,7 +747,8 @@ private static final long serialVersionUID = 1L;
 		sizet.setActionCommand("size");
 		overlapt.setActionCommand("overlap");
 		constancet.setActionCommand("constance");
-		if(sesion.getMicroarrayData()!=null && bv.getMicroarrayData()==null)	bv.setMicroarrayData(sesion.getMicroarrayData());//TODO: Esto de duplicar todo el microarray es regulero
+		if(sesion.getMicroarrayData()!=null && bv.getMicroarrayData()==null)	
+			bv.setMicroarrayData(sesion.getMicroarrayData());
 		GestorConfiguracion gconf=new GestorConfiguracion();
 		sizet.addActionListener(gconf);
 		overlapt.addActionListener(gconf);

@@ -187,6 +187,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							{
 							if(writeToFile.isSelected())	fileName=defaultPath;
 							}
+						 session=session.mainWindow.getActiveWorkDesktop().getSession();
 						 Analysis b=session.analysis;
 						 b.setFilterOptions(null);
 						

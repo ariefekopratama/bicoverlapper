@@ -103,6 +103,19 @@ public class MicroarrayData
 	Table sparseExpressions;//As above, but sparse (only a maximum number of genes are shown)
 	Table sparseGeneLabels;
 	
+	//Stores the different R names of matrices loaded. Typically raw, merged, normalized, discretized, etc.
+	//Typically, analysis and visualization will be done on the last matrix computed, but this is not always the case
+	//for example, limma and gsea analysis cannot be done on merged matrices because they need several replicates of each efv
+//	public String[] matrixLabels=new String[]{"eset.raw", "eset.merged", "eset.normalized", "eset.discretized"};
+//	public enum Status { RAW, MERGED, NORMALIZED, DISCRETIZED }
+//	public String selectedMatrixLabel=matrixLabels[Status.RAW.ordinal()];
+	public String path;//Path with the file that corresponds to this data structure
+	public String name;//Name of the file that corresponds to this data structure
+	public String rMatrixName;//Name in R for this data structure
+	//TODO: Selection panel for selection of the matrix over which to compute and visualize. By now, everything is on the last one
+	//computed, except if limma or gsea, on the raw matrix always
+	
+
 	/**
 	 * Names for the conditions.
 	 */
@@ -128,7 +141,7 @@ public class MicroarrayData
 	 */
 	public HashMap<String,String[]> experimentFactorValues;
 	
-	//For any other annotation present in the data in the first place
+	//For any other annotation present in the data in the first place (by now, not used)
 	public ArrayList<String> geneFactors;
 	public HashMap<String,String[]> geneFactorValues;
 	
@@ -196,12 +209,19 @@ public class MicroarrayData
 	private GeneRequester geneRequester;
 	private HypergeometricTestTask ht;
 	private LoadTask loadTask;
-	private MicroarrayRequester microarrayRequester;
+	public MicroarrayRequester microarrayRequester;
 	public int[] columnOrder;
 	public double[] averageCols;
 	public double[] minCols;
 	public double[] maxCols;
 	public double[] sdCols;
+	public double[] q75;//quantile 75 for each column
+	public double[] q25;//quantile 25 for each column
+	public double[] iqr;//interquantile range, computed as quantile75-quantile25
+	public double whiskerRange=1.5;//this value multiplies iqr to get boxplot whiskers
+	public double[] median;
+	public HashMap<Integer, int[]> outliers;//for each column, the gene above/below iqr*whiskerRange
+	
 	private AnnotationTask at;
 	private AnnotationProgressMonitor2 amd2;
 	
@@ -224,6 +244,9 @@ public class MicroarrayData
 		loadTask.nd=nd;
 		experimentFactors=new ArrayList<String>();
 		experimentFactorValues=new HashMap<String,String[]>();
+		this.name=path.substring(path.lastIndexOf("/")+1, path.lastIndexOf("."));
+		this.path=path.substring(0, path.lastIndexOf("/"));
+		this.rMatrixName=name.replace("-", "");
 		this.re=r;
 		
 		at=new AnnotationTask();
@@ -2551,6 +2574,8 @@ public class MicroarrayData
 		
 		expressions=convert(levels, rowHeader-1, colHeader);
 		
+		
+		
 		t2=System.currentTimeMillis();
 		//System.out.println("T3) conversiï¿½n "+(t2-t1)/1000);
 		
@@ -2607,7 +2632,6 @@ public class MicroarrayData
 		setProgress(progress);
 		
 		t1=System.currentTimeMillis();
-		System.out.println("T4) creacion de tablas "+(t1-t2)/1000);
 		message="Microarray data loaded in "+(t1-start)/1000+" seconds";
 		progress=100;
 		setProgress(progress);
@@ -2864,9 +2888,14 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 	 */
 	public int[] sortColumnsBy(String factor)
 		{
-		REXP exp=re.eval("as.integer(rank("+ RUtils.getRList(experimentFactorValues.get(factor))+", " +
-				"ties.method=\"first\")-1)");//TODO: null pointer if it's not a factor but the ids (it could also be done by sort(..., dindex=T)$ix)
-		columnOrder=exp.asIntArray();
+		if(!factor.equals("Column ID"))
+			{
+			REXP exp=re.eval("as.integer(rank("+ RUtils.getRList(experimentFactorValues.get(factor))+", " +
+					"ties.method=\"first\")-1)");//TODO: null pointer if it's not a factor but the ids (it could also be done by sort(..., dindex=T)$ix)
+			columnOrder=exp.asIntArray();
+			}
+		else	//Initial ordering
+			for(int i=0;i<numConditions;i++)	columnOrder[i]=i;
 		sortColumns();
 		return getColumnOrder();
 		}
@@ -2898,7 +2927,21 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 		return co;
 		}
 	
-	
+	/**
+	 * Selecciona los genes con valor de expresi—n por encima de sdsAbove desviaciones est‡ndar de la media para todas las condiciones
+	 * etiquetadas con el valor highEFV para el factor experimental highEF y por debajo de sdsBelow desviaciones est‡ndar de la media para 
+	 * todas las condiciones etiquetadas con el valor lowEFV para el factor experimental lowEF
+	 * highEF or lowEF (but not both) can be "none333" if we only want to filter by one condition.
+	 * Example: we want to get every gene above 2 sd for "diseased" but below mean for "control" for experimental factor "cancer" 
+	 * selectHiLo("diseased", "cancer", 2, "control", "cancer", 0);
+	 * @param highEFV
+	 * @param highEF
+	 * @param sdsAbove
+	 * @param lowEFV
+	 * @param lowEF
+	 * @param sdsBelow
+	 * @return
+	 */
 	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, int sdsAbove, String lowEFV, String lowEF, int sdsBelow)
 		{
 		if(!experimentFactors.contains(highEF) && !highEF.equals("none333") && !highEF.equals("rest") )
@@ -2946,8 +2989,19 @@ public void loadMicroarray(String path, boolean invert, int rowHeader, int colHe
 			}
 		return ret.toArray(new Integer[ret.size()]);
 		}
+	
+	/**
+	 * Selecciona los genes  con valor 
+	 * @param highEFV
+	 * @param highEF
+	 * @param lowEFV
+	 * @param lowEF
+	 * @return
+	 */
 	public LinkedList<Integer> selectHiLo(String highEFV, String highEF, String lowEFV, String lowEF)
 		{
 		return selectHiLo(highEFV, highEF, 0, lowEFV, lowEF, 0);
 		}
+	
+	
 }
