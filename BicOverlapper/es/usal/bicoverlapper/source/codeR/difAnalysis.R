@@ -115,7 +115,7 @@ diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 	degs=lapply(conds, function(y){
 				g2=grep(paste("^",y,"$",sep=""),ef)
 				print(paste(efv,"vs",y))
-				print(g1)
+				
 				print(g2)
 				rownames(m)[diffAnalysis(m, g1, nameG1=efv, g2, nameG2=y, pvalT=pvalT, diffT=diffT, print=print, return=return)]
 			})

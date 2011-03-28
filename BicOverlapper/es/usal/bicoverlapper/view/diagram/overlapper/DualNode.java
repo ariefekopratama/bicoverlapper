@@ -125,9 +125,9 @@ public class DualNode extends ForcedNode {
     p.rectMode(Overlapper.CENTER);
 
   	p.ellipse((float)position.getX(), (float)position.getY(), radius, radius);
-  	Color cnb=p.paleta[Overlapper.hoverNodeLabelColor];
-	p.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
-  	p.text(""+subNodes.size(), (float)position.getX(), (float)position.getY());
+  	//Color cnb=p.paleta[Overlapper.hoverNodeLabelColor];
+	//p.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
+  	//p.text(""+subNodes.size(), (float)position.getX(), (float)position.getY());
     this.setDrawn(true);
   }
   
@@ -280,6 +280,23 @@ public class DualNode extends ForcedNode {
 		}
 	return num;
   	}
+  
+  /**
+   * Returns the number of subnodes in common between this dual node and the dual node taken as parameter
+   */
+  public int nodesInCommon(DualNode dn)
+  	{
+	int num=0;
+	Iterator<Node> it=subNodes.values().iterator();
+	
+	while(it.hasNext())
+		{
+		Node c=it.next();
+		if(dn.subNodes.containsKey(c.label))	num++;
+		}
+	return num;
+  	}
+  
   
   /**
    * Determines if the dual node is adjacent to other dual node. Adjacency is defined as that both nodes share exactly the same number of

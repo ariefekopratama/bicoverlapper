@@ -218,7 +218,7 @@ convertISAclust=function(ISAlist, row.thr=0.5, col.thr=0.5)
 	{
 		listar = which(abs(ISAlist$rows[,i])>row.thr)
 		listac = which(abs(ISAlist$columns[,i])>col.thr)
-		if(length(listar)==0 || length(listac)==0)	{}
+		if(length(listar)<=1 || length(listac)<=1)	{}
 		else{
 			bic=new("bicluster")
 			bic@rows=listar
@@ -253,6 +253,7 @@ filterclust=function(bics, overlapThreshold=0.25, maxNumber=100, maxRows=100, ma
 		if(insert)
 			for(j in bics2)
 			{
+				print(cat("comparando con otro", overlap(i,j)))
 				if(overlap(i,j)>=overlapThreshold)
 				{
 					print("overlap")

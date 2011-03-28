@@ -1,7 +1,7 @@
 #Binarize by the input threshold or using the mean if no treshold given
 #Values strictly above the threshold are set to 1, the rest to 0
 #If low is TRUE, then values below or equal to the threshold are set to 1 and the rest to 0
-binarize=function(x,threshold=NA, low=FALSE)
+binarize2=function(x,threshold=NA, low=FALSE)
 {
 	matd=x
 	if(is.na(threshold))
@@ -29,26 +29,26 @@ binarize=function(x,threshold=NA, low=FALSE)
 #Binarize to get the input percentage of 1s over 0s
 #The algorithm stops when it gets a density in [percentage-error, percentage+error]
 #Gap is the initial increment taken in iterative search
-binarizeByPercentage=function(x,percentage,error=0.2,gap=0.1, low=FALSE)
+binarizeByPercentage2=function(x,percentage,error=0.2,gap=0.1, low=FALSE)
 {
 	threshold=mean(x)
 	dens=percentage
-	print(paste("Threshold es:",threshold))
+	#print(paste("Threshold es:",threshold))
 	slope=0
 	slopeAnt=0
 	repeat
 	{
-		matd=binarize(x,threshold, low)
+		matd=binarize2(x,threshold, low)
 		densNew=densityOnes(matd)
-		print(paste("Dens:", dens, "new", densNew))
+		#print(paste("Dens:", dens, "new", densNew))
 		if(densNew==0)
 		{
-			matd=binarize(x,threshold-gap, low)
+			matd=binarize2(x,threshold-gap, low)
 			break
 		}
 		if(slope!=slopeAnt && dens==densNew)
 			{
-				print(paste("Best result possible"))
+				#print(paste("Best result possible"))
 				break
 			}
 		dens=densNew
@@ -83,7 +83,7 @@ binarizeByPercentage=function(x,percentage,error=0.2,gap=0.1, low=FALSE)
 		}
 		if(dens>=(percentage-error) && dens<=(percentage+error))
 		{
-			print("nos metemos aqui")
+		#	print("nos metemos aqui")
 			break
 		}
 		if(slopeAnt!=0 && slope!=slopeAnt)	gap=gap/2

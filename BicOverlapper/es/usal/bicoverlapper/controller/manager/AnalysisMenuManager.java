@@ -31,6 +31,7 @@ import es.usal.bicoverlapper.view.analysis.panel.CCPanel;
 import es.usal.bicoverlapper.view.analysis.panel.DiffExpPanel;
 import es.usal.bicoverlapper.view.analysis.panel.GSEAPanel;
 import es.usal.bicoverlapper.view.analysis.panel.ISAPanel;
+import es.usal.bicoverlapper.view.analysis.panel.MergePanel;
 import es.usal.bicoverlapper.view.analysis.panel.PlaidPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SearchPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SelectPanel;
@@ -64,8 +65,6 @@ public class AnalysisMenuManager implements ActionListener{
 	private XMotifsPanel xmotifsPanel=null;
 	private CCPanel ccPanel=null;
 	private ISAPanel isaPanel=null;
-	private ShowPanel showPanel=null;
-	private SortPanel sortPanel=null;
 	private SelectPanel selectPanel=null;
 	private boolean ctrlPressed;
 	private DiffExpPanel difExpPanel;
@@ -79,6 +78,7 @@ public class AnalysisMenuManager implements ActionListener{
 	 */
 	public AnalysisMenuManager(BicOverlapperWindow window) {
 		this.ventana = window;
+		
 	}
 	/**
 	 * Constructor to build a MenuManager
@@ -216,17 +216,13 @@ public class AnalysisMenuManager implements ActionListener{
 				sesion.show();
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("sort")))
 				{
-				//Show label names box
-				if(sortPanel==null)		sortPanel=new SortPanel(sesion);
-				else					sortPanel.updateLists();
-				sortPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-				sortPanel.setTitle("Sort Samples");
-				sortPanel.setAlwaysOnTop(true);
-				
-				//Display the window.
-				sortPanel.pack();
-				sortPanel.setVisible(true);
+				sesion.sort();
 				}
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("merge")))
+				{
+				sesion.merge();
+				}
+		
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("select")))
 				{
 				//Show label names box

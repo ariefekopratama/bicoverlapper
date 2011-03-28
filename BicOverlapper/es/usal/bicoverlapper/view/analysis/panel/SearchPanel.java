@@ -153,9 +153,10 @@ public class SearchPanel{
 			jButton1.setText("Search");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
+					session=session.mainWindow.getActiveWorkDesktop().getSession();
+					
 					if(session!=null)	
 						{
-						
 						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{

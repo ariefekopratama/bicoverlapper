@@ -234,23 +234,32 @@ class BubbleFocusControl extends FocusControl
     	{
     	LinkedList<Integer> lista=new LinkedList<Integer>();
     	String names[];
-    	if(genes) names=this.sesion.getMicroarrayData().rowLabels;
-    	else		names=this.sesion.getMicroarrayData().columnLabels;
-		
-    	//System.out.println("Elementos "+l.size());
-		for(int i=0;i<l.size();i++)
+    	if(genes) 
     		{
-    		String name=(String)l.get(i);
-    		int pos=0;
-    		
-    		for(int j=0;j<names.length;j++)
-    			{
-    			if(names[j].equals(name))	{pos=j; break;}
-    			}
-    	//	System.out.println("Añadiendo "+name+" de pos "+pos);
-    		lista.add(Integer.valueOf(pos));
+    		names=this.sesion.getMicroarrayData().rowLabels;
+    		for(int i=0;i<l.size();i++)
+    	    	{
+    			String name=(String)l.get(i);
+    			lista.add(sesion.getMicroarrayData().getGeneId(name));
+            	}
     		}
-		
+    	else
+    		{
+    		names=this.sesion.getMicroarrayData().columnLabels;
+    		for(int i=0;i<l.size();i++)
+	    		{
+	    		int pos=0;
+	    		String name=(String)l.get(i);
+    			
+	    		for(int j=0;j<names.length;j++)
+	    			{
+	    			if(names[j].equals(name))	{pos=j; break;}
+	    			}
+	    		lista.add(Integer.valueOf(pos));
+	    		}
+			}
+
+    	
     	return lista;
     	}
     //Cuando se llama, se pone como seleccionada una burbuja
