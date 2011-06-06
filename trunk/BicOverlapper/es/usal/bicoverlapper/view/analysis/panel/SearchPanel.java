@@ -157,7 +157,7 @@ public class SearchPanel{
 					
 					if(session!=null)	
 						{
-						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
+						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected(), null);
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
 							session.setSelectedBiclustersExcept(sb,"");
@@ -206,7 +206,7 @@ public class SearchPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected());
+						Selection sb=session.getMicroarrayData().search(jTextField221.getText(),jComboBox.getSelectedIndex(), exactMatch.isSelected(), null);
 						if(sb.getGenes().size()>0 || sb.getConditions().size()>0)
 							{
 							Selection csb=session.getSelectedBicluster();

@@ -45,15 +45,13 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 	private JLabel JLabel1;
 	private JTextField sdThreshold;
 	private JLabel jLabel3;
-	private JLabel jLabel4;
 	private JButton selecFile;
 	private JCheckBox write;
 	private JButton build;
 	private JTextField distanceThreshold;
 	private JComboBox distanceMethod;
 	private JLabel jLabel2;
-	private JLabel jLabel1;
-	
+
 	private Session session;
 	private String defaultPath;
 	private File resultsFile;
@@ -78,26 +76,20 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			getContentPane().setLayout(null);
-			this.setPreferredSize(new java.awt.Dimension(497, 300));
+			this.setPreferredSize(new java.awt.Dimension(383, 222));
 			this.setSize(497, 490);
 			
 			{
 				JLabel1 = new JLabel();
 				getContentPane().add(JLabel1);
-				JLabel1.setText("Filter genes above");
-				JLabel1.setBounds(14, 42, 126, 14);
+				JLabel1.setText("Filter genes with absolute mean expression above");
+				JLabel1.setBounds(14, 42, 310, 14);
 			}
 			{
 				sdThreshold = new JTextField();
 				getContentPane().add(sdThreshold);
-				sdThreshold.setText("2.0");
-				sdThreshold.setBounds(133, 35, 28, 21);
-			}
-			{
-				jLabel1 = new JLabel();
-				getContentPane().add(jLabel1);
-				jLabel1.setText("standard deviations from the mean expression level");
-				jLabel1.setBounds(168, 42, 322, 14);
+				sdThreshold.setText("0.5");
+				sdThreshold.setBounds(336, 39, 28, 21);
 			}
 			{
 				jLabel2 = new JLabel();
@@ -125,20 +117,14 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 			{
 				distanceThreshold = new JTextField();
 				getContentPane().add(distanceThreshold);
-				distanceThreshold.setText("2.0");
+				distanceThreshold.setText("1.0");
 				distanceThreshold.setBounds(336, 70, 28, 21);
-			}
-			{
-				jLabel4 = new JLabel();
-				getContentPane().add(jLabel4);
-				jLabel4.setText("standard deviations from the average distance");
-				jLabel4.setBounds(63, 105, 301, 14);
 			}
 			{
 				build = new JButton();
 				getContentPane().add(build);
 				build.setText("Build Correlation Network");
-				build.setBounds(147, 196, 189, 21);
+				build.setBounds(100, 153, 189, 21);
 				build.addActionListener(new java.awt.event.ActionListener() {
 					private AnalysisTask t;
 					
@@ -204,7 +190,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				write = new JCheckBox();
 				getContentPane().add(write);
 				write.setText("Write to File ...");
-				write.setBounds(21, 147, 126, 21);
+				write.setBounds(26, 116, 126, 21);
 				write.setEnabled(true);
 				write.addChangeListener(new javax.swing.event.ChangeListener() {
 					public void stateChanged(javax.swing.event.ChangeEvent e) {
@@ -229,7 +215,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				selecFile = new JButton();
 				getContentPane().add(selecFile);
 				selecFile.setText("Select");
-				selecFile.setBounds(154, 147, 70, 21);
+				selecFile.setBounds(152, 116, 70, 21);
 				selecFile.setEnabled(false);
 				selecFile.addActionListener(new java.awt.event.ActionListener() {
 
@@ -246,7 +232,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				});
 			}
 			pack();
-			this.setSize(497, 260);
+			this.setSize(383, 222);
 		} catch (Exception e) {
 		    //add your error handling code here
 			e.printStackTrace();

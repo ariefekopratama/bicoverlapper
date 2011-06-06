@@ -3,6 +3,7 @@ package es.usal.bicoverlapper.controller.analysis;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -31,6 +32,7 @@ PropertyChangeListener, Runnable {
 	public JTextArea taskOutput;
 	private AnalysisTask task;
 	public JFrame frame;
+	private String title;
 
 	public AnalysisTask getTask() {
 		return task;
@@ -41,9 +43,23 @@ PropertyChangeListener, Runnable {
 		this.task = task;
 		}
 
+	public AnalysisProgressMonitor(Analysis b, int type, ArrayList<Object> params, String title) {
+		super(new BorderLayout());
+		this.setBounds(100, 100, 400, 500);
+		taskOutput = new JTextArea(8, 40);
+		taskOutput.setMargin(new Insets(5,5,5,5));
+		taskOutput.setEditable(false);
+		this.title=title;
+		task=new AnalysisTask(b, type, params);
+		
+		add(new JScrollPane(taskOutput), BorderLayout.CENTER);
+		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+		}
+
 	public AnalysisProgressMonitor(Analysis b, int type, ArrayList<Object> params) {
 		super(new BorderLayout());
 		this.setBounds(100, 100, 400, 500);
+		title="Running analysis...";
 		taskOutput = new JTextArea(8, 40);
 		taskOutput.setMargin(new Insets(5,5,5,5));
 		taskOutput.setEditable(false);
@@ -53,7 +69,6 @@ PropertyChangeListener, Runnable {
 		add(new JScrollPane(taskOutput), BorderLayout.CENTER);
 		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 		}
-
 
 	/**
 	* Invoked when task's progress property changes.
@@ -105,11 +120,11 @@ PropertyChangeListener, Runnable {
 		
 		progressBar.setSize(500,50);
 		progressBar.setMinimumSize(new Dimension(150,50));
-		progressBar.setString("Computing biclustering, this could take some minutes...");
+		progressBar.setString("Computing analysis, this could take some time...");
 		
 		task.addPropertyChangeListener(this);
 		
-		frame = new JFrame("Running analysis ...");
+		frame = new JFrame(title);
 		frame.setBounds(400,200, 300, 50);
 		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		frame.setMinimumSize(new Dimension(300,50));
@@ -131,7 +146,6 @@ PropertyChangeListener, Runnable {
 		
 	}
 	public class AnalysisTask extends SwingWorker<String, Void>//implements Runnable
-	//public class AnalysisTask extends SwingWorker15<String, Void>//implements Runnable
 	{
 		public String message;
 		Analysis b;
@@ -151,6 +165,8 @@ PropertyChangeListener, Runnable {
 		public final static int GSEA=11;//gsea between two efvs of a given ef
 		public final static int GSEAEF=12;//diffexp between an efv and every other efv of a given ef
 		public final static int GSEAPROG=13;//diffexp between an every pair of consecutive efvs on a given ef (for example, useful with time)
+		public final static int LOAD_MATRIX=14;//load the matrix into R console (usually done inside other methods, but sometimes alone)
+		public final static int SEARCH_PATTERNS=15;//search for similar expression profiles to the one selected
 					
 		
 		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
@@ -166,6 +182,13 @@ PropertyChangeListener, Runnable {
 			String res="";
 			switch(type)
 				{
+				case LOAD_MATRIX:
+					b.loadMatrix((String)params.get(0));
+					break;
+				case SEARCH_PATTERNS:
+					String[] profiles=b.getSimilarProfiles((Integer)params.get(0), (String)params.get(1));
+					for(String p:profiles)	res+=p+" ";
+					break;
 				case BIMAX:
 					res=b.bimax(((Boolean)params.get(0)).booleanValue(), 
 							((Double)params.get(1)).doubleValue(), 
@@ -221,29 +244,31 @@ PropertyChangeListener, Runnable {
 					
 					break;
 				case LIMMA:
-					System.out.println(((Integer[])params.get(0))[0]);
-					System.out.println(((Integer[])params.get(1))[0]);
+					//System.out.println(((Integer[])params.get(0))[0]);
+					//System.out.println(((Integer[])params.get(1))[0]);
+					System.out.println(((String)params.get(0)));
+					System.out.println(((String)params.get(1)));
 					System.out.println(((String)params.get(2)));
-					System.out.println(((String)params.get(3)));
-					System.out.println(((Boolean)params.get(4)).booleanValue());
+					System.out.println(((Boolean)params.get(3)).booleanValue());
+					System.out.println(((Double)params.get(4)).doubleValue());
 					System.out.println(((Double)params.get(5)).doubleValue());
-					System.out.println(((Double)params.get(6)).doubleValue());
+					System.out.println(((String)params.get(6)));
 					System.out.println(((String)params.get(7)));
 					System.out.println(((String)params.get(8)));
-					System.out.println(((String)params.get(9)));
 					
-					res=b.limma(	((Integer[])params.get(0)), 
-							((Integer[])params.get(1)), 
+					res=b.limma(//	((Integer[])params.get(0)), 
+							//((Integer[])params.get(1)), 
 							
+							((String)params.get(0)),
+							((String)params.get(1)),
 							((String)params.get(2)),
-							((String)params.get(3)),
 							
-							((Boolean)params.get(4)).booleanValue(),
-							((Double)params.get(5)).doubleValue(), 
-							((Double)params.get(6)).doubleValue(),
+							((Boolean)params.get(3)).booleanValue(),
+							((Double)params.get(4)).doubleValue(), 
+							((Double)params.get(5)).doubleValue(),
+							((String)params.get(6)),
 							((String)params.get(7)),
-							((String)params.get(8)),
-							((String)params.get(9))		); 
+							((String)params.get(8))		); 
 					
 					break;
 				case LIMMAEF:
@@ -389,7 +414,7 @@ PropertyChangeListener, Runnable {
 		
 		@Override
 		public void done() {
-		  //Toolkit.getDefaultToolkit().beep();
+		    Toolkit.getDefaultToolkit().beep();
 			message="Biclustering finished";
 			progressMonitor.setProgress(100);
 			}

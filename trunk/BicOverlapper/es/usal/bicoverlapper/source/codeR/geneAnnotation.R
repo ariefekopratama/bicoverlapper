@@ -9,14 +9,27 @@ getEnsemblMart=function(species="Homo sapiens")
 	spec=c()
 	specens=c()
 	
-	if(length(strsplit(species, " ")[[1]])==2) 	
+	if(length(strsplit(species, " ")[[1]])>=2) 	
 	{
 			spec=tolower(paste( substr(strsplit(species, " ")[[1]][1],0,1), substr(strsplit(species, " ")[[1]][2],0,2), sep=""))
 			specens=tolower(paste( substr(strsplit(species, " ")[[1]][1],0,1), strsplit(species, " ")[[1]][2], "_gene_ensembl", sep=""))
 	}
 	if(length(spec)==0)	stop("Species name is wrong")
 	if(species=="Schizosaccharomyces pombe")
-		mart = useMart("fungal_mart_6", dataset="spombe_eg_gene")
+		{
+		marts=listMarts()[,"biomart"]
+		martName=as.character(marts[grep("fungal", marts)[1]])
+		mart = useMart(martName, dataset="spombe_eg_gene")
+		}
+	if(length(grep("Escherichia coli", species))>0)
+		{
+		marts=listMarts()[,"biomart"]
+		martName=as.character(marts[grep("bact", marts)[1]])
+		mart=useMart(martName)
+		dss=listDatasets(mart)[,"description"]
+		dsName=listDatasets(mart)[grep(species, dss),"dataset"] #very convenient to make this in order to save time
+		mart = useMart(martName, dataset=as.character(dsName))
+		}
 	else
 		mart = useMart("ensembl", dataset=specens)
 	mart

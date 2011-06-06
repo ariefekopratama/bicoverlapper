@@ -53,7 +53,7 @@ public class RotationLabelRenderer extends AbstractShapeRenderer {
     protected int m_vImageAlign = Constants.CENTER;
     protected int m_imagePos = Constants.LEFT;
     
-    protected int m_horizBorder = 0;//2
+    protected int m_horizBorder = 2;//2
     protected int m_vertBorder  = 0;
     protected int m_imageMargin = 0;//2
     protected int m_arcWidth    = 0;

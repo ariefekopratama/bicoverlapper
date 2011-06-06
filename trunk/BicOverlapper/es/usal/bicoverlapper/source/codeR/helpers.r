@@ -4,7 +4,7 @@
 ###############################################################################
 
 
-#### Littel Helper Functions for preprocessing the Data ########
+#### Small Helper Functions for preprocessing the Data ########
 
 
 #### discretize: Discretize a Matrix to wished levels ############

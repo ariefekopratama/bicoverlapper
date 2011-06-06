@@ -70,6 +70,7 @@ public class Analysis
 		
 		//2) Save
 		r.eval("towrite=cbind(featureNames("+m+"), aess)");
+		r.eval("towrite=rbind(c(\""+ef+"\",unique("+m+"$FactorValue."+ef+")), towrite)");//The only EF is the one we merged by
 		r.eval("towrite=rbind(c(\""+microarrayData.organism+"/"+microarrayData.chip+".db\",unique("+m+"$FactorValue."+ef+")), towrite)");
 		r.eval("colnames(towrite)=NULL");
 		r.eval("write.matrix(towrite, file=\""+path+"\", sep=\"\\t\")");
@@ -213,6 +214,9 @@ public class Analysis
 			exp=r.eval("rm(m)");
 			
 			matrixLoaded = true;
+			System.out.println("Termino y...");
+			synchronized(this)	{ 
+				System.out.println("Notifico"); this.notify(); }
 			}
 		else{System.err.println("No matrix loaded"); return;}
 		}
@@ -335,7 +339,7 @@ public class Analysis
 			System.err.println("Bimax: no R console");
 			return "";
 			}
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("biclust");
 		
@@ -398,7 +402,7 @@ public class Analysis
 			System.err.println("No R console");
 			return "";
 			}
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("isa2");
 		
@@ -466,7 +470,7 @@ public class Analysis
 	public String xmotifs(int disc, boolean quantiles, int ns, int nd, int sd, double alpha, int number, String outFile, String description)
 		{
 		if(r==null)	{ System.err.println("No R console"); return ""; }
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("biclust");
 		
@@ -526,7 +530,7 @@ public class Analysis
 	 */
 	public String chengChurch(float delta, float alpha, int number, String outFile, String description)
 	{
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(r==null)	{ System.err.println("No R console"); return ""; }
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("biclust");
@@ -584,7 +588,7 @@ public class Analysis
 		{
 		if(r==null)		{ System.err.println("no R console"); return null; }
 		if(microarrayData==null)		{ System.err.println("no microarray data"); return null; }
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		
 		//ArrayList<Integer> neighbors=new ArrayList<Integer>();
@@ -623,18 +627,29 @@ public class Analysis
 	 * @param elevel - threshold for differential expression (log10)
 	 * @param reg - regulation (can be up, down or all)
 	 */
-    public String limma(Integer[] group1, Integer[] group2, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
-    	{
+   // public String limma(Integer[] group1, Integer[] group2, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+	 public String limma(String ef, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
+	    	{
     	String m=this.microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("limma");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
 		
-		for(int i=0;i<group1.length;i++)  group1[i]=group1[i]+1;
-		for(int i=0;i<group2.length;i++)  group2[i]=group2[i]+1;
-		exp=r.eval("degs=diffAnalysis(exprs("+m+"), "+RUtils.getRList(group1)+", nameG1=\"Group 1\", "+RUtils.getRList(group2)+", nameG2=\"Group 2\", " +
-				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-						"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		//for(int i=0;i<group1.length;i++)  group1[i]=group1[i]+1;
+		//for(int i=0;i<group2.length;i++)  group2[i]=group2[i]+1;
+		//exp=r.eval("degs=diffAnalysis(exprs("+m+"), "+RUtils.getRList(group1)+", nameG1=\"Group 1\", "+RUtils.getRList(group2)+", nameG2=\"Group 2\", " +
+		//		"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+		//				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+		
+		System.out.println("degs=diffAnalysis(exprs("+m+"), g="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+
+				", g1=\""+nameGroup1+"\", g2=\""+nameGroup2+"\", " +
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+						"numRank=50, return =\""+reg+"\")");
+		
+		exp=r.eval("degs=diffAnalysis(exprs("+m+"), g="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+
+				", g1=\""+nameGroup1+"\", g2=\""+nameGroup2+"\", " +
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+						"numRank=50, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
 		
@@ -689,10 +704,10 @@ public class Analysis
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
 		System.out.println("degs=diffAnalysisEF(exprs("+m+"), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"numRank=50, return =\""+reg+"\")");
 		exp=r.eval("degs=diffAnalysisEF(exprs("+m+"), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", efv=\""+efv+"\", " +
 				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"numRank=50, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
 		
@@ -740,11 +755,11 @@ public class Analysis
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
 		System.out.println("degs=diffAnalysisEFall(exprs("+m+"), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
-				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, return =\""+reg+"\")");
 		exp=r.eval("degs=diffAnalysisEFall(exprs("+m+"), ef="+RUtils.getRList(microarrayData.getExperimentFactorValues(ef))+", " +
-				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
 		
@@ -795,12 +810,12 @@ public class Analysis
 		
 		System.out.println("degs=diffAnalysisAll(exprs("+m+"), ef=efs, " +
 				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
-				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, return =\""+reg+"\")");
 		exp=r.eval("degs=diffAnalysisAll(exprs("+m+"), ef=efs, " +
 				"efNames="+RUtils.getRList(microarrayData.experimentFactors.toArray(new String[0]))+", "+
-				"interestingNames=c(), pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
-				"numRank=50, BH.correct="+bh+", print=FALSE, return =\""+reg+"\")");
+				"pvalT="+pvalue+", diffT="+elevel+", byRank=FALSE, " +
+				"numRank=50, return =\""+reg+"\")");
 		if(exp==null)
 			{System.out.println("Error, cannot perform differential expression analysis"); return null;}
 		
@@ -846,7 +861,7 @@ public class Analysis
      */
 	public String buildCorrelationNetwork(double sdThreshold, String distanceMethod,
 			double distanceThreshold, String outFile) {
-		String m=microarrayData.name;
+		String m=microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		
 		
@@ -1039,7 +1054,7 @@ public String gseaEF(double filterCutoff, double minGenesInGS, String type, doub
  */
 public String gseaProg(double filterCutoff, double minGenesInGS, String type, double sdThreshold, String ef,String outFile, String description)
 	{
-	String m=microarrayData.name;
+	String m=microarrayData.rMatrixName;
 	if(!matrixLoaded)	loadMatrix(m);
 	
 	

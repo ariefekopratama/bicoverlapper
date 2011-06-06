@@ -2,6 +2,7 @@ package es.usal.bicoverlapper.controller.kernel;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.io.IOException;
 
 /**
  * Class with initial dimensions and ids for each Diagram
@@ -66,10 +67,11 @@ public class Configuration {
 		Dimension dimDesktop=new Dimension(dimAplicacion.width-marginExternalWindowWidth, dimAplicacion.height-marginExternalWindowHeight);
 		System.out.println("Screen size: "+dimDesktop.width+", "+dimDesktop.height);
 		dimParallelCoordinatesWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.40));
-		dimHeatmapWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height)-marginInternalWindowHeight);
+		//dimHeatmapWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height)-marginInternalWindowHeight);
+		dimHeatmapWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.66));
 		dimOverlapperWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.60)-40);
 		dimNetworkWindow=new Dimension((int)(dimDesktop.width*0.66), (int)(dimDesktop.height*0.66));
-		dimWordCloudWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.34));
+		dimWordCloudWindow=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.34)-40);
 		dimPanelBubbles=new Dimension((int)(dimDesktop.width*0.34), (int)(dimDesktop.height*0.34));
 		
 		initPC=new Point(0,0);
@@ -78,7 +80,49 @@ public class Configuration {
 		initTRN=initO;
 		initWC=new Point(initO.x+dimOverlapperWindow.width,(int)(dimDesktop.height)-dimWordCloudWindow.height-32);
 		initBM=initO;
+		
+		//configureEnvironment();
 		}
+	
+	/**
+	 * Sets ups any possible environment variables required for the proper functioning of the program
+	 * Environment variables should not be modified from code. Instructions for setting up on different
+	 * OS:
+	 * 
+	 * 1) MACOS
+	 * We can generate an app following http://www.centerkey.com/mac/java/
+	 *  Atfer creating the app ad step 8, we need to create a prelude script and add it to the content of the app,
+	 *  following this one: http://www.amug.org/~glguerin/howto/More-open-files.html#prelude
+	 *  On this prelude script we can add everything we need, for BicOverlapper the export of R_HOME at least
+	 * Then continue with step 9 for generating the installer.
+	 * 
+	 * NOTE: The Prelude thing does not work. It apparently works if you run the Prelude script inside the app,
+	 * but not when double clicking the app. It seems we need to go 
+	 * Apparently Prelude solution will only work on 10.2 and up (or might be done, but it will work in previous ones?)
+	 * LSEnvironment only works on 10.3 and up
+	 * 
+	 * 
+	 */
+	/*public void configureEnvironment()
+		{
+		System.out.println(System.getProperty("os.name"));
+		String os=System.getProperty("os.name");
+		try {
+			if(os.contains("indows"))
+			{}
+		else if(os.contains("ac"))
+			{
+			System.out.println("Setting up environment for Mac");
+			//By now only setting up things for this one
+			//Runtime.getRuntime().exec("set R_HOME=/Library/Frameworks/R.framework/Resources");
+			}
+		else if(os.contains("ux"))
+			{
+			
+			}
+		} catch (IOException e) {			e.printStackTrace();		}
+		
+		}*/
 	/**
 	 * Devuelve la dimension por defecto de la ventana principal de la aplicacion.
 	 * 

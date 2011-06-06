@@ -1,6 +1,9 @@
 package es.usal.bicoverlapper.view.main;
 import java.awt.Color;
 import java.awt.Component;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -25,6 +28,7 @@ import es.usal.bicoverlapper.controller.manager.FileMenuManager;
 import es.usal.bicoverlapper.controller.manager.HelpMenuManager;
 import es.usal.bicoverlapper.controller.manager.ViewMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
+import es.usal.bicoverlapper.view.analysis.panel.TrickPanel;
 
 
 /**
@@ -103,7 +107,28 @@ public class BicOverlapperWindow extends JFrame{
 		    }
 		});
 		desktop.setFocusable(true);
-	}
+		
+		//tricks panel
+		BufferedReader pathReader;
+		try {
+			pathReader = new BufferedReader(new FileReader("es/usal/bicoverlapper/data/config.txt"));
+			String tricks=pathReader.readLine();
+			if(tricks.split("\t")[1].equals("true"))
+				{
+				TrickPanel tp=new TrickPanel();
+				tp.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+				tp.setAlwaysOnTop(true);
+				
+				tp.pack();
+				tp.setLocation((desktop.getWidth()-tp.getWidth())/2, (desktop.getHeight()-tp.getHeight())/2);
+				tp.setVisible(true);
+				}
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
+		
+		
+			}
 
 	private void initDesktop(){
 		

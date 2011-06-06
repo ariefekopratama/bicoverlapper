@@ -848,28 +848,17 @@ public class Session implements KeyListener {
 	 */
 	public void setSelectedBiclustersExcept(Selection selectedBic, String noUpdate) 
 		{
-		this.selectedBicluster = selectedBic;
-		if(!undoOrRedo)
-			{
-			//for(int i=contLog+1;i<selectionLog.size();i++)	
-				//selectionLog.remove(i);
-			if(contLog<selectionLog.size()-1)
-				for(int i=selectionLog.size()-1;i>=contLog;i--)	
-					selectionLog.addLast(selectionLog.get(i));
-			selectionLog.add(selectedBicluster);
-			contLog=selectionLog.size()-1;
-			if(selectionLog.size()>10)   	
-		    	{
-		    	selectionLog.removeFirst();
-		    	contLog--;
-		    	}
-			}
-		else	undoOrRedo=false;
+		setSelectedBicluster(selectedBic);
 		this.updateExcept(noUpdate);
 		}
 	
 	public void setSelectedBiclustersOnly(Selection selectedBic, String onlyUpdate) 
 		{
+		setSelectedBicluster(selectedBic);
+		this.updateOnly(onlyUpdate);
+		}
+	public void setSelectedBicluster(Selection selectedBic) 
+		{
 		this.selectedBicluster = selectedBic;
 		if(!undoOrRedo)
 			{
@@ -885,11 +874,6 @@ public class Session implements KeyListener {
 		    	}
 			}
 		else	undoOrRedo=false;
-		this.updateOnly(onlyUpdate);
-		}
-	public void setSelectedBicluster(Selection selectedBic) 
-		{
-		this.selectedBicluster = selectedBic;
 		}
 	
 	/**
@@ -905,6 +889,13 @@ public class Session implements KeyListener {
 		}
 
 	/**
+	 * For Ctrl-0
+	 */
+	public void clear()
+		{
+		setSelectedBiclustersExcept(null, "");
+		}
+/**
 	 * For Ctrl-Y
 	 */
 	public void redo()
@@ -929,7 +920,7 @@ public class Session implements KeyListener {
 		JComponent newContentPane = searchPanel.getJPanel2();
 		newContentPane.setOpaque(true); //content panes must be opaque
 		window.setContentPane(newContentPane);
-		window.setAlwaysOnTop(true);
+		//window.setAlwaysOnTop(true);
 		//Display the window.
 		window.pack();
 		window.setSize(new Dimension(241, 150));
@@ -1003,11 +994,13 @@ public class Session implements KeyListener {
     public void keyReleased(KeyEvent e) {
          if(ctrlPressed)
         	{
+        	 System.out.println(e.getKeyCode());
          	if(e.getKeyCode()==90)		undo();//crtl-Z
         	else if(e.getKeyCode()==89)	redo();//ctrl-Y
         	else if(e.getKeyCode()==70) search();//ctrl-F
         	else if(e.getKeyCode()==76) show();//ctrl-L
         	else if(e.getKeyCode()==83) sort();//ctrl-S
+        	else if(e.getKeyCode()==48) clear();//ctrl-0
         	}
         ctrlPressed=false;
     }
@@ -1031,7 +1024,7 @@ public class Session implements KeyListener {
 	 */
 	void setSelectedHeatmapBiclusters(Selection selectedBic) 
 		{
-		this.selectedBicluster = selectedBic;
+		setSelectedBicluster(selectedBic);
 		this.update("Bubble");
 		this.update("Transcription");
 		}

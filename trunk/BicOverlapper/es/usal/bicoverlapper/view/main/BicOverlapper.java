@@ -21,6 +21,7 @@ import es.usal.bicoverlapper.controller.data.parser.TRNParser;
 import es.usal.bicoverlapper.controller.data.reader.NCBIReader;
 import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
+import es.usal.bicoverlapper.view.analysis.panel.TrickPanel;
 import es.usal.bicoverlapper.view.diagram.overlapper.Graph;
 
 
@@ -63,5 +64,6 @@ public class BicOverlapper {
 		 //TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/stress/TFs/reg0000001s.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/stress/TFs/reg0000001s.gml");
 		// TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/networks/TFs/Balaji2006/tnetSimple.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/networks/TFs/Balaji2006/tnetSimple.gml");
 				new BicOverlapper();
+				
 	}
 }

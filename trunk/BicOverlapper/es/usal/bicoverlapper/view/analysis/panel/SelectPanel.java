@@ -172,7 +172,7 @@ public class SelectPanel extends javax.swing.JFrame {
 			{
 				ComboBoxModel jComboBox1Model = 
 					new DefaultComboBoxModel(
-							new String[] { "+3 sd", "+2 sd", "+1 sd", "mean", "-1 sd", "-2 sd", "-3 sd"});
+							new String[] { "+3 sdev", "+2 sdev", "+1 sdev", "mean", "-1 sdev", "-2 sdev", "-3 sdev"});
 				jComboBox1 = new JComboBox();
 				getContentPane().add(jComboBox1);
 				jComboBox1.setModel(jComboBox1Model);
@@ -182,7 +182,7 @@ public class SelectPanel extends javax.swing.JFrame {
 			{
 				ComboBoxModel jComboBox2Model = 
 					new DefaultComboBoxModel(
-							new String[] { "+3 sd", "+2 sd", "+1 sd", "mean", "-1 sd", "-2 sd", "-3 sd"});
+							new String[] { "+3 sdev", "+2 sdev", "+1 sdev", "mean", "-1 sdev", "-2 sdev", "-3 sdev"});
 				jComboBox2 = new JComboBox();
 				getContentPane().add(jComboBox2);
 				jComboBox2.setModel(jComboBox2Model);

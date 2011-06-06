@@ -1,11 +1,16 @@
 package es.usal.bicoverlapper.view.diagram.heatmap;
 
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
 
+import javax.swing.JOptionPane;
 
+
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 
@@ -37,6 +42,7 @@ class HeatmapFocusControl extends FocusControl
     private HeatmapDiagram.HorizontalLineLayout hl;
     private int [] columnOrder;
     public int numNeighbors=10;
+	private AnalysisTask t;
     
     /**
      * Session constructor
@@ -110,19 +116,36 @@ class HeatmapFocusControl extends FocusControl
 		         	{
 	        		if(genSeleccionado)
 	        			{
-	        			 String[] neighbors=sesion.analysis.getSimilarProfiles(numNeighbors, sesion.getMicroarrayData().getGeneName(item.getInt("actualId")));
-	        			 System.out.println(neighbors);
-	        			 for(String n : neighbors)
-	        			 	{
-	        				genesSeleccionados.add(sesion.getMicroarrayData().getGeneId(n));
-	        			 	}
-	                	for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
-							{
-							condicionesSeleccionadas.add((Integer)i);
+        				ArrayList<Object> params=new ArrayList<Object>();
+	    				params.add(numNeighbors);
+	    				params.add(sesion.getMicroarrayData().getGeneName(item.getInt("actualId")));
+	    				AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.analysis, AnalysisProgressMonitor.AnalysisTask.SEARCH_PATTERNS, params, "Searching similar patterns...");
+	    				apm.run();
+	    				t=apm.getTask();
+						Thread wt=new Thread() {
+							public void run() {
+								try{
+									String simprofs=t.get();
+									if(simprofs==null)	
+										JOptionPane.showMessageDialog(null,
+							                    "No similar profiles found",
+							                    "Error",JOptionPane.ERROR_MESSAGE);
+									else
+										{
+										String [] neighbors=simprofs.split(" ");
+										 System.out.println(neighbors);
+					        			 for(String n : neighbors)
+					        				genesSeleccionados.add(sesion.getMicroarrayData().getGeneId(n));
+					        			for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
+											condicionesSeleccionadas.add((Integer)i);
+										sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
+										//sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, condicionesSeleccionadas), "XXX");
+								        }
+									}catch(Exception e){e.printStackTrace();}
 							}
-	                	//TODO: Progress bar or something? Takes about 10s for 6000 genes
-	                	sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
-	        			}
+						};
+						wt.start();
+						}
 		         	}
                 else if(e.isAltDown())
                 	{
@@ -132,8 +155,7 @@ class HeatmapFocusControl extends FocusControl
 	        	 	{
 		            if ( item != curFocus ) //Añadimos al foco uno que no es el último añadido
 		            	{
-	                	//if(!e.isControlDown())
-	            		if(!e.isShiftDown())
+	                	if(!e.isShiftDown())
 		                	{
 		                	curFocus = item;
 		                    clear();

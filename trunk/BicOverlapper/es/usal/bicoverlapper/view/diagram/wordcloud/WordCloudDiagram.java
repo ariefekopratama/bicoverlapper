@@ -15,6 +15,7 @@ import java.awt.Graphics2D;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.JComboBox;
+import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -30,16 +32,28 @@ import javax.swing.JPanel;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
+import prefuse.Constants;
+import prefuse.action.ActionList;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+
+import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
+import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.model.gene.GeneRequester;
 import es.usal.bicoverlapper.model.goterm.GOTerm;
 
 import es.usal.bicoverlapper.utils.color.CustomColor;
+import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
+import es.usal.bicoverlapper.view.configuration.panel.WordCloudParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
+import es.usal.bicoverlapper.view.diagram.heatmap.ExpressionColorAction;
+import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
 
-public class WordCloudDiagram extends Diagram implements ActionListener,ChangeListener,MouseListener, GeneRequester
+public class WordCloudDiagram extends Diagram implements ChangeListener,MouseListener, GeneRequester
 	{
 	private static final long serialVersionUID = 1L;
 	
@@ -58,26 +72,15 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	// configuracion de color
 	private static final int colorEtiquetaVar = 0;
 	private static final int colorVarSelec = 1;
-	private static final int colorFondoEtiqueta = 2;
-	private static final int colorTextoEtiqueta = 3;
-	private static final int colorLineaOut = 4;
-	private static final int colorLinea = 5;
-	private static final int colorLineaSelec = 6;
-	private static final int colorLineaMarcada = 7;
-	private static final int colorEje = 8;
-	private static final int colorEjeSelec = 9;
-	private static final int colorFondo = 3;
-	private Color[] paleta = {Color.BLUE, Color.RED, Color.YELLOW, Color.WHITE, Color.ORANGE, Color.BLUE,
-							  Color.RED, Color.YELLOW, Color.BLACK, Color.RED, Color.LIGHT_GRAY,Color.WHITE};
-	private String[] textoLabel = {"Color Etiqueta Variable", "Color Variable Seleccionada", "Color Fondo Etiqueta", "Color Texto Etiqueta",
-								   "Color Linea Excluida", "Color Linea", "Color Linea Seleccionada", "Color Linea Marcada", "Color Ejes",
-								   "Color Eje Seleccionado", "Color Fondo"};
+	private static final int colorFondo = 2;
+	private Color[] paleta = {Color.BLUE, Color.RED, Color.WHITE};
+	private String[] textoLabel = {"Word", "Selected word","Background"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 	
-	private List<GOTerm> got=null;
+	public List<GOTerm> got=null;
 	private ArrayList<GeneAnnotation> annot=null;
-	private boolean textChanged=false; //to not repeat hypergeometric tests and other R calls
-	private boolean innerCall=false;//to differentiate updates from combo boxes from internal updates
+	public boolean textChanged=false; //to not repeat hypergeometric tests and other R calls
+	public boolean innerCall=false;//to differentiate updates from combo boxes from internal updates
 	
 	//Atributos propios de la clase --------------------
 	private float maxFontSize=(float)400;
@@ -88,11 +91,10 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	private double Y=0;
 	private double  X=0;
 	private int maxChar=0;
-	private String nameC=MenuPanel.GO_TERMS;
+	private String nameC=WordCloudParameterConfigurationPanel.GO_TERMS;
 	private ArrayList<String> nameSelected;
-	private Color colorNameSelected;
-	private Color myColor;
-	public MenuPanel menuCloud=null;
+	//private Color colorNameSelected;
+	public WordCloudParameterConfigurationPanel menuCloud=null;
 	
 
 	private TreeMap <String,Word> words;
@@ -105,7 +107,9 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 	private boolean Enought=true;
 	private List<String> sortedWords=null;
 
-	private boolean doNOTupdate=false;
+	public boolean doNOTupdate=false;
+
+	private JLabel progress;
 	
 	
 	public WordCloudDiagram(Session sesion, Dimension dim)
@@ -116,17 +120,22 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		this.sesion = sesion;
 		int alto = (int)dim.getHeight();
 		int ancho = (int)dim.getWidth();
+		this.setLayout(null);
 		this.setPreferredSize(new Dimension(ancho,alto));
 		this.setSize(ancho,alto);
-		menuCloud=new MenuPanel();
-		CustomColor c=new CustomColor(200,0,0,200);
+		//menuCloud=new MenuPanel();
 		
-		this.colorNameSelected=new Color(c.getR(), c.getG(), c.getB());
-		this.myColor=new Color(c.getR(), c.getG(), c.getB(),c.getA());
-		this.colorSeleccion=new Color(c.getR(), c.getG(), c.getB(),c.getA());
-		this.setBackground(Color.WHITE);
+		menuCloud=new WordCloudParameterConfigurationPanel(this);
+		progress=new JLabel("");
+		progress.setForeground(Color.LIGHT_GRAY);
+		progress.setFont(new Font("Arial", Font.PLAIN, 10));
+		progress.setBounds(this.getWidth()-32, this.getHeight()-12, 30, 10);
 		
-		this.add(menuCloud,BorderLayout.SOUTH);
+		
+		this.colorSeleccion=paleta[colorEtiquetaVar];
+		this.setBackground(paleta[colorFondo]);
+		
+		this.add(progress);
 		this.addMouseListener(this);
 		nameSelected=new ArrayList<String>();
 		Ajusta=true;
@@ -135,13 +144,14 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		update();
 		}
 	
-	public MenuPanel getMenuCloud() {
+	public WordCloudParameterConfigurationPanel getMenuCloud() {
 		return menuCloud;
 	}
 
-	public void setMenuCloud(MenuPanel menuCloud) {
+	public void setMenuCloud(WordCloudParameterConfigurationPanel menuCloud) {
 		this.menuCloud = menuCloud;
 	}
+	
 	private void setEnabledButon(){
 	}
 	
@@ -152,7 +162,7 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 			for (int j=0;j<nameSelected.size();j++)
 				{
 				if(nameSelected.get(j).equalsIgnoreCase(w)){
-					colorW=WordCloudDiagram.this.colorNameSelected;
+					colorW=paleta[colorVarSelec];
 					}
 				}
 			}
@@ -173,7 +183,6 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		Enought=true;
 		
 		words.clear();
-		colorSeleccion=sesion.getSelectionColor();
 		
 		if(innerCall==false)	
 			{
@@ -184,25 +193,25 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 		//TODO: digraphs, colors
 		if(this.sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
 			{
-			if(!innerCall || annot==null || (got==null && menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)) 
+			if(!innerCall || annot==null || (got==null && menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES)) 
 				{
 				Point p=new Point(0,0);
 				if(this.getParent()!=null) p=this.sesion.getDiagramWindow(this.getName()).getLocation();
-				if(menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES) 
+				if(menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES) 
 					{
 					String ont="";
 					switch(menuCloud.ontology.getSelectedIndex())
 						{
-						case(MenuPanel.ALL):
+						case(WordCloudParameterConfigurationPanel.ALL):
 							doNOTupdate=true;
-							menuCloud.ontology.setSelectedIndex(MenuPanel.BP);//NOTA: Si hago esto así me hace doble actualización majo
-						case(MenuPanel.BP):
+							menuCloud.ontology.setSelectedIndex(WordCloudParameterConfigurationPanel.BP);//NOTA: Si hago esto así me hace doble actualización majo
+						case(WordCloudParameterConfigurationPanel.BP):
 							ont="BP";
 							break;
-						case(MenuPanel.MF):
+						case(WordCloudParameterConfigurationPanel.MF):
 							ont="MF";
 						break;
-						case(MenuPanel.CC):
+						case(WordCloudParameterConfigurationPanel.CC):
 							ont="CC";
 							break;
 						}
@@ -214,7 +223,7 @@ public class WordCloudDiagram extends Diagram implements ActionListener,ChangeLi
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
 					}
 				else
-					{this.sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, this.menuCloud.progress, null, true);}
+					{this.sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, progress, null, true);}
 				return;
 				}
 			else
@@ -233,10 +242,10 @@ public void addWords()
 	
 	switch(this.menuCloud.text.getSelectedIndex())
 		{
-		case MenuPanel.GO_TERM://----------------------------------------------
+		case WordCloudParameterConfigurationPanel.GO_TERM://----------------------------------------------
 			switch(this.menuCloud.size.getSelectedIndex())
 			{
-			case MenuPanel.GENES:
+			case WordCloudParameterConfigurationPanel.GENES:
 				cont=0;
 				for(GeneAnnotation a : annot)
 				{
@@ -251,13 +260,13 @@ public void addWords()
 							boolean add=true;
 							switch(menuCloud.ontology.getSelectedIndex())
 								{
-								case MenuPanel.BP:
+								case WordCloudParameterConfigurationPanel.BP:
 									if(!go.ontology.equals("BP"))	add=false;
 									break;
-								case MenuPanel.CC:
+								case WordCloudParameterConfigurationPanel.CC:
 									if(!go.ontology.equals("CC"))	add=false;
 									break;
-								case MenuPanel.MF:
+								case WordCloudParameterConfigurationPanel.MF:
 									if(!go.ontology.equals("MF"))	add=false;
 									break;
 								}
@@ -277,7 +286,7 @@ public void addWords()
 				}
 				
 				break;
-			case MenuPanel.OCCURRENCES:
+			case WordCloudParameterConfigurationPanel.OCCURRENCES:
 				for(GeneAnnotation a : annot)
 				{
 				if(a.goTerms!=null)
@@ -289,13 +298,13 @@ public void addWords()
 							boolean add=true;
 							switch(menuCloud.ontology.getSelectedIndex())
 								{
-								case MenuPanel.BP:
+								case WordCloudParameterConfigurationPanel.BP:
 									if(!go.ontology.equals("BP"))	add=false;
 									break;
-								case MenuPanel.CC:
+								case WordCloudParameterConfigurationPanel.CC:
 									if(!go.ontology.equals("CC"))	add=false;
 									break;
-								case MenuPanel.MF:
+								case WordCloudParameterConfigurationPanel.MF:
 									if(!go.ontology.equals("MF"))	add=false;
 									break;
 								}
@@ -311,7 +320,7 @@ public void addWords()
 				}
 				break;
 	
-			case MenuPanel.PVALUES:
+			case WordCloudParameterConfigurationPanel.PVALUES:
 				cont=0;
 				for(GeneAnnotation a : annot)
 					if(a.goTerms!=null && a.goTerms.size()>0)	cont++;
@@ -328,7 +337,7 @@ public void addWords()
 				break;
 				}
 			break;
-		case MenuPanel.DEFINITION://---------------------------------------------
+		case WordCloudParameterConfigurationPanel.DEFINITION://---------------------------------------------
 		default:
 			cont=0;
 			for(int i=0;i<annot.size();i++)
@@ -343,10 +352,10 @@ public void addWords()
 					int oc=1;
 					switch(this.menuCloud.size.getSelectedIndex())
 						{
-						case MenuPanel.OCCURRENCES:
+						case WordCloudParameterConfigurationPanel.OCCURRENCES:
 							splitAndAdd(desc, oc, oc, this.colorSeleccion, false, null);
 							break;
-						case MenuPanel.GENES:
+						case WordCloudParameterConfigurationPanel.GENES:
 						default:
 							splitAndAdd(desc, oc, oc, this.colorSeleccion, true, null);
 							break;
@@ -372,8 +381,8 @@ public void addWords()
 	if(cont>=0 && cont<=sesion.getSelectedBicluster().getGenes().size())
 		{
 		System.out.println(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
-		this.menuCloud.progress.setText(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
-		this.menuCloud.progress.setToolTipText("Annotations retrieved for "+cont+" of the "+sesion.getSelectedBicluster().getGenes().size()+" selected genes");
+		progress.setText(cont+"/"+sesion.getSelectedBicluster().getGenes().size());
+		progress.setToolTipText("Annotations retrieved for "+cont+" of the "+sesion.getSelectedBicluster().getGenes().size()+" selected genes");
 		}
 	System.out.println("Time in the rest: "+(System.currentTimeMillis()-t1)/1000.0+" s");
 	//}
@@ -390,6 +399,7 @@ public synchronized void receiveGOTerms(ArrayList<GOTerm> goterms)
 	}
 public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot)
 	{
+	if(doNOTupdate)	{doNOTupdate=false; return;}
 	System.out.println("receiveGeneAnnotations");
 	this.annot=annot;
 	addWords();
@@ -485,93 +495,6 @@ public void addWord(String w, double value, double size, Color colorW)
 		return true;
 		}
 	
-	/*
-	private void setSelectedPoints(Vector<String> titulos)
-		{
-		SeleccionPuntos sp=new SeleccionPuntos("","",this.sesion.getDatos(this.isPersonas()).getNumElems());
-		for(int i=0;i<titulos.size();i++)
-			{
-			String titulo=titulos.get(i);
-			for(int j=0;j<this.sesion.getDatos(this.isPersonas()).getNumElems();j++)
-				{
-				String id=(String)this.sesion.getDatos(this.isPersonas()).getIdentificador(j);
-				if(id.equalsIgnoreCase(titulo))	
-					{
-					sp.setX(j, true);
-					sp.setLastSelec(true, j);
-					sp.setColorSelec(this.colorSeleccion, j);
-					}
-				}
-			}
-		this.sesion.getCapaDatos().setColorSelec(this.colorSeleccion);
-		this.sesion.getCapaDatos().setSelecPuntos(sp);
-		this.getVentana().actualizar(seleccionId);
-		this.repaint();
-		}
-	
-	private void getSelection() {		
-		Vector<String> titulos=new Vector<String>();		
-		if(nameC.equalsIgnoreCase(panelMenu.GENRE))
-			{
-			Iterator it=MovieDB.instance.movies.values().iterator();
-			while(it.hasNext())
-				{
-				Movie m=(Movie)it.next();
-				List<Genre> l=m.genres;
-				for(int i=0;i<l.size();i++)
-					{
-					for(int j=0;j<nameSelected.size();j++)
-						{
-						if(nameSelected.get(j).equalsIgnoreCase(l.get(i).getName()))
-							{
-							titulos.add(m.title);
-							}
-						}
-					}
-				}
-			}
-		else if(nameC.equalsIgnoreCase(panelMenu.KEYWORD))
-			{
-			Iterator it=MovieDB.instance.movies.values().iterator();
-			while(it.hasNext())
-				{
-				Movie m=(Movie)it.next();
-				List<String> l=m.keywords;
-				for(int i=0;i<l.size();i++)
-					{
-					String w=(String)l.get(i);				
-					for(int j=0;j<nameSelected.size();j++)
-						{
-						if(nameSelected.get(j).equalsIgnoreCase(w))
-							{
-							titulos.add(m.title);
-							}
-						}
-					}
-				}
-			}
-		else if(nameC.equalsIgnoreCase(panelMenu.DISTRIBUTOR))
-			{
-			Iterator it=MovieDB.instance.movies.values().iterator();
-			while(it.hasNext())
-				{
-				Movie m=(Movie)it.next();
-				List<String> l=m.companies;
-				for(int i=0;i<l.size();i++)
-					{
-					String w=(String)l.get(i);
-					for(int j=0;j<nameSelected.size();j++)
-						{
-						if(nameSelected.get(j).equalsIgnoreCase(w))
-							{
-							titulos.add(m.title);
-							}
-						}
-					}			
-				}
-			}
-		setSelectedPoints(titulos);
-	}*/
 	
 	public void create()
 		{
@@ -582,38 +505,7 @@ public void addWord(String w, double value, double size, Color colorW)
 		this.getWindow().pack();
 		}
 	
-	//	Método que se activa cuando cambia la selecciòn en una ventana
-	//TODO: It requires that ALL the genes have retrieved the annotations, which is computationally huge
-	//(when using the NCBI-QuickGO characteristic). By now, unavailable
-	public void actualizar() 
-		{
-		/*
-		LinkedList<Integer> g=new LinkedList<Integer>();
-		LinkedList<Integer> c=new LinkedList<Integer>();
-		Iterator<GeneAnnotation> it=sesion.getMicroarrayData().getGeneAnnotations().values().iterator();
-		for(int i=0;i<sesion.getMicroarrayData().getNumGenes();i++)
-			{
-			GeneAnnotation ga=sesion.getMicroarrayData().getGeneAnnotations().get(i);
-			if(ga!=null)
-				{
-				for(int j=0;j<nameSelected.size();j++)
-					{
-					String name=nameSelected.get(j);
-					if(ga.description.contains(name))
-						{
-						g.add(i);
-						System.out.println("Añadiendo gen "+ga.name+" con id "+i);
-						break;
-						}
-					}
-				}
-			}
-		
-		for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)	c.add(i);		
-		es.usal.bicoverlapper.kernel.BiclusterSelection bs=new BiclusterSelection(g,c);
-		sesion.setSelectedBiclusters(bs, "loud");
-		update();		*/
-		}
+	
 	public void run()
 		{
 		this.getWindow().setVisible(true); // show the window
@@ -675,6 +567,8 @@ public void addWord(String w, double value, double size, Color colorW)
 		
 		((TextLayout)w.getText()).draw(g2,(float)(w.getX()),(float)(w.getY()));//+maxAlto
 		}
+	
+	progress.setBounds(this.getWidth()-progress.getWidth()-2, this.getHeight()-progress.getHeight()-2, 30, 10);
 	}
 	
 	
@@ -726,7 +620,7 @@ public void addWord(String w, double value, double size, Color colorW)
 			if(w.length()>0 && nW!=null)
 				{
 				String wc="";
-				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
+				if(this.menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES)
 					wc=w.concat("("+formatNumber(nW.value)+")");
 				else
 					wc=w.concat("("+(int)(nW.size)+")");
@@ -782,7 +676,7 @@ public void addWord(String w, double value, double size, Color colorW)
 			if(w.length()>0 && nW!=null)
 				{
 				String wc="";
-				if(this.menuCloud.size.getSelectedIndex()==MenuPanel.PVALUES)
+				if(this.menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES)
 					wc=w.concat("("+formatNumber(nW.value))+")";
 				else	
 					wc=w.concat("("+(int)nW.size+")");
@@ -869,28 +763,29 @@ public void addWord(String w, double value, double size, Color colorW)
 	public int getId(){
 		return es.usal.bicoverlapper.controller.kernel.Configuration.CLOUD_ID;
 	}
-	public void actionPerformed(ActionEvent e){
+	
+	/*public void actionPerformed(ActionEvent e){
 		String comando=e.getActionCommand();
-		if (comando.equalsIgnoreCase(MenuPanel.DESCRIPTION)){
+		if (comando.equalsIgnoreCase(WordCloudParameterConfigurationPanel.DESCRIPTION)){
 			setEnabledButon();
 			if (!this.myColor.equals(sesion.getSelectionColor()))
 				this.colorSeleccion=this.myColor;
-			nameC=MenuPanel.DESCRIPTION;
+			nameC=WordCloudParameterConfigurationPanel.DESCRIPTION;
 			newSelection=true;
 			this.actualizar();
 			this.repaint();
-		}else if(comando.equalsIgnoreCase(MenuPanel.GO_TERMS)){
+		}else if(comando.equalsIgnoreCase(WordCloudParameterConfigurationPanel.GO_TERMS)){
 			setEnabledButon();
 			if (!this.myColor.equals(sesion.getSelectionColor()))
 				this.colorSeleccion=this.myColor;
 			//menuCloud.goButton.setEnabled(false);
-			nameC=MenuPanel.GO_TERMS;
+			nameC=WordCloudParameterConfigurationPanel.GO_TERMS;
 			newSelection=true;
 			//ajusta=true;
 			this.actualizar();
 			this.repaint();
 		}
-	}
+	}*/
 	public void stateChanged(ChangeEvent i){
 		//zoom=(float)(menuCloud.sliderZoom.getValue()/(float)4.0);
 		//System.out.println("Z: "+zoom);
@@ -960,13 +855,15 @@ public void addWord(String w, double value, double size, Color colorW)
 		
 	public void mouseReleased(MouseEvent e) 
 		{
-		if(!e.isControlDown())
+		/*if(!e.isShiftDown())//TODO: not used right now
 			{
 			nameSelected=new ArrayList<String>();
 			newSelection=true;
 			}
 		else
-			newSelection=false;
+			newSelection=false;*/
+		nameSelected=new ArrayList<String>();
+		newSelection=true;
 		
 		X=e.getX();
 		Y=e.getY();
@@ -994,155 +891,87 @@ public void addWord(String w, double value, double size, Color colorW)
 						else
 							{
 							nameSelected.add(w);
-							words.get(w).setColor(colorNameSelected);
+							words.get(w).setColor(paleta[colorVarSelec]);
 							System.out.println("W: "+nameSelected.toString());
+							//TODO: Now the search is tricky because it depends on what genes have annotations searched for.
+							//We should focus on the ones selected, or on the whole (with Ctrl pressed, for example) by making first a whole search
+							Selection s=null;
+							if(!e.isControlDown())
+								{
+								s=sesion.getMicroarrayData().search(nameSelected.get(0).trim(), 0, true, sesion.getSelectedGenesBicluster());
+								}
+							else
+								{
+								this.doNOTupdate=true;
+								sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getMicroarrayData().getNonAnnotatedGeneIds()), this, true, progress, null, true);
+								s=sesion.getMicroarrayData().search(nameSelected.get(0).trim(), 0, true, null);
+								System.out.println("Search by all not currently available");
+								}
+							
+							if(s!=null && s.getGenes().size()>0)
+								{
+								sesion.setSelectedBicluster(s);
+								sesion.updateAll();
+								}
+							else
+								{
+								System.err.println("No genes found");
+								}
 							}
-						this.actualizar();
 						break;
-						//this.repaint();
 						}
 					}				
 				}
 			}
 		}
 	
-	public class MenuPanel extends JPanel implements ActionListener{
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -576605444831473458L;
-		public static final String DESCRIPTION="Description";
-		public static final String GO_TERMS="GO Terms";
-		//public static final String DISTRIBUTOR="Distributor";
-		static final int ZOOM_MIN = 10;
-		static final int ZOOM_MAX = 1600;
-		static final int ZOOM_INIT = 15;
-		
-		static final String textLabel=" Text: ";
-		static final String splitLabel=" Split: ";
-		static final String sizeLabel=" Size: ";
-		static final String ontoLabel=" Ontology: ";
-		JLabel tl=new JLabel(textLabel);
-		JLabel spl=new JLabel(splitLabel);
-		JLabel sil=new JLabel(sizeLabel);
-		JLabel onl=new JLabel(ontoLabel);
-		JLabel progress=new JLabel("");
-		
-		String antName="";
-		String[] texts;
-		String[] splits;
-		String[] sizes;
-		String[] ontologies;
-		public JComboBox text, split, size, ontology;
-		
-		static final int DEFINITION=0;
-		static final int GO_TERM=1;
-		static final int WORD1=0;
-		static final int WORD2=1;
-		static final int COMLETE=2;
-		static final int GENES=0;
-		static final int PVALUES=1;
-		static final int OCCURRENCES=2;//Deprecated
-		static final int ALL=0;
-		static final int BP=1;
-		static final int MF=2;
-		static final int CC=3;
-		
-		
-		public  MenuPanel(){
-			/*if(sesion.getMicroarrayData().searchByR==true)	
-				{
-				texts=new String[]{"definition", "go term"};
-				splits=new String[]{"1 word", "2 words", "complete"};
-				sizes=new String[]{"genes", "p-value"};
-		//		sizes=new String[]{"genes"};
-				ontologies=new String[]{"all", "bp", "mf", "cc"};
-				}
-			else											
-				{
-				texts=new String[]{"definition", "go term"};
-				splits=new String[]{"1 word", "2 words", "complete"};
-				sizes=new String[]{"genes", "p-value"};
-				ontologies=new String[]{"all", "bp", "mf", "cc"};
-				}*/
-			texts=new String[]{"definition", "go term"};
-			splits=new String[]{"1 word", "2 words", "complete"};
-			sizes=new String[]{"genes", "p-value"};
-			ontologies=new String[]{"all", "bp", "mf", "cc"};
+	/**
+	 * Pops up a configuration panel for heatmap visual properties
+	 */
+	public void configure(){
+		if(!configurando){
+			configurando = true;
+			JInternalFrame ventanaConfig = this.getVentanaConfig();
 			
-			text=new JComboBox(texts);
-			split=new JComboBox(splits);
-			size=new JComboBox(sizes);
-			ontology=new JComboBox(ontologies);
-			text.setSelectedIndex(1);
-			split.setSelectedIndex(2);
-			size.setSelectedIndex(0);
-			ontology.setSelectedIndex(1);
-			text.addActionListener(this);
-			split.addActionListener(this);
-			size.addActionListener(this);
-			ontology.addActionListener(this);
+			// Obtenemos el gestor de eventos de configuracion
+			ConfigurationMenuManager gestor = new ConfigurationMenuManager(this,ventanaConfig,paleta,muestraColor);
 			
-			
-			sil.setToolTipText("The size of words is proportional to the number of genes that are annotated with it or to the p-value of a significance test");
-			spl.setToolTipText("The description or GO terms are split and visualized following this:");
-			//ontology.setEnabled(false);
-			
-			this.add(tl);
-			this.add(text);
-			this.add(spl);
-			this.add(split);
-			this.add(sil);
-			this.add(size);
-			this.add(onl);
-			this.add(ontology);
-			this.add(progress);
+			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
+			//JPanel panelParametros=new WordCloudParameterConfigurationPanel(this);
+			JPanel panelParametros=menuCloud;
+			this.setPanelParametros(panelParametros);
+			JPanel panelBotones = this.getPanelBotones(gestor);
+				
+			// Configuramos la ventana de configuracion
+			this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
+							
+			// Mostramos la ventana de configuracion
+			ventanaConfig.setLocation(getPosition());
+			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1")+" "+this.getName());
+			sesion.getDesktop().add(ventanaConfig);
+			try {
+				ventanaConfig.setSelected(true);
+			} catch (PropertyVetoException e) {
+				e.printStackTrace();
+			}
+			ventanaConfig.pack();
+			ventanaConfig.setVisible(true);
 		}
+	}
+	
+	/**
+	 * Notifies the end of configuration
+	 */
+	public void endConfig(boolean ok){
+		if(!ok)	{configurando=false; return;}
 		
-		public void actionPerformed(ActionEvent e)
-			{
-			if(doNOTupdate)	{doNOTupdate=false; return;}
-			JComboBox cb = (JComboBox)e.getSource();
-			if(cb==text)
-				{
-				if(!antName.equals((String)cb.getSelectedItem()))	textChanged=true;
-				else		
-					textChanged=false;
-				}
-			else			
-				textChanged=false;
-			
-			if(cb==ontology && size.getSelectedIndex()==PVALUES)	got=null;
-			innerCall=true;
-			if(cb==text && textChanged)
-				{
-				if( ((String)cb.getSelectedItem()).equals("go term")	)
-					{
-					split.addItem("complete");
-					size.addItem("p-value");
-					ontology.setEnabled(true);
-					}
-				else
-					{
-					split.removeItem("complete");
-					size.removeItem("p-value");
-					ontology.setEnabled(false);
-					}
-				}
-	        antName = (String)cb.getSelectedItem();
-	        ((WordCloudDiagram)this.getParent()).update();
-	        }
+		colorSeleccion=paleta[colorEtiquetaVar];
+		this.configurando = false;
+		sesion.setSelectionColor(colorSeleccion);
+		sesion.updateConfigExcept(this.getName());
+		this.update();
+	}
 
-		public void setIndices(int textIndex, int splitIndex, int sizeIndex,
-				int ontologyIndex) {
-			text.setSelectedIndex(textIndex);	
-			split.setSelectedIndex(splitIndex);
-			size.setSelectedIndex(sizeIndex);
-			ontology.setSelectedIndex(ontologyIndex);
-			 ((WordCloudDiagram)this.getParent()).update();
-		       
-		}
-		}
 	
 	private class Word
 		{

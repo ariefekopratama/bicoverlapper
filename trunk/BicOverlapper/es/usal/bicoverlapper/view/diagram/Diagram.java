@@ -48,7 +48,7 @@ public abstract class Diagram extends JPanel {
 
 	private boolean personas;
 	
-	private static final int tamMuestra = 15;
+	private static final int tamMuestra = 5;
 	
 	//------------------------- Elementos para doble buffering y repintados selectivos ------------------
 	/** Imagen necesaria para realizar un rendering con doble buffer */
@@ -171,7 +171,6 @@ public abstract class Diagram extends JPanel {
 		//Configuramos el panel de configuracion de la paleta de colores
 		JPanel panelColor = new JPanel();
 		
-		panelColor.setBackground(Color.LIGHT_GRAY);
 		panelColor.setLayout(new GridBagLayout());
 		
 		JLabel[] etiqueta = new JLabel[paleta.length];
