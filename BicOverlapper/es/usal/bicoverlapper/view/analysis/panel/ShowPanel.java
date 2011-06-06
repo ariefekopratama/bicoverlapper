@@ -53,20 +53,7 @@ public class ShowPanel extends javax.swing.JFrame {
 	private JLabel jLabel1;
 	
 	private Session session =null;
-	
 
-	/**
-	* Auto-generated main method to display this JFrame
-	*/
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				ShowPanel inst = new ShowPanel();
-				inst.setLocationRelativeTo(null);
-				inst.setVisible(true);
-			}
-		});
-	}
 	
 	public ShowPanel() {
 		super();
@@ -81,24 +68,25 @@ public class ShowPanel extends javax.swing.JFrame {
 	
 	public void updateLists()
 		{
-		{
-			Map<Integer, GeneAnnotation> ga=session.getMicroarrayData().getGeneAnnotations();
-			ArrayList<String> rowNames=new ArrayList<String>();
-			rowNames.add(session.getMicroarrayData().chip);
-			if(ga!=null && ga.values()!=null && ga.values().size()>0)
-				{
-				GeneAnnotation a=ga.values().iterator().next();
-				if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-				if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
-				}
-			if(jList1.getModel().getSize()!=rowNames.size())
-				{
-				ListModel jList1Model = 
-					new DefaultComboBoxModel(rowNames.toArray(new String[0]));
-				jList1.setModel(jList1Model);
-				jList1.setSelectedIndex(0);
-				}
-		}
+		Map<Integer, GeneAnnotation> ga=session.getMicroarrayData().getGeneAnnotations();
+		ArrayList<String> rowNames=new ArrayList<String>();
+		rowNames.add(session.getMicroarrayData().chip);
+		if(ga!=null && ga.values()!=null && ga.values().size()>0)
+			{
+			GeneAnnotation a=ga.values().iterator().next();//TODO: that several names appear or not if they weren't found for everygene is totally random because of this next()
+			if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
+			if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+			if(a.ensemblId!=null && a.ensemblId.length()>0)	rowNames.add("ensembl id");
+			if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("entrez id");
+			if(a.symbol!=null && a.symbol.length()>0)	rowNames.add("symbol");
+			}
+		if(jList1.getModel().getSize()!=rowNames.size())
+			{
+			ListModel jList1Model = 
+				new DefaultComboBoxModel(rowNames.toArray(new String[0]));
+			jList1.setModel(jList1Model);
+			jList1.setSelectedIndex(0);
+			}
 		}
 	
 	private void initGUI() {
@@ -136,10 +124,28 @@ public class ShowPanel extends javax.swing.JFrame {
 									String s=jList1.getSelectedValues()[j].toString();
 									if(s!=md.chip)		
 										{
-										if(s.equals(md.rname))	md.rowLabels[i]+=md.geneAnnotations.get(i).name+del;
-										if(s.equals(md.rdescription))	md.rowLabels[i]+=md.geneAnnotations.get(i).description+del;
-										if(s.equals("Entrez ID"))	md.rowLabels[i]+=md.geneAnnotations.get(i).entrezId+del;
-										if(md.rowLabels[i].length()==0) md.rowLabels[i]+=md.getGeneNames()[i]+del;
+										String ss=null;
+										if(md.geneAnnotations.get(i)!=null)
+											{
+											if(s.equals(md.rname))			ss=md.geneAnnotations.get(i).name;
+											if(s.equals(md.rdescription))	ss=md.geneAnnotations.get(i).description;	
+											if(s.equals("entrez id"))		ss=md.geneAnnotations.get(i).entrezId;
+											if(s.equals("ensembl id"))		ss=md.geneAnnotations.get(i).ensemblId;
+											if(s.equals("symbol"))			ss=md.geneAnnotations.get(i).symbol;
+											//if(md.rowLabels[i].length()==0) ss=md.getGeneNames()[i];
+											//if(ss.length()==0) ss=md.getGeneNames()[i];
+											if(ss==null)		ss=md.getGeneNames()[i];
+											}
+										else
+											{
+											//JOptionPane.showMessageDialog(null,
+											//		"No gene annotations for gene "+md.rowLabels[i], 
+											//  	"Annotations not found", JOptionPane.ERROR_MESSAGE);
+											md.rowLabels[i]=md.geneNames[i];
+											System.err.println("No gene annotations for gene "+md.rowLabels[i]);
+											}
+										if(ss!=null)
+											md.rowLabels[i]+=ss+del;
 										}
 									else				md.rowLabels[i]+=md.getGeneNames()[i]+del;
 									}
@@ -178,7 +184,9 @@ public class ShowPanel extends javax.swing.JFrame {
 					GeneAnnotation a=ga.values().iterator().next();
 					if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
 					if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
-					if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("Entrez ID");
+					if(a.ensemblId!=null && a.ensemblId.length()>0)	rowNames.add("ensembl id");
+					if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("entrez id");
+					if(a.symbol!=null && a.symbol.length()>0)	rowNames.add("symbol");
 					}
 				ListModel jList1Model = 
 					new DefaultComboBoxModel(rowNames.toArray(new String[0]));

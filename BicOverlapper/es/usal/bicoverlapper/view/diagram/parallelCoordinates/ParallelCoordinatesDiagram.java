@@ -28,17 +28,21 @@ import java.awt.geom.Rectangle2D;
 import java.beans.PropertyVetoException;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.LinkedList;
 
 import javax.swing.ImageIcon;
 import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 
 
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
@@ -70,7 +74,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private boolean atributosIniciados = false, configurando = false, diagramaPintado = false;
 		
 	// definicion de margenes del diagrama
-	final int margenDer = 15;
+	final int margenDer = 30;
 	final int margenIzq = 80;
 	final int margenSup = 20;
 	final int margenInf = 100;
@@ -85,31 +89,18 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private int[] seleccionPuntos = {es.usal.bicoverlapper.controller.kernel.Configuration.PARALLEL_COORDINATES_ID};// kernel.Configuration.DiagramaPuntosId, kernel.Configuration.BubbleGraphId,
 
 	// configuracion de color
-	private static final int colorEtiquetaVar = 0;
-	private static final int colorVarSelec = 1;
-	private static final int colorFondoEtiqueta = 2;//
-	private static final int colorTextoEtiqueta = 3;//
-	private static final int colorLineaOut = 4;
-	private static final int colorLinea = 5;//
-	private static final int colorLineaMarcada = 6;//
-	private static final int colorEje = 7;
-	private static final int colorEjeSelec = 8;
-	private static final int colorFondo = 9;
-	private static final int colorCotas = 10;
-	private static final int colorBicluster= 11;
+	private static final int colorBicluster= 0;
+	private static final int colorVarSelec =1;
+	private static final int colorLineaMarcada = 2;//
+	private static final int colorEtiquetaVar = 3;
+	private static final int colorCotas = 4;
+	private static final int colorEje = 5;
+	private static final int colorFondo = 6;
 	
-	private Color[] paleta = {Color.DARK_GRAY, new Color(0,0,255,100), new Color(255,255,255,200), 
-			Color.BLACK, new Color(200,200,200), new Color(200,0,0),
-			new Color(0,0,100), Color.BLACK, Color.RED, 
-			  Color.WHITE, Color.LIGHT_GRAY, new Color(200,0,0,100)};
-	private String[] textoLabel = {"Condition labels", "Selected lines",
-			Translator.instance.configureLabels.getString("s12"), Translator.instance.configureLabels.getString("s13"),
-	Translator.instance.configureLabels.getString("s14"), Translator.instance.configureLabels.getString("s15"), 
-	Translator.instance.configureLabels.getString("s16"), Translator.instance.configureLabels.getString("s20"),
-	Translator.instance.configureLabels.getString("s21"), Translator.instance.configureLabels.getString("s19"),
-	Translator.instance.configureLabels.getString("s22"), 
-	"Bicluster Color"};
+	private Color[] paleta = {Color.BLUE, Color.blue.darker(), Color.GREEN, Color.DARK_GRAY, Color.LIGHT_GRAY,  Color.BLACK, Color.WHITE};
+	private String[] textoLabel = {"Selected lines", "Subselected lines", "Hovered line", "Labels", "Levels", "Axes", "Background"};
 	private JTextField[] muestraColor = new JTextField[paleta.length];
+	
 	
 	private Point p1;
 	private boolean settingSlope;
@@ -202,8 +193,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		paleta[ParallelCoordinatesDiagram.colorBicluster]=sesion.getSelectionColor().brighter();
 		paleta[ParallelCoordinatesDiagram.colorLineaMarcada]=sesion.getHoverColor();
 		
-		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up4.png";
-		iconoScrollDown = "es/usal/bicoverlapper/resources/images/up4.png";
+		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up5.png";
+		iconoScrollDown = "es/usal/bicoverlapper/resources/images/up5.png";
 		iconoScrollSelecUp = "es/usal/bicoverlapper/resources/images/upselec4.png";
 		iconoScrollSelecDown = "es/usal/bicoverlapper/resources/images/upselec4.png";
 		
@@ -398,10 +389,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		scrollDown = loadIcon(this.iconoScrollDown).getImage();
 		scrollSelecUp = loadIcon(this.iconoScrollSelecUp).getImage();
 		scrollSelecDown = loadIcon(this.iconoScrollSelecDown).getImage();
+		
 		altoScroll = scrollUp.getHeight(null)-1;
 		anchoScroll = scrollUp.getWidth(null)-1;
 		
-		for(int i = 0; i < numC; i++){
+		/*for(int i = 0; i < numC; i++){
 			
 			Rectangle2D.Double scroll = new Rectangle2D.Double(margenIzq+i*intervaloVar-anchoScroll/2,
 															   margenSup-altoScroll-margenScroll,anchoScroll,altoScroll);
@@ -415,9 +407,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			cotaSup[i] = margenSup-margenScroll;
 			cotaInf[i] = alto-margenInf+margenScroll;
-		}
+		}*/
+		resetScrolls();
 		atributosIniciados = true;
 	}
+	
+	
 	
 	private ImageIcon loadIcon(String name)
 		{
@@ -749,8 +744,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			TextLayout etiqValor = new TextLayout(sesion.getMicroarrayData().rowLabels[tuplaSeleccionada],g2.getFont(),
 					 g2.getFontRenderContext());
-			etiqValor.draw(g2,(float)(margenIzq-5-etiqValor.getBounds().getWidth()),
-				 //  (float)((sesion.getMicroarrayData().maxCols[ordenVars[0]] - datos.getExpressionAt(tuplaSeleccionada, ordenVars[0]))*ratio[ordenVars[0]]+margenSup));	
+			etiqValor.draw(g2,(float)(margenIzq-20-etiqValor.getBounds().getWidth()),
 					  (float)((max[ordenVars[0]] - datos.getExpressionAt(tuplaSeleccionada, ordenVars[0]))*ratio[ordenVars[0]]+margenSup));	
 			
 			g2.setFont(oldFont);
@@ -999,7 +993,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			g2.setColor(Color.BLACK);
 			
 			
-			double w=intervaloVar*0.5;
+			double w=Math.min(intervaloVar*0.5, 30);
 			
 			int k=ordenVars[i];
 			upy[i]=(int)(Math.max(margenSup+(max[k]-sesion.getMicroarrayData().maxCols[k])*ratio[k], margenSup));
@@ -1021,35 +1015,44 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			//with median and quantiles
 			if(sesion.getMicroarrayData().median==null)	
-				sesion.analysis.loadMatrix(sesion.getMicroarrayData().name);
+				{
+				//new Thread(){
+				//	public void run()
+				//		{
+				//		}
+				//	};
+				ArrayList<Object> params=new ArrayList<Object>();
+				params.add(sesion.getMicroarrayData().rMatrixName);
+				AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.analysis, AnalysisProgressMonitor.AnalysisTask.LOAD_MATRIX, params, "Computing percentiles...");
+				apm.run();
+				synchronized(sesion.analysis)		{ try {		sesion.analysis.wait();	} catch (InterruptedException e) {	e.printStackTrace();} }
+				}
 			double median=sesion.getMicroarrayData().median[k];
 			double q75=sesion.getMicroarrayData().q75[k];
 			double q25=sesion.getMicroarrayData().q25[k];
 			double bottom=Math.min(q25, max[k]);
 			double middle=Math.min(median, max[k]);
 			double top=Math.min(q75, max[k]);
-			//double totalBottom=Math.min(sesion.getMicroarrayData().minCols[k], max[k]);
-			//double totalTop=Math.min(sesion.getMicroarrayData().maxCols[k], max[k]);
-			double totalBottom=Math.min(q25-sesion.getMicroarrayData().iqr[k]*sesion.getMicroarrayData().whiskerRange, max[k]);	//not the absolute min/max but a factor*IQR
+			double totalBottom=Math.max(q25-sesion.getMicroarrayData().iqr[k]*sesion.getMicroarrayData().whiskerRange, min[k]);	//not the absolute min/max but a factor*IQR
 			double totalTop=Math.min(q75+sesion.getMicroarrayData().iqr[k]*sesion.getMicroarrayData().whiskerRange, max[k]);
 			double y1=(int)(Math.max(margenSup+(max[k]-top)*ratio[k], margenSup));
 			double y2=(int)(Math.max(margenSup+(max[k]-bottom)*ratio[k], margenSup));
-			double x=margenIzq+intervaloVar*i-intervaloVar*0.25;
+			double x=margenIzq+intervaloVar*i-w/2;
 			
 			
 			//Drawing whiskers
 		    g2.setStroke(dashed);
-			Line2D.Double l=new Line2D.Double(x+intervaloVar*0.25,margenSup+(max[k]-totalTop)*ratio[k],x+intervaloVar*0.25,margenSup+(max[k]-top)*ratio[k]);
+			Line2D.Double l=new Line2D.Double(x+w/2,margenSup+(max[k]-totalTop)*ratio[k],x+w/2,margenSup+(max[k]-top)*ratio[k]);
 			g2.draw(l);
 			g2.setStroke(stant);
-			l=new Line2D.Double(x+intervaloVar*0.15,margenSup+(max[k]-totalTop)*ratio[k],x+intervaloVar*0.35,margenSup+(max[k]-totalTop)*ratio[k]);
+			l=new Line2D.Double(x+w*0.3,margenSup+(max[k]-totalTop)*ratio[k],x+w*0.7,margenSup+(max[k]-totalTop)*ratio[k]);
 			g2.draw(l);
 			
 			g2.setStroke(dashed);
-			l=new Line2D.Double(x+intervaloVar*0.25,margenSup+(max[k]-bottom)*ratio[k],x+intervaloVar*0.25,margenSup+(max[k]-totalBottom)*ratio[k]);
+			l=new Line2D.Double(x+w*0.5,margenSup+(max[k]-bottom)*ratio[k],x+w*0.5,margenSup+(max[k]-totalBottom)*ratio[k]);
 			g2.draw(l);
 			g2.setStroke(stant);
-			l=new Line2D.Double(x+intervaloVar*0.15,margenSup+(max[k]-totalBottom)*ratio[k],x+intervaloVar*0.35,margenSup+(max[k]-totalBottom)*ratio[k]);
+			l=new Line2D.Double(x+w*0.3,margenSup+(max[k]-totalBottom)*ratio[k],x+w*0.7,margenSup+(max[k]-totalBottom)*ratio[k]);
 			g2.draw(l);
 			
 			
@@ -1060,7 +1063,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			
 			//Drawing mean line
-			l=new Line2D.Double(x,margenSup+(max[k]-middle)*ratio[k],x+intervaloVar*0.5,margenSup+(max[k]-middle)*ratio[k]);
+			l=new Line2D.Double(x,margenSup+(max[k]-middle)*ratio[k],x+w,margenSup+(max[k]-middle)*ratio[k]);
 			g2.draw(l);
 			
 			//Drawing outliers
@@ -1069,7 +1072,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for(int d:ou)
 				{
 				Ellipse2D.Double e;
-				e=new Ellipse2D.Double(x+intervaloVar*0.25-er*0.5, tuplas[d-1][k].y-er*0.5,er,er);
+				e=new Ellipse2D.Double(x+w*0.5-er*0.5, tuplas[d-1][k].y-er*0.5,er,er);
 				g2.draw(e);
 				}
 			}
@@ -1164,8 +1167,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	public void update() {
 		repaintAll=true;
 		gpLineasFondo=null;
+		tuplaSeleccionada=-1;
 		
 		fitSelectedConditions();
+		fitScrolls();
 		
 		atributosIniciados = false;
 		atributosIniciados = true;
@@ -1224,6 +1229,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			} 
 	 	}
 	 
+	 /**
+	  * Sets the scrolls in the min and max value of the selected profiles for each coordinate
+	  */
 	 void fitScrolls()
 		{
 		if(sesion.getSelectedBicluster()!=null )
@@ -1305,7 +1313,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			}
 		else	//If the selection has no genes, we reset the scrolls to min and max
 			{
-			//iniciarAtributos();
+			resetScrolls();
 			}
 		}
 
@@ -1441,6 +1449,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private class GestorSeleccionarTupla implements MouseMotionListener, MouseListener{
 
 		
+		private AnalysisTask t;
+
 		public void mouseClicked(MouseEvent e) {
 			Selection selecBic=sesion.getSelectedBicluster();
 			if(!scrollFijado && sesion.areMicroarrayDataLoaded() && selecBic!=null && (selecBic.getGenes().size()>0))
@@ -1473,6 +1483,41 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			                	    	sesion.getMicroarrayData().browseEntrezGene(tuplaSeleccionada);
 			                	    	return;
 			                			}
+		                        	else if(e.isControlDown())
+		                        		{
+		                        		ArrayList<Object> params=new ArrayList<Object>();
+		        	    				params.add(10);
+		        	    				params.add(sesion.getMicroarrayData().getGeneName(tuplaSeleccionada));
+		        	    				AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.analysis, AnalysisProgressMonitor.AnalysisTask.SEARCH_PATTERNS, params, "Searching similar patterns...");
+		        	    				apm.run();
+		        	    				t=apm.getTask();
+		        						Thread wt=new Thread() {
+		        							public void run() {
+		        								try{
+		        									LinkedList<Integer> genesSeleccionados=new LinkedList<Integer>();
+		        									LinkedList<Integer> condicionesSeleccionadas=new LinkedList<Integer>();
+		        									   
+		        									String simprofs=t.get();
+		        									if(simprofs==null)	
+		        										JOptionPane.showMessageDialog(null,
+		        							                    "No similar profiles found",
+		        							                    "Error",JOptionPane.ERROR_MESSAGE);
+		        									else
+		        										{
+		        										String [] neighbors=simprofs.split(" ");
+		        										 System.out.println(neighbors);
+		        					        			 for(String n : neighbors)
+		        					        				genesSeleccionados.add(sesion.getMicroarrayData().getGeneId(n));
+		        					        			for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
+		        											condicionesSeleccionadas.add((Integer)i);
+		        										sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
+		        					        			}
+		        									}catch(Exception e){e.printStackTrace();}
+		        							}
+		        						};
+		        						wt.start();
+		        						
+		                        		}
 		                        	else
 		                        		{
 			            				browsing=false;

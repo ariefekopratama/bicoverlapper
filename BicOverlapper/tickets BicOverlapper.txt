@@ -2,7 +2,71 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=Important
 
--
+S Correlation Network seems not to work again
+	It's a problem of the standard deviation thing. I think it's counterintuitive, I changed it by basic filters.
+S WC Search for word clicking on tag cloud
+		S Done for current selection
+		S For the whole gene set, pressing Ctrl, implemented, but it takes time and a progress bar could be good
+S WC label with number of annotations retrieved
+S Improve limma analysis (models were not used at the best model configuration)
+  S Remove "rest" option from limma analysis: counter-intuitive, the option can be done by the rest of options, difficult to implement with the new model
+
+Luis input
+	S PC Change scolls colors
+	S PC Reset scroll positions
+	-> Computing percentiles task bar not static
+	-> Normalize every set
+	
+S Revise the R package installation (especially annotation packages)
+	It seems to work perfectly well on mac
+	-> Set installation of rJava as a requirement
+S Generate Mac install package
+	-JarBundler+PackageMaker OK
+	-Recheck example data (in source code):
+		S Brain -> NullPointerException: column ids starting with numbers... shall I leave this? -> Age as EF...
+					S for column ids (must be always present so a single if is enough)
+					->S detected and duely reported to the user in the case of Efs, but totally numeric EFVs not supported by now
+		S EColi -> S They look ok, but bimax, isa did not run correctly, S also correlation network computation
+					S It was a sideback problem, now fixed, and no longer GeneNames, but biomaRt.external.gene_id
+		S Yeast -> NA values, now properly detected and displayed
+					S Also, I have imputed them manually and changed it
+		S Spombe -> S Search for gene names: annotations are retrieved online, so it's quite possible gene annotations are not ready still
+					S GeneName is something to remove, too slow, too consuming, biomaRt.external_gene_id is much better!
+		 
+	-Recheck example data (in installed app):
+-> NA values support and imputation
+-> Numeric EFV support (read, numeric selection and merging)
+	It will require changes on EF names, so we will specify they are EFs (EF.)
+	S Read
+	
+->Ctrl+click halves heatmap width
+	Only sometimes! Hard to debug...
+S Add trick box with:
+	Alt+Click on a gene on Parallel Coordinates or Heatmap opens up its NCBI webpage (if found)
+	Right-click on Parallel Coordinates or Heatmap opens up a configuration panel for their visualizations
+	Shift+Click add up to current selection instead of setting a new selection
+	Ctrl+click on a gene on the Heatmap or Parallel Coordinates search for and selects similar profiles
+	On Parallel Coordinates, you can select profiles by threshold dragging the tiny scrolls at the ends of each coordinate
+	Ctrl+drag scrolls on Parallel Coordinates selects only by this scroll, resetting any other scrolls
+	Ctrl-Z and Ctrl-Y can be used to go back and forth among selections
+	Ctrl-0 can be used to remove any selection done
+	Ctrl-F opens up the search box
+	Ctrl-L opens up the label selection box
+	Ctrl-S opens up the column sort box
+	Pressing "u" on Overlapper shows/hides every gene on the groups
+	Pressing "p" on Overlapper pauses/resumes the animation
+	You can drag a line on Overlapper to select the genes that fall inside it
+	You can use biomaRt.id_type as "chip" type, and gene annotations will be searched via BiomaRt (id_type can be, for example, "external_gene_id" or "entrezgene", and should match with row names, and be available as a filter for the species mart on biomaRt bioconductor package)
+	You can use any Bioconductor annotation package names as chip info, for example org.Sc.sgd.db or hgu95av2.db (row names should be valid ids for that platform)
+	 
+	
+	
+-> Color change of the heatmap after opening config box on PC	
+	
+S PC Boxplots restriction to width, sometimes too large if only a few columns shown
+	S Label for hovered gene should not collide with first boxplot
+S HM condition label restriction to width, somtimes too large if only a few columns shown
+S Merge Columns: save EF by which the merging is done
 - Download from AE: Check different experiments: currently ArrayExpress() only works for raw data from 96% of platforms...
 		- Progress bar
 		- Testing with simple, 4 samples, MEXP, Sc experiments:
@@ -11,15 +75,15 @@ D=Discarded (existing but decided not to solve by now, because it's minor or irr
 		
 		- E.MEXP-906		-> ArrayExpress R package
 		- E-MEXP-919 fails  -> ArrayExpress R package
-		- 
+--------
 -> Session one session per microarray data load is working fine, except for the related R matrix. We can only have one console, so only the last R matrix is running.
 			S we should solve that with several R matrix with different names.
 			Now it loads and separates perfectly (on R and on Java level different sessions with different data, all with a single R console but storing different R matrices
 			S Biclustering/TRN results titles wont's go to the active working desktop but to the first one (however results are perfectly loaded)
 			-> Diselect menu options depending on the active workshop --> BicOverlapper.initDesktop
 			-> In the end, proper control of changes between tabs.
--> GSEA and DEA only work if you have replicates... -> allow GSEA-like analysis just with profile selection? workaround for limma/gsea to work with a single replicate
-		The best way is ot provide a method of merging samples by EF, and then apply GSEA.
+S GSEA and DEA only work if you have replicates... -> allow GSEA-like analysis just with profile selection? workaround for limma/gsea to work with a single replicate
+		The best way is to provide a method of merging samples by EF, and then apply GSEA.
 D Sort: numeric problem -> there's a walkaround if resorted by the columnID
 -> Overlapper: towards a drastic simplification of the view:
 		- Exhaustive checking for bugs

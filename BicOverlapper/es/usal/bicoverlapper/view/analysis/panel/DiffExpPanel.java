@@ -63,7 +63,6 @@ public class DiffExpPanel extends javax.swing.JFrame {
 	private JComboBox regulation;
 	private JTextField expressionValue;
 	private JLabel differentialExpression;
-	private JCheckBox correction;
 	private JLabel pvalue;
 	private Session session;
 	private JScrollPane jScrollPane1;
@@ -118,6 +117,8 @@ public class DiffExpPanel extends javax.swing.JFrame {
 					 * 8) ef vs ef (different efs) - error
 					 * (non-Javadoc)
 					 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+					 * TODO: he quitado el caso de rest, es poco intuitivo y ahora mismo no funciona
+					 * Adem‡s se puede hacer con los otros.
 					 */
 					public void actionPerformed(java.awt.event.ActionEvent e) {
 						String ef1=null;
@@ -247,7 +248,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							 System.out.println("Same EF case");
 							 ArrayList<Object> p=new ArrayList<Object>();
 							   p.add(ef1);
-							   p.add(correction.isSelected());
+							   p.add(true);
 							   p.add(new Double(pvalueValue.getText()).doubleValue());
 							   p.add(new Double(expressionValue.getText()).doubleValue());
 							   p.add(reg);
@@ -284,7 +285,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						 	{// case 1, rest vs rest, perform diffexp between every combination of efvs for each ef
 							 System.out.println("rest vs rest case");
 							 ArrayList<Object> p=new ArrayList<Object>();
-							   p.add(correction.isSelected());
+							   p.add(true);
 							   p.add(new Double(pvalueValue.getText()).doubleValue());
 							   p.add(new Double(expressionValue.getText()).doubleValue());
 							   p.add(reg);
@@ -326,7 +327,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							ArrayList<Object> p=new ArrayList<Object>();
 							   p.add(ef);
 							   p.add(efv);
-							   p.add(correction.isSelected());
+							   p.add(true);
 							   p.add(new Double(pvalueValue.getText()).doubleValue());
 							   p.add(new Double(expressionValue.getText()).doubleValue());
 							   p.add(reg);
@@ -368,11 +369,12 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							if(ef1.equals("rest"))	{efv1=efv2;ef1=ef2;}//4)
 							
 							ArrayList<Object> p=new ArrayList<Object>();
-							   p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
-							   p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
+							  // p.add(session.getMicroarrayData().getConditions(ef1, efv1, ne1));
+							  // p.add(session.getMicroarrayData().getConditions(ef2, efv2, ne2));
+							   p.add(ef1);
 							   p.add(nameG1);
 							   p.add(nameG2);
-							   p.add(correction.isSelected());
+							   p.add(true);
 							   p.add(new Double(pvalueValue.getText()).doubleValue());
 							   p.add(new Double(expressionValue.getText()).doubleValue());
 							   p.add(reg);
@@ -410,48 +412,45 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			{
 				pvalue = new JLabel();
 				this.add(pvalue);
-				pvalue.setText("p-value threshold (-log10)      <");
-				pvalue.setBounds(17, 12, 208, 14);
+				pvalue.setText("BH corrected p-value        <");
+				pvalue.setBounds(13, 14, 184, 14);
 				pvalue.setToolTipText("-log10 scale means that a p-value of 10e-6 must be specified as 6");
-			}
-			{
-				correction = new JCheckBox();
-				this.add(correction);
-				correction.setText("Benjamini-Hochberg correction");
-				correction.setBounds(38, 30, 227, 18);
-				correction.setSelected(true);
 			}
 			{
 				pvalueValue = new JTextField();
 				this.add(pvalueValue);
-				pvalueValue.setText("3");
-				pvalueValue.setBounds(228, 9, 43, 21);
+				pvalueValue.setText("0.01");
+				pvalueValue.setBounds(195, 11, 43, 21);
 			}
 			{
 				differentialExpression = new JLabel();
 				this.add(differentialExpression);
-				differentialExpression.setText("Expression threshold              >");
-				differentialExpression.setBounds(13, 57, 199, 14);
+				differentialExpression.setText("Differential expression       >");
+				differentialExpression.setBounds(13, 57, 182, 14);
+				differentialExpression.setToolTipText("Genes with differential expression lower than this threshold will be filtered out");
 			}
 			{
 				expressionValue = new JTextField();
 				this.add(expressionValue);
 				expressionValue.setText("2.0");
-				expressionValue.setBounds(230, 54, 43, 21);
+				expressionValue.setBounds(195, 54, 43, 21);
 			}
 			{
 				ComboBoxModel regulationModel = 
 					new DefaultComboBoxModel(
-							new String[] { "up and down regulated", "only up regulated", "only down regulated" });
+							new String[] { "up and down regulated", "up regulated in group 1", "down regulated in group 1" });
 				regulation = new JComboBox();
 				this.add(regulation);
 				regulation.setModel(regulationModel);
+				regulation.setSelectedIndex(2);
 				regulation.setBounds(39, 83, 192, 21);
 			}
 
 			MicroarrayData md=session.getMicroarrayData();
 			ArrayList<String> efs=new ArrayList<String>();
-			efs.add("rest");
+			//NOTA: lo quitamos, es poco intuitivo, incrementa mucho la combinatoria y su funci—n
+			// se puede realizar mendiante el resto. Adem‡s con los nuevos cambios es dif’cil de implementar
+			//efs.add("rest");
 			for(String ef:md.experimentFactors)
 				{
 				efs.add(ef);

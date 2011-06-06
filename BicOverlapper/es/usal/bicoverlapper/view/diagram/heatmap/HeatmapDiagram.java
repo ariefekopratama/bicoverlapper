@@ -309,12 +309,13 @@ private static final long serialVersionUID = 1L;
 		VerticalLineLayout2 ylabels=new VerticalLineLayout2((alto-conditionMargin), "geneLabels", ng,m_scale);
 		ylabels.setLayoutBounds(rg);
         
-        xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,m_scale/3);
-        xlabels.setLayoutBounds(rc);
+       // xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,m_scale/3);
+		 xlabels = new HorizontalLineLayout((ancho-geneMargin),"conditionLabels", nc,1.5);
+	    xlabels.setLayoutBounds(rc);
 
         gl=new MicroGridLayout("matrix",ng,  ngtot, nc, 
-        		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin, m_scale/3, m_scale, "MicroTal construido "+contName);//sparse
-        		//alto-conditionMargin, ancho-geneMargin, "actualRowId", "colRank",geneMargin, conditionMargin, m_scale/3, m_scale, "MicroTal construido "+contName);//sparse
+       // 		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin, m_scale/3, m_scale, "MicroTal construido "+contName);//sparse
+         		alto-conditionMargin, ancho-geneMargin, "actualRowId", "colId",geneMargin, conditionMargin,1.5, m_scale, "MicroTal construido "+contName);//sparse
         contName++;
         xlabels.setLayoutAnchor(new Point2D.Double(geneMargin, conditionMargin));//TODO: No podrían funcionar dos AxisLayout?
 		gl.setLayoutBounds(rdata);
@@ -781,8 +782,9 @@ private static final long serialVersionUID = 1L;
         public int[] condOrder;
         public int[] initialCondOrder;
         private double distortion;
-        private double maxDistortion=0.7;
-     
+      //  private double maxDistortion=0.7;
+        private double maxDistortion=120;
+        
         
         HorizontalLineLayout(double maxWidth, String group, int colNumber, double d) {
             m_maxWidth = maxWidth;
@@ -823,7 +825,8 @@ private static final long serialVersionUID = 1L;
 	           canonicalw=((RotationLabelRenderer)item.getRenderer()).getTextHeight(item);
      	    	}//A un tamaño de 1, vemos cuánto ocupan en altura
          
-           scale = w > m_maxWidth ? m_maxWidth/w : 1.0; //Escalamos según la altura máxima qu tengamos
+     	    scale = w > m_maxWidth ? m_maxWidth/w : 1.0; //Escalamos según la altura máxima qu tengamos
+     	   System.out.println("Escala es "+scale+", "+ancho+" y ancho m‡ximo "+m_maxWidth);
            Display d = v.getDisplay(0);
            Insets ins = d.getInsets();//espacio que el display deja en sus bordes
            
@@ -836,10 +839,83 @@ private static final long serialVersionUID = 1L;
           
         //0) SELECTION OR HOVER
           if(sesion.getSelectedBicluster()!=null ||  (sesion.getHoveredBicluster()!=null && sesion.getHoveredBicluster().getConditions().size()>0 && sesion.getHoveredBicluster().getConditions().size()<condOrder.length))
-     		    {
-        	    int nc=0;
-	            int ns=0;
-	            int nh=0;
+     		  {
+        	 
+        	  int nc=0;
+              int ns=0;
+              int nh=0;
+              int hoverCondition=-1;
+              if(sesion.getSelectedBicluster()!=null)     
+                  ns=sesion.getSelectedBicluster().getConditions().size();
+              if(sesion.getHoveredBicluster()!=null && sesion.getHoveredBicluster().getConditions().size()>0 && sesion.getHoveredBicluster().getConditions().size()<condOrder.length)     
+                     {
+                     hoverCondition=condOrder[sesion.getHoveredBicluster().getConditions().get(0)];
+                             nh=sesion.getHoveredBicluster().getConditions().size();
+                     }
+              if(nh>0 && nh<condOrder.length && (ns==0 || hoverCondition>ns))     
+                  nc=ns+nh;
+                  else                                                                    
+                          nc=ns;//hovering coincides with a selection
+                   
+              double normalw=w1;
+              double normals=normalw/canonicalw;
+              double width=this.getLayoutBounds().getWidth();
+              double distortedw=normalw*distortion;
+              double distorteds=distortedw/canonicalw;
+
+              double miniw=(width-distortedw*nc)/(condOrder.length-nc);
+              double minis=miniw/canonicalw;
+              int cont=0;
+              
+              if(distortedw*nc>maxDistortion*width)
+                  {
+                  distortedw=width*maxDistortion/nc;
+                  miniw=(m_maxWidth-distortedw*nc)/(condOrder.length-nc);
+                  distorteds=distortedw/canonicalw;
+                  minis=miniw/canonicalw;
+                  }
+
+            
+              while ( iter.hasNext() ) 
+                  {
+	              VisualItem item = (VisualItem)iter.next();
+	              if(nc==condOrder.length || nc==0)
+	                  {
+	                  item.setSize(Math.min(normals,1)); 
+	                  item.setEndSize(Math.min(normals,1)); 
+	                  iw=normalw;
+	                  
+	                  x = w;
+		              setX(item, null, x+item.getBounds().getWidth());
+		              setY(item, null, y);
+		              w += iw;
+	                  }
+	              else
+	                  {
+	                  if((ns>0 && cont<ns) || condOrder[item.getInt("id")]==hoverCondition) 
+	                          {
+	                          item.setSize(Math.min(distorteds,2)); 
+	                          item.setEndSize(Math.min(distorteds,2)); 
+	                          iw=distortedw;
+	                          cont++;
+	                          }
+	                  else
+	                          {
+	                          item.setSize(Math.min(minis,0.7)); 
+	                          item.setEndSize(Math.min(minis,0.7));
+	                          iw=miniw;
+	                          }
+	                  
+	                  x = w;
+		              setX(item, null, x+item.getBounds().getWidth());
+		              setY(item, null, y);
+		              w += iw;
+	                  }
+	              }
+                  /*
+        	    int nc=0;//total number of distorted conditions
+	            int ns=0;//number of selected conditions
+	            int nh=0;//number of hovered conditions
 	            int hoverCondition=-1;
 	            if(sesion.getSelectedBicluster()!=null)	
 	            	ns=sesion.getSelectedBicluster().getConditions().size();
@@ -852,47 +928,46 @@ private static final long serialVersionUID = 1L;
 	            	nc=ns+nh;
 		        else								        
 		        	nc=ns;//hovering coincides with a selection
-		         
+
 	 	    	double normalw=w1;
- 	            double normals=normalw/canonicalw;
- 	            double width=this.getLayoutBounds().getWidth();
- 	            double distortedw=normalw*distortion;
- 	            double distorteds=distortedw/canonicalw;
+	 	        
+	 	    	  double width=this.getLayoutBounds().getWidth();
+	              double distortedw=normalw*distortion;
+	              double miniw=(width-distortedw*nc)/(condOrder.length-nc);
 
- 	            double miniw=(width-distortedw*nc)/(condOrder.length-nc);
- 	            double minis=miniw/canonicalw;
- 	            int cont=0;
-
-      		    if(distortedw*nc>maxDistortion*width)
- 	            	{
- 	    	    	distortedw=width*maxDistortion/nc;
- 	    	    	miniw=(m_maxWidth-distortedw*nc)/(condOrder.length-nc);
- 	    	    	distorteds=distortedw/canonicalw;
- 	    	    	minis=miniw/canonicalw;
- 	    	        }
-
-     	    	
+ 	            double normals=1;
+	            double minis=condOrder.length/(distortion*nc+(condOrder.length-nc));	//the 2 will be distortion
+ 	            double distorteds=distortion*minis;
+ 	     
+ 	             	            double distortedw=normalw*distorteds;
+ 	                        double miniw=normalw*minis;
+	        
+ 	         
+       		   int cont=0;
+	
                 while ( iter.hasNext() ) 
 	            	{
                     VisualItem item = (VisualItem)iter.next();
                     if(nc==condOrder.length || nc==0)
      	                {
+                    	System.out.println("Normal size: "+normals);
 	                	item.setSize(normals); 
 	                	item.setEndSize(normals); 
 	                	iw=normalw;
-	                	}
+	                  	}
 	                else
 		                {
-		              //  if((ns>0 && cont<ns) || item.getInt("id")==hoverCondition) 
 	                	if((ns>0 && cont<ns) || condOrder[item.getInt("id")]==hoverCondition) 
 	   		                {
+	                		System.out.println("Distorted size: "+distorteds);
 		                	item.setSize(distorteds); 
-		                	item.setEndSize(distorteds); 
+		                	item.setEndSize(distorteds);
 		                	iw=distortedw;
 		                	cont++;
 		                	}
 		                else
 		                	{
+		                	System.out.println("Reduced size: "+minis);
 		                	item.setSize(minis); 
 		                	item.setEndSize(minis);
 		                	iw=miniw;
@@ -901,16 +976,18 @@ private static final long serialVersionUID = 1L;
 	                
    	                x = w;
 	                setX(item, null, x+item.getBounds().getWidth());
-	  	            setY(item, null, y);
-	  	            w += iw;
+	                setY(item, null, y);
+	                w += iw;
 	            	}
-     	    	}
+	            	*/
+  	    	}
           
           //3) NORMAL
           else
           	{
         	while ( iter.hasNext() ) 
 	           {
+        		System.out.println("escala normal:"+scale);
 	           VisualItem item = (VisualItem)iter.next();
                item.setSize(scale); item.setEndSize(scale);
                iw = (ancho-geneMargin)/(double)condOrder.length; //Escalamos también los bordes, además del tamaño del texto
@@ -925,10 +1002,6 @@ private static final long serialVersionUID = 1L;
         
        void setColumnOrder(int[] co)
        	{
-    	/*for(int i=0;i<co.length;i++)
-    		{
-    		initialCondOrder[i]=i;
-    		}*/
     	condOrder=initialCondOrder.clone();
         }
        
@@ -979,7 +1052,6 @@ private static final long serialVersionUID = 1L;
 	
 	/**
 	 * Pops up a configuration panel for heatmap visual properties
-	 * TODO: Still in development
 	 */
 	public void configure(){
 		if(!configurando){
@@ -987,18 +1059,14 @@ private static final long serialVersionUID = 1L;
 			JInternalFrame ventanaConfig = this.getVentanaConfig();
 			
 			// Obtenemos el gestor de eventos de configuracion
-			
 			ConfigurationMenuManager gestor = new ConfigurationMenuManager(this,ventanaConfig,paleta,muestraColor);
 			
 			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
-		//	JPanel panelParametros = this.getParameterPanel();
-		//	this.setPanelParametros(panelParametros);
 			JPanel panelParametros=new HeatmapParameterConfigurationPanel();
 			this.setPanelParametros(panelParametros);
 			JPanel panelBotones = this.getPanelBotones(gestor);
 				
 			// Configuramos la ventana de configuracion
-			
 			this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
 							
 			// Mostramos la ventana de configuracion

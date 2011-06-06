@@ -759,25 +759,6 @@ public void drawHoverNode()
 	  			n.setDrawn(true);
 		  		}
 	  		 }
-		if(bv.isDrawDual())
-			{
-			//hoverNode.centerNode
-			Iterator<DualNode> it=dualNodes.values().iterator();
-			while(it.hasNext())
-				{
-				DualNode dn=it.next();
-				if(dn.subNodes.containsValue(hoverNode))
-					{
-					Iterator<Edge> ite=dualEdges.values().iterator();
-					while(ite.hasNext())
-						{
-						Edge e=ite.next();
-						if(e.getFrom()==dn)		e.draw();
-						}
-					break;
-					}
-				}
-			}
 	  	
 	  //	if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.label))
 		if(hoverNode!=null && !selectedNodes.containsKey(hoverNode.labelId))
@@ -836,7 +817,12 @@ public void drawHoverDualNode()
 		  		}
 	  		 }
 		bv.strokeWeight(0);
-	  	}
+		
+		bv.textSize(10);
+    	Color cnb=bv.paleta[Overlapper.nodeLabelBackgroundColor];
+    	bv.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
+    	bv.text(hn.label, (float)Math.floor(hn.position.getX()), (float)Math.floor(hn.position.getY()-hn.getHeight()));
+	    }
 	}
   
 /**
@@ -2765,7 +2751,7 @@ void buildCompleteDualGraph()
 			zones.put(new Integer(n.clusters.hashCode()), n.clusters);
 			TreeMap<String, Node> m=getDualMates(n);
 			DualNode dn=new DualNode(this,n.clusters,m);
-			dn.label=(cont++)+"";
+			//dn.label=(cont++)+"";
 			dn.setMass(m.size());
 			dualNodes.put(dn.hashCode(), dn);
 			Iterator<Group> itc=n.clusters.values().iterator();

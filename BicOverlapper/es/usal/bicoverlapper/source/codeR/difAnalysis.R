@@ -1,6 +1,6 @@
 # Performs a differential analysis, returning the group of genes that are
 # both among the ones with maximum differential expression and maximum pvalue
-# It also draws the corresponding volcano plot if asked for it.
+# It also draws the corresponding volcano plot
 # mt -  expression matrix
 # g1 - first group for the differential analysis (column numbers of mt)
 # nameG1 - name of the first group to appear in the volcano plot
@@ -12,8 +12,8 @@
 #		  Note that p-value can be a tricky measure if the number of measured p-values is not taken into account.
 #		  A p-value of 0.001 for 100 measures means 100*0.001=0.1 -> 10% of false positives
 # diffT - threshold for the differential expression (absolute values)
-# byRank - if true, the above thresholds are ignored and the threshold is set by the top genes in differential expression an pvalue. Default false
-# numRank - number of top genes to consider in order to set the thersholds if byRank is true. Default 50
+# byRank - if true, the above thresholds are ignored and the threshold is set by the top numRank genes in differential expression and pvalue. Default false
+# numRank - number of top genes to consider in order to set the thresholds if byRank is true. Default 50
 
 # yliminf - line for the minimum level of pvalue, in log10 (a pvalue of 10e-7 should be marked as -7).
 # yliminf - line for the maximum level of pvalue, in log10 (a pvalue of 10e-7 should be marked as -7).
@@ -21,13 +21,15 @@
 # liminf - line for the minimum level of differential expression (default -0.2)\
 # BH.correct - if true, Benjamini and Hochberg's method to control the false discovery rate is applied to p-values. Default TRUE
 #				(non-controlled p-values mean that, for 6000 genes, a p-value of 0.0001 gives us a % of false negatives of 6000*0.0001=0.6%
-#				a BH corrected p-value of 0.0001 means a real probability of 0.0001% of being a false possitive.
+#				a BH corrected p-value of 0.0001 means a real probability of 0.0001% (or less) of being a false possitive.
 # print - if TRUE, the volcano plot is drawn
 # return - determines is all the DEGs are returned ("all") or only the up ("up") or down ("down") regulated. Default "all"
-
+# 
+# Returns the row numbers of the differentially expressed genes
+#
 # Author: Rodrigo Santamar’a rodri@usal.es
 ###############################################################################
-diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestingNames=c(), pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=TRUE, return ="all")
+diffAnalysis2=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestingNames=c(), pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=TRUE, return ="all")
 {
 	Difference <- rowMeans(mt[,g1, drop=FALSE])-rowMeans(mt[,g2, drop=FALSE])#Ratio of expression of good prognosis against bad prognosis
 	Average <- rowMeans(mt[,union(g1,g2)])
@@ -97,7 +99,51 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 		}	
 	}
 
-
+# Simplified version of diffAnalysis. No volcano plot print option. Limma without filtering columns out of g1 and g2.
+# pvalT - now it is not a -log but a normal value (e.g. 0.05, 0.001, 0.000001, etc.). It is corrected by adjustMethod
+# diffT - filter out genes with lower differential expression than diffT
+# g - experimental factor values (for example: "0 min", "0 min", "60 min", "60 min", "180 min", "180 min")
+# g1 - first group name (for example "0 min")
+# g2 - second group name ("for example "180 min")
+diffAnalysis=function(mt, g, g1, g2, pvalT=0.01, diffT=0, adjustMethod="BH", byRank=FALSE, numRank=50, return ="all")
+	{
+		#Limma analysis
+		library(limma)
+		population.groups=factor(make.names(g))
+		design=model.matrix(~0+population.groups)
+		colnames(design)=levels(population.groups)
+		fit=lmFit(mt, design)
+		
+		#trick to ve able to use parameters as values for expression
+		mycontrast=paste(make.names(g1),"-",make.names(g2), sep="")
+		cmd <- paste("contrasts <- makeContrasts(", mycontrast, ", levels = design)", sep ='"')
+		eval(parse(text = cmd))	
+		
+		fit2=contrasts.fit(fit, contrasts)
+		fit2.eBayes=eBayes(fit2)
+		
+		if(byRank==FALSE)
+			tt=topTable(fit2.eBayes, p.value=pvalT, adjust=adjustMethod, lfc=diffT, number=dim(mt)[1])
+		else
+			tt=topTable(fit2.eBayes, adjust=adjustMethod, lfc=difft, number=numRank)
+		
+		degs=as.numeric(rownames(tt))
+		
+		if(return=="all" || dim(tt)[1]==0) 
+			degs
+		else
+		{
+			if(return=="up")
+			{
+			degs[which(tt[,"logFC"]>0)]	
+			}
+			else
+			{
+			degs[which(tt[,"logFC"]<0)]	
+			}
+		}	
+	}
+	
 # Like above, but in this case several differential expression analyses are performed, 
 # between a target experimental factor value (efv) and every efv in its experimental 
 # factor (ef) except itself.
@@ -106,27 +152,25 @@ diffAnalysis=function(mt, g1, nameG1="Group 1", g2, nameG2="Group 2", interestin
 # Returns a list of arrays with the DEGs on each of these comparisons
 # TODO: Grep errors with regular expression symbols (e.g. "CD14+ mo" because of the +)
 diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
-		pvalT=7, diffT=0.2, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
+		pvalT=0.01, diffT=0.2, byRank=FALSE, numRank=50, return ="all")
     {
-	g1=grep(paste("^",efv,"$",sep=""),ef)
 	conds=unique(ef)
 	conds=conds[-grep(paste("^",efv,"$",sep=""),conds)] #not to compare with itself
 	
 	degs=lapply(conds, function(y){
-				g2=grep(paste("^",y,"$",sep=""),ef)
-				print(paste(efv,"vs",y))
-				
-				print(g2)
-				rownames(m)[diffAnalysis(m, g1, nameG1=efv, g2, nameG2=y, pvalT=pvalT, diffT=diffT, print=print, return=return)]
+				print(paste(efv,"vs", y))
+				#rownames(m)[diffAnalysis(m, g1=efv, g2=y, pvalT=pvalT, return=return)]
+				rownames(m)[diffAnalysis(m, g=ef, g1=efv, g2=y, pvalT=pvalT, byRank=byRank, numRank=numRank, return=return)]
 			})
 	names=paste(efv, "vs", conds)
 	
-	temp=list()
-	for(i in 1:length(degs))
-		{
-		temp=c(temp,list(degs[[i]]))
-		}
-	degs=temp
+	#temp=list()
+	#for(i in 1:length(degs))
+	#	{
+	#	temp=c(temp,list(degs[[i]]))
+	#	}
+	#degs=temp
+	
 	names(degs)=names
 	degs
     }
@@ -138,7 +182,7 @@ diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 # Returns a list of arrays with the DEGs on each of these comparisons
 # TODO: Grep errors with expression symbols (e.g. "CD14+ mo" because of the +)
 diffAnalysisEFall=function(m, ef, interestingNames=c(),
-			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
+			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, return ="all")
 	{
 		conds=unique(ef)
 		
@@ -152,7 +196,7 @@ diffAnalysisEFall=function(m, ef, interestingNames=c(),
 						print(paste(x,"vs",y))
 						print(g1)
 						print(g2)
-						rownames(m)[diffAnalysis(m, g1, nameG1=x, g2, nameG2=y, pvalT=pvalT, diffT=diffT, print=print, return=return)]
+						rownames(m)[diffAnalysis(m, g=ef,g1=x, g2=y, pvalT=pvalT, diffT=diffT, return=return)]
 						})
 					})
 			
@@ -186,11 +230,11 @@ diffAnalysisEFall=function(m, ef, interestingNames=c(),
 # ef - list of character arrays. Each character array corresponds to the efvs for a given ef, for each sample (column) in matrix m (e.g. healthy healthy cancer1 cancer1 cancer2 cancer2)
 # efNames - list with the names of the Experimental Factors
 # Returns a list where each element is a list of arrays, with the DEGs on each of these efs
-diffAnalysisAll=function(m, ef=list(), efNames=c(), interestingNames=c(),
-			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, BH.correct=TRUE, print=FALSE, return ="all")
+diffAnalysisAll=function(m, ef=list(), efNames=c(),
+			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, return ="all")
 	{
 	ret=lapply(ef, function(x){
-		diffAnalysisEFall(m, ef=x, interestingNames, pvalT, diffT, byRank, numRank, BH.correct, print, return)
+		diffAnalysisEFall(m, ef=x, pvalT, diffT, byRank, numRank, return)
 		})
 	names(ret)=efNames
 	ret

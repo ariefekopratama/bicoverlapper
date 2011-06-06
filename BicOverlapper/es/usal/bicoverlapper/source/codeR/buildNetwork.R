@@ -8,7 +8,7 @@
 #					  than mean(distances)-distanceThreshold*sd(distances)
 # Author: Rodrigo Santamar’a Vicente
 ###############################################################################
-buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean", deviationThreshold=2, distanceThreshold=2)
+buildCorrelationNetwork0=function(gmlFile=NA, mat=NA, distanceMethod="euclidean", deviationThreshold=2, distanceThreshold=2)
 	{
 	#0) Select only elements with some change
 	#TODO: mutual information?
@@ -69,7 +69,73 @@ buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean",
 	rm(mat0,dm,dd)
 	return("Network built")
 	}
+	
 
+#Version where deviation and distance thresholds are used as is, not as standard deivation of something
+buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean", deviationThreshold=0.5, distanceThreshold=1)
+	{
+		#0) Select only elements with some change
+		#TODO: mutual information?
+		if(length(which(c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowsky", "mutualinfo")==distanceMethod))!=1)
+			return(paste("Error: distance must be one of the following:", cat(c("euclidean", "maximum", "manhattan", "canberra", "binary", "minkowsky", "mutualinfo"), sep=", ")))
+		if(distanceMethod=="mutualinfo")
+			require(bioDist)
+		
+		#sds=apply(mat, 1,sd)
+		#dt=mean(sds)+deviationThreshold*sd(sds)
+		#mat0=mat[which(sds>dt),]
+		mat0=mat[which(abs(rowMeans(mat))>deviationThreshold),]
+		dim(mat0)
+		if(dim(mat0)[1]>2000)
+			return("Error: networks with more than 2000 nodes are not allowed, rise up the filtering threshold")
+		
+		#1) Perform distance computations
+		#euclidean, maximum, manhattan, canberra, binary, minkowsky, mutualinfo
+		if(distanceMethod=="mutualinfo")
+			dd=mutualInfo(mat0)
+		else
+			dd=dist(mat0, method=distanceMethod)
+		
+		attr(dd, "Size")
+		#dt=mean(dd)-distanceThreshold*sd(dd)
+		
+		#list relationships below distance threshold
+		t0=proc.time()
+		dm=as.matrix(dd)
+		tal=apply(dm,1,function(x)
+				{
+					selec=which(x<distanceThreshold)
+				})
+		if(length(tal)==0)
+			return(paste("Error: no nodes with distance below", distanceThreshold, "deviations of average distance for nodes deviated above", deviationThreshold," from average expression. Either raise deviation or distance thresholds."))
+		
+		st=which(as.array(sapply(tal, function(x){length(x)}))>1)
+		tal=tal[st]
+		ic=c(); jc=c()
+		for(i in 1:(length(tal)))
+		{
+			notj=which(names(tal[[i]])==names(tal)[[i]])#not to include itself
+			if(length(tal[[i]])>1)
+			{
+				notj=c(notj,which(names(tal[[i]][-notj]) %in% ic))#neither mirror relationships
+				ic=c(ic, rep(names(tal)[[i]], length(tal[[i]])-length(notj)))
+				jc=c(jc, names(tal[[i]][-notj]))
+			}
+		}
+		
+		cat("building network takes" , round(proc.time()[3] - t0[3], 3), "sec\n") 
+		length(ic)
+		length(unique(c(ic,jc)))
+		
+		#3) save to GML file
+		ids=which(rownames(mat0) %in% unique(c(ic,jc)))
+		names=unique(c(ic,jc))
+		writeGML(gmlFile=gmlFile, nodeids=ids, nodenames=names, edges=list(n1=ic, n2=jc))
+		rm(mat0,dm,dd)
+		return("Network built")
+	}
+	
+	
 #This method builds a GML network file from information about nodes and edges 
 #
 #gmlFile - path where the file will be written

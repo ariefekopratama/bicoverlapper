@@ -28,17 +28,7 @@ public class HeatmapParameterConfigurationPanel extends javax.swing.JPanel {
 
 	private JLabel NumNeighborsLabel;
 
-	/**
-	* Auto-generated main method to display this 
-	* JPanel inside a new JFrame.
-	*/
-	public static void main(String[] args) {
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(new HeatmapParameterConfigurationPanel());
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-	}
+
 	
 	public HeatmapParameterConfigurationPanel() {
 		super();

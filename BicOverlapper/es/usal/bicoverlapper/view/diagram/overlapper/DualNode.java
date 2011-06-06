@@ -54,6 +54,13 @@ public class DualNode extends ForcedNode {
 	subNodes.putAll(sub);
 	Point2D.Double p=getMiddlePoint();
 	position=new GraphPoint2D(p.x,p.y);
+	
+	label="";
+	String groups[]=clusters.keySet().toArray(new String[clusters.size()]);
+	for(String s:groups)
+		{
+		label=label+s+"\n";
+		}
 	}
   
   /**
@@ -108,6 +115,7 @@ public class DualNode extends ForcedNode {
    */
   public void draw(boolean dependent) 
   	{
+	 
     Overlapper p=(Overlapper)g.getApplet();
     float radius=getRadius();
     if(dependent)
@@ -125,9 +133,12 @@ public class DualNode extends ForcedNode {
     p.rectMode(Overlapper.CENTER);
 
   	p.ellipse((float)position.getX(), (float)position.getY(), radius, radius);
-  	//Color cnb=p.paleta[Overlapper.hoverNodeLabelColor];
+  	
+  	Color cnb=p.paleta[Overlapper.bicLabelColor];
+  	
+  	//p.textSize(10);
 	//p.fill(cnb.getRed(),cnb.getGreen(),cnb.getBlue(),cnb.getAlpha());
-  	//p.text(""+subNodes.size(), (float)position.getX(), (float)position.getY());
+  	//p.text(""+this.label, (float)position.getX(), (float)position.getY());
     this.setDrawn(true);
   }
   

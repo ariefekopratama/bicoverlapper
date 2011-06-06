@@ -42,30 +42,10 @@ public class Translator {
 	public Translator(String language)
 		{
 		Locale currentLocale=new Locale(language);
-		System.out.println(System.getProperty("os.name"));
-		//URL imgURL=Thread.currentThread().getContextClassLoader().getResource("translation/LabelsBundle");
 		
 		
 		menuLabels=ResourceBundle.getBundle("translation/LabelsBundle", currentLocale);
 		configureLabels=ResourceBundle.getBundle("translation/LabelsConfiguration", currentLocale);
 		warningLabels=ResourceBundle.getBundle("translation/LabelsWarnings", currentLocale);
-		/*
-		if(System.getProperty("os.name").contains("indows"))	
-			{
-			menuLabels=ResourceBundle.getBundle("translation\\LabelsBundle", currentLocale);
-			//scatterLabels=ResourceBundle.getBundle("translation\\LabelsScatter", currentLocale);
-			configureLabels=ResourceBundle.getBundle("translation\\LabelsConfiguration", currentLocale);
-			warningLabels=ResourceBundle.getBundle("translation\\LabelsWarnings", currentLocale);
-			//tableLabels=ResourceBundle.getBundle("translation\\LabelsTable", currentLocale);
-			}
-		else
-			{
-			menuLabels=ResourceBundle.getBundle("translation/LabelsBundle", currentLocale);
-			//scatterLabels=ResourceBundle.getBundle("translation/LabelsScatter", currentLocale);
-			configureLabels=ResourceBundle.getBundle("translation/LabelsConfiguration", currentLocale);
-			warningLabels=ResourceBundle.getBundle("translation/LabelsWarnings", currentLocale);
-			//tableLabels=ResourceBundle.getBundle("translation/LabelsTable", currentLocale);
-			}
-			*/
 		}
 }
