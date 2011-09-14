@@ -14,7 +14,7 @@ downloadAndExpresso=function(experimentID=NA, raw=TRUE, save=FALSE, path=NA)
 		###################################################
 		require(ArrayExpress)
 		require(affy)
-		
+		print("tralara")
 		if(raw==TRUE)
 		{
 			ae=ArrayExpress(input = experimentID, save=save)
@@ -48,7 +48,12 @@ downloadAndExpresso=function(experimentID=NA, raw=TRUE, save=FALSE, path=NA)
 		efvs=lapply(grep("Factor\\.Value\\.\\.", varLabels(ae)), function(y){ae[[y]]})
 		for(i in 1:length(efs))
 		{
-			write(c(efs[[i]], efvs[[i]]), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
+			values=efvs[[i]]
+			invalid=grep("^[^a-zA-z0-9]", values)
+			if(length(invalid)>0)
+				values[invalid]=paste("X", values[invalid], sep="")
+			print(values)
+			write(c(efs[[i]], values), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
 		}
 		write.table(exprs(es), file=outName, sep="\t", quote=FALSE, row.names=TRUE, col.names=FALSE, append=TRUE)
 	}
@@ -106,21 +111,79 @@ downloadAndNormalize=function(experimentID=NA, raw=TRUE, save=FALSE, path, fileN
 	
 	#outName=paste(path, "/", notes(ae)$accession, ".txt", sep="")
 	outName=paste(path, fileName, sep="/")
-    write(c(paste(experimentData(ae)@title, paste(annotation(es), "db", sep="."),sep="/"), phenoData(ae)$Scan.Name), outName, ncolumns=length(sampleNames(es))+1, sep="\t")
+    write(c(paste(experimentData(ae)@title, paste(annotation(es), "db", sep="."),sep="/"), make.names(phenoData(ae)$Scan.Name)), outName, ncolumns=length(sampleNames(es))+1, sep="\t")
 	efs=gsub("\\.", "", gsub("Factor\\.Value\\.\\.", "", varLabels(ae)[grep("Factor\\.Value\\.\\.", varLabels(ae))]))
 	efvs=lapply(grep("Factor\\.Value\\.\\.", varLabels(ae)), function(y){ae[[y]]})
 	for(i in 1:length(efs))
 		{
-		write(c(efs[[i]], efvs[[i]]), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
+			values=efvs[[i]]
+			invalid=grep("^[^a-zA-z0-9]", values)
+			if(length(invalid)>0)
+				values[invalid]=paste("X", values[invalid], sep="")
+			print(values)
+			write(c(efs[[i]], values), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
+		#write(c(efs[[i]], efvs[[i]]), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
 		}
 	write.table(exprs(es), file=outName, sep="\t", quote=FALSE, row.names=TRUE, col.names=FALSE, append=TRUE)
 	rm(ae)
 	rm(es)
 	}
+	
+	
+# Download an experiment from GEO
+# experimentID - accession name of the experiment (e.g. E-MEXP-1103, E-MTAB-135)
+# path - path to the file into which the processed experiment will be stored, and where temp files will be saved
+# fileName - file name for the processed experiment, that will be stored in BicOverlapper format. If fileName is NA
+#			 the accession number of the experiment is used, with extension .txt
+# log - if log is TRUE, a log transform of the expression set is done
+downloadGEO=function(experimentID=NA, path, log=FALSE, fileName=NA)
+	{
+		###################################################
+		#1) Download data
+		###################################################
+		require(GEOquery)
+		require(affy)
+		
+		t0 <- proc.time()
+		es=getGEO(GEO = experimentID, destdir=path)[[1]]
+		
+		###############################################
+		#2) Preprocess the experiments (just a log scaling)
+		###############################################
+		
+		if(log)
+			{
+			exprs(es)=log(exprs(es))
+			}
+			
+		cat("*** download takes " , round(proc.time()[3] - t0[3], 3), "sec\n") 
+		cat("Allocated memory (MB): ",sum(sapply(ls(), function(x){object.size(get(x))}))/1000000, "\n")
+		
+		###############################################
+		#3) Generate new processed file for BicOverlapper
+		###############################################
+		platform=getGEO(annotation(es))
+		chip=tolower(gsub("[-_]", "", gsub("\\[", "", gsub("\\].*", "", platform@header$title))))
+		
+		if(is.na(fileName))	outName=paste(path, experimentID, sep="/")
+		else				outName=paste(path, fileName, sep="/")
+		
+		write(c(paste(platform@header$organism, paste(chip, "db", sep="."),sep="/"), make.names(sampleNames(es))), outName, ncolumns=length(sampleNames(es))+1, sep="\t")
+		write(c("Factors", as.character(pData(es)[,"title"])), outName, ncolumns=length(sampleNames(es))+1, sep="\t", append=TRUE)
+		write.table(exprs(es), file=outName, sep="\t", quote=FALSE, row.names=TRUE, col.names=FALSE, append=TRUE)
+		rm(es)
+		rm(platform)
+	}
 
                                                                                                                                                         
 
-
-                                                                                                                                                        
+#downloadGEO("GSE7561", path="/Users/rodri", log=TRUE)
+#	saveMatrix=function(es=NA, fileName=NA, efs=NA)
+#		{
+#		require(MASS)
+#		towrite=cbind(featureNames(es), exprs(es))
+#		towrite=rbind(c("Time", as.character(pData(es)[, "FactorValue.Time"])), towrite)towrite=rbind(c("Experiment", exps), towrite)
+#		write.matrix(towrite, file=fileName, sep="\t")
+#		}
 
 

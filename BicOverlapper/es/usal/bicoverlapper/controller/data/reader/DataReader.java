@@ -53,7 +53,7 @@ public class DataReader {
 		int skipRows=1;
 		double t1=System.currentTimeMillis();
 		double t2=System.currentTimeMillis();
-		MicroarrayData md=new MicroarrayData(path, false, skipRows,skipColumns,1, mr, sesion.analysis.r);
+		MicroarrayData md=new MicroarrayData(path, false, skipRows,skipColumns,1, mr, sesion.analysis);
 		sesion.setMicroarrayData(md);
 		t1=System.currentTimeMillis();
 		System.out.println("Time to load microarray data: "+(t1-t2)/1000+" seconds");
@@ -92,6 +92,11 @@ public class DataReader {
 				trnd=new NetworkData(getPath(path));//GraphML			
 				}
 			}
+		else
+			{
+			trnd=new NetworkData(getPath(path));
+			}
+		
 		in.close();
 		in2.close();
 		if(sesion.getMicroarrayData()!=null)

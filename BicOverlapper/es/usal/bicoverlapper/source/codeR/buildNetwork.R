@@ -81,10 +81,10 @@ buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean",
 		if(distanceMethod=="mutualinfo")
 			require(bioDist)
 		
-		#sds=apply(mat, 1,sd)
+		sds=apply(mat, 1,sd)
 		#dt=mean(sds)+deviationThreshold*sd(sds)
-		#mat0=mat[which(sds>dt),]
-		mat0=mat[which(abs(rowMeans(mat))>deviationThreshold),]
+		mat0=mat[which(sds>deviationThreshold),]
+		#mat0=mat[which(abs(rowMeans(mat))>deviationThreshold),]
 		dim(mat0)
 		if(dim(mat0)[1]>2000)
 			return("Error: networks with more than 2000 nodes are not allowed, rise up the filtering threshold")
@@ -107,7 +107,7 @@ buildCorrelationNetwork=function(gmlFile=NA, mat=NA, distanceMethod="euclidean",
 					selec=which(x<distanceThreshold)
 				})
 		if(length(tal)==0)
-			return(paste("Error: no nodes with distance below", distanceThreshold, "deviations of average distance for nodes deviated above", deviationThreshold," from average expression. Either raise deviation or distance thresholds."))
+			return(paste("Error: no nodes with", distanceMethod,"distance below", distanceThreshold, "for nodes with expression variation above", deviationThreshold,". Either raise distance threshold or lower expression threshold."))
 		
 		st=which(as.array(sapply(tal, function(x){length(x)}))>1)
 		tal=tal[st]

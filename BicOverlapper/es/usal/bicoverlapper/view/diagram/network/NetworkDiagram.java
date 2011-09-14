@@ -298,12 +298,13 @@ public class NetworkDiagram extends Diagram {
 		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
       	
-		expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-		if(sesion.getMicroarrayData()!=null)
+		//expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+		expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		/*if(sesion.getMicroarrayData()!=null)
 			{
 			expressionColor.setMaxScale(sesion.getMicroarrayData().max);
 			expressionColor.setMinScale(sesion.getMicroarrayData().min);
-			}
+			}*/
 	    
 		noFillColor=new ColorAction("graph.nodes", VisualItem.FILLCOLOR, ColorLib.rgba(255,255,255,200));
 		//	create an action list containing all color assignments
@@ -777,12 +778,12 @@ public class NetworkDiagram extends Diagram {
 		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
       	
-		expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-		if(sesion.getMicroarrayData()!=null)
+		expressionColor=new ExpressionColorAction("graph.nodes", "expressionLevel", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		/*if(sesion.getMicroarrayData()!=null)
 			{
 			expressionColor.setMaxScale(sesion.getMicroarrayData().max);
 			expressionColor.setMinScale(sesion.getMicroarrayData().min);
-			}
+			}*/
 	 
 		//	create an action list containing all color assignments
 		ActionList color=(ActionList)v.getAction("color");

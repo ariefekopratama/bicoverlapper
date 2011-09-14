@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.model.goterm;
+package es.usal.bicoverlapper.model.annoations;
 
 /**
  * GOTerm refers to a GO Term annotated to a gene or a group of genes.

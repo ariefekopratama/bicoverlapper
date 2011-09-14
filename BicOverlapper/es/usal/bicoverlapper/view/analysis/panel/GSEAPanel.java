@@ -214,7 +214,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 											String fileName=t.get();
 											if(fileName==null)	
 												JOptionPane.showMessageDialog(null,
-									                    "No biclusters found",
+									                    "No gene sets found",
 									                    "Error",JOptionPane.ERROR_MESSAGE);
 											
 											else
@@ -291,7 +291,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 											String fileName=t.get();
 											if(fileName==null)	
 												JOptionPane.showMessageDialog(null,
-									                    "No biclusters found",
+									                    "No gene sets found",
 									                    "Error",JOptionPane.ERROR_MESSAGE);
 											
 											else
@@ -337,7 +337,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 											String fileName=t.get();
 											if(fileName==null)	
 												JOptionPane.showMessageDialog(null,
-									                    "No biclusters found",
+									                    "No gene sets found",
 									                    "Error",JOptionPane.ERROR_MESSAGE);
 											
 											else

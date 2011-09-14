@@ -46,9 +46,12 @@ import org.xml.sax.SAXParseException;
 
 
 
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
+import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
 import es.usal.bicoverlapper.controller.data.filter.GMLFilter;
 import es.usal.bicoverlapper.controller.data.filter.MicroarrayFilter;
+import es.usal.bicoverlapper.controller.data.filter.NetworkTabFileFilter;
 import es.usal.bicoverlapper.controller.data.filter.SyntrenFilter;
 import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.data.filter.XmlFileFilter;
@@ -60,7 +63,7 @@ import es.usal.bicoverlapper.model.microarray.MicroarrayRequester;
 import es.usal.bicoverlapper.view.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.WordCloudDiagramConfiguration;
-import es.usal.bicoverlapper.view.configuration.panel.DownloadPanel;
+import es.usal.bicoverlapper.view.configuration.panel.DownloadAEPanel;
 import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
 import es.usal.bicoverlapper.view.main.WorkDesktop;
@@ -86,7 +89,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	private JDesktopPane desktop;
 	private boolean loadingSession;
 	private Document documento;
-	
+	private AnalysisTask t;
+	private FileMenuManager receiver;
 	
 	
 	/**
@@ -96,6 +100,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	 */
 	public FileMenuManager(BicOverlapperWindow window) {
 		this.ventana = window;
+		receiver=this;
 	}
 	
 	
@@ -115,8 +120,11 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 				}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
 			
 		JFileChooser selecFile = new JFileChooser();
+		GMLFilter gml = new GMLFilter();
+		selecFile.addChoosableFileFilter(gml);
+		selecFile.addChoosableFileFilter(new NetworkTabFileFilter());
 		selecFile.addChoosableFileFilter(new SyntrenFilter());
-		selecFile.addChoosableFileFilter(new GMLFilter());
+		selecFile.setFileFilter(gml);
 		selecFile.setCurrentDirectory(new File(defaultPath));
 		int returnval = selecFile.showDialog(
 				(Component)e.getSource(),"Load Network");
@@ -128,6 +136,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			path=fichero.getAbsolutePath();
 			if(selecFile.getFileFilter().getDescription().contains("yntren"))
 					readTRN("syntren");
+			else if(selecFile.getFileFilter().getDescription().contains("*.txt"))
+					readTRN("tab");
 			else	readTRN("gml");
 			}
 	}
@@ -201,7 +211,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		//------------------- Download AE experiment ------------------
 	else if(e.getActionCommand().equals("Download AE experiment"))
 		{
-		DownloadPanel dp=new DownloadPanel(this);
+		DownloadAEPanel dp=new DownloadAEPanel(this);
 		dp.setLocation((ventana.getWidth()-dp.getWidth())/2, (ventana.getHeight()-dp.getHeight())/2);
 		dp.setVisible(true);
 		}
@@ -261,18 +271,46 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		}
 	}
 	
-	public void downloadExperiment(String id, String path)
+	public void downloadExperiment(String id, String downloadPath)
 		{
-		System.out.println("Downloading experiments "+path);
-		fichero=new File(path);
+		System.out.println("Downloading experiments "+downloadPath);
+		fichero=new File(downloadPath);
 		prepareDesktop();
 		boolean error=false;
 		try {
 			sesion.analysis.loadRscripts();
-			sesion.analysis.downloadExperiment(id, path);
-			sesion.reader.readMicroarray(path, sesion, this);
-			sesion.microarrayPath=fichero.getAbsolutePath();
-			} catch (FileNotFoundException e1) {
+			ArrayList<Object> p=new ArrayList<Object>();
+			p.add(id); p.add(downloadPath);  
+			//sesion.analysis.downloadExperiment(id, path);
+			//sesion.reader.readMicroarray(path, sesion, this);
+			//sesion.microarrayPath=fichero.getAbsolutePath();
+			
+			AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.analysis, AnalysisProgressMonitor.AnalysisTask.DOWNLOAD_MATRIX, p, "Downloading experiment...");
+			apm.run();
+			t=apm.getTask();
+			Thread wt=new Thread() {
+					public void run() {
+						try{
+							String fileName=t.get();
+							if(fileName==null)	
+								{
+								JOptionPane.showMessageDialog(null,
+					                    "Experiment cannot be loaded",
+					                    "Error",JOptionPane.ERROR_MESSAGE);
+								t.message="Error: experiment cannot be loaded";
+								}
+							
+							else
+								{
+								sesion.reader.readMicroarray(fileName, sesion, receiver);
+								sesion.microarrayPath=fichero.getAbsolutePath();
+								}
+							}catch(Exception e){e.printStackTrace();}
+					}
+				};
+			wt.start();
+			
+			}/* catch (FileNotFoundException e1) {
 			JOptionPane.showMessageDialog(null,
                     "File not found: "+fichero.getName(),
                     "Error",JOptionPane.ERROR_MESSAGE);
@@ -283,16 +321,15 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
                     "I/O Error: "+e2.getMessage(),
                     "Error",JOptionPane.ERROR_MESSAGE);
 			error=true;
-			} catch (Exception e3) 
+			} */catch (Exception e3) 
 			{
 			JOptionPane.showMessageDialog(null,
 	                "Format Error: "+e3.getMessage(),
 	                "Error",JOptionPane.ERROR_MESSAGE);
 			error=true;
 			}
-		
-		
 		}
+	
 	
 	/**
 	 * Finish the load of a matrix
@@ -304,6 +341,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		if(status==0)//&& sesion.getMicroarrayData()!=null)
 			{
 			// Actualizar las ventanas activas		
+			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
 			sesion.microarrayPath=fichero.getAbsolutePath();
 			try{
 			pathWriter=new BufferedWriter(new FileWriter("es/usal/bicoverlapper/data/matrixPath.txt"));
@@ -312,7 +350,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			}catch(IOException ex){ex.printStackTrace();}
 			
 			sesion.updateData();
-			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
 			
 				
 			ventana.analysisMenu.setEnabled(true);

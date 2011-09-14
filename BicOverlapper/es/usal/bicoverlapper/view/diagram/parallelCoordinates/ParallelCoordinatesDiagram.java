@@ -601,7 +601,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void drawEtiquetas(Graphics2D g2) {
 		double altoTexto;
 		double anchoTexto;
-		System.out.println("DRAW ETIQUETAS");
+	//	System.out.println("DRAW ETIQUETAS");
 		
 		// representamos la cota asociada con el scroll fijado
 		if(scrollFijado && (varScroll != -1))
@@ -656,7 +656,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		else			sele = new TextLayout("selected: 0", g2.getFont(), g2.getFontRenderContext());	
 		altoTexto = sele.getBounds().getHeight();
 		anchoTexto = sele.getBounds().getWidth();
-		System.out.println("imprimimos: sele a "+(ancho-anchoTexto-10)+", "+10);
 		sele.draw(g2,(float)(ancho-anchoTexto-10), (float)(10));
 		
 		// representamos los valores de referencia de la escala
@@ -752,7 +751,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 	private void drawLineas(Graphics2D g2) {
-		System.out.println("DRAW LINEAS");
+		//System.out.println("DRAW LINEAS");
 		GeneralPath gpLineas=new GeneralPath();
 		GeneralPath gpLineasSelec=new GeneralPath();
 		GeneralPath gpLineasSelecBic=new GeneralPath();
@@ -935,7 +934,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	
 	private void drawFondo(Graphics2D g2) {
-		System.out.println("DRAW FONDO");
+	//	System.out.println("DRAW FONDO");
 		g2.setPaint(paleta[colorFondo]);
 	    Rectangle2D.Double fondo =
 			new Rectangle2D.Double(0,0,ancho,alto);
@@ -944,7 +943,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	}
 	
 	private void drawEjes(Graphics2D g2) {
-				System.out.println("DRAW EJES");
+	//			System.out.println("DRAW EJES");
 		g2.setPaint(paleta[colorEje]);
 		
 		for(int i = 0; i < numC; i++){
@@ -1187,6 +1186,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		{
 		if(sesion==null || sesion.getSelectedBicluster()==null || sesion.getSelectedBicluster().getConditions().size()>=sesion.getMicroarrayData().getNumConditions())	return;
 		
+		sortColumns(sesion.getMicroarrayData().getColumnOrder());
 		for(int i=0;i<sesion.getSelectedBicluster().getConditions().size();i++)
 			{
 			int cib=((Integer)sesion.getSelectedBicluster().getConditions().get(i)).intValue();
@@ -1201,7 +1201,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					}
 			
 			//y cambiamos las posiciones
-			ordenVars[posCib]=ordenVars[i];
+			//ordenVars[posCib]=ordenVars[i];
+			for(int j=posCib;j>i;j--)
+				ordenVars[j]=ordenVars[j-1];
 			ordenVars[i]=cib;
 			}
 		return;
@@ -1234,12 +1236,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	  */
 	 void fitScrolls()
 		{
-		if(sesion.getSelectedBicluster()!=null )
+		if(sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
 			{
 			double maxLineas[]=new double[numC];
 			double minLineas[]=new double[numC];
 			for(int i=0;i<numC;i++)		maxLineas[i]=minLineas[i]=-111;
 		
+			
 			//1) Determine max and min values for genes
 			LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
 			for(int i=0;i<lg.size();i++)
@@ -1249,12 +1252,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					{
 					double y=0;
 					
-					y=tuplas[pos][j].getY();
-					if(maxLineas[j]==-111)	maxLineas[j]=minLineas[j]=y;
+					int k=ordenVars[j];
+					y=tuplas[pos][k].getY();
+					if(maxLineas[k]==-111)	maxLineas[k]=minLineas[k]=y;
 					else
 						{
-						if(maxLineas[j]<y)	maxLineas[j]=y;
-						if(minLineas[j]>y)	minLineas[j]=y;
+						if(maxLineas[k]<y)	maxLineas[k]=y;
+						if(minLineas[k]>y)	minLineas[k]=y;
 						}
 					}
 				}
@@ -1263,52 +1267,21 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			//2) Set labels and scroll positions
 			for(int i=0;i<numC;i++)
 				{
-				scrollSup[i].y=minLineas[i]-this.altoScroll;
-				scrollInf[i].y=maxLineas[i];
-				cotaSup[i]=scrollSup[i].y+altoScroll;
-				cotaInf[i]=scrollInf[i].y;
+				int k=ordenVars[i];
+				scrollSup[k].y=minLineas[k]-this.altoScroll;
+				scrollInf[k].y=maxLineas[k];
+				cotaSup[k]=scrollSup[k].y+altoScroll;
+				cotaInf[k]=scrollInf[k].y;
 				
-				double valor = (cotaSup[i]);
-				currentTextSup[i]=valor;
-				valor = (cotaInf[i]);
-				currentTextInf[i]=valor;
+				double valor = (cotaSup[k]);
+				currentTextSup[k]=valor;
+				valor = (cotaInf[k]);
+				currentTextInf[k]=valor;
 				}
 			
 			//3) Highlight selected lines TODO: here check how we do this to replicate when sorting
 			if(sesion.getSelectedBicluster().getConditions().size()<sesion.getMicroarrayData().getNumConditions()-1)
 				{
-				for(int i=0;i<sesion.getSelectedBicluster().getConditions().size();i++)
-					{
-					int cib=((Integer)sesion.getSelectedBicluster().getConditions().get(i)).intValue();
-					//Buscamos donde estaba antes cib
-					int posCib=-1;
-					
-					for(int j=0;j<ordenVars.length;j++)
-						if(ordenVars[j]==cib)	
-							{
-							posCib=j;
-							break;
-							}
-					
-					//		y las posiciones
-					ordenVars[posCib]=ordenVars[i];
-					ordenVars[i]=cib;
-					
-					//Cambiamos las cotas//CHECK: possibly unnecessary with the new changes
-					double auxCotaSup = cotaSup[i], auxCotaInf = cotaInf[i];
-					cotaSup[i] = cotaSup[posCib];
-					cotaSup[posCib] = auxCotaSup;
-					cotaInf[i] = cotaInf[posCib];
-					cotaInf[posCib] = auxCotaInf;
-					
-					double auxYSup = scrollSup[i].y, auxYInf = scrollInf[i].y;
-					scrollSup[i].y = scrollSup[posCib].y;
-					scrollSup[posCib].y = auxYSup;
-					scrollInf[i].y = scrollInf[posCib].y;
-					scrollInf[posCib].y = auxYInf;
-					
-					actualizarTuplas=true;
-					}
 				}
 			}
 		else	//If the selection has no genes, we reset the scrolls to min and max
@@ -1316,7 +1289,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			resetScrolls();
 			}
 		}
-
 	 
 	public void resize(){
 		atributosIniciados = false;
@@ -1324,7 +1296,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		computeLinePositions=true;
 		calcularAtributos();
 		trasladarScrolls();
-		//fitScrolls();
 		gpLineasFondo=null;
 		atributosIniciados = true;
 		repaintAll=true;
@@ -1337,7 +1308,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		if(sesion.getMicroarrayData()!=datos)
 			{
 			atributosIniciados = false;
-			//datos = sesion.getData();
 			datos = sesion.getMicroarrayData();
 			this.iniciarAtributos();
 			atributosIniciados = true;
@@ -1473,7 +1443,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	                                }
 	                            }
 	                         
-	            			System.out.println("tupla es "+tuplaSeleccionada);
+	            			//System.out.println("tupla es "+tuplaSeleccionada);
 	                        if(tuplaSeleccionada != -1)
 	                        		{
 		                        	if(e.isAltDown())
@@ -1560,7 +1530,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
                             }
                         if(tuplaSeleccionada != -1)
                         		{
-                            	//System.out.println("Tupla localizada en "+(System.currentTimeMillis()-t1)+", es la numero "+tuplaSeleccionada+", que es la "+sesion.getMicroarrayData().getGeneNames()[tuplaSeleccionada]);
+                            	//hover actions
+                        		LinkedList<Integer> conditions=new LinkedList<Integer>();
+                            	for(int k=0;k<numC;k++)
+                        			conditions.add(Integer.valueOf(k));
+                            	LinkedList<Integer> genes=new LinkedList<Integer>();
+                            	genes.add(tuplaSeleccionada);
+                        	
+                            	sesion.setHoveredBicluster(new Selection(genes, conditions), "arallel");
+                            	
                             	repaintAll=true;
                         		repaint();
                     			break;
@@ -2021,7 +1999,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					{
 					for(int i = 0; i < ejesVars.length; i++) 
 						{
-						if(ejesVars[i]==null)	System.out.println("Ejes vars "+i+" es null");
+						//if(ejesVars[i]==null)	System.out.println("Ejes vars "+i+" es null");
 						if ((Math.abs(e.getPoint().getX()- ejesVars[i].getX1()) < zonaSelec)
 							&& ((e.getPoint().getY() > margenSup) && (e.getPoint().getY() < upy[i])
 								|| (e.getPoint().getY() > doy[i]) && (e.getPoint().getY() < (alto-margenInf)))

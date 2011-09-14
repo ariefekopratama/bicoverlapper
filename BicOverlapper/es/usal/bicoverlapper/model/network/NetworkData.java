@@ -53,6 +53,8 @@ public class NetworkData
 		System.out.println("Network with "+g.getEdgeCount()+" edges");
 		nNodes=g.getNodeCount();
 		nEdges=g.getEdgeCount();
+		
+		
 		//countFFLs();
 		System.out.println("Number of FFLs found: "+ffls.size());
 		}
@@ -67,8 +69,13 @@ public class NetworkData
 		String ext=SyntrenFilter.getExtension(inputPath);
 		if(ext.equals("xml"))	
 			{
-			TRNParser.syntren2GML(inputPath,"TRN.xml");
-			f=new File("TRN.xml");
+			TRNParser.syntren2GML(inputPath,"es/usal/bicoverlapper/data/TRN.xml");
+			f=new File("es/usal/bicoverlapper/data/TRN.xml");
+			}
+		else if(ext.equals("txt"))
+			{
+			TRNParser.tab2GML(inputPath,"es/usal/bicoverlapper/data/TRN.xml");
+			f=new File("es/usal/bicoverlapper/data/TRN.xml");
 			}
 		else	f=new File(inputPath);
 		

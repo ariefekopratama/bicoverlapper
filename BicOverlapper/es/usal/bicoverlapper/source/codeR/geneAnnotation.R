@@ -18,13 +18,13 @@ getEnsemblMart=function(species="Homo sapiens")
 	if(species=="Schizosaccharomyces pombe")
 		{
 		marts=listMarts()[,"biomart"]
-		martName=as.character(marts[grep("fungal", marts)[1]])
+		martName=as.character(marts[grep("fungi_mart", marts)[1]])
 		mart = useMart(martName, dataset="spombe_eg_gene")
 		}
 	if(length(grep("Escherichia coli", species))>0)
 		{
 		marts=listMarts()[,"biomart"]
-		martName=as.character(marts[grep("bact", marts)[1]])
+		martName=as.character(marts[grep("bacteria_mart", marts)[1]])
 		mart=useMart(martName)
 		dss=listDatasets(mart)[,"description"]
 		dsName=listDatasets(mart)[grep(species, dss),"dataset"] #very convenient to make this in order to save time
@@ -45,7 +45,9 @@ getEnsemblMart=function(species="Homo sapiens")
 #type    - type of the ids, in biomaRt format
 #GOtypes - type of GO terms to search for, in biomaRt format
 #return  - a list of lists, with the corresponding GO ids for each gene in geneids, or NA if no GO terms were found for any of them
-getBMGO=function(geneids, mart, type="ensembl_gene_id", GOtypes=c("go_biological_process_id","go_molecular_function_id","go_cellular_component_id"))
+#getBMGO=function(geneids, mart, type="ensembl_gene_id", GOtypes=c("go_biological_process_id","go_molecular_function_id","go_cellular_component_id"))
+#in version R 2.13+ you have different go identifiers, directly go_id
+getBMGO=function(geneids, mart, type="ensembl_gene_id", GOtypes=c("go_id"))
 	{
 	require(biomaRt)
 	geneens=getBM( attributes = c(type, GOtypes), filters = type, values=geneids, mart = mart)
@@ -59,14 +61,14 @@ getBMGO=function(geneids, mart, type="ensembl_gene_id", GOtypes=c("go_biological
 	golist
 	}
 
-
+#Obtains basic characteristics of the genes (symbol, description and ensembl id)
 getBMGenes=function(geneids, mart, species="Homo sapiens", type)
 {
 	require(biomaRt)
 	if(species=="Homo sapiens")
-		geneens=getGene( id = geneids, type = type, mart = mart)[,c("hgnc_symbol","description","ensembl_gene_id")]
+		geneens=getGene( id = geneids, type = type, mart = mart)[,c(type, "hgnc_symbol","description","ensembl_gene_id")]
 	else
-		geneens=getGene( id = geneids, type = type, mart = mart)[,c("symbol","description","ensembl_gene_id")]
+		geneens=getGene( id = geneids, type = type, mart = mart)[,c(type, "symbol","description","ensembl_gene_id")]
 	#there might be duplicated, we remove them
 	geneens=geneens[-which(duplicated(geneens[,type])),]
 	#they might be unsorted, so we make sure they are returned in the same order

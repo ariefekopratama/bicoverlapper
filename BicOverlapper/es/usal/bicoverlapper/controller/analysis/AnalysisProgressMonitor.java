@@ -164,9 +164,10 @@ PropertyChangeListener, Runnable {
 		public final static int CORRELATION_NETWORK=10;//diffexp between all the efvs for each ef
 		public final static int GSEA=11;//gsea between two efvs of a given ef
 		public final static int GSEAEF=12;//diffexp between an efv and every other efv of a given ef
-		public final static int GSEAPROG=13;//diffexp between an every pair of consecutive efvs on a given ef (for example, useful with time)
+		public final static int GSEAPROG=13;//diffexp between every pair of consecutive efvs on a given ef (for example, useful with time)
 		public final static int LOAD_MATRIX=14;//load the matrix into R console (usually done inside other methods, but sometimes alone)
-		public final static int SEARCH_PATTERNS=15;//search for similar expression profiles to the one selected
+		public final static int DOWNLOAD_MATRIX=15;//download the matrix from AE via ArrayExpress BiocConductor package
+		public final static int SEARCH_PATTERNS=16;//search for similar expression profiles to the one selected
 					
 		
 		public AnalysisTask(Analysis b, int type, ArrayList<Object> params)
@@ -182,6 +183,9 @@ PropertyChangeListener, Runnable {
 			String res="";
 			switch(type)
 				{
+				case DOWNLOAD_MATRIX:
+					res=b.downloadExperiment((String)params.get(0), (String)params.get(1));
+					break;
 				case LOAD_MATRIX:
 					b.loadMatrix((String)params.get(0));
 					break;
