@@ -136,11 +136,11 @@ class HeatmapFocusControl extends FocusControl
 										 System.out.println(neighbors);
 					        			 for(String n : neighbors)
 					        				genesSeleccionados.add(sesion.getMicroarrayData().getGeneId(n));
+					        			condicionesSeleccionadas.clear();
 					        			for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
 											condicionesSeleccionadas.add((Integer)i);
 										sesion.setSelectedBiclustersExcept(new Selection((LinkedList<Integer>)genesSeleccionados.clone(), (LinkedList<Integer>)condicionesSeleccionadas.clone()), "XXX");
-										//sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, condicionesSeleccionadas), "XXX");
-								        }
+										}
 									}catch(Exception e){e.printStackTrace();}
 							}
 						};
@@ -164,6 +164,7 @@ class HeatmapFocusControl extends FocusControl
 		                if(genSeleccionado)			
 		                	{
 		                	genesSeleccionados.add(item.getInt("actualId"));
+		                	condicionesSeleccionadas.clear();
 		                	for(int i=0;i<sesion.getMicroarrayData().getNumConditions();i++)
 								{
 								condicionesSeleccionadas.add((Integer)i);
@@ -172,13 +173,13 @@ class HeatmapFocusControl extends FocusControl
 							}
 		                if(condicionSeleccionada)
 		                	{
-		                	condicionesSeleccionadas.add(item.getInt("id"));
+		                	if(!condicionesSeleccionadas.contains(item.getInt("id")))	condicionesSeleccionadas.add(item.getInt("id"));
 		                	sendExpressionLevels(item.getInt("id"));
 		                	}
 		                if(expresionSeleccionada)
 		                	{
 		                	genesSeleccionados.add(item.getInt("actualRowId"));//Sparse
-		                	condicionesSeleccionadas.add(item.getInt("colId"));
+		                	if(!condicionesSeleccionadas.contains(item.getInt("colId")))	condicionesSeleccionadas.add(item.getInt("colId"));
 		                	}
 		                
 		                this.addItems(genesSeleccionados, condicionesSeleccionadas);
@@ -216,7 +217,7 @@ class HeatmapFocusControl extends FocusControl
 	/**
 	 * Like addItems, but it only for hovering. That is, the position is not changed, they are only distorted
 	 */
-	void addItemsForHover(LinkedList<Integer> gid, LinkedList<Integer> cid)
+	/*void addItemsForHover(LinkedList<Integer> gid, LinkedList<Integer> cid)
 		{
 		int [] genes=null;
 		int [] conds=null;
@@ -252,7 +253,7 @@ class HeatmapFocusControl extends FocusControl
 			}
 		runActivity(visualization);
 		//runActivity("color");
-		}
+		}*/
 
 	/**
 	 * Changes rowRank, colRank to -1 in "geneLabels", "conditionLabels" y "matrix" elements which
@@ -346,7 +347,7 @@ class HeatmapFocusControl extends FocusControl
         if ( activity != null )        
         	{
         	vis.run(activity);
-        	vis.run("color");
+        	//vis.run("color");
         	}
     	}
 

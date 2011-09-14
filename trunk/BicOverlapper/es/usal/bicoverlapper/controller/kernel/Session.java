@@ -29,6 +29,7 @@ import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 import es.usal.bicoverlapper.model.network.NetworkData;
 import es.usal.bicoverlapper.utils.color.CustomColor;
 import es.usal.bicoverlapper.view.analysis.panel.MergePanel;
+import es.usal.bicoverlapper.view.analysis.panel.MergeRowsPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SearchPanel;
 import es.usal.bicoverlapper.view.analysis.panel.ShowPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SortPanel;
@@ -131,6 +132,9 @@ public class Session implements KeyListener {
 	private ShowPanel showPanel;
 	private SortPanel sortPanel;
 	private MergePanel mergePanel;
+	private MergeRowsPanel mergeRowsPanel;
+	
+	public boolean onlyHover;//if true, no additional actions for selection are done, only for hovering
 	
 	
 	
@@ -857,6 +861,7 @@ public class Session implements KeyListener {
 		setSelectedBicluster(selectedBic);
 		this.updateOnly(onlyUpdate);
 		}
+	
 	public void setSelectedBicluster(Selection selectedBic) 
 		{
 		this.selectedBicluster = selectedBic;
@@ -976,7 +981,21 @@ public class Session implements KeyListener {
 		mergePanel.setLocation((getDesktop().getWidth()-mergePanel.getWidth())/2, (getDesktop().getHeight()-mergePanel.getHeight())/2);
 		mergePanel.setVisible(true);
 		}
-	
+	public void mergeRows()
+		{
+		//Show label names box
+		if(mergeRowsPanel==null)		mergeRowsPanel=new MergeRowsPanel(this);
+		else						mergeRowsPanel.updateLists();
+		mergeRowsPanel.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		mergeRowsPanel.setTitle("Merge Features");
+		mergeRowsPanel.setAlwaysOnTop(true);
+		
+		//Display the window.
+		mergeRowsPanel.pack();
+		mergeRowsPanel.setLocation((getDesktop().getWidth()-mergeRowsPanel.getWidth())/2, (getDesktop().getHeight()-mergePanel.getHeight())/2);
+		mergeRowsPanel.setVisible(true);
+		}
+
 	 /** Handle the key typed event from the text field. */
     public void keyTyped(KeyEvent e) {
     	return;
@@ -1013,6 +1032,9 @@ public class Session implements KeyListener {
 	public void setHoveredBicluster(Selection hoveredBic, String responsible) 
 		{
 		this.hoveredBicluster = hoveredBic;
+		this.onlyHover=true;
+		this.updateExcept(responsible);
+		this.onlyHover=false;
 		}
 	
 	public Selection getHoveredBicluster()

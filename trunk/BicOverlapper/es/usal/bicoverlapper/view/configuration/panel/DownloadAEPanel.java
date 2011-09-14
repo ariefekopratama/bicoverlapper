@@ -39,7 +39,7 @@ import javax.swing.JTextField;
 * THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
-public class DownloadPanel extends javax.swing.JFrame implements ActionListener, KeyListener{
+public class DownloadAEPanel extends javax.swing.JFrame implements ActionListener, KeyListener{
 	private JLabel name;
 	private JTextField jTextField1;
 	private JButton selectFile;
@@ -51,12 +51,12 @@ public class DownloadPanel extends javax.swing.JFrame implements ActionListener,
 	private JLabel jLabel1;
 
 	
-	public DownloadPanel() {
+	public DownloadAEPanel() {
 		super();
 		initGUI();
 	}
 	
-	public DownloadPanel(FileMenuManager fmm1) {
+	public DownloadAEPanel(FileMenuManager fmm1) {
 		super();
 		fmm=fmm1;
 		initGUI();

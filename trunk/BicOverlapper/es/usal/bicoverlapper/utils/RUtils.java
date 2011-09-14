@@ -30,6 +30,7 @@ public final class RUtils {
 		}
 	/**
 	 * Builds up an R structure c("id1", "id2", ...) for the elemnts in the list
+	 * NOTE: Can take a lot if a huge list (~1min for 50000 elements)
 	 * @param list
 	 * @return
 	 */

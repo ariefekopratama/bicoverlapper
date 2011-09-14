@@ -28,10 +28,10 @@ import prefuse.data.Table;
 import es.usal.bicoverlapper.controller.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
+import es.usal.bicoverlapper.model.annoations.GOTerm;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.model.gene.GeneRequester;
 import es.usal.bicoverlapper.model.geometry.GraphPoint2D;
-import es.usal.bicoverlapper.model.goterm.GOTerm;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 import es.usal.bicoverlapper.utils.color.CustomColor;
 
@@ -1869,7 +1869,7 @@ protected void mouseReleased() {
 					 else
 					 	{	 
 						rightButtonNode.details="searching...";
-						this.getMicroarrayData().getGeneAnnotations(new int[]{this.microarrayData.getGeneId(rightButtonNode.labelId)},this, true, null, null, true);
+						this.getMicroarrayData().retrieveGeneAnnotations(new int[]{this.microarrayData.getGeneId(rightButtonNode.labelId)},this, true, null, null, true, false);
 					 	}
 				 	}
 				 else

@@ -62,7 +62,7 @@ public class BicOverlapper {
 		   //  TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/processed/chapintp.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/processed/chapintp.gml");
 		   // TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/processed/hsp90intp.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/processed/hsp90intp.gml");
 		 //TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/stress/TFs/reg0000001s.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/stress/TFs/reg0000001s.gml");
-		// TRNParser.list2GML("/Users/rodri/Documents/workspace/sybaris/data/manuel/networks/TFs/Balaji2006/tnetSimple.txt", "/Users/rodri/Documents/workspace/sybaris/data/manuel/networks/TFs/Balaji2006/tnetSimple.gml");
+		 //TRNParser.tab2GML("/Users/rodri/Documents/investigacion/sybaris/data/manuel/networks/TFs/Balaji2006/tnet-K.txt", "/Users/rodri/Documents/investigacion/sybaris/data/manuel/networks/TFs/Balaji2006/tnet-K.gml");
 				new BicOverlapper();
 				
 	}

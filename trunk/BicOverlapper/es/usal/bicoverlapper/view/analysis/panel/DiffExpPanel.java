@@ -264,7 +264,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											String fileName=t.get();
 											if(fileName==null)	
 												JOptionPane.showMessageDialog(null,
-									                    "No biclusters found",
+									                    "No differentially expressed genes found",
 									                    "Error",JOptionPane.ERROR_MESSAGE);
 											
 											else

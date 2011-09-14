@@ -83,7 +83,6 @@ class MicroGridLayout extends Layout {
         colHovered=0;
         this.mx=mx;
         this.my=my;
-        System.out.println("MGL construido "+name);
         this.name=name;
     	}
     

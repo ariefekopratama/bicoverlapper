@@ -82,8 +82,8 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 			{
 				JLabel1 = new JLabel();
 				getContentPane().add(JLabel1);
-				JLabel1.setText("Filter genes with absolute mean expression above");
-				JLabel1.setBounds(14, 42, 310, 14);
+				JLabel1.setText("Filter genes with expression variation above");
+				JLabel1.setBounds(14, 42, 345, 14);
 			}
 			{
 				sdThreshold = new JTextField();
@@ -161,7 +161,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 										String fileName=t.get();
 										if(fileName==null)	
 											JOptionPane.showMessageDialog(null,
-								                    "No biclusters found",
+								                    "Network not generated",
 								                    "Error",JOptionPane.ERROR_MESSAGE);
 										
 										else

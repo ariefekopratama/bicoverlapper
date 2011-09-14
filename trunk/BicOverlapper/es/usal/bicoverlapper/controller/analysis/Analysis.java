@@ -13,10 +13,12 @@ import org.rosuda.JRI.RList;
 import org.rosuda.JRI.Rengine;
 
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
+import es.usal.bicoverlapper.model.microarray.MicroarrayData.LoadTask;
 import es.usal.bicoverlapper.utils.RUtils;
+import es.usal.bicoverlapper.view.data.monitor.MicroarrayLoadProgressMonitor;
 
 /**
- * This class performs different analysis by means of R.
+ * This class is a bridge to different R operations
  * It will be the only one maintaining an Rengine for the use of other classes too. 
  * @author Rodrigo Santamaria
  *
@@ -30,13 +32,13 @@ public class Analysis
 
 	public void setMicroarrayData(MicroarrayData md) {
 		this.microarrayData = md;
-		//loadMatrix();//TODO: By now, this means we have two copies of the matrix, one in MicroarrayData class and another one in R ExpressionSet eset. This is highly memory innefficient...
+		//loadMatrix(microarrayData.rMatrixName);//TODO: By now, this means we have two copies of the matrix, one in MicroarrayData class and another one in R ExpressionSet eset. This is highly memory innefficient...
 	}
 	public Rengine r=null;
 	REXP exp=null;
 	String defaultPath="";
 	int[] filterOptions=null;
-	private boolean matrixLoaded=false;
+	public boolean matrixLoaded=false;
 	
 	public int[] getFilterOptions() {
 		return filterOptions;
@@ -63,15 +65,47 @@ public class Analysis
 		r.eval("aess=sapply(unique("+m+"$FactorValue."+ef+"), function(x) {  rowMeans(exprs("+m+")[,which("+m+"$FactorValue."+ef+"==x),drop=F])  })");
 		r.eval("colnames(aess)=unique("+m+"$FactorValue."+ef+")");
 		
-		//exp=r.eval(label+"=new(\"ExpressionSet\", exprs=aess, annotation=\""+this.getMicroarrayData().chip+"\")");
-		//EFVs will disappear, only unique EFVs for this EF will be there
-		//for(String ef:this.getMicroarrayData().experimentFactors)
-		//	exp=r.eval(label+"$FactorValue."+ef+"="+RUtils.getRList(getMicroarrayData().experimentFactorValues.get(ef)));
-		
 		//2) Save
 		r.eval("towrite=cbind(featureNames("+m+"), aess)");
 		r.eval("towrite=rbind(c(\""+ef+"\",unique("+m+"$FactorValue."+ef+")), towrite)");//The only EF is the one we merged by
 		r.eval("towrite=rbind(c(\""+microarrayData.organism+"/"+microarrayData.chip+".db\",unique("+m+"$FactorValue."+ef+")), towrite)");
+		r.eval("colnames(towrite)=NULL");
+		r.eval("write.matrix(towrite, file=\""+path+"\", sep=\"\\t\")");
+		r.eval("rm(towrite)");
+		r.eval("rm(aess)");
+		}
+	
+	/**
+	 * Collapses rows (probes), using some id:
+	 * If id is "ENTREZID" and there are three probes a,b,c corresponding to entrez id e, the mean for the three is computed
+	 * Any ID that it's in the microarrayData.chip annotation package is allowed.
+	 * If the probe has no correspondence to entrez ids, it may or may not be discarded depending on discradNAs
+	 * It's key to be able to simplify complex experiments but keep replicated in original matrix to allow limma/gsea analysis
+	 * @param ef
+	 */
+	public void mergeRows(String id, boolean discardNAs, String path)
+		{
+		id="ENTREZID"; //TODO: by now only entrezid is allowed
+		//1) Merge
+		String m=this.microarrayData.rMatrixName;
+		if(!matrixLoaded)	loadMatrix(m);
+		loadRLibrary("MASS");
+		
+		exp=r.eval("ids=unlist(mget(featureNames("+microarrayData.rMatrixName+","+microarrayData.chip+id+", ifnotfound=NA))");
+		if(discardNAs)
+			r.eval("ids=ids[-which(is.na(ids))]");
+		
+		r.eval("ee=exprs("+m+")");
+		r.eval("aess=t(sapply(unique(ids), function(x){colMeans(ee[which(ids==x),, drop=FALSE])}))");	//can take ~1min for human
+		r.eval("rownames(aess)=unique(ids)");
+		r.eval("rm(ee)");
+        
+		//2) Save
+		//Put all the efs in before saving
+		r.eval("towrite=cbind(rownames(aess),aess)");
+		for(String ef:microarrayData.experimentFactors)
+			r.eval("towrite=rbind(c(\""+ef+"\",unique("+m+"$FactorValue."+ef+")), towrite)");//The only EF is the one we merged by
+		r.eval("towrite=rbind(c(\""+microarrayData.organism+"/"+id+",colnames(towrite[-1])), towrite)");
 		r.eval("colnames(towrite)=NULL");
 		r.eval("write.matrix(towrite, file=\""+path+"\", sep=\"\\t\")");
 		r.eval("rm(towrite)");
@@ -154,69 +188,51 @@ public class Analysis
 	 * @label - label to add in R to the expression matrix. If no label, the name will be exprs. Otherwise, it will be exprs.label
 	 * 
 	 */
+	//TODO: esto sería mucho más rápido si leyéramos la matriz directamente, no???
 	public void loadMatrix(String label)
 		{
-		if(microarrayData.matrix!=null)
+		if(microarrayData!=null)
 			{
-			int nc=microarrayData.getNumConditions();
-			int ng=microarrayData.getNumGenes();
-			exp=r.eval("m<-matrix(NA, "+ng+", "+nc+")");
-			if(exp==null)	{System.err.println("Matrix cannot be load in R"); return;}
-			for(int i=0;i<ng;i++)
-				{
-				String v="c(";
-				for(int j=0;j<nc;j++)
-					{
-					if(j<nc-1)	v=v.concat(microarrayData.matrix[i][j]+", ");
-					else		v=v.concat(microarrayData.matrix[i][j]+")");
-			    	}
-				exp=r.eval("m["+(i+1)+",]<-"+v);
-				}
-			String names="c(";
-			for(int i=0;i<ng;i++)
-				{
-				if(i<ng-1)	names=names.concat("\""+microarrayData.geneNames[i]+"\", ");
-				else		names=names.concat("\""+microarrayData.geneNames[i]+"\")");
-				}
-			exp=r.eval("rownames(m)<-"+names);
-			names="c(";
-			for(int i=0;i<nc;i++)
-				{
-				
-				if(i<nc-1)	names=names.concat("\""+microarrayData.conditionNames[i]+"\", ");
-				else		names=names.concat("\""+microarrayData.conditionNames[i]+"\")");
-				}
-			exp=r.eval("colnames(m)<-"+names);
+			synchronized(this){ 
 			
+			System.out.println("loading matrix into R");
+			long t0=System.currentTimeMillis();
+		
+			System.out.println(microarrayData.filePath+" "+microarrayData.experimentFactors.size());
+			r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
+	        exp=r.eval(label+"=loadMatrix(filePath=\""+microarrayData.filePath+"\", numEFs="+microarrayData.experimentFactors.size()+")");
 			
+	        System.out.println("matrix loaded, computing some statistics");
 			//compute median by column and quantiles
+			r.eval("m=exprs("+label+")");
 			r.eval("med=apply(m, 2, median)");
-			this.getMicroarrayData().median=r.eval("med").asDoubleArray();
+			System.out.println("Mediana es: "+microarrayData.median);
+			microarrayData.median=r.eval("med").asDoubleArray();
+
 			r.eval("q25=apply(m, 2, quantile)[2,]");
-			this.getMicroarrayData().q25=r.eval("q25").asDoubleArray();
+			microarrayData.q25=r.eval("q25").asDoubleArray();
 			r.eval("q75=apply(m, 2, quantile)[4,]");
-			this.getMicroarrayData().q75=r.eval("q75").asDoubleArray();
+			microarrayData.q75=r.eval("q75").asDoubleArray();
 			r.eval("iqr=apply(m, 2, quantile)[4,]-apply(m, 2, quantile)[2,]");
-			this.getMicroarrayData().iqr=r.eval("iqr").asDoubleArray();
-			RList outliers=r.eval("as.array(sapply(1:dim(m)[2],function(x){c(which(m[,x]>q75[x]+ "+this.getMicroarrayData().whiskerRange+"*iqr[x]),  which(m[,x]<q25[x]- "+this.getMicroarrayData().whiskerRange+"*iqr[x]))}))").asList();
-			this.getMicroarrayData().outliers=new HashMap<Integer, int[]>();
-			for(int i=0;i<this.getMicroarrayData().getNumConditions();i++)
-				this.getMicroarrayData().outliers.put(new Integer(i), outliers.at(i).asIntArray());
+			microarrayData.iqr=r.eval("iqr").asDoubleArray();
+			
+			RList outliers=r.eval("as.array(sapply(1:dim(m)[2],function(x){c(which(m[,x]>q75[x]+ "+microarrayData.whiskerRange+"*iqr[x]),  which(m[,x]<q25[x]- "+microarrayData.whiskerRange+"*iqr[x]))}))").asList();
+			microarrayData.outliers=new HashMap<Integer, int[]>();
+			
+			for(int i=0;i<microarrayData.getNumConditions();i++)
+				microarrayData.outliers.put(new Integer(i), outliers.at(i).asIntArray());
+			
 			r.eval("rm(iqr)");
 			r.eval("rm(q25)");
 			r.eval("rm(q75)");
 			r.eval("rm(med)");
 			r.eval("rm(tal)");
-			
-			exp=r.eval(label+"=new(\"ExpressionSet\", exprs=m, annotation=\""+this.getMicroarrayData().chip+"\")");
-			for(String ef:this.getMicroarrayData().experimentFactors)
-				exp=r.eval(label+"$FactorValue."+ef+"="+RUtils.getRList(getMicroarrayData().experimentFactorValues.get(ef)));
 			exp=r.eval("rm(m)");
 			
 			matrixLoaded = true;
-			System.out.println("Termino y...");
-			synchronized(this)	{ 
-				System.out.println("Notifico"); this.notify(); }
+			System.out.println("Time to load the matrix into R: "+(System.currentTimeMillis()-t0)/1000);
+			this.notify();
+			}
 			}
 		else{System.err.println("No matrix loaded"); return;}
 		}
@@ -603,7 +619,13 @@ public class Analysis
 			}
 		}
 
-	public void downloadExperiment(String id, String path) 
+	/**
+	 * Downloads a microarray experiment from ArrayExpress and normalizes it, using RMA.
+	 * It relies on the BioConductor package ArrayExpress, so accession IDs that cannot be loaded via this package are unavailable.
+	 * @param id - ArrayExpress accession ID
+	 * @param path - location file were the expression level matrix (in BicOverlapper format) is to be stored
+	 */
+	public String downloadExperiment(String id, String path) 
 		{
 		loadRLibrary("ArrayExpress");
 		loadRLibrary("affy");
@@ -613,10 +635,21 @@ public class Analysis
 		path=path.substring(0, path.lastIndexOf("/"));
 		exp=r.eval("downloadAndNormalize(experimentID=\""+id+"\", path=\""+path+"\", fileName=\""+fileName+"\")");
 		if(exp==null)
+			{
+			if(exp!=null && exp.asString()!=null && exp.asString().startsWith("Error"))
+			{
 			System.err.println("Error, cannot download and normalize experiment");
+			JOptionPane.showMessageDialog(null,
+	                exp.asString(),
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+			}
 		else
 			System.out.println("Experiment downloaded and normalized");
+		return path+"/"+fileName;
 		}
+
 	/**
 	 * Performs differential expression analysis via limma
 	 * TODO: make it iterative so we can do every single group/combination upon the selection
@@ -889,19 +922,19 @@ public class Analysis
 				"mat=exprs("+m+"), distanceMethod=\""+distanceMethod+"\", deviationThreshold="+
 				sdThreshold+", distanceThreshold="+distanceThreshold+")");
 		
-		if(exp.asString()!=null && exp.asString().startsWith("Error"))
-			{
-			System.err.println("buildCorrelationNetwork: "+exp.asString());
-			JOptionPane.showMessageDialog(null,
-	                exp.asString(),
-	                "Error",JOptionPane.ERROR_MESSAGE);
-			return null;
-			}
-		else if(exp==null)
+		if(exp==null)
 			{
 			System.err.println("buildCorrelationNetwork: Error");
 			JOptionPane.showMessageDialog(null,
 	                "An error occurred while building the correlation network",
+	                "Error",JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		else if(exp.asString()!=null && exp.asString().startsWith("Error"))
+			{
+			System.err.println("buildCorrelationNetwork: "+exp.asString());
+			JOptionPane.showMessageDialog(null,
+	                exp.asString(),
 	                "Error",JOptionPane.ERROR_MESSAGE);
 			return null;
 			}

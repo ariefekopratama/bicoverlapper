@@ -30,6 +30,11 @@ public final class TRNParser
 
 	/**
 	 * Converts a list of interactions to GML.
+	 * The list should have the format:
+	 * source1 : target1 target2 ... targetN
+	 * source2 : target1 target2 ... targetM
+	 * ...
+	 * 
 	 * [Developed to convert ChaperoneDB excel information to a proper network format]
 	 * @param in String path of input Syntren XML
 	 * @param out String path of output GML
@@ -87,9 +92,6 @@ public final class TRNParser
 					genes.add(origin);
 					}
 				
-				if(linea.contains("YJL111W"))
-					System.out.println();
-				
 				String rest=st.nextToken();
 				StringTokenizer st2=new StringTokenizer(rest," ");//El delimitador en Syntren es un tab.
 				ArrayList<String> end=new ArrayList<String>();
@@ -137,7 +139,108 @@ public final class TRNParser
 		return;	
 		}
 	
+	/**
+	 * Converts a list of interactions to GML.
+	 * The list should have the format:
+	 * source1	target1	[type1]
+	 * source2	target2	[type2]
+	 * ...
+	 * 
+	 * Separators are tabs
+	 * [Developed to convert ChaperoneDB excel information to a proper network format]
+	 * @param in String path of input Syntren XML
+	 * @param out String path of output GML
+	 */
+	public static void tab2GML(String in, String out)
+	{
+	inputPath=in;
+	outputPath=out;
+	BufferedReader br=null;
+		try{
+	br=new BufferedReader(new FileReader(inputPath));
+		}catch(FileNotFoundException e){System.err.println("Error: file "+inputPath+" not found");}
 	
+	BufferedWriter bw=null;
+	FileWriter fw=null;
+	try{
+		fw=new FileWriter(outputPath);
+		bw=new BufferedWriter(fw);
+		
+		
+		{//Header
+		bw.write("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+				"  <graphml xmlns=\"http://graphml.graphdrawing.org/xmlns\"\n " +
+				"  xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+				"  xsi:schemaLocation=\"http://graphml.graphdrawing.org/xmlns\n" +
+				"  http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\">\n" );
+		
+		bw.write("\t<key id=\"d0\" for=\"node\" attr.name=\"name\" attr.type=\"string\">\n"+
+				"</key>\n");
+		
+		bw.write("\t<key id=\"d1\" for=\"node\" attr.name=\"type\" attr.type=\"string\">\n"+
+				"\t\t<default>unknown</default>\n"+
+				"</key>\n");
+		
+		bw.write("\t<key id=\"d2\" for=\"edge\" attr.name=\"type\" attr.type=\"string\">\n"+
+				"</key>\n");
+		
+		bw.write("\t<graph id=\"Gene Network\" edgedefault=\"directed\">\n");
+	    }
+		
+		String linea;
+		HashMap<String, Integer> mapids=new HashMap<String, Integer>();
+		ArrayList<String> genes=new ArrayList<String>();
+		int cont=0;
+		
+		while((linea=br.readLine())!=null)								// Read interactions
+			{
+			StringTokenizer st=new StringTokenizer(linea,"\t");
+			String origin=st.nextToken().trim();
+			if(!genes.contains(origin))	
+				{
+				mapids.put(origin, cont++);
+				genes.add(origin);
+				}
+			
+			String end=st.nextToken();
+			if(!genes.contains(end))	
+				{
+				mapids.put(end, cont++);
+				genes.add(end);
+				}
+			}
+		
+		for(int i=0;i<genes.size();i++)
+			{
+			bw.write("\t\t<node id=\""+mapids.get(genes.get(i))+"\">\n");
+			bw.write("\t\t\t<data key=\"d0\">"+genes.get(i)+"</data>\n");
+			bw.write("\t\t\t<data key=\"d1\">gene</data>\n");
+			bw.write("\t\t</node>\n");
+			}
+		
+		try{
+			br=new BufferedReader(new FileReader(inputPath));
+			}catch(FileNotFoundException e){System.err.println("Error: file "+inputPath+" not found");}
+		while((linea=br.readLine())!=null)							//Edges
+			{
+			StringTokenizer st=new StringTokenizer(linea,"\t");
+			String origin=st.nextToken().trim();
+			String end=st.nextToken().trim();
+			String type="unknown";
+			if(st.hasMoreTokens())	type=st.nextToken().trim();
+			
+			bw.write("\t\t<edge source=\""+mapids.get(origin)+"\" target=\""+mapids.get(end)+"\">\n");
+			bw.write("\t\t\t<data key=\"d2\">"+type+"</data>\n");
+			bw.write("\t\t</edge>\n");
+			}
+		bw.write("\t</graph>\n</graphml>");		//Ending
+		
+		bw.close();
+		fw.close();
+		}catch(IOException e){System.err.println("IOException: "+e.getMessage());}
+	return;	
+	}
+
 	
 	/**
 	 * Converts GML to BioPAX.

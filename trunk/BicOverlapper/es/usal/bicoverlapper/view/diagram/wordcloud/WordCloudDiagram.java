@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -42,9 +43,9 @@ import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
 import es.usal.bicoverlapper.controller.util.Translator;
+import es.usal.bicoverlapper.model.annoations.GOTerm;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.model.gene.GeneRequester;
-import es.usal.bicoverlapper.model.goterm.GOTerm;
 
 import es.usal.bicoverlapper.utils.color.CustomColor;
 import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
@@ -110,6 +111,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 	public boolean doNOTupdate=false;
 
 	private JLabel progress;
+
 	
 	
 	public WordCloudDiagram(Session sesion, Dimension dim)
@@ -152,9 +154,6 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 		this.menuCloud = menuCloud;
 	}
 	
-	private void setEnabledButon(){
-	}
-	
 	private Color getColorW(String w){		
 		Color colorW=(Color)this.colorSeleccion;
 		if (nameSelected.size()>0)
@@ -173,6 +172,43 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 	
 	public void update() 
 		{
+		/*
+		 * Changes color to the terms that are related to the hovered gene (only if <200 genes are selected)
+		 */
+		if(sesion.onlyHover)
+			{
+			if(sesion.getSelectedGenesBicluster().size()>sesion.getMicroarrayData().getNumSparseGenes())	return;
+			Iterator<Word> it=words.values().iterator();		//reset colors
+			while(it.hasNext())	it.next().color=this.colorSeleccion;
+			
+			GeneAnnotation ga=sesion.getMicroarrayData().getGeneAnnotations(sesion.getHoveredBicluster().getGenes()).get(0);
+			if(ga!=null)
+				{
+				switch(menuCloud.text.getSelectedIndex())
+					{
+					case WordCloudParameterConfigurationPanel.GO_TERM:
+						for(GOTerm gt : ga.goTerms)
+							{
+							String[] dw=splitterAndFormat(gt.term);
+							for(String s:dw)
+								if(words.get(s)!=null)	
+									words.get(s).color=sesion.getHoverColor();
+							}
+						break;
+					case WordCloudParameterConfigurationPanel.DEFINITION:
+						String[] dw=splitterAndFormat(ga.description);
+						for(String s:dw)		
+							if(words.get(s)!=null)	
+								words.get(s).color=sesion.getHoverColor();
+						break;
+					default:
+						break;
+					}
+				drawWords((Graphics2D)this.getGraphics());
+				}
+			return;
+			}
+		
 		contZoom=0;
 		maxChar=0;
 		contChar=0;
@@ -190,10 +226,29 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 			annot=null;
 			textChanged=true;
 			}
+		
 		//TODO: digraphs, colors
 		if(this.sesion.getSelectedBicluster()!=null && sesion.getSelectedGenesBicluster()!=null && sesion.getSelectedGenesBicluster().size()>0)
 			{
-			if(!innerCall || annot==null || (got==null && menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES)) 
+			boolean reqSearch=true;
+			
+			boolean annotOK=sesion.getMicroarrayData().checkAnnotations(sesion.getSelectedGenesBicluster());
+			if(annotOK)
+				{
+				annot=sesion.getMicroarrayData().getGeneAnnotations(sesion.getSelectedGenesBicluster());
+				if(menuCloud.text.getSelectedIndex()==WordCloudParameterConfigurationPanel.DEFINITION)	
+					reqSearch=false;
+				}
+			boolean gotOK=sesion.getMicroarrayData().checkGOAnnotations(sesion.getSelectedGenesBicluster());
+			if(annotOK && gotOK && menuCloud.text.getSelectedIndex()==WordCloudParameterConfigurationPanel.GO_TERM &&
+					menuCloud.size.getSelectedIndex()!=WordCloudParameterConfigurationPanel.PVALUES)
+				{
+				got=sesion.getMicroarrayData().getGOTermsCount(sesion.getSelectedGenesBicluster());
+				reqSearch=false;
+				}
+			
+			
+			if(reqSearch && (!innerCall || annot==null || (got==null && menuCloud.size.getSelectedIndex()==WordCloudParameterConfigurationPanel.PVALUES))) 
 				{
 				Point p=new Point(0,0);
 				if(this.getParent()!=null) p=this.sesion.getDiagramWindow(this.getName()).getLocation();
@@ -223,7 +278,22 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
 					}
 				else
-					{this.sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, progress, null, true);}
+					{
+					switch(menuCloud.text.getSelectedIndex())
+						{
+						case(WordCloudParameterConfigurationPanel.GO_TERM):
+							this.sesion.getMicroarrayData().retrieveGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, progress, null, true,false);
+							break;
+						case(WordCloudParameterConfigurationPanel.DEFINITION):
+							this.sesion.getMicroarrayData().retrieveGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, progress, null, false,false);
+							break;
+						case(WordCloudParameterConfigurationPanel.KEGG_PATH):
+							this.sesion.getMicroarrayData().retrieveGeneAnnotations(ArrayUtils.toIntArray(sesion.getSelectedGenesBicluster()), this, true, progress, null, false,true);
+							break;
+						default:
+							break;
+						}
+					}
 				return;
 				}
 			else
@@ -234,11 +304,17 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 		
 	}
 	
+
 public void addWords()
 	{
 	long t1=System.currentTimeMillis();
 	int cont=0;
-	if(annot==null)	{System.err.println("WordCloudDiagram: addWords no annotations found"); return;}
+	if(annot==null || annot.size()==0)	
+		{
+		System.err.println("WordCloudDiagram: addWords no annotations found");
+	    //JOptionPane.showMessageDialog(this, "No tags found for the WordCloud", "Warning",JOptionPane.WARNING_MESSAGE);
+	    return;
+		}
 	
 	switch(this.menuCloud.text.getSelectedIndex())
 		{
@@ -368,7 +444,7 @@ public void addWords()
 	
 	System.out.println("Time in adding the words: "+(System.currentTimeMillis()-t1)/1000.0+" s");
 	
-	//synchronized(this){
+	synchronized(this){
 	textChanged=true;
 	if(this.getGraphics()!=null)	
 		this.paintComponent(this.getGraphics());
@@ -385,7 +461,7 @@ public void addWords()
 		progress.setToolTipText("Annotations retrieved for "+cont+" of the "+sesion.getSelectedBicluster().getGenes().size()+" selected genes");
 		}
 	System.out.println("Time in the rest: "+(System.currentTimeMillis()-t1)/1000.0+" s");
-	//}
+	}
 	
 	}
 
@@ -393,7 +469,7 @@ public synchronized void receiveGOTerms(ArrayList<GOTerm> goterms)
 	{
 	System.out.println("receiveGOTerms");
 	this.got=goterms;
-	if(got==null)
+	if(got==null || got.size()==0)
 	      JOptionPane.showMessageDialog(this, "No relevant GO terms on hypergeometric test for onthology: "+(String)(menuCloud.ontology.getSelectedItem()), "Warning",JOptionPane.WARNING_MESSAGE);
 	addWords();
 	}
@@ -420,13 +496,11 @@ public void splitAndAdd(String desc, double value, double size, Color c, boolean
 	{
 	ArrayList<String> added=new ArrayList<String>();
 	if(alreadyAdded!=null)		added=alreadyAdded;
-	//1) split
-	String[] dw=splitter(desc);
+	//1) split and format
+	String[] dw=splitterAndFormat(desc);
 	//2) add
 	for(int j=0;j<dw.length;j++)
 		{
-		dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
-		dw[j]=dw[j]+" ";
 		if(!unique || !added.contains(dw[j]))
 			addWord(dw[j], value, size, c);
 		added.add(dw[j]);
@@ -434,7 +508,28 @@ public void splitAndAdd(String desc, double value, double size, Color c, boolean
 	
 	return;
 	}
-	
+
+/**
+ * As splitter, but it also makes some visualization formatting (remove parenthesis, add final space)
+ * @param desc
+ * @return
+ */
+public String[] splitterAndFormat(String desc)
+	{
+	String[] dw=splitter(desc);
+	for(int j=0;j<dw.length;j++)
+		{
+		dw[j]=dw[j].replace("(", "").replace(")", "").trim().toLowerCase();
+		dw[j]=dw[j]+" ";
+		}
+	return dw;
+	}
+
+/**
+ * Splits the word depending on the configurated options
+ * @param desc
+ * @return
+ */
 public String[] splitter(String desc)
 	{
 	String[] dw=null;
@@ -539,7 +634,7 @@ public void addWord(String w, double value, double size, Color colorW)
 		return (float)(key-minKey)*(newMax-newMin+1)/(maxKey-minKey)+newMin;
 	}
 	
-	public void drawWords(Graphics2D g2)
+	public synchronized void drawWords(Graphics2D g2)
 	{
 	drawFondo(g2);
 	RenderingHints qualityHints = new RenderingHints(null);
@@ -547,6 +642,7 @@ public void addWord(String w, double value, double size, Color colorW)
 	qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
 	g2.setRenderingHints(qualityHints);
 
+	//System.out.println("Drawing words");
 	Iterator<Word> it=words.values().iterator();
 	if(sortedWords!=null && sortedWords.size()==words.size())
 		for(int i=0;i<words.size();i++)
@@ -569,6 +665,7 @@ public void addWord(String w, double value, double size, Color colorW)
 		}
 	
 	progress.setBounds(this.getWidth()-progress.getWidth()-2, this.getHeight()-progress.getHeight()-2, 30, 10);
+	//System.out.println("Words drawn");
 	}
 	
 	
@@ -604,6 +701,7 @@ public void addWord(String w, double value, double size, Color colorW)
 		if(g2==null)	return;
 		FontRenderContext frc=g2.getFontRenderContext();
 		
+		//System.out.println("Setting words");
 		//0) Alphabetic sort of words
 		if(words!=null && words.size()>0)	
 			{
@@ -739,12 +837,12 @@ public void addWord(String w, double value, double size, Color colorW)
 			{
 			if(increase)	
 				{
-				System.out.println("Increase scale "+scale);
+			//	System.out.println("Increase scale "+scale);
 				scale*=1.5;
 				}
 			else
 				{
-				System.out.println("Decrease scale "+scale);
+			//	System.out.println("Decrease scale "+scale);
 				scale/=1.5;
 				}
 			}
@@ -764,33 +862,10 @@ public void addWord(String w, double value, double size, Color colorW)
 		return es.usal.bicoverlapper.controller.kernel.Configuration.CLOUD_ID;
 	}
 	
-	/*public void actionPerformed(ActionEvent e){
-		String comando=e.getActionCommand();
-		if (comando.equalsIgnoreCase(WordCloudParameterConfigurationPanel.DESCRIPTION)){
-			setEnabledButon();
-			if (!this.myColor.equals(sesion.getSelectionColor()))
-				this.colorSeleccion=this.myColor;
-			nameC=WordCloudParameterConfigurationPanel.DESCRIPTION;
-			newSelection=true;
-			this.actualizar();
-			this.repaint();
-		}else if(comando.equalsIgnoreCase(WordCloudParameterConfigurationPanel.GO_TERMS)){
-			setEnabledButon();
-			if (!this.myColor.equals(sesion.getSelectionColor()))
-				this.colorSeleccion=this.myColor;
-			//menuCloud.goButton.setEnabled(false);
-			nameC=WordCloudParameterConfigurationPanel.GO_TERMS;
-			newSelection=true;
-			//ajusta=true;
-			this.actualizar();
-			this.repaint();
-		}
-	}*/
 	public void stateChanged(ChangeEvent i){
-		//zoom=(float)(menuCloud.sliderZoom.getValue()/(float)4.0);
-		//System.out.println("Z: "+zoom);
 		this.repaint();
 	}
+	
 	public void mouseClicked(MouseEvent e) 
 		{				
 		}
@@ -893,7 +968,6 @@ public void addWord(String w, double value, double size, Color colorW)
 							nameSelected.add(w);
 							words.get(w).setColor(paleta[colorVarSelec]);
 							System.out.println("W: "+nameSelected.toString());
-							//TODO: Now the search is tricky because it depends on what genes have annotations searched for.
 							//We should focus on the ones selected, or on the whole (with Ctrl pressed, for example) by making first a whole search
 							Selection s=null;
 							if(!e.isControlDown())
@@ -903,9 +977,13 @@ public void addWord(String w, double value, double size, Color colorW)
 							else
 								{
 								this.doNOTupdate=true;
-								sesion.getMicroarrayData().getGeneAnnotations(ArrayUtils.toIntArray(sesion.getMicroarrayData().getNonAnnotatedGeneIds()), this, true, progress, null, true);
+								sesion.getMicroarrayData().retrieveGeneAnnotations(ArrayUtils.toIntArray(sesion.getMicroarrayData().getNonAnnotatedGeneIds()), this, true, progress, null, true, false);
+								
+								System.out.println("Waiting for annotation retrieval");
+								try{synchronized(sesion.getMicroarrayData().getGeneAnnotations()){sesion.getMicroarrayData().getGeneAnnotations().wait();}}catch(Exception ex){ex.printStackTrace(); return;}
+								
+								System.out.println("Searching genes");
 								s=sesion.getMicroarrayData().search(nameSelected.get(0).trim(), 0, true, null);
-								System.out.println("Search by all not currently available");
 								}
 							
 							if(s!=null && s.getGenes().size()>0)

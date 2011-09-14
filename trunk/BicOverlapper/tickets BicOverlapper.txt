@@ -1,9 +1,76 @@
 S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
-->=Important
+->=To do
 
+-> WordCloud still hangs up from time to time... and it never takes profit of the total window size...
+     It totally frozens the view!!
+-> explore GEOquery for importing experiments
+	S R code ready (downloadGEO method in downloadAndNormalize.R)
+--> KEGG path annotations, make it work
+--> Overlapper perfomance downgrades the system grows with groups (E-GEOD-17636, only diffexp with limma, 2 groups, with PC, WC and O) -> it also happens with BM, something is downgrading there the system a lot!
+		It's not always... keep checking
+--> Changing labels removes selection (just sometimes... investigate)
+S Column selection: after a selection, we should restore the original order before taking a new one? If not it's confusing
+	S in PC, lose the scrolls after!
+	S in HM
+--> Several issues keep arising on HM and PC with deep interaction...	
+--> Deselection after changing options on WC
+--> Link hovered node (highlight its words in the WC too)
+		S WC highlighting done (maybe too much, not sure if keeping it)
+S TRN Expression color scale does not correspond to the one in the HM -> The ExpressionColorAction was numerical, and it was rebuilt after an update
+-> Progress bars:
+	S Download from AE
+		S Also solved some problems with non-alphanumeric EFVs and column names, with which R had problems
+	S Percentiles in PC (load matrix into R)
+	Clearer status in WC
+S Caps+click halves heatmap width
+	A matter of adding again the whole number of conditions, doubling the elements
+	S Ctrl+click has the same problem! 
+	
+	
+
+-> Merge rows? based on entrez id or symbol?
+-> Time performance (s) in R load and retrieving of annotations (ga: only entrez id and symbol)
+	Organism (rows)				load	ga		go	
+	S. cerevisiae (6400 rows)	5		0.7		8
+	H. sapiens (54000 rows)		9		4		210
+	Broad go term search remains unrealistic on the current terms, but if we go to R, the times are:
+	H. sapiens (54000 rows)		-		3		36
+	So we are adding huge amounts of time with java wrapping:
+	1) If we read less than all the elements (but a lot) it goes thru a large string construction that takes about 70s
+	
+			
+S Synchronization on loadMatrix
+-> Synchronization on geneAnnotations search
+S Avoid re-searches for GO terms if we haven't found any for a first time
+	But still, if word cloud is open, it re-searches for the selected genes!
+		S Avoided if every gene has been searched for
+		-> Still, if some genes in the selection has been searched for and some others not, it will search for the whole of them
+S Invalid memory access of location 0x10 rip=0x11f90731e during diffExp analysis
+	It looks like something related with the new R 2.13 version...that installation is running not very well in Eclipse too
+	Some other analyses (correlation building, annotation retrieval) work ok
+	But others work wrong (biclust, gsea)
+	It looks like it's a problem of Eclipse with the latest java version for Mac (!) --> http://blog.abelmuino.com/2010/07/snow-leopard-java-y-invalid-memory-access-of-location.html
+	It's a problem (at least partially) of getting the rj library for the proper version from http://www.walware.de/?page=/it/downloads/index.mframe
+	S It's actually a problem from a R 2.13 bug, solved if a patched version (jul11) is installed!
+-> Annotation retrieval
+	Should be in background always. It can be ok in some organisms, but for human, for example, it takes very long (>1min)
+		It's also a problem of bad programming trying to do a superbig string to pass to R --> solved this, it takes for humans <20s.
+		Still too much, maybe.
+		We reduce times by getting only symbol and entrez (no ensembl or description) -> 4s for human (50000probes)
+	...
+-> test some RNAseq data... include ArrayExpressHTS for its preprocessing?
+S WC hangs after adding the words in addWords(), no apparent reason. It was because of drawing several times because of different WC windows
+	or quick changes on selection, because of concurrency -> solved by making drawsWords synchronized
+	 S if nothing is significant after a hypergeometrics test report
+	 -> selection deselect when changing WC options
+	 S heatmap color scale changes when changing options everywhere
+	 
+	 
+S explore topGO for GO enrichment analysis, maybe easier/quicker than current method
+	No, it sucks. Gostas is much better
 S Correlation Network seems not to work again
-	It's a problem of the standard deviation thing. I think it's counterintuitive, I changed it by basic filters.
+	It's a problem of the standard deviation thing. I think it's counterintuitive, I changed it by basic filters. -> no! it's good, if not only housekeeping genes are set, reset and solved
 S WC Search for word clicking on tag cloud
 		S Done for current selection
 		S For the whole gene set, pressing Ctrl, implemented, but it takes time and a progress bar could be good
@@ -14,12 +81,13 @@ S Improve limma analysis (models were not used at the best model configuration)
 Luis input
 	S PC Change scolls colors
 	S PC Reset scroll positions
-	-> Computing percentiles task bar not static
-	-> Normalize every set
+	S Computing percentiles task bar not static
+	-> Normalize every set (pre-process option in analysis?)
 	
-S Revise the R package installation (especially annotation packages)
-	It seems to work perfectly well on mac
-	-> Set installation of rJava as a requirement
+--> Revise the R package installation (especially annotation packages)
+	S It seems to work perfectly well on mac
+	--> Recheck on Windows and Linux, make installers
+	-> Set installation of R2.13 and rJava as a requirement
 S Generate Mac install package
 	-JarBundler+PackageMaker OK
 	-Recheck example data (in source code):
@@ -39,8 +107,6 @@ S Generate Mac install package
 	It will require changes on EF names, so we will specify they are EFs (EF.)
 	S Read
 	
-->Ctrl+click halves heatmap width
-	Only sometimes! Hard to debug...
 S Add trick box with:
 	Alt+Click on a gene on Parallel Coordinates or Heatmap opens up its NCBI webpage (if found)
 	Right-click on Parallel Coordinates or Heatmap opens up a configuration panel for their visualizations
@@ -61,7 +127,7 @@ S Add trick box with:
 	 
 	
 	
--> Color change of the heatmap after opening config box on PC	
+S Color change of the heatmap after opening config box on PC	
 	
 S PC Boxplots restriction to width, sometimes too large if only a few columns shown
 	S Label for hovered gene should not collide with first boxplot

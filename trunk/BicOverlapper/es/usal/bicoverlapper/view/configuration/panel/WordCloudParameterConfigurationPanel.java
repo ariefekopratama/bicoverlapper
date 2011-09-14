@@ -58,9 +58,11 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 	
 	public static final String DESCRIPTION="Description";
 	public static final String GO_TERMS="GO Terms";
+	public static final String KEGG_PATHS="KEGG paths";
 	
 	public static final int DEFINITION=0;
 	public static final int GO_TERM=1;
+	public static final int KEGG_PATH=2;
 	public static final int WORD1=0;
 	public static final int WORD2=1;
 	public static final int COMLETE=2;
@@ -86,7 +88,7 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 			this.setLayout(null);
 			this.setPreferredSize(new java.awt.Dimension(405, 83));
 			//this.setPreferredSize(new java.awt.Dimension(404, 400));
-			texts=new String[]{"definition", "go term"};
+			texts=new String[]{"definition", "go term", "kegg path"};
 			splits=new String[]{"1 word", "2 words", "complete"};
 			sizes=new String[]{"genes", "p-value"};
 			ontologies=new String[]{"all", "bp", "mf", "cc"};
@@ -177,7 +179,7 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 		split.setSelectedIndex(splitIndex);
 		size.setSelectedIndex(sizeIndex);
 		ontology.setSelectedIndex(ontologyIndex);
-		 parent.update();
+		// parent.update();
 	       
 	}
 	
@@ -213,9 +215,6 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 			}
 		}
     antName = (String)cb.getSelectedItem();
-	parent.endConfig(true);
-
-    parent.update();
     }
 
 }

@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import es.usal.bicoverlapper.model.goterm.GOTerm;
+import es.usal.bicoverlapper.model.annoations.GOTerm;
+import es.usal.bicoverlapper.model.annoations.KEGGPath;
 
 public class GeneAnnotation {
 	
@@ -58,6 +59,7 @@ public class GeneAnnotation {
 	public ArrayList<String> aliases;
 
 	public ArrayList<GOTerm> goTerms;
+	public ArrayList<KEGGPath> keggPaths;
 	
 	public GeneAnnotation()
 		{

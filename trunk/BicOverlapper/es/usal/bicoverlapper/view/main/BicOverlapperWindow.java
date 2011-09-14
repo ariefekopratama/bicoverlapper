@@ -293,6 +293,8 @@ public class BicOverlapperWindow extends JFrame{
 			new JMenuItem(Translator.instance.menuLabels.getString("sort"));
 		JMenuItem menuAnalysisMerge =
 			new JMenuItem(Translator.instance.menuLabels.getString("merge"));
+		JMenuItem menuAnalysisMergeRows =
+			new JMenuItem(Translator.instance.menuLabels.getString("mergeRows"));
 		JMenuItem menuAnalysisSelect =
 			new JMenuItem(Translator.instance.menuLabels.getString("select"));
 		JMenuItem menuAnalysisDifexp =
@@ -306,11 +308,13 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisSearch.setMnemonic('F');
 		menuAnalysisShow.setMnemonic('L');
 		menuAnalysisMerge.setMnemonic('M');
+		menuAnalysisMergeRows.setMnemonic('R');
 		
 		analysisMenu.add(menuAnalysisSearch);
 		analysisMenu.add(menuAnalysisShow);
 		analysisMenu.add(menuAnalysisSort);
 		analysisMenu.add(menuAnalysisMerge);
+		analysisMenu.add(menuAnalysisMergeRows);
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisSelect);
 		analysisMenu.add(menuAnalysisDifexp);
@@ -329,10 +333,13 @@ public class BicOverlapperWindow extends JFrame{
 		menuAnalysisShow.addActionListener(amm);
 		menuAnalysisSort.addActionListener(amm);
 		menuAnalysisMerge.addActionListener(amm);
+		menuAnalysisMergeRows.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
 		menuAnalysisDifexp.addActionListener(amm);
 		menuAnalysisGSEA.addActionListener(amm);
 		menuAnalysisBuildNetwork.addActionListener(amm);
+		
+		menuAnalysisMergeRows.setEnabled(false);//TODO: in test phase
 						
 		// Creamos menu "Ver"
 		viewMenu = new JMenu(Translator.instance.menuLabels.getString("s2"));

@@ -61,7 +61,6 @@ public MicroarrayLoadProgressMonitor() {
 	closeButton.setMaximumSize(new Dimension(20,100));
 	closeButton.setSize(20,100);
 	
-	
 	closeButton.addActionListener(new ActionListener(){
 		public void actionPerformed(ActionEvent e) {
 			frame.hide();

@@ -222,7 +222,11 @@ public class AnalysisMenuManager implements ActionListener{
 				{
 				sesion.merge();
 				}
-		
+			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("mergeRows")))
+				{
+				sesion.mergeRows();
+				}
+	
 			else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("select")))
 				{
 				//Show label names box

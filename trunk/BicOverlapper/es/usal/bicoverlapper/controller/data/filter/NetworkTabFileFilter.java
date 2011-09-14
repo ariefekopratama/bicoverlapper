@@ -1,16 +1,12 @@
-
 package es.usal.bicoverlapper.controller.data.filter;
 
 import java.io.File;
+import javax.swing.*;
 import javax.swing.filechooser.*;
 
-/**
- * TRN file format filter for JFileChooser
- * @author Rodrigo	Santamaría
- */
-public class TRNFilter extends FileFilter {
+public class NetworkTabFileFilter extends FileFilter {
 
-    /**
+	 /**
      * Returns the extension of a file (the three letters after the dot)
      * @param f	File to get the extension
      * @return	extension of f
@@ -52,8 +48,8 @@ public class TRNFilter extends FileFilter {
         String extension = getExtension(f);
         if (extension != null) 
         	{
-        	if (extension.equals("xml") || extension.equals("gml"))                  return true;
-        	else								              return false;
+            if (extension.equals("txt"))                  return true;
+            else							              return false;
             }
 
         return false;
@@ -65,6 +61,6 @@ public class TRNFilter extends FileFilter {
      * @return	A brief description of expected files for TRN.
      */
     public String getDescription() {
-        return "SynTReN Graph XML description (*.xml)";
+        return "Tab file, 1st column source, 2nd target, 3rd (opt) type (*.txt)";
     }
 }

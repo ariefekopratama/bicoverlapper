@@ -120,6 +120,8 @@ private static final long serialVersionUID = 1L;
 	private HorizontalLineLayout xlabels;
 
 	private boolean resort;
+
+	private HeatmapHoverControl hoverController;
 	
 	/**
 	 * Default constructor
@@ -272,15 +274,13 @@ private static final long serialVersionUID = 1L;
     	
     //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
       	ColorAction textColor=new ColorAction("matrix", VisualItem.TEXTCOLOR, ColorLib.gray(255,0));
-		
+      	Color ch=sesion.getHoverColor();
+				
 		ColorAction labelGeneTextColor=new ColorAction("geneLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-		//labelGeneTextColor.add("_hover", ColorLib.rgb(255,0,0)); 
-		Color ch=sesion.getHoverColor();
 		labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 		ColorAction labelGeneStroke=new ColorAction("geneLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
 		
 		ColorAction labelConditionTextColor=new ColorAction("conditionLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-		//labelConditionTextColor.add("_hover", ColorLib.rgb(255,0,0));
 		labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 		ColorAction labelConditionColor=new ColorAction("conditionLabels", VisualItem.FILLCOLOR, ColorLib.gray(255,0));
 //		ColorAction labelConditionStroke=new ColorAction("conditionLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
@@ -365,8 +365,8 @@ private static final long serialVersionUID = 1L;
 		d.addControlListener(new ZoomControl()); // zoom with vertical right-drag
 		d.addControlListener(new WheelZoomControl()); // zoom to fit screen
 
-		d.addControlListener(new HeatmapHoverControl(sesion, "layout", Visualization.FOCUS_ITEMS, "matrix", "geneLabels", "conditionLabels", gl, ylabels,v));
-//		d.addControlListener(new HoverActionControl("color")); // zoom with vertical right-drag
+		hoverController=new HeatmapHoverControl(sesion, "layout", Visualization.FOCUS_ITEMS, "matrix", "geneLabels", "conditionLabels", gl, ylabels,v);
+		d.addControlListener(hoverController);
 		d.addControlListener(new ConfigurationControl()); // zoom with vertical right-drag
 		
 	//	AnchorUpdateControl auc=new AnchorUpdateControl(new Layout[]{fd, fdg,fdc},"distortion");//
@@ -439,30 +439,45 @@ private static final long serialVersionUID = 1L;
 		{
 		if(v!=null && sesion!=null)
 			{
-			//Tenemos un bicluster seleccionado
-			if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster()!=bicAnt && sesion.getSelectedGenesBicluster().size()<=md.getNumSparseGenes())
+			if(sesion.onlyHover)	//HOVER
 				{
-				currentLevels.clear();
-				
-				md.buildSparse(sesion.getSelectedBicluster().getGenes());
-				update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+				System.out.println("Only hover!");
+				if(sesion.getSelectedGenesBicluster().size()<=md.getNumSparseGenes())
+					{
+					hoverController.addItemsForHover(sesion.getHoveredBicluster().getGenes(), sesion.getHoveredBicluster().getConditions());
+					}
+				else	//TODO: by now nothing, but maybe to recover only that one?
+					{
 					
-				LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
-				LinkedList<Integer> lc=sesion.getSelectedConditionsBicluster();
-				currentLevels.addItems(lg, lc);
-				resort=false;
+					}
 				}
-			else if(resort)
+			else				//SELECTION
 				{
-				currentLevels.clear();
-				
-				md.sortColumns();
-				update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+				if(sesion.getSelectedBicluster()!=null && sesion.getSelectedBicluster()!=bicAnt && sesion.getSelectedGenesBicluster().size()<=md.getNumSparseGenes())
+					{
+					currentLevels.clear();
 					
-				LinkedList<Integer> lg=new LinkedList<Integer>();
-				LinkedList<Integer> lc=new LinkedList<Integer>();
-				currentLevels.addItems(lg, lc);
-				resort=false;
+					md.sortColumns();
+					md.buildSparse(sesion.getSelectedBicluster().getGenes());
+					update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+						
+					LinkedList<Integer> lg=sesion.getSelectedGenesBicluster();
+					LinkedList<Integer> lc=sesion.getSelectedConditionsBicluster();
+					currentLevels.addItems(lg, lc);
+					resort=false;
+					}
+				else if(resort)
+					{
+					currentLevels.clear();
+					
+					md.sortColumns();
+					update(md.getSparseExpressions(),md.getSparseGeneLabels(),md.getConditionLabels());
+						
+					LinkedList<Integer> lg=new LinkedList<Integer>();
+					LinkedList<Integer> lc=new LinkedList<Integer>();
+					currentLevels.addItems(lg, lc);
+					resort=false;
+					}
 				}
 			}
 		synchronized(this){run();}
@@ -478,21 +493,20 @@ private static final long serialVersionUID = 1L;
 		for(int i=0;i<paletteTemp.length;i++)	palette[i]=paletteTemp[i];
 		for(int i=paletteTemp.length;i<palette.length;i++)	palette[i]=paletteTemp2[i-paletteTemp.length];
       	
-		exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-	      exprColor.setMaxScale(md.max);
-	      exprColor.setMinScale(md.min);
+		exprColor=new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+	      //exprColor=new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+	      //exprColor.setMaxScale(md.max);
+	      //exprColor.setMinScale(md.min);
 	      
 	      //	strokeColor=new StrokeColorAction("matrix", "level", palette, sesion.getHoverColor(), sesion.getSelectionColor());
 	      	ColorAction textColor=new ColorAction("matrix", VisualItem.TEXTCOLOR, ColorLib.gray(255,0));
 			
 			ColorAction labelGeneTextColor=new ColorAction("geneLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-			//labelGeneTextColor.add("_hover", ColorLib.rgb(255,0,0)); 
 			Color ch=sesion.getHoverColor();
 			labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 			ColorAction labelGeneStroke=new ColorAction("geneLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
 			
 			ColorAction labelConditionTextColor=new ColorAction("conditionLabels", VisualItem.TEXTCOLOR, ColorLib.gray(0));
-			//labelConditionTextColor.add("_hover", ColorLib.rgb(255,0,0));
 			labelGeneTextColor.add("_hover", ColorLib.rgb(ch.getRed(), ch.getGreen(), ch.getBlue()));
 			ColorAction labelConditionColor=new ColorAction("conditionLabels", VisualItem.FILLCOLOR, ColorLib.gray(255,0));
 //			ColorAction labelConditionStroke=new ColorAction("conditionLabels", VisualItem.STROKECOLOR, ColorLib.gray(100));
@@ -736,7 +750,6 @@ private static final long serialVersionUID = 1L;
 	    	hoverGenes=genes;
 	    	if(genes!=null)	
 	    		for(int i=0;i<hoverGenes.length;i++)	
-	    		//hoverGenes[i]=geneOrder[genes[i]];
 	    			hoverGenes[i]=geneOrder[hoverGenes[i]];
 	    	return;
 	    	}
@@ -826,7 +839,7 @@ private static final long serialVersionUID = 1L;
      	    	}//A un tamaño de 1, vemos cuánto ocupan en altura
          
      	    scale = w > m_maxWidth ? m_maxWidth/w : 1.0; //Escalamos según la altura máxima qu tengamos
-     	   System.out.println("Escala es "+scale+", "+ancho+" y ancho m‡ximo "+m_maxWidth);
+     	 //  System.out.println("Escala es "+scale+", "+ancho+" y ancho m‡ximo "+m_maxWidth);
            Display d = v.getDisplay(0);
            Insets ins = d.getInsets();//espacio que el display deja en sus bordes
            
@@ -987,7 +1000,7 @@ private static final long serialVersionUID = 1L;
           	{
         	while ( iter.hasNext() ) 
 	           {
-        		System.out.println("escala normal:"+scale);
+        		//System.out.println("escala normal:"+scale);
 	           VisualItem item = (VisualItem)iter.next();
                item.setSize(scale); item.setEndSize(scale);
                iw = (ancho-geneMargin)/(double)condOrder.length; //Escalamos también los bordes, además del tamaño del texto

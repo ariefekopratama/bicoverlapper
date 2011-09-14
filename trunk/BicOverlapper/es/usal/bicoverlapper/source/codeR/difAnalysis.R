@@ -160,7 +160,7 @@ diffAnalysisEF=function(m, ef, efv, interestingNames=c(),
 	degs=lapply(conds, function(y){
 				print(paste(efv,"vs", y))
 				#rownames(m)[diffAnalysis(m, g1=efv, g2=y, pvalT=pvalT, return=return)]
-				rownames(m)[diffAnalysis(m, g=ef, g1=efv, g2=y, pvalT=pvalT, byRank=byRank, numRank=numRank, return=return)]
+				rownames(m)[diffAnalysis(m, g=ef, g1=efv, g2=y, pvalT=pvalT, diffT=diffT, byRank=byRank, numRank=numRank, return=return)]
 			})
 	names=paste(efv, "vs", conds)
 	
