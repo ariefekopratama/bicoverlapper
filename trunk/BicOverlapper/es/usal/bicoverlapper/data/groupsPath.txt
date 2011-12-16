@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/sybaris/data/manuel/networks/TFs/Balaji2006/tnetSimple.bic
+/Users/rodri/Documents/workspace/sybaris/lps/DEG-LPS-p1e-05t5.bic

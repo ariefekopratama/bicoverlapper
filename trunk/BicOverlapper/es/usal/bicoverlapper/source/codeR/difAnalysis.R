@@ -114,7 +114,7 @@ diffAnalysis=function(mt, g, g1, g2, pvalT=0.01, diffT=0, adjustMethod="BH", byR
 		colnames(design)=levels(population.groups)
 		fit=lmFit(mt, design)
 		
-		#trick to ve able to use parameters as values for expression
+		#trick to be able to use parameters as values for expression
 		mycontrast=paste(make.names(g1),"-",make.names(g2), sep="")
 		cmd <- paste("contrasts <- makeContrasts(", mycontrast, ", levels = design)", sep ='"')
 		eval(parse(text = cmd))	

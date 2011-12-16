@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/sybaris/data/manuel/networks/TFs/Balaji2006/tnet-K_SGD.txt
+/Users/rodri/Documents/workspace/sybaris/lps/correlation15dev1dist.gml

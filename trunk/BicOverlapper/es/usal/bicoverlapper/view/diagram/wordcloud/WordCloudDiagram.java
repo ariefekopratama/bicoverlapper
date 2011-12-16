@@ -187,7 +187,10 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,MouseLis
 				switch(menuCloud.text.getSelectedIndex())
 					{
 					case WordCloudParameterConfigurationPanel.GO_TERM:
-						for(GOTerm gt : ga.goTerms)
+						if(ga.goTerms!=null)
+							System.err.println("GA goterms should be an empty list, not null");
+						else
+							for(GOTerm gt : ga.goTerms)
 							{
 							String[] dw=splitterAndFormat(gt.term);
 							for(String s:dw)
