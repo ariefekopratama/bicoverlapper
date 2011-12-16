@@ -2,6 +2,8 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=To do
 
+-> Matrix size can mangle R processing, at about 5M of file... -> reduce the number of decimal digits if possible.
+- Check GSEA.R on KEGG.db
 -> WordCloud still hangs up from time to time... and it never takes profit of the total window size...
      It totally frozens the view!!
 -> explore GEOquery for importing experiments
@@ -90,6 +92,7 @@ Luis input
 	-> Set installation of R2.13 and rJava as a requirement
 S Generate Mac install package
 	-JarBundler+PackageMaker OK
+	
 	-Recheck example data (in source code):
 		S Brain -> NullPointerException: column ids starting with numbers... shall I leave this? -> Age as EF...
 					S for column ids (must be always present so a single if is enough)

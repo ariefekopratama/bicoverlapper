@@ -137,7 +137,7 @@ public class Analysis
 	    	r=Rengine.getMainEngine();
 	    else if(r==null || !r.isAlive())
 		    {
-	        r=new Rengine(new String[]{"--vanilla"}, false, null);
+	        r=new Rengine(new String[]{"--vanilla", "--max-mem-size=1024M"}, false, null);
 	        System.out.println("Rengine created, waiting for R");
 			// the engine creates R in a new thread, so we should wait until it's ready
 	        if (!r.waitForR()) 
@@ -164,8 +164,16 @@ public class Analysis
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/binarize.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/helpers.r\")");
         exp=r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
+        return;
        }
 	
+	public void loadRscript(String name)
+	{
+	if(r==null)	{System.err.println("No R console started");	return;}
+	   	
+    exp=r.eval("source(\""+name+"\")");
+   }
+
 	public void loadRLibrary(String library)
 		{
 		exp=r.eval("library("+library+")");
@@ -176,7 +184,7 @@ public class Analysis
         	if(exp==null)
     	    	{
     	    	JOptionPane.showMessageDialog(null,
-					"Package biclust is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, Plaid, Bimax, xMotifs and Cheng&Church biclustering won't be available", 
+					"Package "+library+" is not installed in R and could not be installed automatically\n Please install the package manually through the R console.", 
 					"Missing R package", JOptionPane.WARNING_MESSAGE);
     	    	}
         	}
@@ -201,7 +209,8 @@ public class Analysis
 			System.out.println(microarrayData.filePath+" "+microarrayData.experimentFactors.size());
 			r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
 	        exp=r.eval(label+"=loadMatrix(filePath=\""+microarrayData.filePath+"\", numEFs="+microarrayData.experimentFactors.size()+")");
-			
+			// exp=r.eval("m=read.csv(\""+microarrayData.filePath+"\", sep=\"\t\")");
+				
 	        System.out.println("matrix loaded, computing some statistics");
 			//compute median by column and quantiles
 			r.eval("m=exprs("+label+")");
@@ -221,7 +230,7 @@ public class Analysis
 			
 			for(int i=0;i<microarrayData.getNumConditions();i++)
 				microarrayData.outliers.put(new Integer(i), outliers.at(i).asIntArray());
-			
+			//SyntrenEcoli=loadMatrix(filePath="C:\\Users\\Charly\\Desktop\\SyntrenEcoli.txt", numEFs=0)
 			r.eval("rm(iqr)");
 			r.eval("rm(q25)");
 			r.eval("rm(q75)");
@@ -608,6 +617,7 @@ public class Analysis
 		if(!matrixLoaded)	loadMatrix(m);
 		
 		//ArrayList<Integer> neighbors=new ArrayList<Integer>();
+		//TODO: m‡s f‡cil/r‡pido?: d=apply(m, 1, function(x){sum(x-m["17057",])});	d=sqrt(d*d)
 		exp=r.eval("d=sapply(featureNames("+m+"), function(x){      sqrt(sum((exprs("+m+")[x,]-exprs("+m+")[\""+gene+"\",])*(exprs("+m+")[x,]-exprs("+m+")[\""+gene+"\",])))     })");
 		exp=r.eval("featureNames("+m+")[order(d)][1:"+(threshold+1)+"]");//the first one is actually itself
 		if(exp!=null)
@@ -662,7 +672,7 @@ public class Analysis
 	 */
    // public String limma(Integer[] group1, Integer[] group2, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
 	 public String limma(String ef, String nameGroup1, String nameGroup2, boolean bh, double pvalue, double elevel, String reg, String outFile, String description)
-	    	{
+	    {
     	String m=this.microarrayData.rMatrixName;
 		if(!matrixLoaded)	loadMatrix(m);
 		loadRLibrary("limma");

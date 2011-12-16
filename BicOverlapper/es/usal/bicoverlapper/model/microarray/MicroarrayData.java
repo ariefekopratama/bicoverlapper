@@ -1266,10 +1266,10 @@ public class MicroarrayData
 	    	   //Similar to the above situation, but in this case we use bioMaRt instead of a dedicated environment database.
 	    	   else if(chip.startsWith("biomaRt"))
 	    	   		{
-	    		   chip=chip.substring(chip.indexOf(".")+1);
+	    		    chip=chip.substring(chip.indexOf(".")+1);
 			    	if(organism.equals("Homo sapiens"))	rname="hgnc_symbol";
 		    	    else if(organism.equals("Schizosaccharomyces pombe")) rname="external_gene_id";
-	    		    else								rname="symbol";
+	    		    else								rname=chip;
 	    		    rdescription="description";
 	    		    isBioMaRt=true;
 	    		 	}
@@ -2095,7 +2095,10 @@ public class MicroarrayData
 	 				exp=re.eval("martEnsembl=getEnsemblMart(species=\""+organism+"\")");
 	 			
 	 			if(!chip.equals("ensembl_gene_id"))//it's a bit slower if we don't search for ensembl gene ids
+	 				{
 	 				exp=re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+chip+"\", attributes=c(\"ensembl_gene_id\",\""+rname+"\",\"entrezgene\", \"description\"))$ids");
+	 				System.out.println("BiomaRT finished");
+	 				}
 	 			else
 	 				exp=re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+organism+"\", type=\""+chip+"\")");
 	 			if(!chip.equals(rname))
@@ -2111,10 +2114,19 @@ public class MicroarrayData
 	     		
 	     		exp=re.eval("df[,\""+rdescription+"\"]");
 	 			if(exp!=null)	
+	 				{
+	 				System.out.println("And it has descriptions!");
 	        		descriptions=exp.asStringArray();
+	 				}
 	 			
-	 			exp=re.eval("df[,\"entrezgene\"]");
-	 			if(exp!=null)
+	 			if(rname.equals("entrezgene"))
+	 				{
+	 				entrezs=geneNames.clone();
+	 				}
+	 			else
+	 				{
+	 				exp=re.eval("df[,\"entrezgene\"]");
+	 				if(exp!=null)
 	 				{
 	        		int ints[]=exp.asIntArray();
 	        		ArrayList<String> strings=new ArrayList<String>();
@@ -2123,6 +2135,7 @@ public class MicroarrayData
 	 					else	strings.add(new Integer(i).toString());
 	 				entrezs=strings.toArray(new String[0]);
 	 				//entrezs=exp.asStringArray();
+	 				}
 	 				}
 	 			if(!rname.equals("ensembl_gene_id"))
 	 				{
@@ -2174,7 +2187,8 @@ public class MicroarrayData
 		    	if(exp!=null)
 			    	{
 		    		go=exp.asList();
-		    	    exp=re.eval("l=unique(unlist(df))");
+		    		exp=re.eval("l=unique(unlist(df))");
+		    		exp=re.eval("l=l[which(!is.na(l))]");
 			    	}
 		    	else
 		    		{
@@ -2258,10 +2272,13 @@ public class MicroarrayData
 			
 			
 			//In addition, if searched and found, we add the GO terms		
+			String[] goids=null;
+			
 			if(go!=null)
 				{
+				if(ga.goTerms==null)	
+					ga.goTerms=new ArrayList<GOTerm>();
 				RList goterms=null;
-				String[] goids=null;
 				
 				if(isBioMaRt)
 					{
@@ -2274,8 +2291,8 @@ public class MicroarrayData
 					}
 				if(goids!=null)
 					{
-					if(ga.goTerms==null)	
-						ga.goTerms=new ArrayList<GOTerm>();
+					//if(ga.goTerms==null)	
+					//	ga.goTerms=new ArrayList<GOTerm>();
 					for(int i=0;i<goids.length;i++)
 						{
 						if(goids[i].startsWith("GO:"))
@@ -2288,10 +2305,12 @@ public class MicroarrayData
 						}
 					}
 				}
-			if(searchGO && go!=null && go.at(ga.id).asList()==null)	//If searched and NOT found, we still add a GOTerms structure so we know it has already been searched for
-				{
-				ga.goTerms=new ArrayList<GOTerm>();
-				}
+			//if(searchGO && go!=null && go.at(ga.id).asList()==null)	//If searched and NOT found, we still add a GOTerms structure so we know it has already been searched for
+			//if(searchGO && go!=null && goids==null)	//If searched and NOT found, we still add a GOTerms structure so we know it has already been searched for
+			//	{
+				
+			//	ga.goTerms=new ArrayList<GOTerm>();
+			//	}
 			
 			
 			galist.add(ga);
@@ -2604,6 +2623,7 @@ public class MicroarrayData
 	public int nd;
 	public String message="";
 	public int rowHeader, colHeader;//Row header is the number of initial rows dedicated to information about samples. colHeader is the number of initial columns dedicated to information about genes (by now, just 1)
+	public ArrayList<String> colHeaders;//names of column headers
 	//Right now, rowHeader is computed as the number of rows before the first one that contains numbers, which is 1 (sample IDs) or more, if experimental factors are described
 	//TODO colHeader is fixed to one by now.
 	//TODO rowHeader right now cannot account for numeric experiment factors
@@ -2687,7 +2707,7 @@ public class MicroarrayData
 					        if(stop)
 					        	{
 					        	System.out.println("Out because of "+scanner.next());
-					        	//colHeader=colCont;//By now, only one column
+					        	colHeader=colCont;
 								break;
 					        	}
 							}
@@ -2729,6 +2749,8 @@ public class MicroarrayData
 				
 				if(colHeader>=1)
 					{
+					//TODO: get additional info about genes
+					
 					}
 				else	for(int i=0;i<numConditions;i++)			conditionNames[i]=new Integer(i).toString();
 				}
@@ -2736,6 +2758,7 @@ public class MicroarrayData
 				{	//Y las primeras filas sobre las condiciones
 				BufferedReader in =	new BufferedReader(new FileReader(path));
 				StringTokenizer st=null;
+				colHeaders=new ArrayList<String>();
 				
 				//Read sample related info
 				if(rowHeader>=0)
@@ -2745,33 +2768,39 @@ public class MicroarrayData
 						{
 						description=st.nextToken();//Pasamos los que no tienen q ver, que nombran las columnas de explicaci�n de genes
 						
-						if(description.contains("/"))
+						if(i==0)
 							{
-							chip=description.substring(description.indexOf("/")+1);
-							organism=description.substring(0, description.indexOf("/"));
-							if(chip.length()<2)	
+							if(description.contains("/"))
 								{
-								JOptionPane.showMessageDialog(null,
-										"Chip name is wrong: "+chip, 
-										"Wrong format", JOptionPane.ERROR_MESSAGE);
-								return 1;
+								chip=description.substring(description.indexOf("/")+1);
+								organism=description.substring(0, description.indexOf("/"));
+								if(chip.length()<2)	
+									{
+									JOptionPane.showMessageDialog(null,
+											"Chip name is wrong: "+chip, 
+											"Wrong format", JOptionPane.ERROR_MESSAGE);
+									return 1;
+									}
+								if(organism.length()<2)
+									{
+									JOptionPane.showMessageDialog(null,
+											"Organism name is wrong: "+organism, 
+											"Wrong format", JOptionPane.ERROR_MESSAGE);
+									return 1;
+									}
+								colHeaders.add(chip);
 								}
-							if(organism.length()<2)
+							else
 								{
 								JOptionPane.showMessageDialog(null,
-										"Organism name is wrong: "+organism, 
+										"Chip/Organism description is wrong, use \"/\" as separator: "+description, 
 										"Wrong format", JOptionPane.ERROR_MESSAGE);
 								return 1;
 								}
 							}
-						else
-							{
-							JOptionPane.showMessageDialog(null,
-									"Chip/Organism description is wrong, use \"/\" as separator: "+description, 
-									"Wrong format", JOptionPane.ERROR_MESSAGE);
-							return 1;
-							}
+						else	colHeaders.add(description);
 						}
+					
 					for(int i=0;i<numConditions;i++)	conditionNames[i]=st.nextToken().trim();
 					for(int i=0;i<rowHeader-1;i++)	//Read experiment factors
 						{
@@ -2799,6 +2828,7 @@ public class MicroarrayData
 					rt.run();
 					}
 				
+				if(geneAnnotations==null)	geneAnnotations=new TreeMap<Integer, GeneAnnotation>();
 				//Read gene related info (except expression levels)
 				if(colHeader>0)
 					{
@@ -2822,6 +2852,18 @@ public class MicroarrayData
 							}
 						st=new StringTokenizer(cad,"\t");//El delimitador en Syntren es un tab.
 						geneNames[i]=st.nextToken().trim();
+						assignAnnotation(i,geneNames[i],colHeaders.get(0), true);
+						if(colHeader>1)
+							{
+							for(int j=0;j<colHeader-1;j++)	//get gene annotations present in the array
+								{
+								String annot=st.nextToken().trim();
+								GeneAnnotation ga=new GeneAnnotation();
+								ga.id=geneNames[i];
+								ga.internalId=i;
+								assignAnnotation(i, annot, colHeaders.get(j), false);
+								}
+							}
 						//System.out.println(geneNames[i]);
 						}
 					}
@@ -2932,7 +2974,19 @@ public class MicroarrayData
 		}
 	}
 
-
+public void assignAnnotation(int id, String annotation, String annotationType, boolean isId)
+	{
+	GeneAnnotation ga=null;
+	if((ga=geneAnnotations.get(id))==null)	{ga=new GeneAnnotation(); ga.internalId=id; geneAnnotations.put(id, ga);}
+	if(isId)	ga.id=annotation;
+	
+	if(annotationType.equals("description"))	ga.description=annotation;		//respecting biomart names on these first three
+	else if(annotationType.equals("ensembl_gene_id"))	ga.ensemblId=annotation;
+	else if(annotationType.equals("entrezgene"))	ga.entrezId=annotation;
+	else if(annotationType.equals("name"))		ga.name=annotation;
+	//TODO: GO terms, KEGG paths, etc.
+	return;
+	}
 public void buildSparseGeneMatrix()
 	{
 	sparseGeneLabels=new Table();

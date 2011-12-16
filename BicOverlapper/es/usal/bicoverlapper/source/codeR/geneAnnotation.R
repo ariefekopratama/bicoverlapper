@@ -53,12 +53,13 @@ getBMGO=function(geneids, mart, type="ensembl_gene_id", GOtypes=c("go_id"))
 	geneens=getBM( attributes = c(type, GOtypes), filters = type, values=geneids, mart = mart)
 	geneens=geneens[which(nchar(geneens[,GOtypes[1]])>0),]
 	golist=sapply(unique(geneens[,type]), function(x){unique(unlist(geneens[which(geneens[,type]==x),GOtypes]))})
+	names(golist)=unique(geneens[, type])
 	#add the ones not found
 	nomatch=which(! geneids %in% names(golist))
 	golist[geneids[nomatch]]=NA
 	golist[geneids]#return in the same order they came
-	if(class(golist)=="matrix") golist=list(golist)
-	golist
+	#if(class(golist)=="matrix") golist=list(golist)
+	#golist
 	}
 
 #Obtains basic characteristics of the genes (symbol, description and ensembl id)

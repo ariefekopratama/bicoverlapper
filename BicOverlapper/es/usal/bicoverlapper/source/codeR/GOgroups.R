@@ -68,12 +68,16 @@ getGOTermsByGOID=function(goids)
 	goterms@ids=goids
 	#goterms@evidences=rep(1, length(goids))
 	t1=Sys.time()
-	desc=mget(goterms@ids, GOTERM)
+	desc=mget(goterms@ids, GOTERM, ifnotfound=NA)
 	t2=Sys.time()
 	print(paste("time en mget", t2-t1))
 	goterms@terms=sapply(desc, function(x){Term(x)})
+	goterms@terms=goterms@terms[which(!is.na(goterms@terms))]
 	goterms@ontologies=sapply(desc, function(x){Ontology(x)})
+	goterms@ontologies=goterms@ontologies[which(!is.na(goterms@ontologies))]
 	goterms@definitions=sapply(desc, function(x){Definition(x)})
+	goterms@definitions=goterms@definitions[which(!is.na(goterms@definitions))]
+	
 	t1=Sys.time()
 	print(paste("time en sapplies", t1-t2))
 	goterms
