@@ -2,6 +2,17 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=To do
 
+-> Reformatting old data
+	Expression
+		DONE Ecoli -> didn't work because the load method didn't take account of experiments without EFVs, now it does
+		CURATE Hsapiens -> load but must be curated 
+		
+--> Curating old data	
+		Ecoli	Can put just one digit, but irrelevant
+		H.sapiens Log transform, maybe better take any other experiment (this one is pretty bad)
+		
+
+CC PC scrolls should read actual expression values
 -> Matrix size can mangle R processing, at about 5M of file... -> reduce the number of decimal digits if possible.
 - Check GSEA.R on KEGG.db
 -> WordCloud still hangs up from time to time... and it never takes profit of the total window size...

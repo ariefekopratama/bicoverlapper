@@ -963,8 +963,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		
 	/**
 	 * A mix of drawEjes and drawLineas that draws boxplots, maybe something more familiar to microarray analysts
-	 * Typically, a boxplot uses median and percentiles 25th and 75th. Our boxplot, by now, is using mean and
-	 * +- 1 standard deviation.
+	 * Typically, a boxplot uses median and percentiles 25th and 75th.
 	 * TODO: use median and percentiles instead of mean and deviations
 	 * @param g2
 	 */
