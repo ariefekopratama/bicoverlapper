@@ -28,7 +28,7 @@ loadMatrix=function(filePath=NULL, numEFs=0)
 			m=m[-1,]
 		}
 		
-		#Parse gene names and expression values
+	#Parse gene names and expression values
 	geneNames=gsub("[ ]+", "", as.character(m[,1]))
 	ann=colnames(m)[1]
 	m=m[,-1]
@@ -37,9 +37,16 @@ loadMatrix=function(filePath=NULL, numEFs=0)
 	rownames(m)=geneNames
 		
 	#Build ExpressionSet
-	df=data.frame(efvs)
-	colnames(df)=paste("FactorValue.",efs,sep="")
-	rownames(df)=colnames(m)
+	if(is.null(efs)==FALSE)	
+		{
+		df=data.frame(efvs)
+		colnames(df)=paste("FactorValue.",efs,sep="")
+		rownames(df)=colnames(m)
 		es=new("ExpressionSet", exprs=m, annotation=ann, phenoData=new("AnnotatedDataFrame", data=df))
+		}
+	else
+		{
+		es=new("ExpressionSet", exprs=m, annotation=ann)
+		}
 	es
 	}

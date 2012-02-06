@@ -2683,6 +2683,7 @@ public class MicroarrayData
 					BufferedReader in =	new BufferedReader(new FileReader(path));
 					int numLines=levelsi.getRowCount();
 					rowHeader=0;
+					colHeader=1; //by now, no col headers, apart from the ID
 					boolean stop=false;
 					for(int i=0;i<numLines;i++)	
 						{
@@ -2690,7 +2691,7 @@ public class MicroarrayData
 						Scanner scanner = new Scanner(st);
 						scanner.useDelimiter("\\t");
 						String scan="";
-						int colCont=0;
+						//int colCont=0;
 						if(i>0)
 							{
 							while(scanner.hasNext())
@@ -2699,7 +2700,7 @@ public class MicroarrayData
 						        	{stop=true; break;}
 							    scan=scanner.next();
 							    if(scan.trim().startsWith("EF."))	break;	//To allow numeric values
-							    colCont++;
+							  //  colCont++;
 							    double scand=-333;
 							    try{scand=Double.parseDouble(scan.trim());}catch(NumberFormatException nfe){}
 							    if(scand!=-333){stop=true; break;}
@@ -2707,7 +2708,7 @@ public class MicroarrayData
 					        if(stop)
 					        	{
 					        	System.out.println("Out because of "+scanner.next());
-					        	colHeader=colCont;
+					        	//colHeader=colCont;
 								break;
 					        	}
 							}

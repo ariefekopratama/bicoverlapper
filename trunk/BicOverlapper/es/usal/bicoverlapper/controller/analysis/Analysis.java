@@ -207,6 +207,7 @@ public class Analysis
 			long t0=System.currentTimeMillis();
 		
 			System.out.println(microarrayData.filePath+" "+microarrayData.experimentFactors.size());
+			
 			r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
 	        exp=r.eval(label+"=loadMatrix(filePath=\""+microarrayData.filePath+"\", numEFs="+microarrayData.experimentFactors.size()+")");
 			// exp=r.eval("m=read.csv(\""+microarrayData.filePath+"\", sep=\"\t\")");
