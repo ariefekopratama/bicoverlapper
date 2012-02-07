@@ -177,6 +177,7 @@ public class Analysis
 	public void loadRLibrary(String library)
 		{
 		exp=r.eval("library("+library+")");
+		System.out.println("loadRLibrary de "+library+" = "+exp);
         if(exp==null)
         	{
         	exp=r.eval("install.packages(\""+library+"\")");
@@ -206,20 +207,51 @@ public class Analysis
 			System.out.println("loading matrix into R");
 			long t0=System.currentTimeMillis();
 		
+			/*
+			// antes había esto
 			System.out.println(microarrayData.filePath+" "+microarrayData.experimentFactors.size());
 			
 			r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
 	        exp=r.eval(label+"=loadMatrix(filePath=\""+microarrayData.filePath+"\", numEFs="+microarrayData.experimentFactors.size()+")");
+<<<<<<< .mine
+	        
+			
+=======
 			// exp=r.eval("m=read.csv(\""+microarrayData.filePath+"\", sep=\"\t\")");
 				
+>>>>>>> .r135
+		 	*/
+			//modificación para que funcione en windows
+			String os = System.getProperty("os.name").toLowerCase();
+			if(os.indexOf("win") >= 0){
+				//si estamos en windows
+				exp = r.eval("source(\"es\\\\usal\\\\bicoverlapper\\\\source\\\\codeR\\\\loadMatrix.R\")");	
+				System.out.println("En r.eval source de windows y exp = "+exp);
+			}
+			else{
+				//si estamos en unix
+				exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
+				System.out.println("En r.eval source de linux y exp = "+exp);
+			}			
+			
+			//R necesita las barras de dirección duplicadas, y la forma de hacerlo es ésta
+			String rutaWindowsParaR = microarrayData.filePath.replaceAll("\\\\", "\\\\\\\\");
+			
+			//modificado por Carlos para Windows, antes sólo estaba sin el replaceAll
+			loadRLibrary("stringr");
+			exp = r.eval(label + "=loadMatrix(filePath=\""+ rutaWindowsParaR + "\", numEFs="+ microarrayData.experimentFactors.size() + ")");			
+			//hasta aquí la modificación para que funcione en windows
+			
 	        System.out.println("matrix loaded, computing some statistics");
 			//compute median by column and quantiles
-			r.eval("m=exprs("+label+")");
-			r.eval("med=apply(m, 2, median)");
-			System.out.println("Mediana es: "+microarrayData.median);
+			exp = r.eval("m=exprs("+label+")");
+			System.out.println("Línea 230 r.eval(\"m=exprs(\"+label+\")\") = "+exp);
+			exp = r.eval("med=apply(m, 2, median)");
+			System.out.println("Línea 232 r.eval(\"med=apply(m, 2, median)\") = "+exp);
+			System.out.println("Línea 233 Mediana antes es: "+microarrayData.median);
 			microarrayData.median=r.eval("med").asDoubleArray();
-
-			r.eval("q25=apply(m, 2, quantile)[2,]");
+			//System.out.println("Línea 235 Mediana después es: "+microarrayData.median);
+			exp = r.eval("q25=apply(m, 2, quantile)[2,]");
 			microarrayData.q25=r.eval("q25").asDoubleArray();
 			r.eval("q75=apply(m, 2, quantile)[4,]");
 			microarrayData.q75=r.eval("q75").asDoubleArray();
