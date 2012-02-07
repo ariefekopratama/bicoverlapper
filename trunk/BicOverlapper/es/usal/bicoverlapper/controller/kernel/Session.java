@@ -146,6 +146,16 @@ public class Session implements KeyListener {
 	 * @param desktop <code>JDesktopPane</code> linked to this <code>Session</code>.
 	 */
 	public Session(JDesktopPane desktop, BicOverlapperWindow window){
+		//Carlos
+		window.menuViewHeatmap.setEnabled(false);
+		window.menuViewParallelCoordinates.setEnabled(false);
+		window.menuViewTRN.setEnabled(false);
+		window.menuViewBubbles.setEnabled(false);
+		window.menuViewOverlapper.setEnabled(false);
+		window.menuViewCloud.setEnabled(false);
+		window.setTitle(window.titulo);
+		
+		
 		analysis=new Analysis(null);
 		this.datosCargados = false;
 		this.desktop = desktop;

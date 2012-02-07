@@ -51,7 +51,6 @@ public class ViewMenuManager implements ActionListener{
 		if(ventana.isActiveWorkDesktop()){
 			Session sesion = ventana.getActiveWorkDesktop().getSession();
 			
-			
 			if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s8"))){
 				Dimension dim = config.getSizePanelCoordenadas();
 				ParallelCoordinatesDiagram panel = new ParallelCoordinatesDiagram(sesion, dim);

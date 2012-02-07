@@ -248,7 +248,11 @@ public class MicroarrayData
 		loadTask.nd=nd;
 		experimentFactors=new ArrayList<String>();
 		experimentFactorValues=new HashMap<String,String[]>();
-		this.filePath=this.path;
+		this.filePath = this.path; // CUIDADO CON ESTE THIS.PATH PORQUE VALE NULL	
+		
+		// añadido para que funcione en windows (en principio en unix no dará problemas)
+		path = path.replace("\\", "/");
+		
 		this.name=path.substring(path.lastIndexOf("/")+1, path.lastIndexOf("."));
 		this.path=path.substring(0, path.lastIndexOf("/"));
 		this.rMatrixName=name.replace("-", "").replace(" ", ".");
@@ -2649,8 +2653,16 @@ public class MicroarrayData
 	public int loadFromFile()
 		{
 			int progress=0;
-			String name=path.replace("\\","/");
-			filePath=name;
+			
+			//antes había esto
+			/*
+			String name = path.replace("\\", "/");
+			filePath = name;
+			*/
+			//modificado para que funcione en Windows (en principio en unix no dará problemas)
+			String name = path.replace("\\", "/");
+			filePath = path;
+			
 			message="Reading matrix "+name.substring(name.lastIndexOf("/")+1, name.indexOf("."));
 			progress+=10;
 			setProgress(progress);

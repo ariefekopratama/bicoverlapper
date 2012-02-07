@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/distros/bicoverlapper1-8Mac/data/hsapiens/brain/E-GEOD-1572-ant.txt
+C:\Users\Charly\Desktop\ficheros bicoverlapper funcionan\LPS_rep1dig.txt
