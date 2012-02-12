@@ -971,36 +971,28 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 				bw = new BufferedWriter(new FileWriter(file));
 
 			if (ventana.getActiveWorkDesktop() != null
-					&& ventana.getActiveWorkDesktop().getSession()
-							.getSelectedBicluster() != null) {
-				Selection bs = ventana.getActiveWorkDesktop().getSession()
-						.getSelectedBicluster();
+					&& ventana.getActiveWorkDesktop().getSession().getSelectedBicluster() != null) {
+				Selection bs = ventana.getActiveWorkDesktop().getSession().getSelectedBicluster();
 
 				bw.write(bs.getGenes().size() + " " + bs.getConditions().size());
 				bw.newLine();
-				ArrayList<String> g = ventana.getActiveWorkDesktop()
-						.getSession().getMicroarrayData()
-						.getGeneNames(bs.getGenes());
+				ArrayList<String> g = ventana.getActiveWorkDesktop().getSession().getMicroarrayData().getGeneNames(bs.getGenes());
 
 				for (int i = 0; i < bs.getGenes().size(); i++) {
 
 					bw.write(g.get(i) + " ");
 				}
 				bw.newLine();
-				ArrayList<String> c = ventana.getActiveWorkDesktop()
-						.getSession().getMicroarrayData()
-						.getConditionNames(bs.getConditions());
+				ArrayList<String> c = ventana.getActiveWorkDesktop().getSession().getMicroarrayData().getConditionNames(bs.getConditions());
 				for (int i = 0; i < c.size(); i++) {
 					bw.write(c.get(i) + " ");
 				}
 				bw.close();
 			} else {
-				JOptionPane
-						.showMessageDialog(
+				JOptionPane.showMessageDialog(
 								null,
 								"No selection done, select some genes or conditions first",
-								Translator.instance.warningLabels
-										.getString("s2"),
+								Translator.instance.warningLabels.getString("s2"),
 								JOptionPane.ERROR_MESSAGE);
 			}
 		} catch (Exception e) {

@@ -119,8 +119,22 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private int longEjeY;
 	private double intervaloVar;// , anchoTextoCuota;
 	private double[] ratio;
+	
+	//Carlos
+	//estos 2 arrays ya existían pero no se usaban en ningún sitio, lo que me hace pensar que el problema estaba detectado pero no tratado
 	private double[] maxText;
 	private double[] minText;
+	
+	//Carlos
+	//este array para mantener las posiciones relativas
+	private double[] posicionesMaxMin;
+	private double[] posicionesY;
+	
+	//Carlos
+	//valores máximo y mínimo totales
+	private double maximo;
+	private double minimo;
+	
 	private double[] currentTextInf;
 	private double[] currentTextSup;
 	// private boolean ejesRelativos = true;//if true, each pc axis max/min
@@ -202,12 +216,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	public ParallelCoordinatesDiagram(Session sesion, Dimension dim) {
 		// public ParallelCoordinatesDiagram(Session sesion){
 		int num = sesion.getNumParallelCoordinatesDiagrams();
-		paleta[ParallelCoordinatesDiagram.colorVarSelec] = sesion
-				.getSelectionColor().darker();
-		paleta[ParallelCoordinatesDiagram.colorBicluster] = sesion
-				.getSelectionColor().brighter();
-		paleta[ParallelCoordinatesDiagram.colorLineaMarcada] = sesion
-				.getHoverColor();
+		paleta[ParallelCoordinatesDiagram.colorVarSelec] = sesion.getSelectionColor().darker();
+		paleta[ParallelCoordinatesDiagram.colorBicluster] = sesion.getSelectionColor().brighter();
+		paleta[ParallelCoordinatesDiagram.colorLineaMarcada] = sesion.getHoverColor();
 
 		iconoScrollUp = "es/usal/bicoverlapper/resources/images/up5.png";
 		iconoScrollDown = "es/usal/bicoverlapper/resources/images/up5.png";
@@ -381,6 +392,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.currentTextSup = new double[numC];
 		this.valorInf = new double[numC];
 		this.valorSup = new double[numC];
+		this.posicionesMaxMin = new double[currentTextSup.length+currentTextInf.length];
 
 		// iniciamos los atributos del cambio de variables
 		this.ejesVars = new Line2D.Double[numC];
@@ -494,7 +506,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for (int i = 0; i < numC; i++) {
 				if (ejesRelativos) {
 					min[i] = sesion.getMicroarrayData().minCols[i];
-					max[i] = sesion.getMicroarrayData().maxCols[i];
+					max[i] = sesion.getMicroarrayData().maxCols[i];					
 				} else {
 					min[i] = sesion.getMicroarrayData().min;
 					max[i] = sesion.getMicroarrayData().max;
@@ -508,6 +520,22 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					currentTextInf[i] = sesion.getMicroarrayData().minCols[i];
 				}
 				// System.out.println("ca\t"+i+"\t"+currentTextInf[i]+"\t"+currentTextSup[i]);
+				
+				//Carlos
+				//se rellenan minText y maxText
+				minText[i] = currentTextInf[i];
+				maxText[i] = currentTextSup[i];
+				maximo = ParallelCoordinatesDiagram.getMaxValue(maxText);
+				minimo = ParallelCoordinatesDiagram.getMinValue(minText);
+
+				
+				//Carlos
+				/*
+				System.out.println("min[i]="+min[i]);
+				System.out.println("max[i]="+max[i]);
+				System.out.println("currentTextInf[i]="+currentTextInf[i]);
+				System.out.println("currentTextSup[i]="+currentTextSup[i]);
+				*/
 			}
 
 			// System.out.println("Time to compute textInf/Sup "+(System.currentTimeMillis()-t1)/1000.0);
@@ -574,19 +602,32 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	}
 
+	/**
+	 * Método que posiciona los scrolls en la vista
+	 */
+	//REALMENTE HACE LO MISMO QUE RESETSCROLLS()
 	private void trasladarScrolls() {
 		if (sesion.areMicroarrayDataLoaded()) {
+			
+			//Carlos, experimento de arrays
+			System.arraycopy(currentTextSup, 0, posicionesMaxMin, 0, currentTextSup.length);
+			System.arraycopy(currentTextInf, 0, posicionesMaxMin, currentTextSup.length, currentTextInf.length);
+			posicionesY = this.getRanks(posicionesMaxMin);	
+			
 			for (int i = 0; i < numC; i++) {
+				
+				//Carlos
+				scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2,	posicionesY[i], anchoScroll, altoScroll);
+				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2, posicionesY[i+currentTextSup.length], anchoScroll, altoScroll);
+				cotaSup[i] = posicionesY[i];
+				cotaInf[i] = posicionesY[i+currentTextSup.length];	
+				
+				//antes había esto
+				//scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll/2, margenSup - altoScroll - margenScroll, anchoScroll, altoScroll);
+				//scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll/2, margenSup + longEjeY + margenScroll, anchoScroll, altoScroll);				
+				//cotaSup[i] = margenSup - margenScroll;
+				//cotaInf[i] = margenSup + longEjeY + margenScroll;
 
-				scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll
-						/ 2, margenSup - altoScroll - margenScroll,
-						anchoScroll, altoScroll);
-				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll
-						/ 2, margenSup + longEjeY + margenScroll, anchoScroll,
-						altoScroll);
-
-				cotaSup[i] = margenSup - margenScroll;
-				cotaInf[i] = margenSup + longEjeY + margenScroll;
 			}
 		}
 	}
@@ -600,19 +641,22 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			// r.y=scrollSup[k].y;
 			// g2.draw(r);
 			// g2.draw(scrollSup[k]);
-			if ((varScroll == i) && (scrollPos == Sup))
+			if ((varScroll == i) && (scrollPos == Sup)){
 				g2.drawImage(scrollSelecDown, (int) scrollSup[i].getX(),
 						(int) scrollSup[k].getY(), null);
-			else
+			}
+			else{
 				g2.drawImage(scrollDown, (int) scrollSup[i].getX(),
 						(int) scrollSup[k].getY(), null);
-
-			if ((varScroll == i) && (scrollPos == Inf))
+			}
+			if ((varScroll == i) && (scrollPos == Inf)){
 				g2.drawImage(scrollSelecUp, (int) scrollInf[i].getX(),
 						(int) scrollInf[k].getY(), null);
-			else
+			}
+			else{
 				g2.drawImage(scrollUp, (int) scrollInf[i].getX(),
 						(int) scrollInf[k].getY(), null);
+			}
 		}
 		return;
 	}
@@ -630,24 +674,56 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				posY = scrollSup[k].getY();
 				// valor =
 				// sesion.getMicroarrayData().maxCols[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
-				valor = max[k] - (nuevaCota - margenSup + margenScroll)
-						/ ratio[k];
+				
+				//Carlos
+				valor = maxText[k] - ((nuevaCota - margenSup + margenScroll)	/ ratio[k]) + (maximo - maxText[k]);
+				/*
+				System.out.println("maxText[k] = "+maxText[k]);
+				System.out.println("nuevaCota = "+nuevaCota);
+				System.out.println("(nuevaCota - margenSup + margenScroll)	/ ratio[k] = "+(((nuevaCota - margenSup + margenScroll)	/ ratio[k]) + 0.8));
+				System.out.println("valor = "+valor);
+				*/
+				
+				//antes había esto
+				//valor = max[k] - (nuevaCota - margenSup + margenScroll)	/ ratio[k];
+				
+				//Carlos
+				//este if está relacionado con la barra de scroll superior
+				//System.out.println("En el if cad vale "+datos.format(valor, k)+" y max[k] vale "+max[k]);
+				
 			} else if (scrollPos == Inf) {
 				posX = scrollInf[varScroll].getX();
 				posY = scrollInf[k].getY();
 				// valor =
 				// sesion.getMicroarrayData().maxCols[k]-(nuevaCota-margenSup-margenScroll)/ratio[k];
-				valor = max[k] - (nuevaCota - margenSup - margenScroll)
-						/ ratio[k];
+				
+				//Carlos
+				valor = (maxText[k] - (nuevaCota - margenSup - margenScroll)	/ ratio[k]) + (maximo - maxText[k]);
+
+				
+				//antes había esto
+				//valor = max[k] - (nuevaCota - margenSup - margenScroll)	/ ratio[k];
+				
+				//Carlos
+				//este if está relacionado con la barra de scroll inferior
+				//System.out.println("En el else cad vale "+datos.format(valor, k)+" y max[k] vale "+max[k]);
 			}
 
 			Font oldFont = g2.getFont();
 			g2.setFont(new Font("Arial", Font.BOLD, 9));
 			g2.setPaint(paleta[colorEje]);
 
+			//Carlos
+			//comprobación de que la etiqueta del scroll no se pasa de los máximos y mínimos para ese elemento
+			if(valor < minText[k]){
+				valor = minText[k];
+			}
+			else if(valor > maxText[k]){
+				valor = maxText[k];
+			}			
+			
 			String cad = datos.format(valor, k);
-			TextLayout cota = new TextLayout(cad, g2.getFont(),
-					g2.getFontRenderContext());
+			TextLayout cota = new TextLayout(cad, g2.getFont(),	g2.getFontRenderContext());
 
 			altoTexto = cota.getBounds().getHeight();
 			anchoTexto = cota.getBounds().getWidth();
@@ -659,7 +735,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			//Carlos
 			//parece que la k es la posición de izquierda a derecha del elemento gráfico que se toca
 			//"cad" es el valor que se pinta en el puntero, es decir, el valor que debería valer al final el mínimo
-			System.out.println("cota se crea con cad que vale "+cad+", valor vale "+valor+" y k vale "+k);		
+			//System.out.println("cota se crea con cad que vale "+cad+", valor vale "+valor+" y k vale "+k);		
 		}
 
 		// imprimimos el número de elementos seleccionados
@@ -703,7 +779,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		maximo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 		
 		//Carlos
-		System.out.println("1º cad que vale "+cad);
+		//System.out.println("1º cad que vale "+cad);
 		
 		
 		altoTexto = maximo.getBounds().getHeight();
@@ -717,7 +793,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		minimo = new TextLayout(cad, g2.getFont(), g2.getFontRenderContext());
 		
 		//Carlos
-		System.out.println("2º cad que vale "+cad);		
+		//System.out.println("2º cad que vale "+cad);		
 		
 		altoTexto = minimo.getBounds().getHeight();
 		anchoTexto = minimo.getBounds().getWidth();
@@ -732,7 +808,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			//Carlos
 			//este valor es el de la cota superior
-			System.out.println("3º cad que vale "+cad);			
+			//System.out.println("3º cad que vale "+cad);			
 			
 			maximo = new TextLayout(cad, f, frc);
 			altoTexto = maximo.getBounds().getHeight();
@@ -745,7 +821,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			//Carlos
 			//este valor es el de la cota inferior
-			System.out.println("4º cad que vale "+cad);			
+			//System.out.println("4º cad que vale "+cad);			
 			
 			minimo = new TextLayout(cad, f, frc);
 			altoTexto = minimo.getBounds().getHeight();
@@ -1279,8 +1355,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void fitSelectedConditions() {
 		if (sesion == null
 				|| sesion.getSelectedBicluster() == null
-				|| sesion.getSelectedBicluster().getConditions().size() >= sesion
-						.getMicroarrayData().getNumConditions())
+				|| sesion.getSelectedBicluster().getConditions().size() >= sesion.getMicroarrayData().getNumConditions())
 			return;
 
 		sortColumns(sesion.getMicroarrayData().getColumnOrder());
@@ -1310,32 +1385,106 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * Resets scrolls to their initial positions
 	 */
 	void resetScrolls() {
+		
+		//Carlos, experimento de arrays
+		System.arraycopy(currentTextSup, 0, posicionesMaxMin, 0, currentTextSup.length);
+		System.arraycopy(currentTextInf, 0, posicionesMaxMin, currentTextSup.length, currentTextInf.length);
+		posicionesY = this.getRanks(posicionesMaxMin);		
+		
+		
 		for (int i = 0; i < numC; i++) {
-
-			Rectangle2D.Double scroll = new Rectangle2D.Double(margenIzq + i
-					* intervaloVar - anchoScroll / 2, margenSup - altoScroll
-					- margenScroll, anchoScroll, altoScroll);
-
+			Rectangle2D.Double scroll;
+			
+			//Carlos
+			//para poder posicionar el scroll dependiendo de su valor tengo que tocar el 2º parámetro de "scroll"
+			
+			/*
+			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
+					margenSup - altoScroll - margenScroll, anchoScroll, altoScroll);
+			*/
+			
+			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
+					posicionesY[i], anchoScroll, altoScroll);
+			
 			scrollSup[i] = scroll;
 
-			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar
-					- anchoScroll / 2, margenSup + longEjeY + margenScroll,
-					anchoScroll, altoScroll);
-
+			/*
+			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
+					margenSup + longEjeY + margenScroll, anchoScroll, altoScroll);
+			*/
+			
+			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
+					posicionesY[i+currentTextSup.length], anchoScroll, altoScroll);
+			
 			scrollInf[i] = scroll;
 
-			cotaSup[i] = margenSup - margenScroll;
-			cotaInf[i] = alto - margenInf + margenScroll;
+			
+			//Carlos
+			cotaSup[i] = posicionesY[i];
+			cotaInf[i] = posicionesY[i+currentTextSup.length];	
+			
+			//antes había esto
+			//cotaSup[i] = margenSup - margenScroll;
+			//cotaInf[i] = alto - margenInf + margenScroll;			
+
+			//Carlos
+			//System.out.println("margenSup - altoScroll - margenScroll="+(margenSup - altoScroll - margenScroll));
+			//System.out.println("margenSup + longEjeY + margenScroll="+(margenSup + longEjeY + margenScroll));
+			//cotaInf y cotaSup valen lo mismo para todos...
+			//System.out.println("cotaSup[i] = "+cotaSup[i]);
+			//System.out.println("cotaInf[i] = "+cotaInf[i]);	
 		}
+	}	
+	
+    public double[] getRanks(double[] samples) {
+        if (samples.length < 1) {
+                System.err.println("The sample is empty");
+        }
+
+        double max = getMaxValue(samples);
+        double min = getMinValue(samples);
+        double[] ranks = new double[samples.length];
+        
+        double factor = margenSup + longEjeY + margenScroll - (margenSup - altoScroll - margenScroll);
+
+        for (int i = 0; i < samples.length; i++) {
+        	//se le pone 1 - el valor calculado porque los valores más altos están más arriba, o sea, con una coordenada Y más pequeña
+            ranks[i] = 1 - ((samples[i] - min) / (max - min));
+            ranks[i] = ranks[i]*factor+(margenSup - altoScroll - margenScroll);
+            //System.out.println("Para el sample="+samples[i]+" el rank="+ranks[i]);
+        }
+
+        return ranks;
+	}    
+	
+	public static double getMaxValue(double[] numbers) {
+		double maxValue = numbers[0];
+	        for (int i = 1; i < numbers.length; i++) {
+	                if (numbers[i] > maxValue) {
+	                        maxValue = numbers[i];
+	                }
+	        }
+	
+        return maxValue;
 	}
+	
+	public static double getMinValue(double[] numbers) {
+		double minValue = numbers[0];
+	        for (int i = 1; i < numbers.length; i++) {
+	                if (numbers[i] < minValue) {
+	                        minValue = numbers[i];
+	                }
+	        }
+	
+        return minValue;
+	}	
 
 	/**
 	 * Sets the scrolls in the min and max value of the selected profiles for
 	 * each coordinate
 	 */
 	void fitScrolls() {
-		if (sesion.getSelectedBicluster() != null
-				&& sesion.getSelectedGenesBicluster().size() > 0) {
+		if (sesion.getSelectedBicluster() != null && sesion.getSelectedGenesBicluster().size() > 0) {
 			double maxLineas[] = new double[numC];
 			double minLineas[] = new double[numC];
 			for (int i = 0; i < numC; i++)
@@ -1377,8 +1526,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			// 3) Highlight selected lines TODO: here check how we do this to
 			// replicate when sorting
-			if (sesion.getSelectedBicluster().getConditions().size() < sesion
-					.getMicroarrayData().getNumConditions() - 1) {
+			if (sesion.getSelectedBicluster().getConditions().size() < sesion.getMicroarrayData().getNumConditions() - 1) {
 			}
 		} else // If the selection has no genes, we reset the scrolls to min and
 				// max
@@ -1930,12 +2078,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 				for (int i = 0; i < numC; i++) {
 					int k = ordenVars[i];
-					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[k]
-							.clone();
+					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[k].clone();
 					rs.x = scrollSup[i].x;
 
-					Rectangle2D.Double ri = (Rectangle2D.Double) scrollInf[k]
-							.clone();
+					Rectangle2D.Double ri = (Rectangle2D.Double) scrollInf[k].clone();
 					ri.x = scrollInf[i].x;
 
 					if (inScroll(e.getPoint(), rs, 5, true)) {
@@ -1944,6 +2090,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						scrollPos = Sup;
 						nuevaCota = cotaSup[k];
 						posY = scrollSup[k].getY();
+						
+						//Carlos
+						//System.out.println("\n\n\nEl punto está en rs y e.getPoint() vale "+e.getPoint()+" y rs vale "+rs+" y nuevaCota vale "+nuevaCota+"\n\n\n");						
+						
 						break;
 					} else if (inScroll(e.getPoint(), ri, 5, false)) {
 						scrollSeleccionado = scrollInf[k];
@@ -1951,6 +2101,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						scrollPos = Inf;
 						nuevaCota = cotaInf[k];
 						posY = scrollInf[k].getY();
+						
+						//Carlos
+						//System.out.println("\n\n\nEl punto está en ri y e.getPoint() vale "+e.getPoint()+" y ri vale "+ri+" y nuevaCota vale "+nuevaCota);						
+						//System.out.println("Para rs sería: e.getPoint() vale "+e.getPoint()+" y rs vale "+rs+"\n\n\n");						
+
 						break;
 					}
 				}
@@ -1974,20 +2129,47 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						cotaSup[k] = nuevaCota;
 						// currentTextSup[k]
 						// =sesion.getMicroarrayData().maxCols[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
-						currentTextSup[k] = max[k]
-								- (nuevaCota - margenSup + margenScroll)
-								/ ratio[k];
+						
+						//Carlos
+						//currentTextSuper[k] es la etiqueta superior, no la etiqueta del scroll.
+						currentTextSup[k] = (maxText[k] - (nuevaCota - margenSup + margenScroll) / ratio[k]) + (maximo - maxText[k]);
+						
+						//antes había esto
+						//currentTextSup[k] = max[k] - (nuevaCota - margenSup + margenScroll) / ratio[k];
+						
+						//Carlos
+						//comprobación de que la etiqueta superior no se pasa de los máximos y mínimos para ese elemento
+						if(currentTextSup[k] < minText[k]){
+							currentTextSup[k] = minText[k];
+						}
+						else if(currentTextSup[k] > maxText[k]){
+							currentTextSup[k] = maxText[k];
+						}
+						
 					} else {
 						cotaInf[k] = nuevaCota;
 						// currentTextInf[k]
 						// =sesion.getMicroarrayData().maxCols[k]-(nuevaCota-margenSup+margenScroll)/ratio[k];
-						currentTextInf[k] = max[k]
-								- (nuevaCota - margenSup + margenScroll)
-								/ ratio[k];
+						
+						//Carlos
+						//esto era diferente al cálculo de la etiqueta inferior (hay que cambiar + margenScroll por - margenScroll
+						//currentTextInf[k] = max[k] - (nuevaCota - margenSup + margenScroll)	/ ratio[k];
+						//currentTestInf[k] es la etiqueta inferior, no la etiqueta del scroll.						
+						currentTextInf[k] = (maxText[k] - (nuevaCota - margenSup - margenScroll) / ratio[k]) + (maximo - maxText[k]);
+						
+						//Carlos
+						//comprobación de que la etiqueta inferior no se pasa de los máximos y mínimos para ese elemento
+						if(currentTextInf[k] < minText[k]){
+							currentTextInf[k] = minText[k];
+						}
+						else if(currentTextInf[k] > maxText[k]){
+							currentTextInf[k] = maxText[k];
+						}
+						
 						
 						//Carlos
 						//aquí radica el problema de que el mínimo no coincida
-						System.out.println("En mouseReleased después de actualizar currentTextInf[k] = "+currentTextInf[k]+" y cotaInf[k] = "+cotaInf[k]);
+						//System.out.println("En mouseReleased después de actualizar currentTextInf[k] = "+currentTextInf[k]+" y cotaInf[k] = "+cotaInf[k]);
 					}
 				}
 
@@ -2097,37 +2279,63 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				if (varScroll > -1) {
 
 					int k = ordenVars[varScroll];
+					
+					//posRef es la posición de partida
 					offset = e.getY() - posRef;
 
 					if (scrollPos == Sup) {
 						nuevaCota = cotaSup[k] + offset;
 
-						if ((nuevaCota <= cotaInf[k])
-								&& (nuevaCota >= (margenSup - margenScroll))) {
+						//Carlos
+						//aquí realmente lo que hace es intentar acotar, que es lo que hago yo con el posicionesY
+						//pero él lo hace estáticamente con un código bastante malo además porque no se toca ni con un palo...
+						//donde pone (nuevaCota >= (margenSup - margenScroll) debería poner nuevaCota >= posicionensY[k+...]
+						if ((nuevaCota <= cotaInf[k]) && (nuevaCota >= posicionesY[k])) {
 							double posX = scrollSup[k].getX();
-							scrollSup[k].setRect(posX, posY + offset,
-									anchoScroll, altoScroll);
+							
+							scrollSup[k].setRect(posX, posY + offset, anchoScroll, altoScroll);
+
+							//Carlos
+							//esto es una locura porque realmente posY es lo mismo que cotaSup y que e.getY()...
+							//System.out.println("mouseDragged En el if nuevaCota="+nuevaCota+" y posY="+posY+" y offset="+offset+" y e.getY()="+e.getY()+" y posRef="+posRef);
+							
+							
 						} else if (nuevaCota > cotaInf[k]) {
 							nuevaCota = cotaInf[k];
 						} else {
-							nuevaCota = margenSup - margenScroll;
+							//Carlos
+							nuevaCota = posicionesY[k];
+							
+							//esto es lo que había antes
+							//nuevaCota = margenSup - margenScroll;
 						}
 					}
 
 					if (scrollPos == Inf) {
 						nuevaCota = cotaInf[k] + offset;
 
-						if ((nuevaCota >= cotaSup[k])
-								&& (nuevaCota <= (alto - margenInf + margenScroll))) {
+						//Carlos
+						//lo mismo que para la cota superior
+						if ((nuevaCota >= cotaSup[k]) && (nuevaCota <= posicionesY[k+currentTextSup.length])) {
 							double posX = scrollInf[k].getX();
-							scrollInf[k].setRect(posX, posY + offset,
-									anchoScroll, altoScroll);
+							
+							//Carlos
+							scrollInf[k].setRect(posX, posY + offset, anchoScroll, altoScroll);
+
 						} else if (nuevaCota < cotaSup[k]) {
 							nuevaCota = cotaSup[k];
 						} else {
-							nuevaCota = alto - margenInf + margenScroll;
+							//Carlos
+							nuevaCota = posicionesY[k+currentTextSup.length];
+							
+							//esto es lo que había antes
+							//nuevaCota = alto - margenInf + margenScroll;
 						}
 					}
+					
+					//Carlos
+					//System.out.println("MOUSEDRAGGED nuevaCota="+nuevaCota+", cotaInf[k]="+cotaInf[k]+", posicionesY[k+currentTextSup.length]="+posicionesY[k+currentTextSup.length]+", offset="+offset);
+					
 					scrollMoved = true;
 					paintComponent(getGraphics());
 				}
@@ -2159,16 +2367,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				boolean zonaScroll = false;
 				for (int i = 0; i < numC; i++) {
 					int k = ordenVars[i];
-					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[i]
-							.clone();
+					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[i].clone();
 					rs.y = scrollSup[k].y;
 
-					Rectangle2D.Double ri = (Rectangle2D.Double) scrollInf[i]
-							.clone();
+					Rectangle2D.Double ri = (Rectangle2D.Double) scrollInf[i].clone();
 					ri.y = scrollInf[k].y;
 
-					if (inScroll(e.getPoint(), rs, 5, true)
-							|| inScroll(e.getPoint(), ri, 5, false)) {
+					if (inScroll(e.getPoint(), rs, 5, true)	|| inScroll(e.getPoint(), ri, 5, false)) {
 						zonaScroll = true;
 						break;
 					}
@@ -2179,13 +2384,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					for (int i = 0; i < ejesVars.length; i++) {
 						// if(ejesVars[i]==null)
 						// System.out.println("Ejes vars "+i+" es null");
-						if ((Math
-								.abs(e.getPoint().getX() - ejesVars[i].getX1()) < zonaSelec)
-								&& ((e.getPoint().getY() > margenSup)
-										&& (e.getPoint().getY() < upy[i]) || (e
-										.getPoint().getY() > doy[i])
-										&& (e.getPoint().getY() < (alto - margenInf)))
-
+						if ((Math.abs(e.getPoint().getX() - ejesVars[i].getX1()) < zonaSelec)
+								&& ((e.getPoint().getY() > margenSup) && (e.getPoint().getY() < upy[i]) || 
+										(e.getPoint().getY() > doy[i]) && 
+										(e.getPoint().getY() < (alto - margenInf)))
 								&& !scrollSup[i].contains(e.getPoint())
 								&& !scrollInf[i].contains(e.getPoint())) {
 							zonaEje = true;
