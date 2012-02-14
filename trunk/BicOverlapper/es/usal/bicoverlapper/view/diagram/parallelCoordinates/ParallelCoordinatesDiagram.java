@@ -126,8 +126,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private double[] minText;
 	
 	//Carlos
-	//este array para mantener las posiciones relativas
-	private double[] posicionesMaxMin;
+	//este array se utiliza para unir las posiciones máxima y mínima de todos los elementos en un array
+	//así, se podrán escalar a partir de él
+	private double[] posicionesSupInf;
+	//este array mantiene las posiciones máxima y mínima de todos los elementos, pero ya escaladas
+	//si la posición máxima está del elemento i está en posicionesY[i], 
+	//la posición mínima de ese mismo elemento estará en posicionesY[i+numC]
 	private double[] posicionesY;
 	
 	//Carlos
@@ -392,7 +396,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		this.currentTextSup = new double[numC];
 		this.valorInf = new double[numC];
 		this.valorSup = new double[numC];
-		this.posicionesMaxMin = new double[currentTextSup.length+currentTextInf.length];
+		this.posicionesSupInf = new double[currentTextSup.length+currentTextInf.length];
 
 		// iniciamos los atributos del cambio de variables
 		this.ejesVars = new Line2D.Double[numC];
@@ -610,17 +614,17 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		if (sesion.areMicroarrayDataLoaded()) {
 			
 			//Carlos, experimento de arrays
-			System.arraycopy(currentTextSup, 0, posicionesMaxMin, 0, currentTextSup.length);
-			System.arraycopy(currentTextInf, 0, posicionesMaxMin, currentTextSup.length, currentTextInf.length);
-			posicionesY = this.getRanks(posicionesMaxMin);	
+			System.arraycopy(currentTextSup, 0, posicionesSupInf, 0, currentTextSup.length);
+			System.arraycopy(currentTextInf, 0, posicionesSupInf, currentTextSup.length, currentTextInf.length);
+			posicionesY = this.getRanks(posicionesSupInf);	
 			
 			for (int i = 0; i < numC; i++) {
 				
 				//Carlos
 				scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2,	posicionesY[i], anchoScroll, altoScroll);
-				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2, posicionesY[i+currentTextSup.length], anchoScroll, altoScroll);
+				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2, posicionesY[i+numC], anchoScroll, altoScroll);
 				cotaSup[i] = posicionesY[i];
-				cotaInf[i] = posicionesY[i+currentTextSup.length];	
+				cotaInf[i] = posicionesY[i+numC];	
 				
 				//antes había esto
 				//scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll/2, margenSup - altoScroll - margenScroll, anchoScroll, altoScroll);
@@ -1184,25 +1188,25 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			// Drawing whiskers
 			g2.setStroke(dashed);
-			Line2D.Double l = new Line2D.Double(x + w / 2, margenSup
-					+ (max[k] - totalTop) * ratio[k], x + w / 2, margenSup
-					+ (max[k] - top) * ratio[k]);
+			
+			//Carlos
+			//se va a modificar la longitud y posición de las líneas
+			
+			//línea discontinua superior
+			Line2D.Double l = new Line2D.Double(x + w / 2, posicionesY[i], x + w / 2, margenSup	+ (max[k] - top) * ratio[k]);
 			g2.draw(l);
 			g2.setStroke(stant);
-			l = new Line2D.Double(x + w * 0.3, margenSup + (max[k] - totalTop)
-					* ratio[k], x + w * 0.7, margenSup + (max[k] - totalTop)
-					* ratio[k]);
+			//línea horizontal de tope superior
+			l = new Line2D.Double(x + w * 0.3, posicionesY[i], x + w * 0.7,posicionesY[i]);
 			g2.draw(l);
 
 			g2.setStroke(dashed);
-			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom)
-					* ratio[k], x + w * 0.5, margenSup + (max[k] - totalBottom)
-					* ratio[k]);
+			//línea discontinua inferior
+			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom) * ratio[k], x + w * 0.5, posicionesY[i+numC]);
 			g2.draw(l);
 			g2.setStroke(stant);
-			l = new Line2D.Double(x + w * 0.3, margenSup
-					+ (max[k] - totalBottom) * ratio[k], x + w * 0.7, margenSup
-					+ (max[k] - totalBottom) * ratio[k]);
+			//línea horizontal tope inferior
+			l = new Line2D.Double(x + w * 0.3, posicionesY[i+numC], x + w * 0.7, posicionesY[i+numC]);
 			g2.draw(l);
 
 			// Drawing the box
@@ -1387,9 +1391,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	void resetScrolls() {
 		
 		//Carlos, experimento de arrays
-		System.arraycopy(currentTextSup, 0, posicionesMaxMin, 0, currentTextSup.length);
-		System.arraycopy(currentTextInf, 0, posicionesMaxMin, currentTextSup.length, currentTextInf.length);
-		posicionesY = this.getRanks(posicionesMaxMin);		
+		System.arraycopy(currentTextSup, 0, posicionesSupInf, 0, currentTextSup.length);
+		System.arraycopy(currentTextInf, 0, posicionesSupInf, currentTextSup.length, currentTextInf.length);
+		posicionesY = this.getRanks(posicionesSupInf);		
 		
 		
 		for (int i = 0; i < numC; i++) {
@@ -1414,14 +1418,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			*/
 			
 			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
-					posicionesY[i+currentTextSup.length], anchoScroll, altoScroll);
+					posicionesY[i+numC], anchoScroll, altoScroll);
 			
 			scrollInf[i] = scroll;
 
 			
 			//Carlos
 			cotaSup[i] = posicionesY[i];
-			cotaInf[i] = posicionesY[i+currentTextSup.length];	
+			cotaInf[i] = posicionesY[i+numC];	
 			
 			//antes había esto
 			//cotaSup[i] = margenSup - margenScroll;
@@ -2316,7 +2320,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 						//Carlos
 						//lo mismo que para la cota superior
-						if ((nuevaCota >= cotaSup[k]) && (nuevaCota <= posicionesY[k+currentTextSup.length])) {
+						if ((nuevaCota >= cotaSup[k]) && (nuevaCota <= posicionesY[k+numC])) {
 							double posX = scrollInf[k].getX();
 							
 							//Carlos
@@ -2326,7 +2330,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							nuevaCota = cotaSup[k];
 						} else {
 							//Carlos
-							nuevaCota = posicionesY[k+currentTextSup.length];
+							nuevaCota = posicionesY[k+numC];
 							
 							//esto es lo que había antes
 							//nuevaCota = alto - margenInf + margenScroll;
