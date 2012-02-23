@@ -928,7 +928,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 				bw.write("1");
 				bw.newLine();
 				
-				bw.write("User selecion");
+				bw.write("User selection");
 				bw.newLine();
 				
 				bw.write("G1 : "+bs.getGenes().size()+"\t"+bs.getConditions().size());
