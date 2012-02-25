@@ -1293,9 +1293,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * repaints it
 	 */
 	public void update() {		
-		
-		System.out.println("en update()");
-		
 		repaintAll = true;
 		gpLineasFondo = null;
 		tuplaSeleccionada = -1;
@@ -1344,10 +1341,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for (int j = posCib; j > i; j--)
 				ordenVars[j] = ordenVars[j - 1];
 			ordenVars[i] = cib;
-		}
-		
-		System.out.println("abajo de fitSelectedConditions()");
-		
+		}		
 		return;
 	}
 
@@ -1356,15 +1350,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 */
 	void resetScrolls() {
 		
-		//Carlos, experimento de arrays
-		System.arraycopy(currentTextSup, 0, posicionesSupInf, 0, currentTextSup.length);
-		System.arraycopy(currentTextInf, 0, posicionesSupInf, currentTextSup.length, currentTextInf.length);
+		//Carlos
+		//se cogen las posiciones iniciales y se calcula el rango de posiciones
+		System.arraycopy(maxText, 0, posicionesSupInf, 0, maxText.length);
+		System.arraycopy(minText, 0, posicionesSupInf, maxText.length, minText.length);
 		posicionesY = this.getRanks(posicionesSupInf);		
 		
 		
 		for (int i = 0; i < numC; i++) {
 			Rectangle2D.Double scroll;
-			
+
 			//Carlos
 			//para poder posicionar el scroll dependiendo de su valor tengo que tocar el 2º parámetro de "scroll"
 			
@@ -1446,9 +1441,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 */
 	void fitScrolls() {
 		if (sesion.getSelectedBicluster() != null && sesion.getSelectedGenesBicluster().size() > 0) 
-		{
-			System.out.println("en fitScrolls() en el if");
-			
+		{			
 			//Carlos
 			double maxEtiquetas[] = new double[numC];
 			double minEtiquetas[] = new double[numC];
@@ -1463,6 +1456,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			LinkedList<Integer> lg = sesion.getSelectedGenesBicluster();
 			for (int i = 0; i < lg.size(); i++) {
 				int pos = lg.get(i);
+								
 				for (int j = 0; j < numC; j++) {
 					double y = 0;
 
@@ -1523,8 +1517,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			}
 		} 
 		else // If the selection has no genes, we reset the scrolls to min and max
-		{
-			System.out.println("en fitScrolls() en el else");
+		{			
+			//Carlos
+			//añado el calcularAtributos() para que se recalculen las etiquetas (antes sólo había resetScrolls())
+			calcularAtributos();
 			resetScrolls();
 		}
 	}
