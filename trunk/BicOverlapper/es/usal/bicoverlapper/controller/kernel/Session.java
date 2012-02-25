@@ -13,6 +13,7 @@ import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JComponent;
@@ -166,8 +167,7 @@ public class Session implements KeyListener {
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0, 1);
 
 		selectionLog = new LinkedList<Selection>();
-		selectionLog.add(new Selection(new LinkedList<Integer>(),
-				new LinkedList<Integer>()));
+		selectionLog.add(new Selection(new LinkedList<Integer>(), new LinkedList<Integer>()));	
 		contLog = 0;
 		// With black background
 		// this.selectionColor=Color.BLUE;
@@ -918,20 +918,38 @@ public class Session implements KeyListener {
 		this.updateOnly(onlyUpdate);
 	}
 
-	public void setSelectedBicluster(Selection selectedBic) {
+	public void setSelectedBicluster(Selection selectedBic) {		
 		this.selectedBicluster = selectedBic;
 		if (!undoOrRedo) {
-			if (contLog < selectionLog.size() - 1)
-				for (int i = selectionLog.size() - 1; i >= contLog; i--)
+			if (contLog < selectionLog.size() - 1){
+				for (int i = selectionLog.size() - 1; i >= contLog; i--){
 					selectionLog.addLast(selectionLog.get(i));
-			selectionLog.add(selectedBicluster);
+				}
+			}
+			
+			//selectionLog.add(selectedBicluster);
+			//selectionLog.add(new Selection(selectedBic.getGenes(), selectedBic.getConditions()));
+			
+			//Carlos
+			//ninguna de las 2 anteriores funciona porque estos descriptores probablemente sean manipulados en otro sitio
+			//por tanto se pierde su valor antiguo y no se restauraba, es necesario crear unos descriptores nuevos
+			selectionLog.add(new Selection(new LinkedList<Integer>(selectedBic.getGenes()), new LinkedList<Integer>(selectedBic.getConditions())));	
+
+						
+			//normalmente en el for de arriba no entra, así que hay que ver dónde me está machacando los valores de selectionLog
+			for(Selection s: selectionLog){
+				System.out.println("selectionLog s.getGenes()="+s.getGenes()+" s.getConditions()="+s.getConditions());
+			}
+				
 			contLog = selectionLog.size() - 1;
 			if (selectionLog.size() > 10) {
 				selectionLog.removeFirst();
 				contLog--;
 			}
-		} else
+		} 
+		else{
 			undoOrRedo = false;
+		}
 	}
 
 	/**
