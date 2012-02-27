@@ -1,1 +1,1 @@
-C:\Users\Charly\Desktop\ficheros bicoverlapper funcionan\LPS_rep1dig.txt
+/Users/rodri/Documents/workspace/sybaris/lps/LPS_rep1dig.txt

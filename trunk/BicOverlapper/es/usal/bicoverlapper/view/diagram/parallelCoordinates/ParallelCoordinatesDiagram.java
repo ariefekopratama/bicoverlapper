@@ -380,7 +380,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			// System.out.println("drawImage took "+(System.currentTimeMillis()-t)/1000.0);
 		}
-
 	}
 
 	private void iniciarAtributos() {
@@ -1299,7 +1298,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 		fitSelectedConditions();
 		fitScrolls();
-
 		atributosIniciados = false;
 		atributosIniciados = true;
 
