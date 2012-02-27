@@ -12,7 +12,7 @@ D=Discarded (existing but decided not to solve by now, because it's minor or irr
 		H.sapiens Log transform, maybe better take any other experiment (this one is pretty bad)
 		
 
-CC PC scrolls should read actual expression values
+S PC scrolls should read actual expression values
 -> Matrix size can mangle R processing, at about 5M of file... -> reduce the number of decimal digits if possible.
 - Check GSEA.R on KEGG.db
 -> WordCloud still hangs up from time to time... and it never takes profit of the total window size...

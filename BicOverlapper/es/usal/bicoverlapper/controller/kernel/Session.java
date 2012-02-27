@@ -126,7 +126,6 @@ public class Session implements KeyListener {
 	public String microarrayPath = null;
 	public String biclusteringPath = null;
 	public String trnPath = null;
-	private boolean ctrlPressed = false;
 	private boolean undoOrRedo = false;
 
 	/**
@@ -525,12 +524,12 @@ public class Session implements KeyListener {
 	 */
 	public void updateExcept(String name) {
 
-		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) {
+		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) 
+			{
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
 			if (name == "" || !ventana.getTitle().contains(name))
 				ventana.updateDiagram();
-		}
-
+			}
 	}
 
 	// actualizar las ventanas activas menos las uqe tengan por título
@@ -957,7 +956,7 @@ public class Session implements KeyListener {
 	 */
 	public void undo() {
 		undoOrRedo = true;
-		System.out.println("Undo");
+		System.out.println("Undo: "+contLog);
 		if (contLog > 0)
 			contLog--;
 		setSelectedBiclustersExcept(selectionLog.get(contLog), "");
@@ -1087,14 +1086,11 @@ public class Session implements KeyListener {
 
 	/** Handle the key pressed event from the text field. */
 	public void keyPressed(KeyEvent e) {
-		int keyCode = e.getKeyCode();
-		if (keyCode == 17)// Ctrl
-			ctrlPressed = true;
 	}
 
 	/** Handle the key released event from the text field. */
 	public void keyReleased(KeyEvent e) {
-		if (ctrlPressed) {
+		if (e.isControlDown()) {
 			System.out.println(e.getKeyCode());
 			if (e.getKeyCode() == 90)
 				undo();// crtl-Z
@@ -1109,7 +1105,6 @@ public class Session implements KeyListener {
 			else if (e.getKeyCode() == 48)
 				clear();// ctrl-0
 		}
-		ctrlPressed = false;
 	}
 
 	/**
