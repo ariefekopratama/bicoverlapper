@@ -1323,31 +1323,24 @@ public class MicroarrayData
 		    	    exp=re.eval("source(\"es/usal/bicoverlapper/source/codeR/geneAnnotation.R\")");
 		    	     
 	    	    	long t=System.currentTimeMillis();
-	    	    	if(!isBioMaRt) //in this case, the chip contains the name of the R annotation package
-	    	    		{
-			    	    exp=re.eval("library("+chip+")");
-			    	    System.out.println("It takes "+(System.currentTimeMillis()-t)+" to load the library");
-			    	    if(exp==null)	System.out.println("library "+chip+" returns null in R");
-			    	    else			System.out.println("library "+chip+" loaded correctly");
-				        if(exp==null)
-				        	{
-				        	if(installPackage(exp, chip)<0)
-				    	    	{
-				        		chip="GeneName";
-				    	    	searchByR=false;
-				    	    	}
-				    	    else	searchByR=true;
-							}
-				        else	searchByR=true;
-	    	    		}
-	    	    	else	
-	    	    		{
-	    	    		searchByR=true;
-			    	    }
+	    	    	    
+	    	    	exp=re.eval("library("+chip+")");
+		    	    System.out.println("It takes "+(System.currentTimeMillis()-t)+" to load the library");
+		    	    if(exp==null)	System.out.println("library "+chip+" returns null in R");
+		    	    else			System.out.println("library "+chip+" loaded correctly");
+			        if(exp==null)
+			        	{
+			        	if(installPackage(exp, chip)<0) //if it cannot find the R package, tries online via NCBI (very slow)
+			    	    	{
+			        		chip="GeneName";
+			    	    	searchByR=false;
+			    	    	}
+			    	    else	searchByR=true;
+						}
+			        else	searchByR=true;
 			        
 		    	    chip=chip.replace(".db", "");
 		    	    
-		    	    //TODO: by now commented
 		    	    getGeneAnnotationsLite();
 		    	    }
 	         	}
