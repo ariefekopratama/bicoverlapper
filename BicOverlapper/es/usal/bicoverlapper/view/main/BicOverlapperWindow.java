@@ -24,6 +24,7 @@ import es.usal.bicoverlapper.controller.manager.HelpMenuManager;
 import es.usal.bicoverlapper.controller.manager.ViewMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.view.analysis.panel.TrickPanel;
+import es.usal.bicoverlapper.view.data.monitor.MicroarrayAnnotationsLoadProgressBar;
 
 /**
  * Class to build main BicOverlapper interface: menu and desktop panel
@@ -44,7 +45,6 @@ public class BicOverlapperWindow extends JFrame {
 	
 	private Vector<WorkDesktop> vistas;
 	private WorkDesktop vistaActiva = null;
-	private int indexClosing;
 	private DefaultTabPreviewPainter visor;
 	/**
 	 * Menu item to export selected entities
@@ -78,6 +78,8 @@ public class BicOverlapperWindow extends JFrame {
 	public JMenu analysisMenu, viewMenu;
 
 	private FileMenuManager gestorMenuArchivo;
+	
+	public static MicroarrayAnnotationsLoadProgressBar mlpb;
 
 	/**
 	 * Default constructor
@@ -94,7 +96,7 @@ public class BicOverlapperWindow extends JFrame {
 		Configuration config = new Configuration();
 
 		JMenuBar menu = crearMenu(config);
-
+		
 		this.setJMenuBar(menu);
 		this.setTitle(titulo);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -128,6 +130,10 @@ public class BicOverlapperWindow extends JFrame {
 			e1.printStackTrace();
 		}
 
+		
+		//Carlos
+		//no es una forma muy ortodoxa, pero es que si no hay que recorrer toda la jerarquía e irle pasando la vista y es un lío
+		mlpb = new MicroarrayAnnotationsLoadProgressBar(this);
 	}
 
 	private void initDesktop() {
