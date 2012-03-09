@@ -79,7 +79,7 @@ public class BicOverlapperWindow extends JFrame {
 
 	private FileMenuManager gestorMenuArchivo;
 	
-	public static MicroarrayAnnotationsLoadProgressBar mlpb;
+	private MicroarrayAnnotationsLoadProgressBar mlpb;
 
 	/**
 	 * Default constructor
@@ -596,5 +596,9 @@ public class BicOverlapperWindow extends JFrame {
 	//public void setDesktop(JTabbedPane desktop) {
 	public void setDesktop(JPanel desktop) {
 		this.desktop = desktop;
+	}
+
+	public MicroarrayAnnotationsLoadProgressBar getMlpb() {
+		return mlpb;
 	}
 }

@@ -56,7 +56,7 @@ public class DataReader {
 		double t1 = System.currentTimeMillis();
 		double t2 = System.currentTimeMillis();
 		MicroarrayData md = new MicroarrayData(path, false, skipRows,
-				skipColumns, 1, mr, sesion.analysis);
+				skipColumns, 1, mr, sesion.analysis, sesion);
 		sesion.setMicroarrayData(md);
 		t1 = System.currentTimeMillis();
 		System.out.println("Time to load microarray data: " + (t1 - t2) / 1000
