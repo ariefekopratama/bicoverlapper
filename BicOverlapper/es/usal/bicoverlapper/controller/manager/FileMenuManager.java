@@ -378,9 +378,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			ventana.viewMenu.setEnabled(true);
 			ventana.menuViewParallelCoordinates.setEnabled(true);
 			ventana.menuViewHeatmap.setEnabled(true);
-			
-			System.out.println("\n\nparallelcoordinates y heatmap activados\n\n");
-
 			ventana.menuArchivoExportSelection.setEnabled(true);
 
 			if (addVista)

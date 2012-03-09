@@ -3,6 +3,7 @@ package es.usal.bicoverlapper.model.microarray;
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.data.reader.NCBIReader;
 import es.usal.bicoverlapper.controller.kernel.Selection;
+import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.annoations.GOTerm;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.model.gene.GeneRequester;
@@ -27,6 +28,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -260,6 +263,8 @@ public class MicroarrayData {
 	private AnnotationTask at;
 	private AnnotationProgressMonitor2 amd2;
 	public String sortingFactor = "Column ID";
+	
+	private BicOverlapperWindow ventana;
 
 	/**
 	 * Constructor from a file
@@ -279,7 +284,7 @@ public class MicroarrayData {
 	 *            expression levels
 	 */
 	public MicroarrayData(String path, boolean invert, int rowHeader,
-			int colHeader, int nd, MicroarrayRequester mr, Analysis a)
+			int colHeader, int nd, MicroarrayRequester mr, Analysis a, Session sesion)
 			throws Exception {
 		MicroarrayLoadProgressMonitor pmd = new MicroarrayLoadProgressMonitor();
 		loadTask = new LoadTask();
@@ -292,6 +297,7 @@ public class MicroarrayData {
 		experimentFactorValues = new HashMap<String, String[]>();
 		this.filePath = this.path; // CUIDADO CON ESTE THIS.PATH PORQUE VALE
 									// NULL
+		this.ventana = sesion.mainWindow;
 
 		// añadido para que funcione en windows (en principio en unix no dará
 		// problemas)
@@ -1459,8 +1465,8 @@ public class MicroarrayData {
 							
 							//Carlos
 							//se le pone como oyente esta clase que manejará la progress bar
-							at.addPropertyChangeListener(BicOverlapperWindow.mlpb);
-							BicOverlapperWindow.mlpb.isListener();							
+							at.addPropertyChangeListener(ventana.getMlpb());
+							ventana.getMlpb().isListener();							
 							at.execute();
 
 						} catch (Exception e) {
@@ -1956,8 +1962,8 @@ public class MicroarrayData {
 			wt.start();
 		} else {
 			
-			at.addPropertyChangeListener(BicOverlapperWindow.mlpb);
-			BicOverlapperWindow.mlpb.isListener();
+			at.addPropertyChangeListener(ventana.getMlpb());
+			ventana.getMlpb().isListener();
 			at.execute();
 		}
 	}
@@ -2629,6 +2635,15 @@ public class MicroarrayData {
 		public ArrayList<GeneAnnotation> getGeneAnnotationNCBI() {
 			double progress = 0;
 			long t1 = System.currentTimeMillis();
+			
+			int hora, minutos, segundos;
+			Calendar calendario = new GregorianCalendar();
+			hora =calendario.get(Calendar.HOUR_OF_DAY);
+			minutos = calendario.get(Calendar.MINUTE);
+			segundos = calendario.get(Calendar.SECOND);
+			
+			System.out.println("EMPIEZA LA BÚSQUEDA DE LAS ANOTACIONES A LAS "+hora+":"+minutos+":"+segundos);
+			
 			// for(int g=0;g<genes.size();g++)
 			for (int g = 0; g < genes.length; g++) {
 				// String gene=geneNames[genes.get(g)];
@@ -2640,7 +2655,7 @@ public class MicroarrayData {
 				progress += 100 * 0.5 / genes.length;
 				setProgress((int) progress);
 				
-				System.out.println("setProgress="+(int) progress+" sin redondear="+progress);
+				System.out.println("1. setProgress="+(int) progress+" sin redondear="+progress);
 				
 				// ga=geneAnnotations.get(genes.get(g));
 				ga = geneAnnotations.get(genes[g]);
@@ -2673,7 +2688,7 @@ public class MicroarrayData {
 							progress = 99;
 						setProgress((int) progress);
 						
-						System.out.println("setProgress="+(int) progress+" sin redondear="+progress);
+						System.out.println("2. setProgress="+(int) progress+" sin redondear="+progress);
 						
 					} else {
 						System.err.println("Nothing found for gene " + gene);
@@ -2688,7 +2703,7 @@ public class MicroarrayData {
 							progress = 99;
 						setProgress((int) progress);		
 						
-						System.out.println("setProgress="+(int) progress+" sin redondear="+progress);
+						System.out.println("3. setProgress="+(int) progress+" sin redondear="+progress);
 						
 					}
 
@@ -2743,8 +2758,14 @@ public class MicroarrayData {
 			progress = 100;
 			setProgress((int) progress);
 			
-			System.out.println("setProgress="+(int) progress+" sin redondear="+progress);
-
+			System.out.println("4. setProgress="+(int) progress+" sin redondear="+progress);
+			calendario = new GregorianCalendar();
+			hora =calendario.get(Calendar.HOUR_OF_DAY);
+			minutos = calendario.get(Calendar.MINUTE);
+			segundos = calendario.get(Calendar.SECOND);
+			
+			System.out.println("ACABA LA BÚSQUEDA DE LAS ANOTACIONES A LAS "+hora+":"+minutos+":"+segundos);
+			
 			return galist;
 		}
 
@@ -2755,7 +2776,10 @@ public class MicroarrayData {
 					getMultipleGeneAnnotationsR();
 				else
 					getGeneAnnotationNCBI();
-				done();
+				
+				//Carlos
+				//el done lo hace automáticamente al terminar este método
+				//done();
 
 				return galist;
 			}
@@ -2763,6 +2787,7 @@ public class MicroarrayData {
 
 		@Override
 		public void done() {
+			System.out.println("HA LLEGADO A DONE()	");
 			synchronized (geneAnnotations) {
 				geneAnnotations.notify();
 			}
