@@ -1433,13 +1433,8 @@ public class MicroarrayData {
 			// Similar to the above situation, but in this case we use bioMaRt
 			// instead of a dedicated environment database.
 			else if (chip.startsWith("biomaRt")) {
-				chip = chip.substring(chip.indexOf(".") + 1);
-				if (organism.equals("Homo sapiens"))
-					rname = "hgnc_symbol";
-				else if (organism.equals("Schizosaccharomyces pombe"))
-					rname = "external_gene_id";
-				else
-					rname = chip;
+				rname = chip.substring(chip.indexOf(".") + 1);
+				chip = chip.substring(0, chip.indexOf("."));
 				rdescription = "description";
 				isBioMaRt = true;
 			} else if (chip.startsWith("KEGG")) {
@@ -2326,24 +2321,20 @@ public class MicroarrayData {
 						exp = re.eval("martEnsembl=getEnsemblMart(species=\""
 								+ organism + "\")");
 
-					if (!chip.equals("ensembl_gene_id"))// it's a bit slower if
-														// we don't search for
-														// ensembl gene ids
-					{
-						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""
-								+ chip
-								+ "\", attributes=c(\"ensembl_gene_id\",\""
-								+ rname
-								+ "\",\"entrezgene\", \"description\"))$ids");
+					/*if (!rname.equals("ensembl_gene_id"))// it's a bit slower if we don't search for ensembl gene ids
+						{
+						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
 						System.out.println("BiomaRT finished");
-					} else
-						exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""
-								+ organism + "\", type=\"" + chip + "\")");
-					if (!chip.equals(rname)) {
+						}
+					else
+						exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
+					exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
+					if (!chip.equals(rname)) 
+						{
 						exp = re.eval("df[,\"" + rname + "\"]");
 						if (exp != null)
 							names = exp.asStringArray();
-					}
+						}
 					message = "searching for gene descriptions...";
 					System.out.println(message);
 					progress += 5;
@@ -2384,9 +2375,7 @@ public class MicroarrayData {
 			progress += 5;
 			setProgress(progress);
 
-			System.out
-					.println("Time in the search for gene descriptions (entrez+symbol): "
-							+ (System.currentTimeMillis() - t0) / 1000);
+			System.out.println("Time in the search for gene descriptions (entrez+symbol): "+ (System.currentTimeMillis() - t0) / 1000);
 			t0 = System.currentTimeMillis();
 			// 3) Search for GO terms
 			RList go = null;
@@ -2411,11 +2400,9 @@ public class MicroarrayData {
 				} else {
 					// BIOMART SEARCH
 					if (re.eval("martEnsembl") == null)
-						exp = re.eval("martEnsembl=getEnsemblMart(species=\""
-								+ organism + "\")");
+						exp = re.eval("martEnsembl=getEnsemblMart(species=\""+ organism + "\")");
 
-					exp = re.eval("df=getBMGO(group, mart=martEnsembl, type=\""
-							+ chip + "\")");
+					exp = re.eval("df=getBMGO(group, mart=martEnsembl, type=\""+ rname + "\")");
 					exp = re.eval("df");
 					if (exp != null) {
 						go = exp.asList();
@@ -2465,9 +2452,9 @@ public class MicroarrayData {
 									message = "adding term " + ids[i];
 									progress += 84.0 / ids.length;
 									setProgress(progress);
-
-									GOTerm gt = new GOTerm(t[i], ids[i], d[i],
-											o[i], "", 1);
+									
+									if(t!=null)	System.out.println("Addint term "+t[i]);
+									GOTerm gt = new GOTerm(t[i], ids[i], d[i], o[i], "", 1);
 									GOTerms.put(ids[i], gt);
 								}
 							}
