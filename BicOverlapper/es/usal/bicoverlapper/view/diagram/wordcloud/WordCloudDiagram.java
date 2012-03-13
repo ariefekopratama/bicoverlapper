@@ -157,7 +157,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		 * Changes color to the terms that are related to the hovered gene (only
 		 * if <200 genes are selected)
 		 */
-		if (sesion.onlyHover) {
+		if(sesion.onlyHover)	return;
+		//It's a bit dazzling and confusing
+		/*if (sesion.onlyHover && sesion.getHoveredBicluster()!=null) {
 			if (sesion.getSelectedGenesBicluster().size() > sesion
 					.getMicroarrayData().getNumSparseGenes())
 				return;
@@ -173,8 +175,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				switch (menuCloud.text.getSelectedIndex()) {
 				case WordCloudParameterConfigurationPanel.GO_TERM:
 					if (ga.goTerms != null)
-						System.err
-								.println("GA goterms should be an empty list, not null");
+						System.err								.println("GA goterms should be an empty list, not null");
 					else
 						for (GOTerm gt : ga.goTerms) {
 							String[] dw = splitterAndFormat(gt.term);
@@ -195,7 +196,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				drawWords((Graphics2D) this.getGraphics());
 			}
 			return;
-		}
+		}*/
 
 		contZoom = 0;
 		maxChar = 0;
@@ -544,8 +545,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	public String[] splitterAndFormat(String desc) {
 		String[] dw = splitter(desc);
 		for (int j = 0; j < dw.length; j++) {
-			dw[j] = dw[j].replace("(", "").replace(")", "").trim()
-					.toLowerCase();
+			dw[j] = dw[j].replace("(", "").replace(")", "").trim();
+		//			.toLowerCase();
 			dw[j] = dw[j] + " ";
 		}
 		return dw;
@@ -1135,14 +1136,6 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 		public void setColor(Color color) {
 			this.color = color;
-		}
-
-		public TextLayout getContText() {
-			return contText;
-		}
-
-		public void setContText(TextLayout contText) {
-			this.contText = contText;
 		}
 	}
 }

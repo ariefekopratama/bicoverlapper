@@ -620,7 +620,7 @@ public class MicroarrayData {
 						+ ". Opening entrez gene home page");
 				java.awt.Desktop.getDesktop()
 						.browse(java.net.URI
-								.create("http://www.ncbi.nlm.nih.gov/gene"));
+								.create("http://www.ncbi.nlm.nih.gov/gene?term="+g.id+"%20AND%20\""+organism.replace(" ", "%20")+"\"%5BOrganism%5D"));
 			} else
 				java.awt.Desktop.getDesktop().browse(
 						java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene/"
@@ -835,9 +835,10 @@ public class MicroarrayData {
 	 */
 	public int getSparseGeneId(int id) {
 		int sid = -1;
-		IntIterator it = this.sparseGeneLabels.rows(ExpressionParser
-				.predicate("actualId=" + id));
-		sid = sparseGeneLabels.getInt((Integer) it.next(), "id");
+		IntIterator it = this.sparseGeneLabels.rows(ExpressionParser.predicate("actualId=" + id));
+		Integer i=(Integer) it.next();
+		if(i!=null)
+			sid = sparseGeneLabels.getInt(i, "id");
 		return sid;
 	}
 
@@ -1166,7 +1167,8 @@ public class MicroarrayData {
 							}
 						}
 					}
-				} else {
+				} //non exact search
+				else {
 					if ((ga.id != null && ga.id.equals(what))
 							|| (ga.description != null && ga.description
 									.equals(what))
@@ -1187,9 +1189,9 @@ public class MicroarrayData {
 							}
 						}
 					}
-				}
-			}
-		}
+				}//exact search
+			}//if has gene annotations
+		}//for each gene
 		return genes;
 	}
 
