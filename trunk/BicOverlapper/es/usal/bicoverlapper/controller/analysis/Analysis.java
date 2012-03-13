@@ -1470,12 +1470,8 @@ public class Analysis {
 
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/getGeneSet.R\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/GSEA.R\")");
-		exp = r.eval("en=" + getMicroarrayData().chip + type);
-		exp = r.eval("ret=gseaProg(" + m + ", filterCutoff=" + filterCutoff
-				/ 100 + ", envir=en, model=~as.factor(FactorValue." + ef
-				+ "), ef=" + m + "$FactorValue." + ef + ", type=\"" + type
-				+ "\", sdThreshold=" + sdThreshold + ", outputPath=\""
-				+ outFile + "\")");
+		exp = r.eval("en=" + getMicroarrayData().chip + type);		//This won't work in the case of biomaRt!
+		exp = r.eval("ret=gseaProg(" + m + ", filterCutoff=" + filterCutoff/ 100 + ", envir=en, model=~as.factor(FactorValue." + ef	+ "), ef=" + m + "$FactorValue." + ef + ", type=\"" + type+ "\", sdThreshold=" + sdThreshold + ", outputPath=\""+ outFile + "\")");
 
 		if (exp != null && exp.asString() != null
 				&& exp.asString().startsWith("Error")) {

@@ -2,6 +2,12 @@ S=Solved
 D=Discarded (existing but decided not to solve by now, because it's minor or irrelevant)
 ->=To do
 
+-> TASK BAR
+	Use for different purposes? Search patternd, analysis, etc.
+-> Annotations: do not add a go term if it's already present! problem when several annotation threads co-wait (because of quicker selection than retrieval)
+-> TRN: keeps calculating expression for animation long after it was closed!
+		This would be better on buttons for animation (play, step by step, etc.)
+-> GSEA: does not work for biomaRt ids (only for platforms...)
 -> Reformatting old data
 	Expression
 		DONE Ecoli -> didn't work because the load method didn't take account of experiments without EFVs, now it does
