@@ -17,9 +17,9 @@ private JProgressBar progressBar;
 	public MicroarrayAnnotationsLoadProgressBar(BicOverlapperWindow framePrincipal){
 		progressBar = new JProgressBar(0, 100);
         progressBar.setValue(0);
-        progressBar.setStringPainted(true);
+        progressBar.setStringPainted(false);
         progressBar.setPreferredSize(new Dimension(70,10));
-		progressBar.setVisible(false);
+		progressBar.setVisible(true);
 		progressBar.setToolTipText("Loading annotations...");
 		JPanel panel = new JPanel(new BorderLayout());
 		panel.add(progressBar, BorderLayout.EAST);

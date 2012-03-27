@@ -132,8 +132,8 @@ public class BicOverlapperWindow extends JFrame {
 
 		
 		//Carlos
-		//no es una forma muy ortodoxa, pero es que si no hay que recorrer toda la jerarquía e irle pasando la vista y es un lío
-		mlpb = new MicroarrayAnnotationsLoadProgressBar(this);
+		//de momento desactivado porque las anotaciones no se cargan al arrancar
+		//mlpb = new MicroarrayAnnotationsLoadProgressBar(this);
 	}
 
 	private void initDesktop() {

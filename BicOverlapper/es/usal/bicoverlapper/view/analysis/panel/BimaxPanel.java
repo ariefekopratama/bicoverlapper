@@ -31,8 +31,6 @@ import java.util.ArrayList;
 import javax.swing.JCheckBox;
 import javax.swing.JButton;
 
-
-
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
@@ -41,22 +39,19 @@ import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.util.Translator;
 
-
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-public class BimaxPanel{
-	
-	private JPanel jPanel = null;  //  @jve:decl-index=0:visual-constraint="28,8"
+ * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
+ * Builder, which is free for non-commercial use. If Jigloo is being used
+ * commercially (ie, by a corporation, company or business for any purpose
+ * whatever) then you should purchase a license for each developer using Jigloo.
+ * Please visit www.cloudgarden.com for details. Use of Jigloo implies
+ * acceptance of these licensing terms. A COMMERCIAL LICENSE HAS NOT BEEN
+ * PURCHASED FOR THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED LEGALLY FOR
+ * ANY CORPORATE OR COMMERCIAL PURPOSE.
+ */
+public class BimaxPanel {
+
+	private JPanel jPanel = null; // @jve:decl-index=0:visual-constraint="28,8"
 	private JLabel jLabel = null;
 	private JLabel jLabel1 = null;
 	private JLabel jLabel2 = null;
@@ -73,9 +68,9 @@ public class BimaxPanel{
 	private JCheckBox jCheckBox1 = null;
 	private JTextField jTextField212 = null;
 	private JButton jButton1 = null;
-	private Session session =null;
-	public File resultsFile=null;
-	public String defaultPath="";  //  @jve:decl-index=0:
+	private Session session = null;
+	public File resultsFile = null;
+	public String defaultPath = ""; // @jve:decl-index=0:
 	protected AnalysisTask t;
 	private JCheckBox jCheckBox2 = null;
 	private JCheckBox jCheckBox3 = null;
@@ -87,26 +82,27 @@ public class BimaxPanel{
 	private JTextField jTextField22111 = null;
 	private JTextField jTextField221111 = null;
 	private JTextField jTextField2211111 = null;
-	public BimaxPanel()
-	{}	
-	public BimaxPanel(Session s)
-	{
-		session=s;
-	}	
+
+	public BimaxPanel() {
+	}
+
+	public BimaxPanel(Session s) {
+		session = s;
+	}
 
 	/**
-	 * This method initializes jPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes jPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	public JPanel getJPanel() {
 		return jPanel;
 	}
 
 	/**
-	 * This method initializes jPanel	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes jPanel
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	public JPanel getJPanel2() {
 		if (jPanel == null) {
@@ -114,17 +110,20 @@ public class BimaxPanel{
 			jLabel21111.setBounds(new Rectangle(32, 248, 145, 16));
 			jLabel21111.setText("Max. # biclusters");
 			jLabel21111.setEnabled(false);
-			jLabel21111.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel21111
+					.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel2111 = new JLabel();
 			jLabel2111.setBounds(new Rectangle(33, 228, 143, 16));
 			jLabel2111.setText("Max. # conditions");
 			jLabel2111.setEnabled(false);
-			jLabel2111.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel2111
+					.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel211 = new JLabel();
 			jLabel211.setBounds(new Rectangle(32, 208, 144, 16));
 			jLabel211.setText("Max. # genes");
 			jLabel211.setEnabled(false);
-			jLabel211.setToolTipText("Biclusters with at least this number of conditions are searched");
+			jLabel211
+					.setToolTipText("Biclusters with at least this number of conditions are searched");
 			jLabel21 = new JLabel();
 			jLabel21.setBounds(new Rectangle(31, 188, 144, 16));
 			jLabel21.setText("Max. % of overlap");
@@ -180,9 +179,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jTextField2	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField2
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField2() {
 		if (jTextField2 == null) {
@@ -194,75 +193,73 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jRadioButton	
-	 * 	
-	 * @return javax.swing.JRadioButton	
+	 * This method initializes jRadioButton
+	 * 
+	 * @return javax.swing.JRadioButton
 	 */
 	private JRadioButton getJRadioButton() {
 		if (jRadioButton == null) {
 			jRadioButton = new JRadioButton();
 			jRadioButton.setSelected(true);
-			jRadioButton.setToolTipText("This percentage of the highest levels will be 1, the rest will be 0");
+			jRadioButton
+					.setToolTipText("This percentage of the highest levels will be 1, the rest will be 0");
 			jRadioButton.setText("By percentage");
 			jRadioButton.setBounds(new Rectangle(30, 92, 146, 24));
-			jRadioButton.addChangeListener(new javax.swing.event.ChangeListener() {
-				public void stateChanged(javax.swing.event.ChangeEvent e) {
-					if(jRadioButton.isSelected())	
-						{
-						jRadioButton1.setSelected(false);
-						jTextField21.setEnabled(true);
-						jTextField211.setEnabled(false);
+			jRadioButton
+					.addChangeListener(new javax.swing.event.ChangeListener() {
+						public void stateChanged(javax.swing.event.ChangeEvent e) {
+							if (jRadioButton.isSelected()) {
+								jRadioButton1.setSelected(false);
+								jTextField21.setEnabled(true);
+								jTextField211.setEnabled(false);
+							} else {
+								jRadioButton1.setSelected(true);
+								jTextField21.setEnabled(false);
+								jTextField211.setEnabled(true);
+							}
 						}
-					else							
-						{
-						jRadioButton1.setSelected(true);
-						jTextField21.setEnabled(false);
-						jTextField211.setEnabled(true);
-						}
-				}
-			});
-			
+					});
+
 		}
 		return jRadioButton;
 	}
 
 	/**
-	 * This method initializes jRadioButton1	
-	 * 	
-	 * @return javax.swing.JRadioButton	
+	 * This method initializes jRadioButton1
+	 * 
+	 * @return javax.swing.JRadioButton
 	 */
 	private JRadioButton getJRadioButton1() {
 		if (jRadioButton1 == null) {
 			jRadioButton1 = new JRadioButton();
 			jRadioButton1.setText("By expression value");
-			jRadioButton1.setToolTipText("Expression levels above this value will be 1, the rest will be 0");
+			jRadioButton1
+					.setToolTipText("Expression levels above this value will be 1, the rest will be 0");
 
 			jRadioButton1.setBounds(new Rectangle(30, 114, 151, 24));
-			jRadioButton1.addChangeListener(new javax.swing.event.ChangeListener() {
-				public void stateChanged(javax.swing.event.ChangeEvent e) {
-					if(jRadioButton1.isSelected())	
-						{
-						jRadioButton.setSelected(false);
-						jTextField211.setEnabled(true);
-						jTextField21.setEnabled(false);
+			jRadioButton1
+					.addChangeListener(new javax.swing.event.ChangeListener() {
+						public void stateChanged(javax.swing.event.ChangeEvent e) {
+							if (jRadioButton1.isSelected()) {
+								jRadioButton.setSelected(false);
+								jTextField211.setEnabled(true);
+								jTextField21.setEnabled(false);
+							} else {
+								jRadioButton.setSelected(true);
+								jTextField211.setEnabled(false);
+								jTextField21.setEnabled(true);
+							}
 						}
-					else							
-						{
-						jRadioButton.setSelected(true);
-						jTextField211.setEnabled(false);
-						jTextField21.setEnabled(true);
-						}
-				}
-			});
-		
+					});
+
 		}
 		return jRadioButton1;
 	}
 
 	/**
-	 * This method initializes jTextField21	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField21
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField21() {
 		if (jTextField21 == null) {
@@ -274,9 +271,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jTextField211	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField211
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField211() {
 		if (jTextField211 == null) {
@@ -289,9 +286,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jTextField22	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField22
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField22() {
 		if (jTextField22 == null) {
@@ -303,9 +300,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jTextField221	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField221
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField221() {
 		if (jTextField221 == null) {
@@ -317,33 +314,36 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jCheckBox	
-	 * 	
-	 * @return javax.swing.JCheckBox	
+	 * This method initializes jCheckBox
+	 * 
+	 * @return javax.swing.JCheckBox
 	 */
 	private JCheckBox getJCheckBox() {
 		if (jCheckBox == null) {
 			jCheckBox = new JCheckBox();
 			jCheckBox.setBounds(new Rectangle(10, 277, 107, 21));
 			jCheckBox.setText("Write to file");
-			jCheckBox.setToolTipText("If checked, biclustering results will be stored in the selected path");
+			jCheckBox
+					.setToolTipText("If checked, biclustering results will be stored in the selected path");
 			jCheckBox.addChangeListener(new javax.swing.event.ChangeListener() {
 				public void stateChanged(javax.swing.event.ChangeEvent e) {
-					if(jCheckBox.isSelected())	
-						{
-						try{
-							BufferedReader pathReader=new BufferedReader(new FileReader("es/usal/bicoverlapper/data/groupsPath.txt"));
-							defaultPath=pathReader.readLine();
-							}catch(IOException ex){System.err.println("pathReader has no information"); defaultPath="";}
+					if (jCheckBox.isSelected()) {
+						try {
+							BufferedReader pathReader = new BufferedReader(
+									new FileReader(
+											"es/usal/bicoverlapper/data/groupsPath.txt"));
+							defaultPath = pathReader.readLine();
+						} catch (IOException ex) {
+							System.err.println("pathReader has no information");
+							defaultPath = "";
+						}
 						jCheckBox1.setEnabled(true);
 						jButton.setEnabled(true);
-						}
-					else
-						{
-						defaultPath="";
+					} else {
+						defaultPath = "";
 						jButton.setEnabled(false);
 						jCheckBox1.setEnabled(false);
-						}
+					}
 				}
 			});
 		}
@@ -351,9 +351,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jButton	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes jButton
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getJButton() {
 		if (jButton == null) {
@@ -363,16 +363,17 @@ public class BimaxPanel{
 			jButton.setText("Select");
 			jButton.addActionListener(new java.awt.event.ActionListener() {
 
-				
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					JFileChooser selecFile = new JFileChooser();
-					selecFile.addChoosableFileFilter(new BiclusterResultsFilter());
+					selecFile
+							.addChoosableFileFilter(new BiclusterResultsFilter());
 					selecFile.setCurrentDirectory(new File(defaultPath));
-					int returnval = selecFile.showSaveDialog((Component)e.getSource());
-					
-					if(returnval == JFileChooser.APPROVE_OPTION) {
+					int returnval = selecFile.showSaveDialog((Component) e
+							.getSource());
+
+					if (returnval == JFileChooser.APPROVE_OPTION) {
 						resultsFile = selecFile.getSelectedFile();
-						}
+					}
 
 				}
 			});
@@ -381,14 +382,15 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jCheckBox1	
-	 * 	
-	 * @return javax.swing.JCheckBox	
+	 * This method initializes jCheckBox1
+	 * 
+	 * @return javax.swing.JCheckBox
 	 */
 	private JCheckBox getJCheckBox1() {
 		if (jCheckBox1 == null) {
 			jCheckBox1 = new JCheckBox();
-			jCheckBox1.setToolTipText("This brief description will be added to the biclustering results file");
+			jCheckBox1
+					.setToolTipText("This brief description will be added to the biclustering results file");
 			jCheckBox1.setBounds(19, 302, 199, 24);
 			jCheckBox1.setText("Add description line");
 			jCheckBox1.setEnabled(false);
@@ -397,9 +399,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jTextField212	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField212
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField212() {
 		if (jTextField212 == null) {
@@ -411,9 +413,9 @@ public class BimaxPanel{
 	}
 
 	/**
-	 * This method initializes jButton1	
-	 * 	
-	 * @return javax.swing.JButton	
+	 * This method initializes jButton1
+	 * 
+	 * @return javax.swing.JButton
 	 */
 	private JButton getJButton1() {
 		if (jButton1 == null) {
@@ -422,130 +424,155 @@ public class BimaxPanel{
 			jButton1.setText("Run Bimax");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					session=session.mainWindow.getActiveWorkDesktop().getSession();
-					if(session!=null)	
-						{
-						Analysis b=session.analysis;
-					    
-						String fileName="";
-						if(resultsFile!=null)			
-							{
-							fileName=resultsFile.getPath().replace("\\", "/");
-							if(!fileName.contains(".")) 	fileName=fileName.concat(".bic");
-							}
-						else 
-							{
-							if(getJCheckBox().isSelected())	fileName=defaultPath;
-							}
-						
-					 	((JFrame)(getJPanel2().getTopLevelAncestor())).dispose();
-						
-					   int[] filterOptions=null;
-					   if(getJCheckBox3().isSelected())
-						   	{
-							filterOptions=new int[4];
-							filterOptions[0]=new Integer(getJTextField2211().getText()).intValue();
-							filterOptions[1]=new Integer(getJTextField2211111().getText()).intValue();
-							filterOptions[2]=new Integer(getJTextField221111().getText()).intValue();
-							filterOptions[3]=new Integer(getJTextField22111().getText()).intValue();
-						   	}
-					   b.setFilterOptions(filterOptions);
-					   ArrayList<Object> p=new ArrayList<Object>();
-					   p.add(getJRadioButton().isSelected()? true:false);
-					   p.add(getJRadioButton().isSelected()? new Double(getJTextField21().getText()).doubleValue():new Double(getJTextField211().getText()).doubleValue());
-					   p.add(getJCheckBox2().isSelected()? true:false);
-					   p.add(new Integer(getJTextField221().getText()).intValue());
-					   p.add(new Integer(getJTextField22().getText()).intValue());
-					   p.add(new Integer(getJTextField2().getText()).intValue());
-					   p.add(fileName);
-					   p.add(getJTextField212().getText());
-					   AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.BIMAX, p);
-					   apm.run();
-					   t=apm.getTask();
-					   Thread wt=new Thread() {
+					session = session.mainWindow.getActiveWorkDesktop()
+							.getSession();
+					if (session != null) {
+						Analysis b = session.analysis;
+
+						String fileName = "";
+						if (resultsFile != null) {
+							fileName = resultsFile.getPath().replace("\\", "/");
+							if (!fileName.contains("."))
+								fileName = fileName.concat(".bic");
+						} else {
+							if (getJCheckBox().isSelected())
+								fileName = defaultPath;
+						}
+
+						((JFrame) (getJPanel2().getTopLevelAncestor()))
+								.dispose();
+
+						int[] filterOptions = null;
+						if (getJCheckBox3().isSelected()) {
+							filterOptions = new int[4];
+							filterOptions[0] = new Integer(getJTextField2211()
+									.getText()).intValue();
+							filterOptions[1] = new Integer(
+									getJTextField2211111().getText())
+									.intValue();
+							filterOptions[2] = new Integer(
+									getJTextField221111().getText()).intValue();
+							filterOptions[3] = new Integer(getJTextField22111()
+									.getText()).intValue();
+						}
+						b.setFilterOptions(filterOptions);
+						ArrayList<Object> p = new ArrayList<Object>();
+						p.add(getJRadioButton().isSelected() ? true : false);
+						p.add(getJRadioButton().isSelected() ? new Double(
+								getJTextField21().getText()).doubleValue()
+								: new Double(getJTextField211().getText())
+										.doubleValue());
+						p.add(getJCheckBox2().isSelected() ? true : false);
+						p.add(new Integer(getJTextField221().getText())
+								.intValue());
+						p.add(new Integer(getJTextField22().getText())
+								.intValue());
+						p.add(new Integer(getJTextField2().getText())
+								.intValue());
+						p.add(fileName);
+						p.add(getJTextField212().getText());
+						AnalysisProgressMonitor apm = new AnalysisProgressMonitor(
+								b, AnalysisProgressMonitor.AnalysisTask.BIMAX,
+								p);
+						apm.run();
+						t = apm.getTask();
+						Thread wt = new Thread() {
 							public void run() {
-								try{
-									String fileName=t.get();
-									if(fileName==null)	
+								try {
+									String fileName = t.get();
+									if (fileName == null)
 										JOptionPane.showMessageDialog(null,
-							                    "No biclusters found",
-							                    "Error",JOptionPane.ERROR_MESSAGE);
-									
-									else
-										{
-										if(fileName.indexOf("/")>-1)
-											session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												"No biclusters found", "Error",
+												JOptionPane.ERROR_MESSAGE);
+
+									else {
+										if (fileName.indexOf("/") > -1)
+											session.reader.readBiclusterResults(
+													fileName.substring(
+															0,
+															fileName.lastIndexOf("/")),
+													fileName.substring(fileName
+															.lastIndexOf("/") + 1),
+													fileName, session);
 										else
-											session.reader.readBiclusterResults("",fileName, fileName, session);
-										}
-									}catch(Exception e){e.printStackTrace();}
+											session.reader
+													.readBiclusterResults("",
+															fileName, fileName,
+															session);
+									}
+								} catch (Exception e) {
+									e.printStackTrace();
+								}
 							}
 						};
 						wt.start();
-						}
 					}
+				}
 			});
 		}
 		return jButton1;
 	}
+
 	/**
-	 * This method initializes jCheckBox2	
-	 * 	
-	 * @return javax.swing.JCheckBox	
+	 * This method initializes jCheckBox2
+	 * 
+	 * @return javax.swing.JCheckBox
 	 */
 	private JCheckBox getJCheckBox2() {
 		if (jCheckBox2 == null) {
 			jCheckBox2 = new JCheckBox();
 			jCheckBox2.setBounds(new Rectangle(30, 137, 157, 24));
 			jCheckBox2.setText("Under threshold");
-			jCheckBox2.setToolTipText("If checked, biclustering results will be stored in the selected path");
+			jCheckBox2
+					.setToolTipText("If checked, biclustering results will be stored in the selected path");
 		}
 		return jCheckBox2;
 	}
+
 	/**
-	 * This method initializes jCheckBox3	
-	 * 	
-	 * @return javax.swing.JCheckBox	
+	 * This method initializes jCheckBox3
+	 * 
+	 * @return javax.swing.JCheckBox
 	 */
 	private JCheckBox getJCheckBox3() {
 		if (jCheckBox3 == null) {
 			jCheckBox3 = new JCheckBox();
 			jCheckBox3.setBounds(new Rectangle(10, 164, 155, 24));
 			jCheckBox3.setText("Post-filter");
-			jCheckBox3.setToolTipText("Check to perform post-filter and select filter options");
-			jCheckBox3.addChangeListener(new javax.swing.event.ChangeListener() {
-				public void stateChanged(javax.swing.event.ChangeEvent e) {
-					if(jCheckBox3.isSelected())	
-						{
-						jLabel21.setEnabled(true);
-						jLabel211.setEnabled(true);
-						jLabel2111.setEnabled(true);
-						jLabel21111.setEnabled(true);
-						jTextField2211.setEnabled(true);
-						jTextField22111.setEnabled(true);
-						jTextField221111.setEnabled(true);
-						jTextField2211111.setEnabled(true);
+			jCheckBox3
+					.setToolTipText("Check to perform post-filter and select filter options");
+			jCheckBox3
+					.addChangeListener(new javax.swing.event.ChangeListener() {
+						public void stateChanged(javax.swing.event.ChangeEvent e) {
+							if (jCheckBox3.isSelected()) {
+								jLabel21.setEnabled(true);
+								jLabel211.setEnabled(true);
+								jLabel2111.setEnabled(true);
+								jLabel21111.setEnabled(true);
+								jTextField2211.setEnabled(true);
+								jTextField22111.setEnabled(true);
+								jTextField221111.setEnabled(true);
+								jTextField2211111.setEnabled(true);
+							} else {
+								jLabel21.setEnabled(false);
+								jLabel211.setEnabled(false);
+								jLabel2111.setEnabled(false);
+								jLabel21111.setEnabled(false);
+								jTextField2211.setEnabled(false);
+								jTextField22111.setEnabled(false);
+								jTextField221111.setEnabled(false);
+								jTextField2211111.setEnabled(false);
+							}
 						}
-					else
-						{
-						jLabel21.setEnabled(false);
-						jLabel211.setEnabled(false);
-						jLabel2111.setEnabled(false);
-						jLabel21111.setEnabled(false);
-						jTextField2211.setEnabled(false);
-						jTextField22111.setEnabled(false);
-						jTextField221111.setEnabled(false);
-						jTextField2211111.setEnabled(false);
-						}
-				}
-			});
+					});
 		}
 		return jCheckBox3;
 	}
+
 	/**
-	 * This method initializes jTextField2211	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField2211
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField2211() {
 		if (jTextField2211 == null) {
@@ -556,10 +583,11 @@ public class BimaxPanel{
 		}
 		return jTextField2211;
 	}
+
 	/**
-	 * This method initializes jTextField22111	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField22111
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField22111() {
 		if (jTextField22111 == null) {
@@ -570,10 +598,11 @@ public class BimaxPanel{
 		}
 		return jTextField22111;
 	}
+
 	/**
-	 * This method initializes jTextField221111	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField221111
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField221111() {
 		if (jTextField221111 == null) {
@@ -584,10 +613,11 @@ public class BimaxPanel{
 		}
 		return jTextField221111;
 	}
+
 	/**
-	 * This method initializes jTextField2211111	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes jTextField2211111
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getJTextField2211111() {
 		if (jTextField2211111 == null) {

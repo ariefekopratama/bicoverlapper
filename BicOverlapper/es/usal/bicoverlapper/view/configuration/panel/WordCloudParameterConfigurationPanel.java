@@ -1,42 +1,27 @@
 package es.usal.bicoverlapper.view.configuration.panel;
 
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
-
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 
 import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 
-
-import prefuse.action.layout.graph.ForceDirectedLayout;
-import prefuse.util.force.ForceConfigAction;
-
-
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel implements ActionListener {
+ * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
+ * Builder, which is free for non-commercial use. If Jigloo is being used
+ * commercially (ie, by a corporation, company or business for any purpose
+ * whatever) then you should purchase a license for each developer using Jigloo.
+ * Please visit www.cloudgarden.com for details. Use of Jigloo implies
+ * acceptance of these licensing terms. A COMMERCIAL LICENSE HAS NOT BEEN
+ * PURCHASED FOR THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED LEGALLY FOR
+ * ANY CORPORATE OR COMMERCIAL PURPOSE.
+ */
+public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel
+		implements ActionListener {
 	/**
 	 * 
 	 */
@@ -54,77 +39,66 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 	private String[] sizes;
 	private String[] ontologies;
 	private WordCloudDiagram parent;
-	String antName="";
-	
-	public static final String DESCRIPTION="Description";
-	public static final String GO_TERMS="GO Terms";
-	public static final String KEGG_PATHS="KEGG paths";
-	
-	public static final int DEFINITION=0;
-	public static final int GO_TERM=1;
-	public static final int KEGG_PATH=2;
-	public static final int WORD1=0;
-	public static final int WORD2=1;
-	public static final int COMLETE=2;
-	public static final int GENES=0;
-	public static final int PVALUES=1;
-	public static final int OCCURRENCES=2;//Deprecated
-	public static final int ALL=0;
-	public static final int BP=1;
-	public static final int MF=2;
-	public static final int CC=3;
-	
-	
+	String antName = "";
 
-	
+	public static final String DESCRIPTION = "Description";
+	public static final String GO_TERMS = "GO Terms";
+	public static final String KEGG_PATHS = "KEGG paths";
+
+	public static final int DEFINITION = 0;
+	public static final int GO_TERM = 1;
+	public static final int KEGG_PATH = 2;
+	public static final int WORD1 = 0;
+	public static final int WORD2 = 1;
+	public static final int COMLETE = 2;
+	public static final int GENES = 0;
+	public static final int PVALUES = 1;
+	public static final int OCCURRENCES = 2;// Deprecated
+	public static final int ALL = 0;
+	public static final int BP = 1;
+	public static final int MF = 2;
+	public static final int CC = 3;
+
 	public WordCloudParameterConfigurationPanel(WordCloudDiagram wc) {
 		super();
-		parent=wc;
+		parent = wc;
 		initGUI();
 	}
-	
+
 	private void initGUI() {
 		try {
 			this.setLayout(null);
 			this.setPreferredSize(new java.awt.Dimension(405, 83));
-			//this.setPreferredSize(new java.awt.Dimension(404, 400));
-			texts=new String[]{"definition", "go term", "kegg path"};
-			splits=new String[]{"1 word", "2 words", "complete"};
-			sizes=new String[]{"genes", "p-value"};
-			ontologies=new String[]{"all", "bp", "mf", "cc"};
-			
-			
+			// this.setPreferredSize(new java.awt.Dimension(404, 400));
+			texts = new String[] { "definition", "go term", "kegg path" };
+			splits = new String[] { "1 word", "2 words", "complete" };
+			sizes = new String[] { "genes", "p-value" };
+			ontologies = new String[] { "all", "bp", "mf", "cc" };
+
 			{
-				ComboBoxModel comboTextModel = 
-					new DefaultComboBoxModel(
-							texts);
+				ComboBoxModel comboTextModel = new DefaultComboBoxModel(texts);
 				text = new JComboBox();
 				this.add(text);
 				text.setModel(comboTextModel);
 				text.setBounds(76, 10, 97, 22);
 			}
 			{
-				ComboBoxModel jComboBox1Model = 
-					new DefaultComboBoxModel(
-							splits);
+				ComboBoxModel jComboBox1Model = new DefaultComboBoxModel(splits);
 				split = new JComboBox();
 				this.add(split);
 				split.setModel(jComboBox1Model);
 				split.setBounds(75, 43, 99, 22);
 			}
 			{
-				ComboBoxModel jComboBox1Model = 
-					new DefaultComboBoxModel(
-							sizes);
+				ComboBoxModel jComboBox1Model = new DefaultComboBoxModel(sizes);
 				size = new JComboBox();
 				this.add(size);
 				size.setModel(jComboBox1Model);
 				size.setBounds(282, 10, 101, 22);
 			}
 			{
-				ComboBoxModel jComboBox1Model = 
-					new DefaultComboBoxModel(
-							ontologies);
+				ComboBoxModel jComboBox1Model = new DefaultComboBoxModel(
+						ontologies);
 				ontology = new JComboBox();
 				this.add(ontology);
 				ontology.setModel(jComboBox1Model);
@@ -135,7 +109,8 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 				this.add(labelText);
 				labelText.setText("Text:");
 				labelText.setBounds(12, 12, 64, 19);
-				labelText.setToolTipText("Text to be considered for the words on the cloud");
+				labelText
+						.setToolTipText("Text to be considered for the words on the cloud");
 			}
 			{
 				jLabel1 = new JLabel();
@@ -158,7 +133,7 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 				jLabel3.setBounds(201, 45, 82, 19);
 				jLabel3.setToolTipText("In the case that GO terms are selected, which ontology to use");
 			}
-			
+
 			text.setSelectedIndex(1);
 			split.setSelectedIndex(2);
 			size.setSelectedIndex(0);
@@ -167,54 +142,52 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel imp
 			split.addActionListener(this);
 			size.addActionListener(this);
 			ontology.addActionListener(this);
-			
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void setIndices(int textIndex, int splitIndex, int sizeIndex,
 			int ontologyIndex) {
-		text.setSelectedIndex(textIndex);	
+		text.setSelectedIndex(textIndex);
 		split.setSelectedIndex(splitIndex);
 		size.setSelectedIndex(sizeIndex);
 		ontology.setSelectedIndex(ontologyIndex);
 		// parent.update();
-	       
-	}
-	
-	public void actionPerformed(ActionEvent e)
-	{
 
-	if(parent.doNOTupdate)	{parent.doNOTupdate=false; return;}
-	JComboBox cb = (JComboBox)e.getSource();
-	if(cb==text)
-		{
-		if(!antName.equals((String)cb.getSelectedItem()))	parent.textChanged=true;
-		else		
-			parent.textChanged=false;
+	}
+
+	public void actionPerformed(ActionEvent e) {
+
+		if (parent.doNOTupdate) {
+			parent.doNOTupdate = false;
+			return;
 		}
-	else			
-		parent.textChanged=false;
-	
-	if(cb==ontology && size.getSelectedIndex()==PVALUES)	parent.got=null;
-	parent.innerCall=true;
-	if(cb==text && parent.textChanged)
-		{
-		if( ((String)cb.getSelectedItem()).equals("go term")	)
-			{
-			split.addItem("complete");
-			size.addItem("p-value");
-			ontology.setEnabled(true);
-			}
-		else
-			{
-			split.removeItem("complete");
-			size.removeItem("p-value");
-			ontology.setEnabled(false);
+		JComboBox cb = (JComboBox) e.getSource();
+		if (cb == text) {
+			if (!antName.equals((String) cb.getSelectedItem()))
+				parent.textChanged = true;
+			else
+				parent.textChanged = false;
+		} else
+			parent.textChanged = false;
+
+		if (cb == ontology && size.getSelectedIndex() == PVALUES)
+			parent.got = null;
+		parent.innerCall = true;
+		if (cb == text && parent.textChanged) {
+			if (((String) cb.getSelectedItem()).equals("go term")) {
+				split.addItem("complete");
+				size.addItem("p-value");
+				ontology.setEnabled(true);
+			} else {
+				split.removeItem("complete");
+				size.removeItem("p-value");
+				ontology.setEnabled(false);
 			}
 		}
-    antName = (String)cb.getSelectedItem();
-    }
+		antName = (String) cb.getSelectedItem();
+	}
 
 }
