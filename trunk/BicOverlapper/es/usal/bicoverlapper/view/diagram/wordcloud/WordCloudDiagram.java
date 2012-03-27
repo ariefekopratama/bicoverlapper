@@ -736,6 +736,11 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		double maxAlto = 0;
 		double maxAncho = 0;
 		double separationSpace = 1.5;
+		
+		double posicionXWord, separacionXWord;
+		double xMaxima;
+		
+		
 		if (g2 == null)
 			return;
 		FontRenderContext frc = g2.getFontRenderContext();
@@ -764,22 +769,30 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				Font f = g2.getFont().deriveFont((float) num);
 				TextLayout texto = new TextLayout(wc, f, frc);
 				altoTexto = texto.getBounds().getHeight();
-				anchoTexto = texto.getBounds().getWidth() + separationSpace
-						* nW.size;
+				anchoTexto = texto.getBounds().getWidth() + separationSpace * nW.size;
+				//si la palabra es mas ancha que el espacio disponible se pone a la izquierda del todo y se baja una línea
 				if (x + anchoTexto > this.getWidth()) {
 					x = 0;
 					y += maxAlto;
 					maxAlto = altoTexto;
 				}
+				//se actualiza el valor de la altura máxima
 				if (maxAlto < altoTexto)
 					maxAlto = altoTexto;
+				//se actualiza el valor de la anchura máxima
 				if (maxAncho < anchoTexto)
 					maxAncho = anchoTexto;
 				nW.setX(x);
 				nW.setY(y);
 				nW.setText(texto);
+
+				//se desplaza la coordenada x a la derecha para la siguiente palabra si ello es posible
 				if (x + anchoTexto <= this.getWidth())
 					x += anchoTexto;
+				
+				//Carlos
+				//no sé muy bien las consecuencias de esto, porque en principio es que la palabra es demasiado ancha para la ventana...
+				//para esto ya se ha introducido el xMaxima
 				if (anchoTexto > this.getWidth()) {
 					y += altoTexto;
 					maxAlto = 0;
@@ -789,8 +802,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		y += maxAlto;// Si no el último salto no se tiene en cuenta.
 
 		// 2) Determinamos el factor de escala
-		double scale = Math.min(this.getHeight() / y, this.getWidth()
-				/ maxAncho);
+		double scale = Math.min(this.getHeight() / y, this.getWidth() / maxAncho);
 
 		// 3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un
@@ -799,9 +811,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		boolean increase = false;
 		// boolean increaseAnt=increase;
 		// boolean first=true;
+		
+		//Carlos
+		boolean hasDecreased = false;
 
 		maxAncho = 0;
+		
 		do {
+			//en cada vuelta se actualiza la xMaxima
+			xMaxima = 0;
+
 			x = 0;
 			y = 0;
 			ArrayList<Word> wordsInLine = new ArrayList<Word>();
@@ -819,12 +838,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					TextLayout texto = new TextLayout(wc, f, frc);
 
 					altoTexto = texto.getBounds().getHeight();
-					anchoTexto = texto.getBounds().getWidth() + separationSpace
-							* nW.size;
+					anchoTexto = texto.getBounds().getWidth() + separationSpace * nW.size;
+					
 					if (x + anchoTexto > this.getWidth()) // change to next line
 					{
-						// Sumamos a todas las de la línea anterior el maxAlto
-						// de esa linea
+						// Sumamos a todas las de la línea anterior el maxAlto de esa línea
+						// de esta forma no se intercalarán las alturas y todas las de la línea siguiente empezarán a la misma altura
 						for (int k = 0; k < wordsInLine.size(); k++) {
 							Word w2 = wordsInLine.get(k);
 							w2.setY(w2.getY() + .75 * maxAlto);
@@ -835,10 +854,33 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 						x = 0;
 						y += maxAlto;
 						maxAlto = altoTexto;
+						
+						//Carlos
+						//se comprueba la máxima x que se alcanza en el dibujo de las palabras
+						//esto funciona bien para el caso de pintar la palabra y dejar todo el espacio sobrante a la derecha
+						/*
+						if((x + texto.getBounds().getWidth()) > xMaxima){
+							xMaxima = x + texto.getBounds().getWidth();
+							System.out.println("xMaxima="+xMaxima+", getWidth()="+this.getWidth());
+						}
+						*/						
+						
+						if((x + texto.getBounds().getWidth() + (separationSpace * nW.size / 2)) > xMaxima){
+							xMaxima = x + texto.getBounds().getWidth() + (separationSpace * nW.size / 2);
+							//System.out.println("xMaxima="+xMaxima+", getWidth()="+this.getWidth());
+						}						
+						
 					}
 					if (maxAlto < altoTexto)
 						maxAlto = altoTexto;
-					nW.setX(x);
+					
+					//si se desea posicionar la palabra en el centro de todo el espacio reservado en anchoTexto en vez de dejar todo el espacio a la derecha
+					//se colocará la coordenada X de la palabra en posicionXWord
+					//si se desea dejar a la izquierda y todo el espacio sobrante a la derecha, basta con hacer nW.setX(x);
+					separacionXWord = (separationSpace * nW.size);
+					posicionXWord = x + (separacionXWord / 2);
+					
+					nW.setX(posicionXWord);
 					nW.setY(y);// debería ser directamente +maxAlto, pero no
 								// queda bien y no sé por qué.
 								// luego está el tema de que cuando se está
@@ -866,6 +908,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			int limitY = this.getHeight() - menuCloud.getBounds().height;
 			// System.out.println("Occupied size: "+Math.floor((x/limitX)*100)+", "+Math.floor((y/limitY)*100));
 
+			//Carlos
+			//antes había esto
+			/*
 			if ((y <= limitY && x <= limitX))// smaller
 			{
 				end = true;
@@ -884,9 +929,39 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					scale /= 1.5;
 				}
 			}
-		} while (!end);
+			*/
+	
+			//AQUÍ HAY QUE TENER MUCHO CUIDADO PORQUE DECIR QUE X <= LIMITX NO VALE PARA NADA, SÓLO MIRA LA ÚLTIMA X
+			//HABRÍA QUE IR GUARDANDO UN VALOR MÁXIMO DE X + ANCHURA Y VERLO AQUÍ
+			//if ((y <= limitY && x <= limitX))// smaller
+			if ((y <= limitY && xMaxima <= limitX))// smaller
+			{
+				if(hasDecreased){
+					end = true;
+				}
+				increase = true;
+				
+			} else// larger
+			{
+				increase = false;
+				hasDecreased = true;
+				System.out.println("decreased, y="+y+", x="+x+", limitY="+limitY+", limitX="+limitX);
+			}
 
+			if (!end) {
+				if (increase) {
+					scale *= 1.5;
+				} else {
+					scale /= 1.2;
+				}
+			}
+			
+		} while (!end);
+		
 		textChanged = false;
+		
+		//necesita un repaint para que al redimensionar se actualice la vista
+		super.repaint();
 	}
 
 	public synchronized void paintComponent(Graphics g) {
@@ -993,10 +1068,13 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 												this, true, progress, null,
 												true, false);
 
-								System.out.println("Waiting for annotation retrieval");
+								System.out
+										.println("Waiting for annotation retrieval");
 								try {
-									synchronized (sesion.getMicroarrayData().getGeneAnnotations()) {
-										sesion.getMicroarrayData().getGeneAnnotations().wait();
+									synchronized (sesion.getMicroarrayData()
+											.getGeneAnnotations()) {
+										sesion.getMicroarrayData()
+												.getGeneAnnotations().wait();
 									}
 								} catch (Exception ex) {
 									ex.printStackTrace();
@@ -1004,7 +1082,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 								}
 
 								System.out.println("Searching genes");
-								s = sesion.getMicroarrayData().search(nameSelected.get(0).trim(), 0, true,null);
+								s = sesion.getMicroarrayData().search(
+										nameSelected.get(0).trim(), 0, true,
+										null);
 							}
 
 							if (s != null && s.getGenes().size() > 0) {

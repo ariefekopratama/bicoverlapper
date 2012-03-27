@@ -381,6 +381,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			ventana.menuViewCloud.setEnabled(true);
 			
 			ventana.menuArchivoExportSelection.setEnabled(true);
+			ventana.menuViewCloud.setEnabled(true);
 
 			if (addVista)
 				ventana.addWorkDesktop(new WorkDesktop(desktop, sesion));

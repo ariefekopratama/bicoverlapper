@@ -1461,9 +1461,9 @@ public class MicroarrayData {
 							AnnotationTask at = new AnnotationTask(new int[] { getGeneId(geneNames[0]) });
 							
 							//Carlos
-							//se le pone como oyente esta clase que manejará la progress bar
-							at.addPropertyChangeListener(ventana.getMlpb());
-							ventana.getMlpb().isListener();							
+							//de momento en desuso porque las anotaciones no se cargan al arrancar
+							//at.addPropertyChangeListener(ventana.getMlpb());
+							//ventana.getMlpb().isListener();							
 							at.execute();
 
 						} catch (Exception e) {
@@ -1959,8 +1959,9 @@ public class MicroarrayData {
 			wt.start();
 		} else {
 			
-			at.addPropertyChangeListener(ventana.getMlpb());
-			ventana.getMlpb().isListener();
+			//de momento en desuso porque las anotaciones no se cargan al arrancar
+			//at.addPropertyChangeListener(ventana.getMlpb());
+			//ventana.getMlpb().isListener();
 			at.execute();
 		}
 	}
@@ -2952,7 +2953,16 @@ public class MicroarrayData {
 					+ name.substring(name.lastIndexOf("/") + 1,
 							name.indexOf("."));
 			progress += 10;
+			//System.err.println("MicroArrayData va a hacer en el primer setProgress(progress)="+progress+" y message="+message);
 			setProgress(progress);
+			
+			//tiempo de espera para que el oyente recoja el mensaje
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}			
 
 			String description = "";
 			double t1 = System.currentTimeMillis();
@@ -2974,6 +2984,7 @@ public class MicroarrayData {
 						+ e.getMessage(), "I/O Error",
 						JOptionPane.ERROR_MESSAGE);
 				message = "Error reading the file: " + e.getMessage();
+				//System.out.println("MicroArrayData en la excepción de error reading the file va a hacer setProgress(progress)="+progress+" y message="+message);
 				setProgress(100);
 				return 1;
 			}
@@ -3035,7 +3046,16 @@ public class MicroarrayData {
 			}
 			message = numGenes + " rows\n" + numConditions + " columns";
 			progress += 60;
+			//System.err.println("MicroArrayData va a hacer en el segundo setProgress(progress)="+progress+" y message="+message);
 			setProgress(progress);
+			
+			//tiempo de espera para que el oyente recoja el mensaje
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}			
 
 			conditionNames = new String[numConditions];
 			geneNames = new String[numGenes];
@@ -3247,7 +3267,16 @@ public class MicroarrayData {
 			message = "Organism: " + organism + "\nPlatform: " + chip
 					+ "\nRetrieving gene annotations ... (in background)";
 			progress += 10;
+			//System.err.println("MicroArrayData va a hacer en el tercer setProgress(progress)="+progress+" y message="+message);
 			setProgress(progress);
+			
+			//tiempo de espera para que el oyente recoja el mensaje
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
 			geneAnnotations = new TreeMap<Integer, GeneAnnotation>();
 			GOTerms = new TreeMap<String, GOTerm>();
@@ -3321,12 +3350,23 @@ public class MicroarrayData {
 
 			message = "Computed sparse representation";
 			progress += 10;
+			//System.err.println("MicroArrayData va a hacer en el cuarto setProgress(progress)="+progress+" y message="+message);
 			setProgress(progress);
 
+			//tiempo de espera para que el oyente recoja el mensaje
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			
 			t1 = System.currentTimeMillis();
 			message = "Microarray data loaded in " + (t1 - start) / 1000
 					+ " seconds";
 			progress = 100;
+			//System.err.println("MicroArrayData va a hacer en el quinto setProgress(progress)="+progress+" y message="+message);
+			
 			setProgress(progress);
 			System.out.println("Memory reserved after loading: "
 					+ Sizeof.usedMemory());
