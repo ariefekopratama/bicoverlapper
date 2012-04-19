@@ -224,6 +224,12 @@ public class AnalysisMenuManager implements ActionListener {
 			} else if (e.getActionCommand().equals(
 					Translator.instance.menuLabels.getString("mergeRows"))) {
 				sesion.mergeRows();
+			} else if (e.getActionCommand().equals(
+					Translator.instance.menuLabels.getString("retrieve"))) {
+				JOptionPane.showMessageDialog(
+						null,
+						"No veo claro cómo hacer esto, ya que se realiza al leer el microarray",
+						"Problema", JOptionPane.INFORMATION_MESSAGE);
 			}
 
 			else if (e.getActionCommand().equals(

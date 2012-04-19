@@ -199,14 +199,13 @@ public class DataReader {
 		readBiclusterResults(path, fichero, path, sesion);
 	}
 
-	public void readBiclusterResults(String path, String fileName, String file,
-			Session sesion) {
+	public void readBiclusterResults(String path, String fileName, String file,	Session sesion) {
 		BicOverlapperWindow window = sesion.mainWindow;
 		JDesktopPane desktop = sesion.getDesktop();
 		boolean error = false;
 
 		try {
-			BubbleData bd = new BubbleData(file, sesion.getMicroarrayData());
+			BubbleData bd = new BubbleData(file, sesion.getMicroarrayData(), sesion);
 			bd.getGraph().getNodes().getClientProperty("name");
 			sesion.setBubbleData(bd);
 

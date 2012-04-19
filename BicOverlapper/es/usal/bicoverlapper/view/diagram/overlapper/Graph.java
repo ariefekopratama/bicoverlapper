@@ -774,6 +774,7 @@ public class Graph {
 
 			Iterator<Node> itDrawMates = hoverNode.mates.values().iterator();
 			Color c = bv.paleta[Overlapper.hoverColor];
+						
 			bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
 			bv.stroke(c.getRed(), c.getGreen(), c.getBlue(), 255);
 			bv.strokeWeight(2);
@@ -844,6 +845,7 @@ public class Graph {
 
 			Iterator<DualNode> itDrawMates = this.dualNodes.values().iterator();
 			Color c = bv.paleta[Overlapper.hoverColor];
+						
 			bv.fill(c.getRed(), c.getGreen(), c.getBlue(), 0);
 			bv.stroke(c.getRed(), c.getGreen(), c.getBlue(), 255);
 			bv.rectMode(JProcessingPanel.CENTER);
@@ -882,7 +884,10 @@ public class Graph {
 			Iterator<Group> it = hoverClusters.values().iterator();
 			while (it.hasNext()) {
 				Group n = (Group) it.next();
-				if (n.hull != null) {
+				if (n.hull != null) {					
+					//Carlos
+					//aquí es donde se pintan de verde
+					
 					n.drawHull(c);
 					n.drawHullLabels();
 				}

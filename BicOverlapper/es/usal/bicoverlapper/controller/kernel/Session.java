@@ -141,6 +141,13 @@ public class Session implements KeyListener {
 	public boolean onlyHover;// if true, no additional actions for selection are
 								// done, only for hovering
 
+	//Carlos
+	//para avisar al BubbleMap o al Ovelapper de que hay demasiados genes
+	/*
+	private boolean tooManyGenes;
+	public static int MAX_NODES = 5;
+	private int numNodes;
+	*/
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a
 	 * <code>JDesktopPane</code>, with empty data
@@ -186,6 +193,11 @@ public class Session implements KeyListener {
 		this.hiExpColor = Color.RED;
 		this.avgExpColor = Color.WHITE;
 
+		/*
+		this.tooManyGenes = false;
+		this.numNodes = 0;
+		*/
+		
 		reader = new DataReader();
 		return;
 	}
@@ -1448,4 +1460,35 @@ public class Session implements KeyListener {
 	public void setSelectionColor(Color selectionColor) {
 		this.selectionColor = selectionColor;
 	}
+
+	/**
+	 * Register a Kegg diagram TODO: TO BE UNIFIED FOR ANY KIND OF DIAGRAM
+	 * 
+	 * @param dw
+	 *            <code>DiagramWindow</code> to register
+	 */
+	public void setKegg(DiagramWindow dw) {
+		this.ventanas.add(dw);
+		this.grupoVentanasDefecto.add(dw);
+		this.numVentanaWordCloud++;
+		this.numVentanas++;
+	}
+
+	/*
+	public boolean isTooManyGenes() {
+		return tooManyGenes;
+	}
+
+	public void setTooManyGenes(boolean tooManyGenes) {
+		this.tooManyGenes = tooManyGenes;
+	}
+
+	public int getNumNodes() {
+		return numNodes;
+	}
+
+	public void setNumNodes(int numNodes) {
+		this.numNodes = numNodes;
+	}
+	*/
 }

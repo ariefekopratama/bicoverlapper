@@ -21,12 +21,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.Timer;
 
 import prefuse.data.Table;
 import es.usal.bicoverlapper.controller.analysis.geneticAlgorithms.GraphGeneticAlgorithm;
 import es.usal.bicoverlapper.controller.kernel.Selection;
+import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
 import es.usal.bicoverlapper.model.annoations.GOTerm;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
@@ -307,6 +309,8 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	private int contStability = 0;
 
 	private long totalTime;
+	
+	public static int maxNodes = 1000;
 
 	/**
 	 * Default constructor
@@ -520,6 +524,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 
 				Color bg = this.getBackground();
 				Color fg = this.getForeground();
+
 				gr.setColor(bg);
 				gr.fillRect(0, 0, this.getWidth(), this.getHeight());
 				gr.setColor(fg);
@@ -527,7 +532,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 				refreshTime = 0;
 
 				this.setBackground(paleta[this.backgroundColor]);
-
+				
 				pushMatrix();
 				translate(offsetX, offsetY);
 				scale(zoomFactor); // TODO: probando todavía
@@ -1629,8 +1634,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	 * This function is activated when the mouse is pressed, controling
 	 * navigation through the graph and node selection
 	 */
-	protected void mousePressed() {
-
+	protected void mousePressed() {		
 		g.setDragNode(null);
 		move = false;
 		if ((mouseX >= xTopMagnifier)
@@ -1672,13 +1676,26 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	}
 
 	/**
+	 * Método para que cuando el cursor salga de la ventana, se deseleccione todo y no se mantenga repintado como si estuviera el cursor encima.
+	 * Si esto ocurre sería una situación errónea, ya que es falso que el cursor siga encima.
+	 * Esto ocurría al cambiar de ventana y al salir por un borde de la aplicación desde un polígono seleecionado.
+	 */
+	protected void mouseExited(){
+		g.getHoverClusters().clear();
+		g.setHoverNode(null);
+		if (g.dualNodes != null){
+			g.getHoverDualZones().clear();
+		}
+	}
+
+	/**
 	 * This function is called each time that the mouse is moved, to check node
 	 * hovering, thus highlighting neighbor nodes.
 	 */
-	protected void mouseMoved() {
+	protected void mouseMoved() {		
 		if (!(mouseX < this.xTopOverviewBox || mouseY > (this.yTopOverviewBox + this.overviewBoxHeight)))
 			return;// Si estamos en el overview no miramos
-
+				
 		if (g.getDragNode() == null) {
 			float xpress = (mouseX - offsetX) / zoomFactor;
 			float ypress = (mouseY - offsetY) / zoomFactor;
@@ -1691,8 +1708,9 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 						break;
 					}
 				}
-				if (!itMM.hasNext())
+				if (!itMM.hasNext()){
 					g.setHoverNode(null);
+				}
 			} else // hover, but for dual nodes
 			{
 				Iterator<DualNode> itMM = g.dualNodes.values().iterator();
@@ -1704,8 +1722,9 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 						break;
 					}
 				}
-				if (!itMM.hasNext())
+				if (!itMM.hasNext()){
 					g.setHoverNode(null);
+				}
 			}
 			g.getHoverClusters().clear();
 			if (g.getHoverNode() == null && this.drawHull == true)// Search for
@@ -1714,19 +1733,19 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			{
 				for (int i = 0; i <= this.numClusters; i++) {
 					Group mc = this.getClusterInPos(i);
-					if (mc != null && mc.hull != null
-							&& mc.hull.contains(xpress, ypress)
-							&& !excludedClusters.contains(mc.label)) {
+
+					if (mc != null && mc.hull != null && mc.hull.contains(xpress, ypress) && !excludedClusters.contains(mc.label)) {
 						g.getHoverClusters().put(mc.label, mc);
 					}
 				}
-				if (g.dualNodes != null && g.dualNodes.size() > 0) {
+				if (g.dualNodes != null && g.dualNodes.size() > 0) {					
 					g.getHoverDualZones().clear();
 					Iterator<DualNode> itd = g.dualNodes.values().iterator();
 					while (itd.hasNext()) {
 						DualNode dn = itd.next();
-						if (dn.hull != null && dn.hull.contains(xpress, ypress))
+						if (dn.hull != null && dn.hull.contains(xpress, ypress)){
 							g.getHoverDualZones().put(dn.label, dn);
+						}
 					}
 				}
 			}
@@ -1747,8 +1766,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	 * This function is called when the mouse is released, to stop dragging
 	 * nodes.
 	 */
-	protected void mouseReleased() {
-
+	protected void mouseReleased() {		
 		movingMagnifier = false;
 		boolean nodeSelected = false;
 
@@ -1937,7 +1955,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	 * This function is called when the mouse is dragging moving the selected
 	 * node (if any) or panning through the overall view
 	 */
-	protected void mouseDragged() {
+	protected void mouseDragged() {				
 		boolean navigate = false;
 		if (showOverview) {
 			if ((mouseX > xTopOverviewBox)
@@ -3087,7 +3105,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	/**
 	 * Builds a graph according to dataFile information in the Session layer
 	 */
-	public void buildGraph() {
+	public boolean buildGraph() {
 		totalTime = System.currentTimeMillis();
 		// Preliminary reading of biclusters and ordering
 		groupDelimiter = ":";
@@ -3131,7 +3149,19 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 		if (g.dualNodes != null)
 			System.out.println("Dual graph with " + this.g.dualNodes.size()
 					+ " nodes and " + this.g.dualEdges.size() + " edges");
-
+		
+		if(g.getNumNodes() > Overlapper.maxNodes){
+			JOptionPane.showMessageDialog(
+					null,
+					"Overlapper visualization does not support more than "+Overlapper.maxNodes+" nodes " +
+					"(currently there are "+g.getNumNodes()+" nodes), " +
+					"please select biclustering results with a lower number of biclusters " +
+					"and/or smaller biclusters.",
+					"Numer of nodes error", JOptionPane.ERROR_MESSAGE);
+			
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -3140,10 +3170,13 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	 * 
 	 * @param numTimes
 	 */
-	public void timeTest(int numTimes) {
+	public boolean timeTest(int numTimes) {
 		double total = 0;
 		for (int i = 0; i < numTimes; i++) {
-			buildGraph();
+			boolean ret = buildGraph();
+			if(!ret){
+				return false;
+			}
 			double time = System.currentTimeMillis();
 			int cont = 0;
 			while (!pauseSimulation && cont < 3000) {
@@ -3158,6 +3191,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			total += took;
 		}
 		System.out.println("Average is" + total / numTimes);
+		return true;
 	}
 
 	/**

@@ -1930,7 +1930,7 @@ public class MicroarrayData {
 			boolean showProgress, JLabel label, Point location,
 			boolean searchGO, boolean searchKEGG) {
 		at = new AnnotationTask(genes);
-
+		
 		at.searchGO = searchGO;
 		at.searchKEGG = searchKEGG;
 		if (showProgress) {			
@@ -2289,6 +2289,11 @@ public class MicroarrayData {
 			// 1) Search for gene names
 			if (!searchGO && !searchKEGG) {
 				if (!isBioMaRt) {
+					
+					//se desactiva la posibilidad de buscarlos manualmente
+					//en principio, si no es bioMaRt, se buscan automáticamente siempre (preguntarle a Rodrigo)
+					ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);					
+					
 					if (isGO) {
 						exp = re.eval("golist=unlist(mget(group,GOTERM, ifnotfound=NA))");
 						exp = re.eval("sapply(golist, function(x){x@Term})");
@@ -2318,50 +2323,71 @@ public class MicroarrayData {
 						// if(exp!=null)
 						// ensembls=exp.asStringArray();
 					}
-				} else// -------------------------------------BioMaRt
+				} 
+				else// -------------------------------------BioMaRt
 				{
-					if (re.eval("martEnsembl") == null)
-						exp = re.eval("martEnsembl=getEnsemblMart(species=\""
-								+ organism + "\")");
-
-					exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
-					if (!chip.equals(rname)) 
+					int res = JOptionPane.showConfirmDialog(
+						    null,
+						    "Would you like to search for names? (It could take about 3-4 minutes)",
+						    "Search for names",
+						    JOptionPane.YES_NO_OPTION);
+					
+					//si el usuario desea buscar los nombres...
+					if(res == JOptionPane.YES_OPTION){
+						//se desactiva la posibilidad de buscarlos manualmente
+						ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);
+						
+						if (re.eval("martEnsembl") == null)
+							exp = re.eval("martEnsembl=getEnsemblMart(species=\""
+									+ organism + "\")");
+						//y después se procede a la búsqueda
+	
+						/*if (!rname.equals("ensembl_gene_id"))// it's a bit slower if we don't search for ensembl gene ids
+							{
+							exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
+							System.out.println("BiomaRT finished");
+							}
+						else
+							exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
+						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
+						if (!chip.equals(rname)) 
 						{
-						exp = re.eval("df[,\"" + rname + "\"]");
-						if (exp != null)
-							names = exp.asStringArray();
+							exp = re.eval("df[,\"" + rname + "\"]");
+							if (exp != null)
+								names = exp.asStringArray();
 						}
-					message = "searching for gene descriptions...";
-					System.out.println(message);
-					progress += 5;
-					setProgress(progress);
-
-					exp = re.eval("df[,\"" + rdescription + "\"]");
-					if (exp != null) {
-						System.out.println("And it has descriptions!");
-						descriptions = exp.asStringArray();
-					}
-
-					if (rname.equals("entrezgene")) {
-						entrezs = geneNames.clone();
-					} else {
-						exp = re.eval("df[,\"entrezgene\"]");
+						message = "searching for gene descriptions...";
+						System.out.println(message);
+						progress += 5;
+						setProgress(progress);
+	
+						exp = re.eval("df[,\"" + rdescription + "\"]");
 						if (exp != null) {
-							int ints[] = exp.asIntArray();
-							ArrayList<String> strings = new ArrayList<String>();
-							for (int i : ints)
-								if (i < 0)
-									strings.add(null);
-								else
-									strings.add(new Integer(i).toString());
-							entrezs = strings.toArray(new String[0]);
-							// entrezs=exp.asStringArray();
+							System.out.println("And it has descriptions!");
+							descriptions = exp.asStringArray();
 						}
-					}
-					if (!rname.equals("ensembl_gene_id")) {
-						exp = re.eval("df[,\"ensembl_gene_id\"]");
-						if (exp != null)
-							ensembls = exp.asStringArray();
+	
+						if (rname.equals("entrezgene")) {
+							entrezs = geneNames.clone();
+						} else {
+							exp = re.eval("df[,\"entrezgene\"]");
+							if (exp != null) {
+								int ints[] = exp.asIntArray();
+								ArrayList<String> strings = new ArrayList<String>();
+								for (int i : ints)
+									if (i < 0)
+										strings.add(null);
+									else
+										strings.add(new Integer(i).toString());
+								entrezs = strings.toArray(new String[0]);
+								// entrezs=exp.asStringArray();
+							}
+						}
+						if (!rname.equals("ensembl_gene_id")) {
+							exp = re.eval("df[,\"ensembl_gene_id\"]");
+							if (exp != null)
+								ensembls = exp.asStringArray();
+						}
 					}
 				}
 			}
@@ -2637,9 +2663,7 @@ public class MicroarrayData {
 				// progress+=100*0.5/genes.size();
 				progress += 100 * 0.5 / genes.length;
 				setProgress((int) progress);
-				
-				System.out.println("1. setProgress="+(int) progress+" sin redondear="+progress);
-				
+								
 				// ga=geneAnnotations.get(genes.get(g));
 				ga = geneAnnotations.get(genes[g]);
 				if (ga == null) {
@@ -2670,9 +2694,7 @@ public class MicroarrayData {
 						if (progress >= 100)
 							progress = 99;
 						setProgress((int) progress);
-						
-						System.out.println("2. setProgress="+(int) progress+" sin redondear="+progress);
-						
+												
 					} else {
 						System.err.println("Nothing found for gene " + gene);
 						ga = new GeneAnnotation();
@@ -2684,10 +2706,7 @@ public class MicroarrayData {
 						progress += 100 * 0.5 / genes.length;
 						if (progress >= 100)
 							progress = 99;
-						setProgress((int) progress);		
-						
-						System.out.println("3. setProgress="+(int) progress+" sin redondear="+progress);
-						
+						setProgress((int) progress);								
 					}
 
 					if (list != null && list.getId() != null) {
@@ -2741,7 +2760,6 @@ public class MicroarrayData {
 			progress = 100;
 			setProgress((int) progress);
 			
-			System.out.println("4. setProgress="+(int) progress+" sin redondear="+progress);
 			calendario = new GregorianCalendar();
 			hora =calendario.get(Calendar.HOUR_OF_DAY);
 			minutos = calendario.get(Calendar.MINUTE);
@@ -2770,7 +2788,6 @@ public class MicroarrayData {
 
 		@Override
 		public void done() {
-			System.out.println("HA LLEGADO A DONE()	");
 			synchronized (geneAnnotations) {
 				geneAnnotations.notify();
 			}

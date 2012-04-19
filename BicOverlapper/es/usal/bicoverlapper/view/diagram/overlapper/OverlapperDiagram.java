@@ -153,7 +153,7 @@ private static final long serialVersionUID = 1L;
 	/**
 	 * Once the panel is built and session is set, this method builds the interface, including the BiclusVis visualization
 	 */
-	public void create()
+	public boolean create()
 		{
 			{
 			//JToolBar jtb=new JToolBar();
@@ -165,7 +165,10 @@ private static final long serialVersionUID = 1L;
 			//bv.setup(ancho,alto-jtb.getBounds().height);
 			bv.setup(ancho,alto);
 			if(sesion.getMicroarrayData()!=null)	bv.setMicroarrayData(sesion.getMicroarrayData());
-			bv.buildGraph();
+			boolean ret = bv.buildGraph();
+			if (!ret){
+				return false;
+			}
 			bv.init();
 			
 			this.getWindow().add(bv, BorderLayout.CENTER);
@@ -181,6 +184,8 @@ private static final long serialVersionUID = 1L;
 			if(sesion.getMicroarrayData()!=null)	
 				this.update();
 			}
+			
+			return true;
 		}
 	
 	private void addButtons(JToolBar toolBar) 
