@@ -104,7 +104,7 @@ gsea=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, membership=NA
 	#if(type=="GO")  gs0=gs0[grep("^GO:", rownames(gs0)),]
 	if(!is.na(gs0))
 		{
-			gs0=gs0[,featureNames(filt)]
+		gs0=gs0[,featureNames(filt)]
 		}
 	else
 		{

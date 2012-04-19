@@ -2324,13 +2324,6 @@ public class MicroarrayData {
 						exp = re.eval("martEnsembl=getEnsemblMart(species=\""
 								+ organism + "\")");
 
-					/*if (!rname.equals("ensembl_gene_id"))// it's a bit slower if we don't search for ensembl gene ids
-						{
-						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
-						System.out.println("BiomaRT finished");
-						}
-					else
-						exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
 					exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
 					if (!chip.equals(rname)) 
 						{

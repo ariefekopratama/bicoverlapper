@@ -482,8 +482,8 @@ public class BimaxPanel {
 									String fileName = t.get();
 									if (fileName == null)
 										JOptionPane.showMessageDialog(null,
-												"No biclusters found", "Error",
-												JOptionPane.ERROR_MESSAGE);
+												"No biclusters found", "Note",
+												JOptionPane.WARNING_MESSAGE);
 
 									else {
 										if (fileName.indexOf("/") > -1)

@@ -1,4 +1,4 @@
-# TODO: Function similar to GeneSetCollection on GSEABase, but this one will allow us
+# Function similar to GeneSetCollection on GSEABase, but this one will allow us
 # to load gene sets from other sources
 # Returns a geneset x gene matrix with element ij = 1 if the geneset i contains gene j, 0 otherwise
 # Author: rodri
