@@ -82,8 +82,6 @@ public class MicroarrayLoadProgressMonitor extends JPanel implements
 			progressMonitor.setNote(message);
 			taskOutput.append(message);
 			
-			System.err.println("\n\n\nmessage="+message+", progress="+progress+"\n\n\n");
-
 			if (progressMonitor.isCanceled() || task.isDone()
 					|| progress >= 100) {
 				if (progressMonitor.isCanceled()) {

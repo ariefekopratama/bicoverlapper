@@ -379,6 +379,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			ventana.menuViewParallelCoordinates.setEnabled(true);
 			ventana.menuViewHeatmap.setEnabled(true);
 			ventana.menuViewCloud.setEnabled(true);
+			ventana.menuViewKegg.setEnabled(true);
 			
 			ventana.menuArchivoExportSelection.setEnabled(true);
 			ventana.menuViewCloud.setEnabled(true);

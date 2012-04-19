@@ -74,12 +74,18 @@ public class BicOverlapperWindow extends JFrame {
 	 * Menu item to view go tag cloud
 	 */
 	public JMenuItem menuViewCloud;
+	/**
+	 * Menu item to view kegg tool
+	 */
+	public JMenuItem menuViewKegg;
 
 	public JMenu analysisMenu, viewMenu;
 
 	private FileMenuManager gestorMenuArchivo;
 	
 	private MicroarrayAnnotationsLoadProgressBar mlpb;
+	
+	public JMenuItem menuAnalysisRetrieveDescriptors;
 
 	/**
 	 * Default constructor
@@ -297,6 +303,8 @@ public class BicOverlapperWindow extends JFrame {
 				Translator.instance.menuLabels.getString("merge"));
 		JMenuItem menuAnalysisMergeRows = new JMenuItem(
 				Translator.instance.menuLabels.getString("mergeRows"));
+		menuAnalysisRetrieveDescriptors = new JMenuItem(
+				Translator.instance.menuLabels.getString("retrieve"));
 		JMenuItem menuAnalysisSelect = new JMenuItem(
 				Translator.instance.menuLabels.getString("select"));
 		JMenuItem menuAnalysisDifexp = new JMenuItem(
@@ -317,6 +325,7 @@ public class BicOverlapperWindow extends JFrame {
 		analysisMenu.add(menuAnalysisSort);
 		analysisMenu.add(menuAnalysisMerge);
 		analysisMenu.add(menuAnalysisMergeRows);
+		analysisMenu.add(menuAnalysisRetrieveDescriptors);
 		analysisMenu.addSeparator();
 		analysisMenu.add(menuAnalysisSelect);
 		analysisMenu.add(menuAnalysisDifexp);
@@ -334,6 +343,7 @@ public class BicOverlapperWindow extends JFrame {
 		menuAnalysisShow.addActionListener(amm);
 		menuAnalysisSort.addActionListener(amm);
 		menuAnalysisMerge.addActionListener(amm);
+		menuAnalysisRetrieveDescriptors.addActionListener(amm);
 		menuAnalysisMergeRows.addActionListener(amm);
 		menuAnalysisSelect.addActionListener(amm);
 		menuAnalysisDifexp.addActionListener(amm);
@@ -408,6 +418,14 @@ public class BicOverlapperWindow extends JFrame {
 		menuViewTRN = new JMenuItem("Biological Network");
 
 		viewMenu.add(menuViewTRN);
+		
+		// Añadimos separador al menu
+		viewMenu.addSeparator();
+		
+		// Añadimos el item "Kegg"
+		menuViewKegg = new JMenuItem(
+				Translator.instance.menuLabels.getString("s25"));
+		viewMenu.add(menuViewKegg);	
 
 		// Añadimos el gestor de eventos a los items del menu "Ver"
 		ViewMenuManager gestorMenuVer = new ViewMenuManager(this, config);
@@ -425,6 +443,8 @@ public class BicOverlapperWindow extends JFrame {
 
 		menuViewOverlapper.addActionListener(gestorMenuVer);
 		menuViewBubbles.addActionListener(gestorMenuVer);
+		
+		menuViewKegg.addActionListener(gestorMenuVer);
 
 		// Creamos menu Ayuda
 		JMenu helpMenu = new JMenu(
@@ -461,6 +481,9 @@ public class BicOverlapperWindow extends JFrame {
 
 		menuViewBubbles.setEnabled(false);
 		menuViewOverlapper.setEnabled(false);
+
+		menuViewKegg.setEnabled(false);
+		
 		// menuViewCloud.setEnabled(false);
 
 		// TODO: Además, para una versión oficial, de momento deshabilitamos el

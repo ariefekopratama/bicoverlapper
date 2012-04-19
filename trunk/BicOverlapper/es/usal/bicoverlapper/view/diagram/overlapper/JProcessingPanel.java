@@ -649,10 +649,12 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	protected abstract void mousePressed();
 	protected abstract void mouseDragged();
 	protected abstract void mouseReleased();
+	protected abstract void mouseExited();
 	protected void mouseMovedAction()		{		mouseMoved();		}
 	protected void mousePressedAction()		{		mousePressed();		}
 	protected void mouseDraggedAction()		{		mouseDragged();		}
 	protected void mouseReleasedAction()		{		mouseReleased();		}
+	protected void mouseExitedAction()		{		mouseExited();		}
 	
 	protected abstract void keyPressed();
 	//protected abstract void keyReleased();
@@ -725,6 +727,7 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 		{
 		mouseX=e.getX();
 		mouseY=e.getY();
+		mouseExitedAction();
 		}
 
 	public void mouseDragged(MouseEvent e) 
