@@ -3137,7 +3137,11 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 									// idea
 		g.buildCompleteDualGraph();
 		// g.buildDualGraph();
+		
+		System.out.println("Graph built");
+		
 		g.computeMaxZones();
+		
 		System.out.println("Graph with " + this.g.getNodes().size()
 				+ " nodes, " + this.clusters.size() + " biclusters, "
 				+ this.getGraph().getEdges().size() + " edges, "
