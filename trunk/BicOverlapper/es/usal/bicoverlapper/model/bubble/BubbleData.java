@@ -17,6 +17,7 @@ import javax.swing.JOptionPane;
 import es.usal.bicoverlapper.controller.data.fileStructure.FileStructure;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
+import es.usal.bicoverlapper.view.diagram.overlapper.Overlapper;
 
 /**
  * Class with data of Bubbles representing biclusters, using Prefuse Tables.
@@ -148,7 +149,12 @@ public class BubbleData {
 					}
 					else{
 						b.name = "" + cont;
-						System.out.println("abajo b.name="+b.name);
+						JOptionPane.showMessageDialog(
+								null,
+								"Biclustering format without bicluster names deprecated, please refer to format section on the help",
+								"Biclustering format error", JOptionPane.ERROR_MESSAGE);
+						
+						System.err.println("Biclustering format without bicluster names deprecated, please refer to format section on the help");
 					}
 					cont++;
 				} else {
