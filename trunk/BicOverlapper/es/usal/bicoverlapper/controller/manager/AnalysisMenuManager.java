@@ -226,10 +226,7 @@ public class AnalysisMenuManager implements ActionListener {
 				sesion.mergeRows();
 			} else if (e.getActionCommand().equals(
 					Translator.instance.menuLabels.getString("retrieve"))) {
-				JOptionPane.showMessageDialog(
-						null,
-						"No veo claro cómo hacer esto, ya que se realiza al leer el microarray",
-						"Problema", JOptionPane.INFORMATION_MESSAGE);
+				sesion.getMicroarrayData().getGeneAnnotationsLite();
 			}
 
 			else if (e.getActionCommand().equals(

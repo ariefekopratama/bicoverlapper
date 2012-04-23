@@ -1929,6 +1929,7 @@ public class MicroarrayData {
 	public void retrieveGeneAnnotations(int[] genes, GeneRequester gr,
 			boolean showProgress, JLabel label, Point location,
 			boolean searchGO, boolean searchKEGG) {
+		
 		at = new AnnotationTask(genes);
 		
 		at.searchGO = searchGO;
@@ -1958,7 +1959,6 @@ public class MicroarrayData {
 			};
 			wt.start();
 		} else {
-			
 			//de momento en desuso porque las anotaciones no se cargan al arrancar
 			//at.addPropertyChangeListener(ventana.getMlpb());
 			//ventana.getMlpb().isListener();
@@ -2290,9 +2290,8 @@ public class MicroarrayData {
 			if (!searchGO && !searchKEGG) {
 				if (!isBioMaRt) {
 					
-					//se desactiva la posibilidad de buscarlos manualmente
-					//en principio, si no es bioMaRt, se buscan automáticamente siempre (preguntarle a Rodrigo)
-					ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);					
+					//en principio se desactivará por defecto y se activará si se contesta que no en el cuadro de diálogo
+					//ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);					
 					
 					if (isGO) {
 						exp = re.eval("golist=unlist(mget(group,GOTERM, ifnotfound=NA))");
@@ -2328,20 +2327,24 @@ public class MicroarrayData {
 				{
 					int res = JOptionPane.showConfirmDialog(
 						    null,
-						    "Would you like to search for names? (It could take about 3-4 minutes)",
+						    "Would you like to search for names? (It could take about several minutes)",
 						    "Search for names",
 						    JOptionPane.YES_NO_OPTION);
 					
-					//si el usuario desea buscar los nombres...
-					if(res == JOptionPane.YES_OPTION){
-						//se desactiva la posibilidad de buscarlos manualmente
+					//si el usuario no desea buscar los nombres en este momento...
+					if(res == JOptionPane.NO_OPTION){
+						//se activa la posibilidad de buscarlos manualmente
+						ventana.menuAnalysisRetrieveDescriptors.setEnabled(true);
+					}
+					//si se desea buscar los nombres en este momento...
+					else if(res == JOptionPane.YES_OPTION){
+						//una vez que se buscan, ya no se podrá repetir la búsqueda
 						ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);
 						
 						if (re.eval("martEnsembl") == null)
 							exp = re.eval("martEnsembl=getEnsemblMart(species=\""
 									+ organism + "\")");
-						//y después se procede a la búsqueda
-	
+						
 						/*if (!rname.equals("ensembl_gene_id"))// it's a bit slower if we don't search for ensembl gene ids
 							{
 							exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
@@ -2349,7 +2352,11 @@ public class MicroarrayData {
 							}
 						else
 							exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
+						
+						System.out.println("antes de donde se queda bastante rato");
+						
 						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
+						System.out.println("en la 2356");
 						if (!chip.equals(rname)) 
 						{
 							exp = re.eval("df[,\"" + rname + "\"]");
@@ -2773,11 +2780,12 @@ public class MicroarrayData {
 		@Override
 		public ArrayList<GeneAnnotation> doInBackground() {
 			synchronized (rManager) {
-				if (searchByR)
+				if (searchByR){
 					getMultipleGeneAnnotationsR();
-				else
+				}
+				else{
 					getGeneAnnotationNCBI();
-				
+				}
 				//Carlos
 				//el done lo hace automáticamente al terminar este método
 				//done();

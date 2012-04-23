@@ -38,6 +38,6 @@
 	<classpathentry kind="lib" path="lib/JRI.jar"/>
 	<classpathentry kind="lib" path="lib/forms-1.1.0.jar"/>
 	<classpathentry kind="lib" path="lib/TableLayout.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Charly/Desktop/librerias KEGG/keggapi.jar"/>
+	<classpathentry kind="lib" path="lib/keggapi.jar"/>
 	<classpathentry kind="output" path=""/>
 </classpath>
