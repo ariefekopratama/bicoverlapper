@@ -305,6 +305,8 @@ public class BicOverlapperWindow extends JFrame {
 				Translator.instance.menuLabels.getString("mergeRows"));
 		menuAnalysisRetrieveDescriptors = new JMenuItem(
 				Translator.instance.menuLabels.getString("retrieve"));
+		//por defecto estará desactivado. Cuando se conteste que NO a la pregunta de si se desean buscar anotaciones se activará
+		menuAnalysisRetrieveDescriptors.setEnabled(false);
 		JMenuItem menuAnalysisSelect = new JMenuItem(
 				Translator.instance.menuLabels.getString("select"));
 		JMenuItem menuAnalysisDifexp = new JMenuItem(
@@ -419,12 +421,9 @@ public class BicOverlapperWindow extends JFrame {
 
 		viewMenu.add(menuViewTRN);
 		
-		// Añadimos separador al menu
-		viewMenu.addSeparator();
-		
 		// Añadimos el item "Kegg"
 		menuViewKegg = new JMenuItem(
-				Translator.instance.menuLabels.getString("s25"));
+				Translator.instance.menuLabels.getString("s26"));
 		viewMenu.add(menuViewKegg);	
 
 		// Añadimos el gestor de eventos a los items del menu "Ver"

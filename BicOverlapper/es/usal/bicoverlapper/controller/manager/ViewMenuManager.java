@@ -148,7 +148,7 @@ public class ViewMenuManager implements ActionListener {
 				ventana.setLocation(config.initWC.x, config.initWC.y);
 				sesion.setWordCloud(ventana);
 				panel.repaint();
-			} else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s25"))){//Kegg
+			} else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s26"))){//Kegg
 				Dimension dim = config.getDimPanelKegg();
 				KeggDiagram panel = new KeggDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion, sesion.getDesktop(), panel);
