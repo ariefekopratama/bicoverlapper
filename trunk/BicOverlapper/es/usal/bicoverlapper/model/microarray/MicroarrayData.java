@@ -3609,6 +3609,7 @@ public class MicroarrayData {
 
 		if (description.contains("/")) {
 			chip = description.substring(description.indexOf("/") + 1);
+			System.out.println("chip en loadMicroarray = "+chip);
 			organism = description.substring(0, description.indexOf("/"));
 			if (chip.length() < 2)
 				JOptionPane.showMessageDialog(null, "Chip name is wrong: "

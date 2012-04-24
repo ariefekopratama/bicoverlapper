@@ -6,7 +6,9 @@ import prefuse.data.Table;
 //Parsing
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.StringTokenizer;
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -90,6 +92,9 @@ public class BubbleData {
 		int contc = 0;
 		Bubble b = null;
 
+		//Carlos, para contar el número diferentes de genes
+		Set<String> genesLeidos = new HashSet<String>();
+		
 		maxHomogeneity = -1;
 		minHomogeneity = -1;
 		boolean areGenes = true;
@@ -99,7 +104,7 @@ public class BubbleData {
 		cad = br.readLine(); // La primera línea contiene el número de
 								// biclusters
 
-		//Carlos, esto tenderá a desaparecer probablemente
+		/*
 		if (null != cad) {
 			int numBiclusters = Integer.parseInt(cad);
 			if (numBiclusters >= 200) {
@@ -108,7 +113,11 @@ public class BubbleData {
 								"Too many biclusters found. Please, adjust the parameters in order to find less biclusters.",
 								"Biclusters error", JOptionPane.ERROR_MESSAGE);
 			}
-		}	
+		}
+		*/	
+		
+		//antes de comenzar la lectura se restablece la variable
+		sesion.setTooManyGenes(false);
 
 		while ((cad = br.readLine()) != null) {
 			StringTokenizer st = new StringTokenizer(cad, "\t");
@@ -121,12 +130,12 @@ public class BubbleData {
 				{
 					isSize = false;
 					b = new Bubble();
+										
 					if (cad.contains(":")){
 						//antes estaba así
 						//b.name = new StringTokenizer(cad, ":").nextToken();
 						StringTokenizer stAux = new StringTokenizer(cad, ":");
 						b.name = stAux.nextToken();
-						System.out.println("arriba b.name="+b.name);
 						/*
 						if(stAux.hasMoreTokens()){
 							int numNodos;
@@ -162,13 +171,23 @@ public class BubbleData {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
 							b.genes.add(c);
+
+							//se controla el número de genes leídos
+							genesLeidos.add(c);
+							//en caso de superar una determinada cifra y de no estar notificado, se notificará en la sesión
+							//pero se seguirá leyendo
+							if(!sesion.isTooManyGenes() && genesLeidos.size() > Session.MAX_GENES){
+								sesion.setTooManyGenes(true);
+								System.out.println("\n\nsesion.setTooManyGenes(true)\n\n");
+							}
+							
 							if (!genes.containsKey(c))
 								genes.put(c, contg++);
 						}
 					} else {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
-							b.conditions.add(c);
+							b.conditions.add(c);							
 							if (!conditions.containsKey(c))
 								conditions.put(c, contc++);
 						}
@@ -198,7 +217,7 @@ public class BubbleData {
 						bubbles.add(b);
 						isSize = true;// para el siguiente
 					}
-					areGenes = !areGenes;
+					areGenes = !areGenes;				
 				}
 			}
 			if (st.countTokens() > 0) {
