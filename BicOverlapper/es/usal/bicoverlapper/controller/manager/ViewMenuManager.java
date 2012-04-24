@@ -102,24 +102,32 @@ public class ViewMenuManager implements ActionListener {
 				ventana.setLocation(config.initHM.x, config.initHM.y);
 				panel.create();
 				panel.run();
-			} else if (e.getActionCommand().equals(Translator.instance.menuLabels.getString("s10"))) {
-				Dimension dim = config.getDimPanelBiclusVis();
-				OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
-				DiagramWindow ventana = new DiagramWindow(sesion, sesion.getDesktop(), panel);
-				panel.setWindow(ventana);
-				// ventana.setSize(config.getDimPanelBiclusVis());
-				ventana.setLocation(0,
-						config.getSizePanelCoordenadas().height + 30);
-
-				sesion.setBubbleGraph(ventana);
-
-				boolean ret = panel.create();
-				//si el panel se ha creado sin errores se arranca
-				if(ret){
-					panel.run();
+			} else if (e.getActionCommand().equals(Translator.instance.menuLabels.getString("s10"))) { //Overlapper
+				if(!sesion.isTooManyGenes()){
+					Dimension dim = config.getDimPanelBiclusVis();
+					OverlapperDiagram panel = new OverlapperDiagram(sesion, dim);
+					DiagramWindow ventana = new DiagramWindow(sesion, sesion.getDesktop(), panel);
+					panel.setWindow(ventana);
+					// ventana.setSize(config.getDimPanelBiclusVis());
+					ventana.setLocation(0,
+							config.getSizePanelCoordenadas().height + 30);
+	
+					sesion.setBubbleGraph(ventana);
+	
+					boolean ret = panel.create();
+					//si el panel se ha creado sin errores se arranca
+					if(ret){
+						panel.run();
+					}
+					else{
+						ventana.dispose();
+					}
 				}
 				else{
-					ventana.dispose();
+					JOptionPane.showMessageDialog(
+							null,
+							"Too many genes found in the biclusters. Please, adjust the parameters in order to find less genes.",
+							"Too many genes", JOptionPane.ERROR_MESSAGE);
 				}
 				
 			} else if (e.getActionCommand().equals("Bicluster Bubble Graph")) {

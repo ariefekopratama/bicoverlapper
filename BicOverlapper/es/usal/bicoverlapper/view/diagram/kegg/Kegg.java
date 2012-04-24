@@ -3,6 +3,7 @@ package es.usal.bicoverlapper.view.diagram.kegg;
 import java.awt.Color;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -43,7 +44,6 @@ public class Kegg {
 
 		k = kegg;
 		// se consultan los elementos del pathway
-
 		PathwayElement[] results = k.serv.get_elements_by_pathway(pathway);
 		// se crea la lista con los resultados
 		int[] element_id_list = new int[results.length];
@@ -61,6 +61,10 @@ public class Kegg {
 			// Por el momento se le dan valores aleatorios a las muestras entre
 			// 0 y 100
 			samples[i] = r.nextInt(101);
+			//AQUÍ EN SAMPLES VA A ESTAR PROBABLEMENTE LO QUE FALTA.
+			//SUPONGO QUE ESTOS element_id_list COINCIDIRÁN CON LOS ID DE ENTREZ 
+			//ENTONCES MAPEÁNDOLOS EXTRAERÉ LA INFORMACIÓN NECESARIA PARA COLOREARLOS DE ALGÚN LADO
+			
 
 			// int[] components = results[i].getComponents();
 			// String[] names = results[i].getNames();
@@ -156,6 +160,9 @@ public class Kegg {
 			// System.out.println(d[i].getEntry_id()+", "+d[i].getDefinition());
 			paths[i] = d[i].getDefinition();
 		}
+		
+		//se ordena por orden alfabético
+		Arrays.sort(paths);
 
 		return paths;
 	}

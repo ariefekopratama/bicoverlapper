@@ -23,17 +23,14 @@ public class KeggDiagram extends Diagram {
 		int num = sesion.getNumHeatmapDiagrams();
 		this.setName("Kegg " + num);
 		this.sesion = sesion;
-		//this.md = sesion.getMicroarrayData();
+
 		this.alto = (int) dim.getHeight();
 		this.ancho = (int) dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho, alto));
 		this.setSize(ancho, alto);
-		/*
-		this.paleta = new Color[] { sesion.lowExpColor, sesion.avgExpColor,
-				sesion.hiExpColor, sesion.getSelectionColor(),
-				sesion.getHoverColor() };
-		muestraColor = new JTextField[paleta.length];
-		*/
+
+		System.out.println("ESTO ES LA BIBLIOTECA sesion.getMicroarrayData().chip="+sesion.getMicroarrayData().chip);
+		System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism;="+sesion.getMicroarrayData().organism);
 	}
 	
 	public void create() {
@@ -55,5 +52,13 @@ public class KeggDiagram extends Diagram {
 
 	public synchronized void run() {
 		this.getWindow().setVisible(true);
+	}
+
+	public Session getSesion() {
+		return sesion;
+	}
+
+	public void setSesion(Session sesion) {
+		this.sesion = sesion;
 	}
 }

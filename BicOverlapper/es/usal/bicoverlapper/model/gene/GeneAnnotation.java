@@ -8,13 +8,12 @@ import es.usal.bicoverlapper.model.annoations.GOTerm;
 import es.usal.bicoverlapper.model.annoations.KEGGPath;
 
 public class GeneAnnotation {
-	
-	
+
 	/**
 	 * Internal id used only by BicOverlapper
 	 */
 	public int internalId;
-	//From NCBI, obtained by eUtils
+	// From NCBI, obtained by eUtils
 	/**
 	 * Gene name as in NCBI
 	 */
@@ -35,7 +34,7 @@ public class GeneAnnotation {
 	 * Ensembl gene id (entrezId)
 	 */
 	public String ensemblId;
-	
+
 	/**
 	 * Gene type as in NCBI (by now not taken)
 	 */
@@ -52,7 +51,7 @@ public class GeneAnnotation {
 	 * Gene organism as in NCBI
 	 */
 	public String organism;
-	
+
 	/**
 	 * NCBI identified aliases
 	 */
@@ -60,84 +59,97 @@ public class GeneAnnotation {
 
 	public ArrayList<GOTerm> goTerms;
 	public ArrayList<KEGGPath> keggPaths;
-	
-	public GeneAnnotation()
-		{
-		aliases=new ArrayList<String>();
-		//goTerms=new ArrayList<GOTerm>();//null if they haven't been searched yet, empty if they were searched and not found
+
+	public GeneAnnotation() {
+		aliases = new ArrayList<String>();
+		// goTerms=new ArrayList<GOTerm>();//null if they haven't been searched
+		// yet, empty if they were searched and not found
+	}
+
+	public String getDetailedForm() {
+		String form = "";
+		if (name != null && name.length() > 0)
+			form = form.concat("Name: " + name + "\n");
+		if (id != null && id.length() > 0)
+			form = form.concat("ID:      " + id + "\n");
+		if (type != null && type.length() > 0)
+			form = form.concat("Type:  " + type + "\n");
+		if (locus != null && locus.length() > 0)
+			form = form.concat("Loc.:  " + locus + "\n");
+		if (aliases != null && aliases.size() > 0) {
+			String al = "";
+			for (int i = 0; i < aliases.size(); i++)
+				al = al.concat(aliases.get(i) + ", ");
+			form = form.concat("Alias:  " + al.substring(0, al.length() - 2)
+					+ "\n");
 		}
-	public String getDetailedForm()
-		{
-		String form="";
-		if(name!=null && name.length()>0)				form=form.concat("Name: "+name+"\n");
-		if(id!=null && id.length()>0)					form=form.concat("ID:      "+id+"\n");
-		if(type!=null && type.length()>0)				form=form.concat("Type:  "+type+"\n");
-		if(locus!=null && locus.length()>0)				form=form.concat("Loc.:  "+locus+"\n");
-		if(aliases!=null && aliases.size()>0)
-			{
-			String al="";
-			for(int i=0;i<aliases.size();i++)	al=al.concat(aliases.get(i)+", ");
-			form=form.concat("Alias:  "+al.substring(0, al.length()-2)+"\n");	
-			}
-		if(organism!=null && organism.length()>0)		form=form.concat("Species:   "+organism+"\n");
-		if(description!=null && description.length()>0)	
-			{
-			form=form.concat("Desc.:  ");
-			String[] tok=description.split(" ");
-			int cont=0;
-			for(int i=0;i<tok.length;i++)
-				{
-				form=form.concat(tok[i]+" ");
-				if(cont++>=5 || i==tok.length-1)	
-					{
-					form=form.concat("\n      ");
-					cont=0;
-					}
+		if (organism != null && organism.length() > 0)
+			form = form.concat("Species:   " + organism + "\n");
+		if (description != null && description.length() > 0) {
+			form = form.concat("Desc.:  ");
+			String[] tok = description.split(" ");
+			int cont = 0;
+			for (int i = 0; i < tok.length; i++) {
+				form = form.concat(tok[i] + " ");
+				if (cont++ >= 5 || i == tok.length - 1) {
+					form = form.concat("\n      ");
+					cont = 0;
 				}
 			}
-		if(goTerms!=null && goTerms.size()>0)
-			{
-			//1) Sort terms
-			List<String> terms=new ArrayList<String>();
-			for(GOTerm go : goTerms)	terms.add(go.term);
+		}
+		if (goTerms != null && goTerms.size() > 0) {
+			// 1) Sort terms
+			List<String> terms = new ArrayList<String>();
+			for (GOTerm go : goTerms)
+				terms.add(go.term);
 			Collections.sort(terms);
-			ArrayList<GOTerm> newgo=new ArrayList<GOTerm>();
-			for(String term: terms)
-				for(GOTerm go: goTerms)
-					if(go.term.equals(term))	newgo.add(go);
-			
-			goTerms=newgo;
-			
-			//2) Add them
-			form=form.concat("\nGO Terms:  ");
-			boolean add=false;
-			for(GOTerm go : goTerms)
-				if(go.ontology.equals("CC"))	{add=true; break;}
-			if(add)
-				{
-				form=form.concat("\n  Cellular component");
-				for(GOTerm go : goTerms)
-					if(go.ontology.equals("CC"))	form=form.concat("\n     "+go.term);
+			ArrayList<GOTerm> newgo = new ArrayList<GOTerm>();
+			for (String term : terms)
+				for (GOTerm go : goTerms)
+					if (go.term.equals(term))
+						newgo.add(go);
+
+			goTerms = newgo;
+
+			// 2) Add them
+			form = form.concat("\nGO Terms:  ");
+			boolean add = false;
+			for (GOTerm go : goTerms)
+				if (go.ontology.equals("CC")) {
+					add = true;
+					break;
 				}
-			add=false;
-			for(GOTerm go : goTerms)
-				if(go.ontology.equals("BP"))	{add=true; break;}
-			if(add)
-				{
-				form=form.concat("\n  Biological process");
-				for(GOTerm go : goTerms)
-					if(go.ontology.equals("BP"))	form=form.concat("\n     "+go.term);
-				}
-			add=false;
-			for(GOTerm go : goTerms)
-				if(go.ontology.equals("MF"))	{add=true; break;}
-			if(add)
-				{
-				form=form.concat("\n  Molecular function");
-				for(GOTerm go : goTerms)
-					if(go.ontology.equals("MF"))	form=form.concat("\n     "+go.term);
-				}
+			if (add) {
+				form = form.concat("\n  Cellular component");
+				for (GOTerm go : goTerms)
+					if (go.ontology.equals("CC"))
+						form = form.concat("\n     " + go.term);
 			}
-		return form;
+			add = false;
+			for (GOTerm go : goTerms)
+				if (go.ontology.equals("BP")) {
+					add = true;
+					break;
+				}
+			if (add) {
+				form = form.concat("\n  Biological process");
+				for (GOTerm go : goTerms)
+					if (go.ontology.equals("BP"))
+						form = form.concat("\n     " + go.term);
+			}
+			add = false;
+			for (GOTerm go : goTerms)
+				if (go.ontology.equals("MF")) {
+					add = true;
+					break;
+				}
+			if (add) {
+				form = form.concat("\n  Molecular function");
+				for (GOTerm go : goTerms)
+					if (go.ontology.equals("MF"))
+						form = form.concat("\n     " + go.term);
+			}
 		}
+		return form;
+	}
 }

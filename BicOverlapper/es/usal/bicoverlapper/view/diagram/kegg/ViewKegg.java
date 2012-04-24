@@ -20,7 +20,7 @@ public class ViewKegg {
 	private ScrollablePicture picture;
 	private JScrollPane pictureScrollPane;
 	private JComponent panelImagen;
-	private JComponent panelComboBox;
+	private JComponent panelComboBoxes;
 	//private JFrame frame;
 	private JComboBox combo1, combo2;
 	private Definition[] definitionPathways;
@@ -28,7 +28,7 @@ public class ViewKegg {
 	
 	private static Kegg kegg;
 	
-	private JPanel panelPrincipal;
+	private KeggDiagram panelPrincipal;
 
 	private ImageIcon imagenPorDefecto = null;
 	public static final String urlImagenPorDefecto = "http://www.uco.es/~b02robaj/sencel_archivos/image038.gif";
@@ -46,7 +46,7 @@ public class ViewKegg {
 	}
 	*/
 	
-	public ViewKegg(Kegg _kegg, JPanel _panelPrincipal) throws Exception{
+	public ViewKegg(Kegg _kegg, KeggDiagram _panelPrincipal) throws Exception{
 		kegg = _kegg;
 		panelPrincipal = _panelPrincipal;
 		
@@ -91,12 +91,12 @@ public class ViewKegg {
 		//para que se muestre al menos el panel cuando se disponga de él (bastante antes que de los combos)
 		panelImagen.revalidate();
 		
-		panelComboBox = new JPanel();
-		panelComboBox.setOpaque(true);
-		panelComboBox.setLayout(new FlowLayout());
+		panelComboBoxes = new JPanel();
+		panelComboBoxes.setOpaque(true);
+		panelComboBoxes.setLayout(new FlowLayout());
 		
 		//set up the combobox pane.
-		panelImagen.add(panelComboBox);
+		panelImagen.add(panelComboBoxes);
 
 		this.createComboBoxes();
 
@@ -106,9 +106,22 @@ public class ViewKegg {
 	}
 
 	private void createComboBoxes() throws Exception {
+		//se obtiene la lista de organismos
+		String[] organismosSeleccionables = kegg.getOrganism();
+		int organismoSeleccionado = 0;
+		//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
+		for (String organismo : organismosSeleccionables) {
+			if(organismo.contains(panelPrincipal.getSesion().getMicroarrayData().organism)){
+				break;
+			}
+			organismoSeleccionado++;
+		}
 		combo1 = new JComboBox();
-		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(kegg.getOrganism());
+		//se añaden todos los organismos al desplegable
+		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
+		//se selecciona en el desplegable el organismo cuyo microarray ha sido cargado
+		combo1.setSelectedIndex(organismoSeleccionado);
 		combo1.setPreferredSize(new java.awt.Dimension(351, 23));
 		combo1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -158,8 +171,8 @@ public class ViewKegg {
 			}
 		});
 
-		panelComboBox.add(combo1);
-		panelComboBox.add(combo2);
+		panelComboBoxes.add(combo1);
+		panelComboBoxes.add(combo2);
 
 		fillComboBox2();
 		//combo2.setVisible(true);
@@ -259,7 +272,7 @@ public class ViewKegg {
 		//se carga la nueva imagen a mostrar
 		loadImage(url, isDefaultImage);
 		//se montan los elementos restantes del panel
-		panelImagen.add(panelComboBox);		
+		panelImagen.add(panelComboBoxes);		
 	}
 	
 	private void loadImage(String url, boolean isDefaultImage) {

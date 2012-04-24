@@ -143,11 +143,8 @@ public class Session implements KeyListener {
 
 	//Carlos
 	//para avisar al BubbleMap o al Ovelapper de que hay demasiados genes
-	/*
 	private boolean tooManyGenes;
-	public static int MAX_NODES = 5;
-	private int numNodes;
-	*/
+	public static int MAX_GENES = 1000;
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a
 	 * <code>JDesktopPane</code>, with empty data
@@ -1474,7 +1471,6 @@ public class Session implements KeyListener {
 		this.numVentanas++;
 	}
 
-	/*
 	public boolean isTooManyGenes() {
 		return tooManyGenes;
 	}
@@ -1482,13 +1478,4 @@ public class Session implements KeyListener {
 	public void setTooManyGenes(boolean tooManyGenes) {
 		this.tooManyGenes = tooManyGenes;
 	}
-
-	public int getNumNodes() {
-		return numNodes;
-	}
-
-	public void setNumNodes(int numNodes) {
-		this.numNodes = numNodes;
-	}
-	*/
 }
