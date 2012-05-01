@@ -2327,7 +2327,7 @@ public class MicroarrayData {
 				{
 					int res = JOptionPane.showConfirmDialog(
 						    null,
-						    "Would you like to search for names? (It could take about several minutes)",
+						    "Would you like to search for names? (It could take several minutes)",
 						    "Search for names",
 						    JOptionPane.YES_NO_OPTION);
 					

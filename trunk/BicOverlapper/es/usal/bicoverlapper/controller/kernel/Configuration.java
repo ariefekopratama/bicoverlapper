@@ -89,8 +89,8 @@ public class Configuration {
 				(int) (dimDesktop.height * 0.34));
 		
 		
-		dimKeggWindow = new Dimension((int) (dimDesktop.width * 0.45),
-				(int) (dimDesktop.height * 0.55));
+		dimKeggWindow = new Dimension((int) (dimDesktop.width * 0.50),
+				(int) (dimDesktop.height * 0.57) - 30);
 
 		initPC = new Point(0, 0);
 		initHM = new Point(initPC.x + dimParallelCoordinatesWindow.width, 0);

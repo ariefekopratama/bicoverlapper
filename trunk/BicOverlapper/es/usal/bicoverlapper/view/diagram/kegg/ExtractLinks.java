@@ -95,9 +95,10 @@ public class ExtractLinks {
 				
 				//ahora se mapea lo que se lee del html con un keggElement
 				//la forma de hacerlo es con el título y el campo names de kegg
-				for (KeggElement ke : keggElements) {
+				for (KeggElement ke : keggElements) {					
 					//si se encuentra alguna coincidencia, se setea el fg y el bg y se sale
 					if(checkElement(title, ke.getNames())){
+						System.out.println("ELEMENTO COINCIDENTE EN checkElement");
 						itm.setFg(ke.getForeground());
 						itm.setBg(ke.getBackground());
 						break;
@@ -129,6 +130,7 @@ public class ExtractLinks {
         }
                
         for (int i = 0; i < names.length; i++) {
+        	//System.out.println("names[i]="+names[i]+", title="+title);
             if(title.indexOf(names[i]) == -1)
             	contains = false;
         }
