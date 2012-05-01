@@ -30,7 +30,6 @@ public class ViewKegg {
 	
 	private KeggDiagram panelPrincipal;
 
-	private ImageIcon imagenPorDefecto = null;
 	public static final String urlImagenPorDefecto = "http://www.uco.es/~b02robaj/sencel_archivos/image038.gif";
 	
 	/*
@@ -213,6 +212,7 @@ public class ViewKegg {
 		combo2.setEnabled(false);
 		
 		String id_pathway = kegg.getPathwayIdFromDefinition((String) combo2.getSelectedItem(), definitionPathways);
+		System.out.println("id_pathway = "+id_pathway);
 
 		if (id_pathway != null) {
 			showImage(id_pathway);
@@ -243,21 +243,21 @@ public class ViewKegg {
 	}
 
 	private void showImage(String pathway) {
-		Kegg k;
-
 		try {
-			k = new Kegg();
-			String url = k.generarImagenKegg(k, pathway);
+			String url = kegg.generarImagenKegg(pathway);
 
 			URL u = new URL(url);
 			InputStream in = u.openStream();
 			InputStreamReader reader = new InputStreamReader(in);
 
-			ExtractLinks fl = new ExtractLinks(k.getKeggElements());
+			ExtractLinks fl = new ExtractLinks(kegg.getKeggElements());
 
 			listaElementosImg = fl.getLinks(reader);
 
-			mountPanelsWithNewImage(url.replace("html", "png"), false);
+			//para que se monte el coloreado desde el programa java se pone false
+			//mountPanelsWithNewImage(url.replace("html", "png"), false);
+			//si se recoge la imagen ya coloreada, aquí true
+			mountPanelsWithNewImage(url.replace("html", "png"), true);
 		} catch (MalformedURLException mURLe) {
 			mURLe.printStackTrace();
 		} catch (Exception e) {

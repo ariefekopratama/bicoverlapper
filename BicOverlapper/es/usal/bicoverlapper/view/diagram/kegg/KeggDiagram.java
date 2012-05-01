@@ -13,6 +13,7 @@ public class KeggDiagram extends Diagram {
 	private int alto;
 	private int ancho;
 	private Visualization v;
+	private Kegg kegg;
 
 	public KeggDiagram(){
 		super();
@@ -30,7 +31,9 @@ public class KeggDiagram extends Diagram {
 		this.setSize(ancho, alto);
 
 		System.out.println("ESTO ES LA BIBLIOTECA sesion.getMicroarrayData().chip="+sesion.getMicroarrayData().chip);
-		System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism;="+sesion.getMicroarrayData().organism);
+		System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism="+sesion.getMicroarrayData().organism);
+		System.out.println("ESTO ES LA BIBLIOTECA SI ARRIBA DA BIOMART sesion.getMicroarrayData().rname="+sesion.getMicroarrayData().rname);
+		
 	}
 	
 	public void create() {
@@ -40,9 +43,8 @@ public class KeggDiagram extends Diagram {
 	}	
 	
 	private void crearViewKegg() {
-		Kegg kegg;
 		try {
-			kegg = new Kegg();
+			kegg = new Kegg(sesion);
 			ViewKegg vk = new ViewKegg(kegg, this);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block

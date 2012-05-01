@@ -1,103 +1,202 @@
 package es.usal.bicoverlapper.view.diagram.kegg;
 
 import java.awt.Color;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Random;
+import java.util.Map;
+import java.util.TreeMap;
 
-import keggapi.*;
+import keggapi.Definition;
+import keggapi.KEGGLocator;
+import keggapi.KEGGPortType;
+import keggapi.PathwayElement;
+import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
 public class Kegg {
 	
 	private KEGGPortType serv;
-	private static Kegg k;
 	private List<KeggElement> keggElements = new ArrayList<KeggElement>();
-
+	private Session sesion;
+	private TreeMap<String, ArrayList<String>> koterms;
+	
 	/**
 	 * Binds the service to the soap port
 	 * 
 	 * @throws Exception
 	 */
-	public Kegg() throws Exception {
+	public Kegg(Session _sesion) throws Exception {
 
 		KEGGLocator locator = new KEGGLocator();
 		serv = locator.getKEGGPort();
+		sesion = _sesion;
+		
+        try {
+            System.out.println("Reading komappingTOTAL "+System.currentTimeMillis());
+            String pathKOMapping = "es/usal/bicoverlapper/view/diagram/kegg/komappingTOTAL.ser";
+            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathKOMapping);
+            if(null == is){
+                System.out.println("problems al canto");
+            }
+            else{
+	            ObjectInputStream oin = new ObjectInputStream(is);
+	            koterms = (TreeMap<String, ArrayList<String>>) oin.readObject();
+	            oin.close();
+            }
+            System.out.println("koterms read at "+System.currentTimeMillis());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        /*
+        Set<String> listaClaves = koterms.keySet();
+        for (String clave : listaClaves) {
+			System.out.println("clave = "+clave);
+		}
+		*/
 	}
 
 	public KEGGPortType getServ() {
 		return serv;
 	}
 
-	public static Kegg getK() {
-		return k;
-	}
-
 	public List<KeggElement> getKeggElements() {
 		return keggElements;
 	}
 
-	public String generarImagenKegg(Kegg kegg, String pathway) throws Exception {
+	public String generarImagenKegg(String pathway) throws Exception {
 		long start = System.currentTimeMillis();
-
-		k = kegg;
+		
+		List<PathwayElement> resultadosValidos = new ArrayList<PathwayElement>();
+		
 		// se consultan los elementos del pathway
-		PathwayElement[] results = k.serv.get_elements_by_pathway(pathway);
+		PathwayElement[] results = this.serv.get_elements_by_pathway(pathway);
 		// se crea la lista con los resultados
-		int[] element_id_list = new int[results.length];
+		List<Integer> elementIdList = new ArrayList<Integer>();
 		// lista de samples
-		float[] samples = new float[element_id_list.length];
-		// el random es temporal, sólo para coger samples aleatorios
-		Random r = new Random();
-		r.setSeed(new Date().getTime());
-
+		List<Float> samplesList = new ArrayList<Float>();
+		
+		//creo una lista de elementos que tendrá todos los elementos y que sólo usaré para obtener la imagen de KEGG en blanco
+		//int[] element_id_listAux = new int[results.length];
+		
+		//se recogen los genes de MicroarrayData
+		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+		
+		System.out.println("results.length es "+results.length);
 		// extraigo los element_id_list, lo de los colores es sólo ahora que no
 		// tengo de dónde extraerlos y los genero aleatorios
 		for (int i = 0; i < results.length; i++) {
-			element_id_list[i] = results[i].getElement_id();
-
-			// Por el momento se le dan valores aleatorios a las muestras entre
-			// 0 y 100
-			samples[i] = r.nextInt(101);
-			//AQUÍ EN SAMPLES VA A ESTAR PROBABLEMENTE LO QUE FALTA.
-			//SUPONGO QUE ESTOS element_id_list COINCIDIRÁN CON LOS ID DE ENTREZ 
-			//ENTONCES MAPEÁNDOLOS EXTRAERÉ LA INFORMACIÓN NECESARIA PARA COLOREARLOS DE ALGÚN LADO
-			
-
-			// int[] components = results[i].getComponents();
-			// String[] names = results[i].getNames();
-
-			// System.out.println(results[i].getElement_id()+" "+results[i].getType()+" "+samples[i]);
-			/*
-			 * for (int component: components) {
-			 * System.out.println("Component: "+component); }
-			 * 
-			 * for (String name: names) { System.out.println("Names: "+name); }
-			 */
+			if(results[i].getType().equals("ortholog")){
+				//así cogerías los id de todos, pero realmente sólo quiero coger aquellas que coloree
+				//element_id_listAux[i] = results[i].getElement_id();
+	
+				ArrayList<Double> valoresExpresion = null;
+				boolean hayExpresion = false;
+				valoresExpresion = new ArrayList<Double>();
+				String[] nombresGenesEnElemento = results[i].getNames();
+				for (String nombreGenEnElemento : nombresGenesEnElemento) {
+					//obtengo la lista de genes de koterms
+					ArrayList<String> listaGenes = koterms.get(nombreGenEnElemento);
+					//si no está vacía (estará vacía cuando sean puntitos que no se van a colorear por ejemplo)
+					if(null != listaGenes){
+						//se recorren los nombres de los genes para buscar coincidencias
+						for (String gen : listaGenes) {							
+							int numGen = -1;
+							//se recorren los genes de BicOverlapper para encontrar coincidencias
+							//lo que no sé es si aquí, una vez encuentre 1 coincidencia, podría salirme o no...
+							//en principio sí que aparece más de 1 coincidencia en algún caso, con lo que no puedo quitarlo
+							for (GeneAnnotation g : mapaGenes.values()) {
+								numGen++;
+								//habrá que ver finalmente qué se usa, si la id, la entrezId o qué...
+								//de momento para el mus musculus trabajo con la id a pelo, pero sólo para pruebas...
+								//System.out.println("g.entrezId = "+g.entrezId);
+								if(null != g.id && gen.contains(g.id)){									
+									//se supone que al llegar aquí quiere decir que hay genes en BicOverlapper para ese elemento de Kegg
+									//por lo tanto se activa este flag y después se calculará una media de los valores que salgan de aquí
+									hayExpresion = true;
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(numGen, 0);
+									valoresExpresion.add(valorExp);			
+								}
+							}
+						}
+					}
+				}
+				
+				if(hayExpresion){
+					elementIdList.add(results[i].getElement_id());
+					resultadosValidos.add(results[i]);
+					float media = calcularMedia(valoresExpresion);
+					samplesList.add(media);
+				}
+			}
+			else{
+				//System.out.println("he encontrado uno que no es ortholog");
+			}
 		}
+		
+		System.out.println("for principal took "
+				+ (System.currentTimeMillis() - start) / 1000 + " seconds");		
 
+		//convierto las colecciones anteriores en arrays
+		int[] element_id_list = toIntArray(elementIdList);
+		float[] samples = toFloatArray(samplesList);		
+		
+		System.out.println("antes de interpolateColors");
+		
+		//CUIDADO PORQUE AHORA element_id_list PODRÍA SER UN NULLAZO
+		
 		String[] fgs = new String[element_id_list.length];
 		String[] bgs = new String[element_id_list.length];
 
-		interpolateColors(pathway, element_id_list, samples, fgs, bgs);
+		interpolateColors(element_id_list, samples, fgs, bgs);
 
 		// como todo en principio debería haber mantenido el orden, ahora ya
 		// tendría cada elemento con su fg y bg correspondiente
 		// como el id es único para cada resultado, añado el resultado que es lo
 		// que tiene más información
-		for (int i = 0; i < results.length; i++) {
-			// Se añade a la lista de elementos
-			keggElements.add(new KeggElement(results[i], fgs[i], bgs[i]));
+		int i = 0;
+		for (PathwayElement resultadoValido: resultadosValidos) {
+			System.out.println("Elemento añadido: "+resultadoValido.getElement_id());
+			for (String name: resultadoValido.getNames()) {
+				System.out.println("nombre: "+name);
+			}
+			keggElements.add(new KeggElement(resultadoValido, fgs[i], bgs[i]));
+			i++;
 		}
+		
+		System.out.println("El número de resultados válidos encontrados es "+keggElements.size());
+		
+		//para medir sólo lo que tarda este método
+		long startColorKegg = System.currentTimeMillis();
+		System.out.println("Llamando a colorKeggInTheCloud");
+		
+		//aquí creo que me dan igual fgs y bgs porque van a ir en blanco
+		//pongo element_id_listAux en vez de element_id_list porque quiero todos los elementos de la imagen en blanco
+		//String url = k.colorKegg2(pathway, element_id_listAux, fgs, bgs);
 
-		String url = k.colorKegg2(pathway, element_id_list, fgs, bgs);
-
+		String url = this.colorKeggInTheCloud(pathway, element_id_list, fgs, bgs);
+		
+		System.out.println("colorKeggInTheCloud took "
+				+ (System.currentTimeMillis() - startColorKegg) / 1000 + " seconds");		
+		
 		System.out.println("generarImagenKegg took "
 				+ (System.currentTimeMillis() - start) / 1000 + " seconds");
 
 		return url;
+	}
+
+	/*
+	 * Método para calcular el promedio de una lista
+	 */
+	private float calcularMedia(List<Double> valoresExpresion) {
+		double suma = 0;
+		for (Double valor : valoresExpresion) {
+			suma += valor;
+		}
+		return (float) (suma/valoresExpresion.size());
 	}
 
 	/**
@@ -301,8 +400,7 @@ public class Kegg {
 	 *            like #00FF00
 	 * @return
 	 */
-	public String colorKegg2(String pathid, int[] element_id_list,
-			String[] fgcolors, String[] bgcolors) {
+	public String colorKegg2(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
 		String colored = null;
 		try {
 			/*
@@ -323,15 +421,30 @@ public class Kegg {
 				bgAux[i] = "#FFFFFF";
 				fgAux[i] = "#000000";
 			}
-			colored = serv.get_html_of_colored_pathway_by_elements(pathid,
-					element_id_list, fgAux, bgAux);
+			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgAux, bgAux);
 
-			System.out.println("Finished " + colored);
+			System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return colored;
 	}
+	
+	
+	
+	
+	public String colorKeggInTheCloud(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
+		String colored = null;
+		try {
+			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgcolors, bgcolors);
+
+			System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return colored;
+	}	
+	
 
 	/**
 	 * Colors Kegg (esta versión devuelve el png simplemente)
@@ -385,10 +498,9 @@ public class Kegg {
 		return colored;
 	}
 
-	public void interpolateColors(String pathway, int[] element_id_list,
-			float[] samples, String[] fgs, String[] bgs) {
+	public void interpolateColors(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
 		try {
-			float[] ranks = k.getRanks(samples);
+			float[] ranks = this.getRanks(samples);
 
 			for (int i = 0; i < element_id_list.length; i++) {
 				fgs[i] = "#007700";
@@ -508,4 +620,24 @@ public class Kegg {
 
 		return minValue;
 	}
+	
+    public static int[] toIntArray(List<Integer> list) {  
+	    int[] intArray = new int[list.size()];  
+	    int i = 0;  
+	       
+	    for (Integer integer : list)  
+	    intArray[i++] = integer;  
+	      
+	    return intArray;  
+    }  
+    
+    public static float[] toFloatArray(List<Float> list) {  
+	    float[] floatArray = new float[list.size()];  
+	    int i = 0;  
+	       
+	    for (Float f: list)  
+	    	floatArray[i++] = f;  
+	      
+	    return floatArray;  
+    }    
 }
