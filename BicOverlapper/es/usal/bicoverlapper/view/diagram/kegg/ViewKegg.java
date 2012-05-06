@@ -206,7 +206,6 @@ public class ViewKegg {
 			        worker.execute();					
 					
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -234,7 +233,6 @@ public class ViewKegg {
 				        worker.execute();
 					}
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}

@@ -145,8 +145,7 @@ public class Kegg {
 			}
 		}
 		
-		System.out.println("for principal took "
-				+ (System.currentTimeMillis() - start) / 1000 + " seconds");		
+		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds");		
 
 		//convierto las colecciones anteriores en arrays
 		int[] element_id_list = toIntArray(elementIdList);
