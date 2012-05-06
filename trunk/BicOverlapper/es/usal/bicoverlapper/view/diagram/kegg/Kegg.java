@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import keggapi.Definition;
@@ -35,6 +36,7 @@ public class Kegg {
 		serv = locator.getKEGGPort();
 		sesion = _sesion;
 		
+		long start = System.currentTimeMillis();
         try {
             System.out.println("Reading komappingTOTAL "+System.currentTimeMillis());
             String pathKOMapping = "es/usal/bicoverlapper/view/diagram/kegg/komappingTOTAL.ser";
@@ -47,14 +49,19 @@ public class Kegg {
 	            koterms = (TreeMap<String, ArrayList<String>>) oin.readObject();
 	            oin.close();
             }
-            System.out.println("koterms read at "+System.currentTimeMillis());
+            System.out.println("koterms read in "+(System.currentTimeMillis() - start) / 1000 + " seconds");
         } catch (Exception e) {
             e.printStackTrace();
         }
         /*
         Set<String> listaClaves = koterms.keySet();
         for (String clave : listaClaves) {
-			System.out.println("clave = "+clave);
+			ArrayList<String> genes = koterms.get(clave);
+			for (String gen : genes) {
+				if(gen.contains("mmu")){
+					System.out.println("gen = "+gen+" y clave = "+clave);
+				}
+			}
 		}
 		*/
 	}
@@ -67,13 +74,14 @@ public class Kegg {
 		return keggElements;
 	}
 
-	public String generarImagenKegg(String pathway) throws Exception {
+	public String generarImagenKegg(String pathway, int numCondition) throws Exception {
 		long start = System.currentTimeMillis();
 		
 		List<PathwayElement> resultadosValidos = new ArrayList<PathwayElement>();
 		
+		System.out.println("pathway = "+pathway);
 		// se consultan los elementos del pathway
-		PathwayElement[] results = this.serv.get_elements_by_pathway(pathway);
+		PathwayElement[] pathwayElements = this.serv.get_elements_by_pathway(pathway);
 		// se crea la lista con los resultados
 		List<Integer> elementIdList = new ArrayList<Integer>();
 		// lista de samples
@@ -84,56 +92,56 @@ public class Kegg {
 		
 		//se recogen los genes de MicroarrayData
 		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+		System.out.println("mapaGenes.size()="+mapaGenes.size());
 		
-		System.out.println("results.length es "+results.length);
+		System.out.println("pathwayElements.length es "+pathwayElements.length);
 		// extraigo los element_id_list, lo de los colores es sólo ahora que no
 		// tengo de dónde extraerlos y los genero aleatorios
-		for (int i = 0; i < results.length; i++) {
-			if(results[i].getType().equals("ortholog")){
+		for (int i = 0; i < pathwayElements.length; i++) {
+			if(pathwayElements[i].getType().equals("gene")){
 				//así cogerías los id de todos, pero realmente sólo quiero coger aquellas que coloree
 				//element_id_listAux[i] = results[i].getElement_id();
 	
 				ArrayList<Double> valoresExpresion = null;
 				boolean hayExpresion = false;
 				valoresExpresion = new ArrayList<Double>();
-				String[] nombresGenesEnElemento = results[i].getNames();
-				for (String nombreGenEnElemento : nombresGenesEnElemento) {
-					//obtengo la lista de genes de koterms
-					ArrayList<String> listaGenes = koterms.get(nombreGenEnElemento);
-					//si no está vacía (estará vacía cuando sean puntitos que no se van a colorear por ejemplo)
-					if(null != listaGenes){
-						//se recorren los nombres de los genes para buscar coincidencias
-						for (String gen : listaGenes) {							
-							int numGen = -1;
-							//se recorren los genes de BicOverlapper para encontrar coincidencias
-							//lo que no sé es si aquí, una vez encuentre 1 coincidencia, podría salirme o no...
-							//en principio sí que aparece más de 1 coincidencia en algún caso, con lo que no puedo quitarlo
-							for (GeneAnnotation g : mapaGenes.values()) {
-								numGen++;
-								//habrá que ver finalmente qué se usa, si la id, la entrezId o qué...
-								//de momento para el mus musculus trabajo con la id a pelo, pero sólo para pruebas...
-								//System.out.println("g.entrezId = "+g.entrezId);
-								if(null != g.id && gen.contains(g.id)){									
-									//se supone que al llegar aquí quiere decir que hay genes en BicOverlapper para ese elemento de Kegg
-									//por lo tanto se activa este flag y después se calculará una media de los valores que salgan de aquí
-									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(numGen, 0);
-									valoresExpresion.add(valorExp);			
-								}
+				String[] nombresKO = pathwayElements[i].getNames();
+				
+				//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
+				TreeMap<String, ArrayList<String>> koTermsEnPathway=new TreeMap<String, ArrayList<String>>();
+				for (String nombreKO : nombresKO){
+					ArrayList<String> elementosDeKoterms = new ArrayList<String>();
+					
+					if(nombreKO.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
+						//guardo el número del gen sin el identificador del organismo
+						elementosDeKoterms.add(nombreKO.split("\\:")[1]);
+						koTermsEnPathway.put(nombreKO, elementosDeKoterms);
+					}
+					//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
+				}
+				
+				for (GeneAnnotation g : mapaGenes.values()) {		//para cada gen en el microarray
+					for (ArrayList<String> listaGenes: koTermsEnPathway.values()) {	//para cada KO term en el pathway
+						for(String gen: listaGenes){
+							if(null != g.id && gen.equals(g.id)){									
+								hayExpresion = true;
+								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+								valoresExpresion.add(valorExp);			
+								//System.out.println("gen = "+gen+", g.id = "+g.id+", pathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
 							}
 						}
 					}
 				}
 				
 				if(hayExpresion){
-					elementIdList.add(results[i].getElement_id());
-					resultadosValidos.add(results[i]);
+					elementIdList.add(pathwayElements[i].getElement_id());
+					resultadosValidos.add(pathwayElements[i]);
 					float media = calcularMedia(valoresExpresion);
 					samplesList.add(media);
 				}
 			}
 			else{
-				//System.out.println("he encontrado uno que no es ortholog");
+				//System.out.println("he encontrado uno que no es gene");
 			}
 		}
 		
@@ -159,10 +167,12 @@ public class Kegg {
 		// que tiene más información
 		int i = 0;
 		for (PathwayElement resultadoValido: resultadosValidos) {
+			/*
 			System.out.println("Elemento añadido: "+resultadoValido.getElement_id());
 			for (String name: resultadoValido.getNames()) {
 				System.out.println("nombre: "+name);
 			}
+			*/
 			keggElements.add(new KeggElement(resultadoValido, fgs[i], bgs[i]));
 			i++;
 		}
