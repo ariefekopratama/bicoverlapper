@@ -24,13 +24,13 @@ public class ViewKegg {
 	private JComponent panelInferior;
 	private JComponent panelComboBoxes;
 	private JComponent panelProgressBar;
-	private JComponent panelSeleccionCondicion;
-	//private JFrame frame;
+	private JComponent panelInferiorDerecha;
 	private JComboBox combo1, combo2;
 	private Definition[] definitionPathways;
 	private List<LinkItem> listaElementosImg;
-	private JButton botonIzq, botonDer;
+	private JButton botonFlechaIzq, botonFlechaDer;
 	private JTextField jtf;
+	private JButton botonObtenerImagen;
 	
 	private static Kegg kegg;
 	private JProgressBar progressBar;
@@ -112,19 +112,19 @@ public class ViewKegg {
 	}
 
 	private void createPanelCondiciones() {
-		panelSeleccionCondicion = new JPanel(new BorderLayout(3, 3));
-		panelSeleccionCondicion.setOpaque(true);
+		panelInferiorDerecha = new JPanel(new BorderLayout(3, 3));
+		panelInferiorDerecha.setOpaque(true);
 		
-		botonIzq = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
-		botonIzq.setBorder(null);
-        botonIzq.setFocusPainted(false);
-        botonIzq.setContentAreaFilled(false);
-        botonIzq.setBorderPainted(false);
-        botonIzq.setRolloverEnabled(false);
-        botonIzq.setBackground(null);
-        botonIzq.setForeground(null);
+		botonFlechaIzq = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
+		botonFlechaIzq.setBorder(null);
+        botonFlechaIzq.setFocusPainted(false);
+        botonFlechaIzq.setContentAreaFilled(false);
+        botonFlechaIzq.setBorderPainted(false);
+        botonFlechaIzq.setRolloverEnabled(false);
+        botonFlechaIzq.setBackground(null);
+        botonFlechaIzq.setForeground(null);
         
-		botonIzq.addMouseListener(new MouseAdapter() {
+		botonFlechaIzq.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
             	int valorActual = Integer.parseInt(jtf.getText());
             	if(valorActual-1 >= 0){
@@ -133,8 +133,8 @@ public class ViewKegg {
             }
         });
 		
-		botonDer = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
-		botonDer.addMouseListener(new MouseAdapter() {
+		botonFlechaDer = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
+		botonFlechaDer.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
             	int valorActual = Integer.parseInt(jtf.getText());
             	if(valorActual+1 < panelPrincipal.getSesion().getMicroarrayData().getNumConditions()){
@@ -142,22 +142,57 @@ public class ViewKegg {
             	}            
         	}
         });	
-		botonDer.setBorder(null);
-		botonDer.setFocusPainted(false);
-		botonDer.setContentAreaFilled(false);				
+		botonFlechaDer.setBorder(null);
+		botonFlechaDer.setFocusPainted(false);
+		botonFlechaDer.setContentAreaFilled(false);				
 		
 		jtf = new JTextField("0");
-		jtf.setToolTipText("Select the number of condition");
+		jtf.setToolTipText("Use the arrows to choose the condition");
 		jtf.setEditable(false);
 		jtf.setPreferredSize(new Dimension(40, 25));
 		jtf.setSize(new Dimension(40, 25));
 		jtf.setHorizontalAlignment(JTextField.CENTER);
 		
-		panelSeleccionCondicion.add(botonIzq, BorderLayout.WEST);
-		panelSeleccionCondicion.add(botonDer, BorderLayout.EAST);
+		JPanel panelSeleccionCondicion = new JPanel(new BorderLayout(3, 3));
+		panelInferiorDerecha.add(panelSeleccionCondicion, BorderLayout.WEST);
+		
+		botonObtenerImagen = new JButton("Get image");
+		botonObtenerImagen.setToolTipText("Click here to get the image. You should choose 1 organism and 1 pathway first.");
+		botonObtenerImagen.setEnabled(false);
+		botonObtenerImagen.addActionListener(new ActionListener(){
+
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+		        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){  
+		        	  
+		            @Override  
+		            protected Void doInBackground() throws Exception {  
+		            	botonObtenerImagen.setEnabled(false);
+		            	botonFlechaIzq.setEnabled(false);
+		            	botonFlechaDer.setEnabled(false);
+		            	//se pone visible la progressbar para que el usuario sepa que se está trabajando en 2º plano
+		            	progressBar.setVisible(true);				            	
+		            	mountPanelsWithNewImage(urlImagenPorDefecto, true);
+		            	loadKeggImage();
+		            	botonObtenerImagen.setEnabled(true);
+		            	botonFlechaIzq.setEnabled(true);
+		            	botonFlechaDer.setEnabled(true);		            	
+		                return null;  
+		            }
+		              
+		        };  
+		          
+		        worker.execute();				
+			}
+			
+		});
+		panelInferiorDerecha.add(botonObtenerImagen, BorderLayout.EAST);
+		
+		panelSeleccionCondicion.add(botonFlechaIzq, BorderLayout.WEST);
+		panelSeleccionCondicion.add(botonFlechaDer, BorderLayout.EAST);
 		panelSeleccionCondicion.add(jtf, BorderLayout.CENTER);
 		
-		panelInferior.add(panelSeleccionCondicion, BorderLayout.EAST);
+		panelInferior.add(panelInferiorDerecha, BorderLayout.EAST);
 	}
 
 
@@ -182,6 +217,7 @@ public class ViewKegg {
 			organismoSeleccionado++;
 		}
 		combo1 = new JComboBox();
+		combo1.setToolTipText("Choose an organism");
 		//se añaden todos los organismos al desplegable
 		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
@@ -195,6 +231,7 @@ public class ViewKegg {
 			        	  
 			            @Override  
 			            protected Void doInBackground() throws Exception {  
+			            	botonObtenerImagen.setEnabled(false);
 			            	//se pone visible la progressbar para que el usuario sepa que se está trabajando en 2º plano
 			            	progressBar.setVisible(true);
 			            	fillComboBox2();
@@ -212,25 +249,15 @@ public class ViewKegg {
 		});
 
 		combo2 = new JComboBox();
-		//combo2.setVisible(false);
+		combo2.setToolTipText("Choose a pathway");
 		combo2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				try {
 					if (combo2.getSelectedItem() != null && !combo2.getSelectedItem().equals("")){
-				        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){  
-				        	  
-				            @Override  
-				            protected Void doInBackground() throws Exception {  
-				            	//se pone visible la progressbar para que el usuario sepa que se está trabajando en 2º plano
-				            	progressBar.setVisible(true);				            	
-				            	mountPanelsWithNewImage(urlImagenPorDefecto, true);
-				            	loadKeggImage();
-				                return null;  
-				            }
-				              
-				        };  
-				          
-				        worker.execute();
+						botonObtenerImagen.setEnabled(true);
+					}
+					else{
+						botonObtenerImagen.setEnabled(false);
 					}
 				} catch (Exception e) {
 					e.printStackTrace();
