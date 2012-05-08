@@ -124,7 +124,7 @@ public class Kegg {
 								hayExpresion = true;
 								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
 								valoresExpresion.add(valorExp);			
-								//System.out.println("gen = "+gen+", g.id = "+g.id+", pathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
+								System.out.println("gen = "+gen+", g.id = "+g.id+", g.entrezId = "+g.entrezId);
 							}
 						}
 					}
