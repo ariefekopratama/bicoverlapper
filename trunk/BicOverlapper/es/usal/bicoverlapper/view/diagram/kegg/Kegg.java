@@ -36,9 +36,10 @@ public class Kegg {
 		serv = locator.getKEGGPort();
 		sesion = _sesion;
 		
+		//en principio no va a hacer falta leer este fichero
+		/*
 		long start = System.currentTimeMillis();
         try {
-            System.out.println("Reading komappingTOTAL "+System.currentTimeMillis());
             String pathKOMapping = "es/usal/bicoverlapper/view/diagram/kegg/komappingTOTAL.ser";
             InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathKOMapping);
             if(null == is){
@@ -53,17 +54,7 @@ public class Kegg {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        /*
-        Set<String> listaClaves = koterms.keySet();
-        for (String clave : listaClaves) {
-			ArrayList<String> genes = koterms.get(clave);
-			for (String gen : genes) {
-				if(gen.contains("mmu")){
-					System.out.println("gen = "+gen+" y clave = "+clave);
-				}
-			}
-		}
-		*/
+        */
 	}
 
 	public KEGGPortType getServ() {
@@ -75,6 +66,10 @@ public class Kegg {
 	}
 
 	public String generarImagenKegg(String pathway, int numCondition) throws Exception {
+		int[] element_id_list = null;
+		String[] bgs = null;
+		String[] fgs = null;
+		
 		long start = System.currentTimeMillis();
 		
 		List<PathwayElement> resultadosValidos = new ArrayList<PathwayElement>();
@@ -99,30 +94,32 @@ public class Kegg {
 		// tengo de dónde extraerlos y los genero aleatorios
 		for (int i = 0; i < pathwayElements.length; i++) {
 			if(pathwayElements[i].getType().equals("gene")){
-				//así cogerías los id de todos, pero realmente sólo quiero coger aquellas que coloree
-				//element_id_listAux[i] = results[i].getElement_id();
-	
 				ArrayList<Double> valoresExpresion = null;
 				boolean hayExpresion = false;
 				valoresExpresion = new ArrayList<Double>();
 				String[] nombresKO = pathwayElements[i].getNames();
 				
 				//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
+				//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
+				//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
 				TreeMap<String, ArrayList<String>> koTermsEnPathway=new TreeMap<String, ArrayList<String>>();
 				for (String nombreKO : nombresKO){
 					ArrayList<String> elementosDeKoterms = new ArrayList<String>();
-					
+					//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
 					if(nombreKO.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
-						//guardo el número del gen sin el identificador del organismo
+						//se guarda el número del gen sin el identificador del organismo
 						elementosDeKoterms.add(nombreKO.split("\\:")[1]);
 						koTermsEnPathway.put(nombreKO, elementosDeKoterms);
 					}
 					//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
 				}
 				
-				for (GeneAnnotation g : mapaGenes.values()) {		//para cada gen en el microarray
-					for (ArrayList<String> listaGenes: koTermsEnPathway.values()) {	//para cada KO term en el pathway
+				//para cada gen en el microarray
+				for (GeneAnnotation g : mapaGenes.values()) {		
+					//para cada gen en el pathway
+					for (ArrayList<String> listaGenes: koTermsEnPathway.values()) {	
 						for(String gen: listaGenes){
+							//si coinciden, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
 							if(null != g.id && gen.equals(g.id)){									
 								hayExpresion = true;
 								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
@@ -133,10 +130,14 @@ public class Kegg {
 					}
 				}
 				
+				//si se han producido coincidencias, entonces quiere decir que para ese elemento habrá que calcular un coloreado
 				if(hayExpresion){
+					//por tanto se añade el elemento a la lista
 					elementIdList.add(pathwayElements[i].getElement_id());
 					resultadosValidos.add(pathwayElements[i]);
+					//se calcula el valor medio para todos los genes de ese elemento
 					float media = calcularMedia(valoresExpresion);
+					//se guarda esta media en la lista de muestras con la que se coloreará la imagen
 					samplesList.add(media);
 				}
 			}
@@ -147,33 +148,26 @@ public class Kegg {
 		
 		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds");		
 
-		//convierto las colecciones anteriores en arrays
-		int[] element_id_list = toIntArray(elementIdList);
-		float[] samples = toFloatArray(samplesList);		
-		
-		System.out.println("antes de interpolateColors");
-		
-		//CUIDADO PORQUE AHORA element_id_list PODRÍA SER UN NULLAZO
-		
-		String[] fgs = new String[element_id_list.length];
-		String[] bgs = new String[element_id_list.length];
-
-		interpolateColors(element_id_list, samples, fgs, bgs);
-
-		// como todo en principio debería haber mantenido el orden, ahora ya
-		// tendría cada elemento con su fg y bg correspondiente
-		// como el id es único para cada resultado, añado el resultado que es lo
-		// que tiene más información
-		int i = 0;
-		for (PathwayElement resultadoValido: resultadosValidos) {
-			/*
-			System.out.println("Elemento añadido: "+resultadoValido.getElement_id());
-			for (String name: resultadoValido.getNames()) {
-				System.out.println("nombre: "+name);
+		if(!elementIdList.isEmpty()){
+			//se convierten las colecciones anteriores en arrays
+			element_id_list = toIntArray(elementIdList);
+			float[] samples = toFloatArray(samplesList);		
+								
+			fgs = new String[element_id_list.length];
+			bgs = new String[element_id_list.length];
+	
+			//se interpolan los colores de la muestra
+			interpolateColors(element_id_list, samples, fgs, bgs);
+	
+			// como todo en principio debería haber mantenido el orden, ahora ya
+			// tendría cada elemento con su fg y bg correspondiente
+			// como el id es único para cada resultado, añado el resultado que es lo
+			// que tiene más información
+			int i = 0;
+			for (PathwayElement resultadoValido: resultadosValidos) {
+				keggElements.add(new KeggElement(resultadoValido, fgs[i], bgs[i]));
+				i++;
 			}
-			*/
-			keggElements.add(new KeggElement(resultadoValido, fgs[i], bgs[i]));
-			i++;
 		}
 		
 		System.out.println("El número de resultados válidos encontrados es "+keggElements.size());
@@ -265,7 +259,6 @@ public class Kegg {
 		Definition[] d = serv.list_organisms();
 		String[] paths = new String[d.length];
 		for (int i = 0; i < d.length; i++) {
-			// System.out.println(d[i].getEntry_id()+", "+d[i].getDefinition());
 			paths[i] = d[i].getDefinition();
 		}
 		
@@ -446,8 +439,12 @@ public class Kegg {
 		String colored = null;
 		try {
 			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgcolors, bgcolors);
-
-			System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
+			if(null != element_id_list){
+				System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
+			}
+			else{
+				System.out.println("Finished "+ colored);
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

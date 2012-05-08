@@ -258,26 +258,7 @@ public class ViewKegg {
 	private void creatPanelImagen() {
 		panelImagen = new JPanel();
 		panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.LINE_AXIS));
-		panelImagen.setOpaque(true); // content panes must be opaque
-		
-		/*
-		try {
-			imagenPorDefecto = createImageIcon(urlImagenPorDefecto);
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-
-		// Set up the scroll pane.
-		picture = new ScrollablePicture(imagenPorDefecto);
-		pictureScrollPane = new JScrollPane(picture);
-		pictureScrollPane.setPreferredSize(new Dimension(1024, 768));
-		pictureScrollPane.setViewportBorder(BorderFactory.createLineBorder(Color.black));
-
-		// Put it in this panel.
-		panelImagen.add(pictureScrollPane);
-		*/
+		panelImagen.setOpaque(true);
 		
 		loadImage(urlImagenPorDefecto, true);
 		
@@ -342,7 +323,6 @@ public class ViewKegg {
 		} catch (MalformedURLException mURLe) {
 			mURLe.printStackTrace();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
