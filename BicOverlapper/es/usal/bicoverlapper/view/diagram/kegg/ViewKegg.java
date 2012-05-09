@@ -36,6 +36,8 @@ public class ViewKegg {
 	private JProgressBar progressBar;
 	
 	private KeggDiagram panelPrincipal;
+	private int valorActualCondition;
+	private String organism;
 
 	public static final String urlImagenPorDefecto = "http://www.uco.es/~b02robaj/sencel_archivos/image038.gif";
 	
@@ -116,6 +118,7 @@ public class ViewKegg {
 		panelInferiorDerecha.setOpaque(true);
 		
 		botonFlechaIzq = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
+		botonFlechaIzq.setToolTipText("Use the arrows to choose the condition");
 		botonFlechaIzq.setBorder(null);
         botonFlechaIzq.setFocusPainted(false);
         botonFlechaIzq.setContentAreaFilled(false);
@@ -126,19 +129,24 @@ public class ViewKegg {
         
 		botonFlechaIzq.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-            	int valorActual = Integer.parseInt(jtf.getText());
-            	if(valorActual-1 >= 0){
-            		jtf.setText((valorActual-1) + "");
+            	if(valorActualCondition-1 >= 0){
+            		valorActualCondition--;
+            		String texto = panelPrincipal.getSesion().getMicroarrayData().getConditionName(valorActualCondition);
+            		jtf.setText(texto);
+            		jtf.setToolTipText(texto);
             	}
             }
         });
 		
 		botonFlechaDer = new JButton(ViewKegg.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
+		botonFlechaDer.setToolTipText("Use the arrows to choose the condition");
 		botonFlechaDer.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-            	int valorActual = Integer.parseInt(jtf.getText());
-            	if(valorActual+1 < panelPrincipal.getSesion().getMicroarrayData().getNumConditions()){
-            		jtf.setText((valorActual+1) + "");
+            	if(valorActualCondition+1 < panelPrincipal.getSesion().getMicroarrayData().getNumConditions()){
+            		valorActualCondition++;
+            		String texto = panelPrincipal.getSesion().getMicroarrayData().getConditionName(valorActualCondition);
+            		jtf.setText(texto);
+            		jtf.setToolTipText(texto);
             	}            
         	}
         });	
@@ -146,11 +154,12 @@ public class ViewKegg {
 		botonFlechaDer.setFocusPainted(false);
 		botonFlechaDer.setContentAreaFilled(false);				
 		
-		jtf = new JTextField("0");
-		jtf.setToolTipText("Use the arrows to choose the condition");
+		jtf = new JTextField(panelPrincipal.getSesion().getMicroarrayData().getConditionName(0));
+		valorActualCondition = 0;
+		jtf.setToolTipText(panelPrincipal.getSesion().getMicroarrayData().getConditionName(0));
 		jtf.setEditable(false);
-		jtf.setPreferredSize(new Dimension(40, 25));
-		jtf.setSize(new Dimension(40, 25));
+		jtf.setPreferredSize(new Dimension(100, 25));
+		jtf.setSize(new Dimension(100, 25));
 		jtf.setHorizontalAlignment(JTextField.CENTER);
 		
 		JPanel panelSeleccionCondicion = new JPanel(new BorderLayout(3, 3));
@@ -212,6 +221,7 @@ public class ViewKegg {
 		//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
 		for (String organismo : organismosSeleccionables) {
 			if(organismo.contains(panelPrincipal.getSesion().getMicroarrayData().organism)){
+				organism = organismo;
 				break;
 			}
 			organismoSeleccionado++;
@@ -322,7 +332,9 @@ public class ViewKegg {
 		combo2.removeAllItems();
 		combo2.addItem("");
 		for (int i = 0; i < pathways.length; i++) {
-			combo2.addItem(pathways[i].getDefinition());
+			//sólo se coge la cadena hasta el "-", ya que lo que hay después es el nombre del organismo
+			combo2.addItem(pathways[i].getDefinition().replace(" - "+organism, ""));
+			//combo2.addItem(pathways[i].getDefinition());
 		}
 		
 		//se habilita al estar relleno
