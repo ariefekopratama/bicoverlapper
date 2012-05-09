@@ -124,7 +124,7 @@ public class Kegg {
 								hayExpresion = true;
 								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
 								valoresExpresion.add(valorExp);			
-								System.out.println("gen = "+gen+", g.id = "+g.id+", g.entrezId = "+g.entrezId);
+								//System.out.println("gen = "+gen+", g.id = "+g.id+", g.entrezId = "+g.entrezId+" numCondition = "+numCondition);
 							}
 						}
 					}
@@ -137,6 +137,12 @@ public class Kegg {
 					resultadosValidos.add(pathwayElements[i]);
 					//se calcula el valor medio para todos los genes de ese elemento
 					float media = calcularMedia(valoresExpresion);
+					//System.out.println("pathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id()+", media = "+media);
+					/*
+					for (Double in : valoresExpresion) {
+						System.out.println("valor = "+in);
+					}
+					*/
 					//se guarda esta media en la lista de muestras con la que se coloreará la imagen
 					samplesList.add(media);
 				}
@@ -198,6 +204,7 @@ public class Kegg {
 		double suma = 0;
 		for (Double valor : valoresExpresion) {
 			suma += valor;
+			//System.out.println("valor = "+valor+", suma = "+suma+", valoresExpresion.size() = "+valoresExpresion.size());
 		}
 		return (float) (suma/valoresExpresion.size());
 	}
