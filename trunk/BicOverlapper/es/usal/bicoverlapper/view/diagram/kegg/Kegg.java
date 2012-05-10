@@ -124,7 +124,7 @@ public class Kegg {
 								hayExpresion = true;
 								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
 								valoresExpresion.add(valorExp);			
-								//System.out.println("gen = "+gen+", g.id = "+g.id+", g.entrezId = "+g.entrezId+" numCondition = "+numCondition);
+								//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
 							}
 						}
 					}
@@ -249,7 +249,7 @@ public class Kegg {
 	 */
 	public String getPathwayIdFromDefinition(String path, Definition[] d) {
 		for (int i = 0; i < d.length; i++) {
-			if (d[i].getDefinition().equals(path)) {
+			if (d[i].getDefinition().contains(path)) {
 				return d[i].getEntry_id();
 			}
 		}
@@ -432,7 +432,7 @@ public class Kegg {
 			}
 			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgAux, bgAux);
 
-			System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
+			System.out.println("Finished " + colored);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -447,7 +447,7 @@ public class Kegg {
 		try {
 			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgcolors, bgcolors);
 			if(null != element_id_list){
-				System.out.println("Finished " + colored + " element_id_list.length = "+element_id_list.length);
+				System.out.println("Finished " + colored);
 			}
 			else{
 				System.out.println("Finished "+ colored);
@@ -558,7 +558,7 @@ public class Kegg {
 				// esto es para probar los blancos
 				// bgs[i]="#FFFFFF";
 
-				// System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"ranks[i]="+ranks[i]+"\t"+bgs[i]+"\t"+fgs[i]);
+				//System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"ranks[i]="+ranks[i]+"\t"+bgs[i]+"\t"+fgs[i]);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -600,8 +600,14 @@ public class Kegg {
 			System.err.println("The sample is empty");
 		}
 
-		float max = Kegg.getMaxValue(samples);
-		float min = Kegg.getMinValue(samples);
+		//de esta forma se cogería el máximo y el mínimo de la muestra
+		//float max = Kegg.getMaxValue(samples);
+		//float min = Kegg.getMinValue(samples);
+		
+		//pero para que funcione como se desea en BicOverlapper, hay que coger el máximo y mínimo de todas las muestras
+		float max = (float) sesion.getMicroarrayData().max;
+		float min = (float) sesion.getMicroarrayData().min;
+		
 		float[] ranks = new float[samples.length];
 
 		for (int i = 0; i < samples.length; i++) {
