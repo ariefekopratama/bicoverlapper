@@ -3,9 +3,15 @@ package es.usal.bicoverlapper.view.diagram.kegg;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.*;
+
+import es.usal.bicoverlapper.controller.kernel.Selection;
+import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
 
 public class ScrollablePicture extends JLabel implements Scrollable, MouseListener {
@@ -14,7 +20,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	private int maxUnitIncrement = 1;
 	private boolean missingPicture = false;
 	private List<LinkItem> listaElementosImg;
-
+	private Session sesion;
+	private int valorActualCondition;
+	
 	// Este es el método que permite realizar la modificación del
 	// canal alfa de la imagen
 	private AlphaComposite creaComposite(float alfa) {
@@ -49,6 +57,12 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		g2.setComposite(compOriginal);
 	}
 
+	/**
+	 * Método que colorea la imagen con la imagen extraída del html
+	 * 
+	 * En principio DEPRECATED puesto que coloreo la imagen en el servidor
+	 */
+	/*
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
@@ -62,9 +76,11 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 			}
 		}
 	}
+	*/
 
-	public ScrollablePicture(ImageIcon i) {
+	public ScrollablePicture(ImageIcon i, Session _sesion) {
 		super(i);
+		sesion = _sesion;
 		if (i == null) {
 			missingPicture = true;
 			setText("No picture found.");
@@ -81,8 +97,10 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		addMouseListener(this); // handle mouse drags
 	}
 
-	public ScrollablePicture(ImageIcon i, List<LinkItem> listaElementosImg) {
+	public ScrollablePicture(ImageIcon i, List<LinkItem> listaElementosImg, Session _sesion, int numCondition) {
 		super(i);
+		sesion = _sesion;
+		valorActualCondition = numCondition;
 		if (i == null) {
 			missingPicture = true;
 			setText("No picture found.");
@@ -140,25 +158,45 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	 * Método que detecta el click del botón izquierdo del ratón sobre el panel
 	 */
 	public void mouseClicked(MouseEvent e) {
-		// saySomething("Mouse clicked (# of clicks: "+ e.getClickCount() + ")",
-		// e);
-		// System.out.println("mouse Clicked "+e.getX()+" "+e.getY());
-
 		if (listaElementosImg != null) {
 			for (LinkItem itm : listaElementosImg) {
 				if (itm.getRectangle() != null
 						&& itm.getRectangle().outcode(e.getX(), e.getY()) == 0) {
-					System.out.println("Rectangle: Has picado sobre "
-							+ itm.getTitle());
+					System.out.println("Rectangle: Has picado sobre "+ itm.getTitle());
+					
+					//se actualizan el resto de vistas con la selección
+					LinkedList<Integer> conditions = new LinkedList<Integer>();
+					conditions.add(valorActualCondition);
+					
+					LinkedList<Integer> genesSeleccionados = this.mapearGenesConInternalId(itm.getGeneNames());
+					if(null != genesSeleccionados){
+						sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
+					}
+					else{
+						JOptionPane.showMessageDialog(null, "Sorry, the other views can't be updated", "Error", JOptionPane.ERROR_MESSAGE);	
+					}
+					
 				} else if (itm.getCircle() != null
 						&& itm.getCircle().contains(
 								new Point(e.getX(), e.getY()))) {
-					System.out.println("Circle: Has picado sobre "
-							+ itm.getTitle());
+					System.out.println("Circle: Has picado sobre "+ itm.getTitle());
 				}
 			}
 		}
 
+	}
+
+	private LinkedList<Integer> mapearGenesConInternalId(String[] geneNames) {
+		LinkedList<Integer> genesSeleccionados = new LinkedList<Integer>();
+		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+		for (GeneAnnotation g : mapaGenes.values()) {
+			for (String gen : geneNames) {
+				if(g.id.equals(gen)){
+					genesSeleccionados.add(g.internalId);
+				}
+			}
+		}
+		return genesSeleccionados;
 	}
 
 	public Dimension getPreferredSize() {

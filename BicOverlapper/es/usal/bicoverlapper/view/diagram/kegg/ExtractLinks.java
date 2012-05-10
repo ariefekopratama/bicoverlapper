@@ -98,9 +98,9 @@ public class ExtractLinks {
 				for (KeggElement ke : keggElements) {					
 					//si se encuentra alguna coincidencia, se setea el fg y el bg y se sale
 					if(checkElement(title, ke.getNames())){
-						System.out.println("ELEMENTO COINCIDENTE EN checkElement");
 						itm.setFg(ke.getForeground());
 						itm.setBg(ke.getBackground());
+						itm.setGeneNames(ke.getNames());
 						break;
 					}
 				}

@@ -1,6 +1,7 @@
 package es.usal.bicoverlapper.view.diagram.kegg;
 
 import java.awt.geom.Rectangle2D;
+import java.util.LinkedList;
 
 public class LinkItem {
 	private String link;
@@ -14,6 +15,8 @@ public class LinkItem {
 	// elemento para que no falle el programa
 	private String fg = "#000000";;
 	private String bg = "#000000";;
+	
+	private String[] geneNames;
 
 	public Circle getCircle() {
 		return circle;
@@ -87,4 +90,11 @@ public class LinkItem {
 		this.bg = bg;
 	}
 
+	public String[] getGeneNames() {
+		return geneNames;
+	}
+
+	public void setGeneNames(String[] geneNames) {
+		this.geneNames = geneNames;
+	}
 }

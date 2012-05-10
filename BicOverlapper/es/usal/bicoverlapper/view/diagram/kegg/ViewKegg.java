@@ -308,7 +308,9 @@ public class ViewKegg {
 		combo2.setEnabled(false);
 		
 		String id_pathway = kegg.getPathwayIdFromDefinition((String) combo2.getSelectedItem(), definitionPathways);
-
+		
+		System.out.println("id_pathway = "+id_pathway);
+		
 		if (id_pathway != null) {
 			showImage(id_pathway);
 		}
@@ -345,7 +347,7 @@ public class ViewKegg {
 
 	private void showImage(String pathway) {
 		try {
-			String url = kegg.generarImagenKegg(pathway, Integer.parseInt(jtf.getText()));
+			String url = kegg.generarImagenKegg(pathway, valorActualCondition);
 
 			URL u = new URL(url);
 			InputStream in = u.openStream();
@@ -357,8 +359,9 @@ public class ViewKegg {
 
 			//para que se monte el coloreado desde el programa java se pone false
 			//mountPanelsWithNewImage(url.replace("html", "png"), false);
-			//si se recoge la imagen ya coloreada, aquí true
-			mountPanelsWithNewImage(url.replace("html", "png"), true);
+			//pero para poder extraer los links y que actúe el oyente he comentado el paintComponent en ScrollablePicture
+			//así, aquí pondré ahora false y no se coloreará en java, sólo se activará el mouseListener
+			mountPanelsWithNewImage(url.replace("html", "png"), false);
 		} catch (MalformedURLException mURLe) {
 			mURLe.printStackTrace();
 		} catch (Exception e) {
@@ -391,10 +394,10 @@ public class ViewKegg {
 
 		// Set up the scroll pane.
 		if(!isDefaultImage){
-			picture = new ScrollablePicture(imagen, listaElementosImg);
+			picture = new ScrollablePicture(imagen, listaElementosImg, panelPrincipal.getSesion(), valorActualCondition);
 		}
 		else{
-			picture = new ScrollablePicture(imagen);
+			picture = new ScrollablePicture(imagen, panelPrincipal.getSesion());
 		}
 		pictureScrollPane = new JScrollPane(picture);
 		pictureScrollPane.setPreferredSize(new Dimension(1024, 768));
