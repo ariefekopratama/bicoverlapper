@@ -3,6 +3,7 @@ package es.usal.bicoverlapper.view.diagram.kegg;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	private List<LinkItem> listaElementosImg;
 	private Session sesion;
 	private int valorActualCondition;
+	
+	private boolean dibujarBordeKeggElement = false;
+	private List<Rectangle2D.Double> rectangles = new ArrayList<Rectangle2D.Double>();
 	
 	// Este es el método que permite realizar la modificación del
 	// canal alfa de la imagen
@@ -160,31 +164,59 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	public void mouseClicked(MouseEvent e) {
 		if (listaElementosImg != null) {
 			for (LinkItem itm : listaElementosImg) {
-				if (itm.getRectangle() != null
-						&& itm.getRectangle().outcode(e.getX(), e.getY()) == 0) {
+				if (itm.getRectangle() != null && itm.getRectangle().outcode(e.getX(), e.getY()) == 0) {
 					System.out.println("Rectangle: Has picado sobre "+ itm.getTitle());
 					
 					//se actualizan el resto de vistas con la selección
 					LinkedList<Integer> conditions = new LinkedList<Integer>();
 					conditions.add(valorActualCondition);
 					
-					LinkedList<Integer> genesSeleccionados = this.mapearGenesConInternalId(itm.getGeneNames());
-					if(null != genesSeleccionados){
-						sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
-					}
-					else{
-						JOptionPane.showMessageDialog(null, "Sorry, the other views can't be updated", "Error", JOptionPane.ERROR_MESSAGE);	
+					//si se dispone de los nombres de genes de ese elemento...
+					if(null != itm.getGeneNames()){
+						LinkedList<Integer> genesSeleccionados = this.mapearGenesConInternalId(itm.getGeneNames());
+						if(null != genesSeleccionados){
+							//parámetros para pintar el reborde del rectángulo
+							dibujarBordeKeggElement = true;
+							rectangles.add(itm.getRectangle());
+							this.repaint();
+							
+							sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
+							
+							//una vez encontrada coincidencia, en principio no habría problema en salir del bucle
+							break;
+						}
+						else{
+							JOptionPane.showMessageDialog(null, "Sorry, the other views can't be updated", "Error", JOptionPane.ERROR_MESSAGE);	
+						}
 					}
 					
-				} else if (itm.getCircle() != null
-						&& itm.getCircle().contains(
-								new Point(e.getX(), e.getY()))) {
+				} else if (itm.getCircle() != null && itm.getCircle().contains(new Point(e.getX(), e.getY()))) {
 					System.out.println("Circle: Has picado sobre "+ itm.getTitle());
+				} 
+				else{
+					//si se hace clic y no hay coincidencias, se pintará la imagen sin nada seleccionado
+					dibujarBordeKeggElement = false;
+					rectangles.clear();
+					repaint();
 				}
 			}
 		}
 
 	}
+	
+	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		Graphics2D g2 = (Graphics2D) g;
+		if(dibujarBordeKeggElement){
+			//se modifica el grosor de las líneas
+		    g2.setStroke(new BasicStroke(3.0f));			
+		    //se modifica el color de las líneas
+		    g2.setPaint(sesion.getSelectionColor());
+		    for (Rectangle2D.Double rectangle : rectangles) {
+		    	g2.drawRect((int)rectangle.getX() - 5, (int)rectangle.getY() - 5, (int)rectangle.getWidth()+10, (int)rectangle.getHeight()+10);
+			}    
+		}
+	}		
 
 	private LinkedList<Integer> mapearGenesConInternalId(String[] geneNames) {
 		LinkedList<Integer> genesSeleccionados = new LinkedList<Integer>();
@@ -254,5 +286,21 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		} else {
 			return visibleRect.height - maxUnitIncrement;
 		}
+	}
+
+	public List<Rectangle2D.Double> getRectangles() {
+		return rectangles;
+	}
+
+	public void setRectangles(List<Rectangle2D.Double> rectangles) {
+		this.rectangles = rectangles;
+	}
+
+	public boolean isDibujarBordeKeggElement() {
+		return dibujarBordeKeggElement;
+	}
+
+	public void setDibujarBordeKeggElement(boolean dibujarBordeKeggElement) {
+		this.dibujarBordeKeggElement = dibujarBordeKeggElement;
 	}
 }
