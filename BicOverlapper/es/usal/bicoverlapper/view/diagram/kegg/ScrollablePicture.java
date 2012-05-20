@@ -27,6 +27,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	private boolean dibujarBordeKeggElement = false;
 	private List<Rectangle2D.Double> rectangles = new ArrayList<Rectangle2D.Double>();
 	
+	//parámetro que indica la distancia a la cual se dibujará el borde de selección del elemento
+	public static final int distanciaAlElemento = 2;
+	
 	// Este es el método que permite realizar la modificación del
 	// canal alfa de la imagen
 	private AlphaComposite creaComposite(float alfa) {
@@ -159,9 +162,17 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	}
 
 	/**
-	 * Método que detecta el click del botón izquierdo del ratón sobre el panel
+	 * Método que detecta el click del botón izquierdo del ratón sobre el panel y coloreará si fuese pertinene el elemento
 	 */
 	public void mouseClicked(MouseEvent e) {
+		this.detectarYColorearSeleccion(e);
+	}
+	
+	/**
+	 * Detección de la posición de clic de ratón y coloreado del elemento en caso de que se haya pinchado sobre alguno
+	 * @param e Evento de ratón
+	 */
+	private void detectarYColorearSeleccion(MouseEvent e) {
 		if (listaElementosImg != null) {
 			for (LinkItem itm : listaElementosImg) {
 				if (itm.getRectangle() != null && itm.getRectangle().outcode(e.getX(), e.getY()) == 0) {
@@ -180,7 +191,12 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 							rectangles.add(itm.getRectangle());
 							this.repaint();
 							
-							sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
+							//Si no se quiere actualizar la propia vista Kegg
+							//sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
+							
+							//Si se desea actualizar la propia vista Kegg (así se consigue que si se selecciona un elemento y hay repetidos en la imagen, se autoseleccionen)
+							sesion.setSelectedBicluster(new Selection(genesSeleccionados, conditions));	
+							sesion.updateAll();
 							
 							//una vez encontrada coincidencia, en principio no habría problema en salir del bucle
 							break;
@@ -192,18 +208,17 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 					
 				} else if (itm.getCircle() != null && itm.getCircle().contains(new Point(e.getX(), e.getY()))) {
 					System.out.println("Circle: Has picado sobre "+ itm.getTitle());
-				} 
+				}
 				else{
 					//si se hace clic y no hay coincidencias, se pintará la imagen sin nada seleccionado
-					dibujarBordeKeggElement = false;
-					rectangles.clear();
-					repaint();
+					//dibujarBordeKeggElement = false;
+					//rectangles.clear();
+					//repaint();
 				}
 			}
-		}
-
+		}		
 	}
-	
+
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
@@ -213,8 +228,8 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		    //se modifica el color de las líneas
 		    g2.setPaint(sesion.getSelectionColor());
 		    for (Rectangle2D.Double rectangle : rectangles) {
-		    	g2.drawRect((int)rectangle.getX() - 5, (int)rectangle.getY() - 5, (int)rectangle.getWidth()+10, (int)rectangle.getHeight()+10);
-			}    
+		    	g2.drawRect((int)rectangle.getX() - distanciaAlElemento, (int)rectangle.getY() - distanciaAlElemento, (int)rectangle.getWidth()+(2*distanciaAlElemento), (int)rectangle.getHeight()+(2*distanciaAlElemento));
+			}
 		}
 	}		
 
