@@ -941,12 +941,20 @@ public class Session implements KeyListener {
 			//Carlos
 			//ninguna de las 2 anteriores funciona porque estos descriptores probablemente sean manipulados en otro sitio
 			//por tanto se pierde su valor antiguo y no se restauraba, es necesario crear unos descriptores nuevos
-			selectionLog.add(new Selection(new LinkedList<Integer>(selectedBic.getGenes()), new LinkedList<Integer>(selectedBic.getConditions())));	
+			if(null != selectedBic){
+				selectionLog.add(new Selection(new LinkedList<Integer>(selectedBic.getGenes()), new LinkedList<Integer>(selectedBic.getConditions())));
+			}
+			else{
+				//si entra por aquí es porque selectedBic es null, por tanto quiere decir que no hay nada seleccionado
+				selectionLog.add(null);
+			}
 
 						
 			//normalmente en el for de arriba no entra, así que hay que ver dónde me está machacando los valores de selectionLog
 			for(Selection s: selectionLog){
-				System.out.println("selectionLog s.getGenes()="+s.getGenes()+" s.getConditions()="+s.getConditions());
+				if(null != s){
+					System.out.println("selectionLog s.getGenes()="+s.getGenes()+" s.getConditions()="+s.getConditions());
+				}
 			}
 				
 			contLog = selectionLog.size() - 1;

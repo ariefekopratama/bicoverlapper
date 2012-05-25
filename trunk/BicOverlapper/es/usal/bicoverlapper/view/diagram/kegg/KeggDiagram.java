@@ -102,7 +102,7 @@ public class KeggDiagram extends Diagram {
 		//si onlyHover es false y hay genes seleccionados...
 		//hay que meter la comprobación de "null != sesion.getSelectedBicluster()" porque si esto es nulo, el método sesion.getSelectedGenesBicluster() da nullpointerexception
 		//esto debería estar controlado en Session, pero yo no lo toco no siendo que repercuta en otro lado...
-		if(!sesion.onlyHover && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){			
+		if(!sesion.onlyHover && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
 			//se recogen los id de los genes seleccionados
 			List<String> genes = mapearInternalIdconIdGen(sesion.getSelectedGenesBicluster());
 			List<Rectangle2D.Double> elementosKeggSeleccionados = new ArrayList<Rectangle2D.Double>();
@@ -136,6 +136,12 @@ public class KeggDiagram extends Diagram {
 				picture.setDibujarBordeKeggElement(false);
 				picture.repaint();
 			}
+		}
+		else{
+			//si no se ha seleccionado ningún gen, entonces se deja la imagen original
+			picture.getRectangles().clear();
+			picture.setDibujarBordeKeggElement(false);
+			picture.repaint();			
 		}
 	}
 	
