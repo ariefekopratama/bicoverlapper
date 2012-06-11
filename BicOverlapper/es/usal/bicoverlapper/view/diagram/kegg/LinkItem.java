@@ -1,7 +1,6 @@
 package es.usal.bicoverlapper.view.diagram.kegg;
 
 import java.awt.geom.Rectangle2D;
-import java.util.LinkedList;
 
 public class LinkItem {
 	private String link;
