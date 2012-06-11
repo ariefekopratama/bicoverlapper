@@ -26,7 +26,6 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -34,9 +33,6 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
 import keggapi.Definition;
-
-import prefuse.Visualization;
-import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.view.diagram.Diagram;
@@ -46,7 +42,6 @@ public class KeggDiagram extends Diagram {
 	private Session sesion;
 	private int alto;
 	private int ancho;
-	private Visualization v;
 	private Kegg kegg;
 	private ScrollablePicture picture;
 	private JScrollPane pictureScrollPane;
@@ -67,12 +62,20 @@ public class KeggDiagram extends Diagram {
 	private int valorActualCondition;
 	private String organism;
 
-	public static final String urlImagenPorDefecto = "http://www.uco.es/~b02robaj/sencel_archivos/image038.gif";	
+	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/view/diagram/kegg/keggDefaultImage.gif";	
 	
+	/**
+	 * Default constructor
+	 */	
 	public KeggDiagram(){
 		super();
 	}
 	
+	/**
+	 * Session Constructor
+	 * @param session Session in which this diagram is in. It must have TRN data loaded
+	 * @param dim Dimension for this diagram
+	 */	
 	public KeggDiagram(Session sesion, Dimension dim) {
 		super(new BorderLayout());
 		int num = sesion.getNumHeatmapDiagrams();
@@ -84,20 +87,38 @@ public class KeggDiagram extends Diagram {
 		this.setPreferredSize(new Dimension(ancho, alto));
 		this.setSize(ancho, alto);
 
-		System.out.println("ESTO ES LA BIBLIOTECA sesion.getMicroarrayData().chip="+sesion.getMicroarrayData().chip);
-		System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism="+sesion.getMicroarrayData().organism);
-		System.out.println("ESTO ES LA BIBLIOTECA SI ARRIBA DA BIOMART sesion.getMicroarrayData().rname="+sesion.getMicroarrayData().rname);
-		
+		//System.out.println("ESTO ES LA BIBLIOTECA sesion.getMicroarrayData().chip="+sesion.getMicroarrayData().chip);
+		//System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism="+sesion.getMicroarrayData().organism);
+		//System.out.println("ESTO ES LA BIBLIOTECA SI ARRIBA DA BIOMART sesion.getMicroarrayData().rname="+sesion.getMicroarrayData().rname);
 	}
 	
-	public void create() {
-		v = new Visualization();
-		
-		this.crearViewKegg();
+	/**
+	 * Kegg Diagram creation
+	 */
+	public void create() {		
+		try {
+			kegg = new Kegg(sesion);
+			
+			//La creación se hace en un hilo para no congelar la interfaz gráfica
+	        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {  
+	  
+	            @Override  
+	            protected Void doInBackground() throws Exception {  
+	            	createAndShowKeggGUI();
+					return null;  
+	            }
+	              
+	        };  
+	          
+	        worker.execute();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}	
 	
-	
-	
+	/**
+	 * Updates the diagram by retrieving the last selection of data
+	 */
 	public void update(){
 		//si onlyHover es false y hay genes seleccionados...
 		//hay que meter la comprobación de "null != sesion.getSelectedBicluster()" porque si esto es nulo, el método sesion.getSelectedGenesBicluster() da nullpointerexception
@@ -145,6 +166,11 @@ public class KeggDiagram extends Diagram {
 		}
 	}
 	
+	/**
+	 * Mapping internal ids with gen ids
+	 * @param internalIds List with the internal ids
+	 * @return Selected genes
+	 */
 	private List<String> mapearInternalIdconIdGen(List<Integer> internalIds) {
 		List<String> genesSeleccionados = new LinkedList<String>();
 		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
@@ -157,100 +183,95 @@ public class KeggDiagram extends Diagram {
 		}
 		return genesSeleccionados;
 	}
-	
-	private void crearViewKegg() {
-		try {
-			kegg = new Kegg(sesion);
-			
-	        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {  
-	  
-	            @Override  
-	            protected Void doInBackground() throws Exception {  
-	            	createAndShowGUI();
-					return null;  
-	            }
-	              
-	        };  
-	          
-	        worker.execute();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 
+	/**
+	 * Makes the panel visible
+	 */
 	public synchronized void run() {
 		this.getWindow().setVisible(true);
 	}
+
+	/**
+	 * Create the Kegg GUI
+	 */
+	private void createAndShowKeggGUI() {
+		//creación del panel que albergará la imagen
+		this.creteImagePanel();
+		
+		//creación de la barra de progreso que indicará que se están cargando elementos de Kegg
+		this.createProgressBar();
+				
+		//creación del panel inferior
+		//albergará a los comboboxes, las opciones de selección de condición y el botón para llamar al servidor y obtener la imagen		
+		this.createLowerPanel();
+	}
 	
 	/**
-	 * Returns an ImageIcon, or null if the path was invalid.
-	 * 
-	 * @throws MalformedURLException
+	 * Create the lower panel
 	 */
-	protected static ImageIcon createImageIcon(String path)	throws MalformedURLException {
-		URL imgURL = new URL(path);
-		return new ImageIcon(imgURL);
-	}
-
-	/**
-	 * Create the GUI and show it. For thread safety, this method should be
-	 * invoked from the event-dispatching thread.
-	 * 
-	 * @throws Exception
-	 */
-	private void createAndShowGUI() throws Exception {
-		// Create and set up the content pane.
-		this.creatPanelImagen();
-
-		this.add(panelImagen, BorderLayout.CENTER);
-		panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.PAGE_AXIS));
-		
-		//para que se muestre al menos el panel cuando se disponga de él (bastante antes que de los combos)
-		panelImagen.revalidate();
-		
-		panelProgressBar = new JPanel(new BorderLayout(10, 10));
-		this.createProgressBar();
-		this.add(panelProgressBar, BorderLayout.NORTH);
-		this.revalidate();
-		
-		//se crea el Layout y sus separaciones
-		GridLayout layoutComoBoxes = new GridLayout(1,2);
-		layoutComoBoxes.setHgap(10);
-		layoutComoBoxes.setVgap(10);
-		
-		panelComboBoxes = new JPanel(layoutComoBoxes);
-		panelComboBoxes.setOpaque(true);
-		
+	private void createLowerPanel() {		
+		//creación del panel inferior
 		panelInferior = new JPanel(new BorderLayout(10, 10));
 		panelInferior.setOpaque(true);
-		panelInferior.add(panelComboBoxes, BorderLayout.CENTER);
 		
 		//medidas predeterminadas principalmente por la altura, para que no se hagan demasiado anchos y antiestéticos los combos
 		panelInferior.setPreferredSize(new Dimension(100, 25));
 		panelInferior.setMaximumSize(new Dimension(10000, 25));		
 		
-		//set up the combobox pane.
-		panelImagen.add(panelInferior);
-
-		this.createComboBoxes();
-		this.createPanelCondiciones();
+		//se añade el panel inferior al panel principal de la imagen
+		panelImagen.add(panelInferior);		
+				
+		//creación del panel de los comboboxes
+		this.createComboBoxesPanel();
+		//este panel contiene, en la parte central, al panel de los comboboxes
+		panelInferior.add(panelComboBoxes, BorderLayout.CENTER);
+				
+		//creación del panel de las condiciones
+		this.createConditionsPanel();
 	}
 
-	private void createPanelCondiciones() {
+	/**
+	 * Create the panel with the Kegg image
+	 */	
+	private void creteImagePanel() {
+		//creación del panel 
+		panelImagen = new JPanel();
+		panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.LINE_AXIS));
+		panelImagen.setOpaque(true);
+		
+		//se le establece al panel una imagen por defecto para que no esté en gris
+		this.loadImage(urlImagenPorDefecto, true);
+		
+		//Se le establece un borde al panel
+		panelImagen.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));		
+		
+		//se coloca el panel de la imagen en el centro de esta ventana
+		this.add(panelImagen, BorderLayout.CENTER);
+		panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.PAGE_AXIS));
+		
+		//para que se muestre al menos el panel cuando se disponga de él, dado que montar toda la interfaz tomará un tiempo...
+		panelImagen.revalidate();		
+	}
+
+	/**
+	 * Create the panel with the available conditions
+	 */
+	private void createConditionsPanel() {
+		//se crea un panel que albergará lo correspondiente a la selección de las condiciones
+		//además, también albergará el botón "Get image" para realizar la llamada al servidor de Kegg y obtener la imagen coloreada
 		panelInferiorDerecha = new JPanel(new BorderLayout(3, 3));
 		panelInferiorDerecha.setOpaque(true);
 		
-		botonFlechaIzq = new JButton(KeggDiagram.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
+		//creación del botón izquierdo
+		botonFlechaIzq = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
 		botonFlechaIzq.setToolTipText("Use the arrows to choose the condition");
+		//mientras se use el skin, estas opciones son ignoradas...
 		botonFlechaIzq.setBorder(null);
         botonFlechaIzq.setFocusPainted(false);
         botonFlechaIzq.setContentAreaFilled(false);
         botonFlechaIzq.setBorderPainted(false);
-        botonFlechaIzq.setRolloverEnabled(false);
-        botonFlechaIzq.setBackground(null);
-        botonFlechaIzq.setForeground(null);
-        
+        //cuando se pulse sobre el boton de la izquierda, aparecerá seleccionada la condición anterior
+        //si se llega a la condición más baja, no se hace nada
 		botonFlechaIzq.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
             	if(valorActualCondition-1 >= 0){
@@ -262,8 +283,11 @@ public class KeggDiagram extends Diagram {
             }
         });
 		
-		botonFlechaDer = new JButton(KeggDiagram.crearImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
+		//creación del botón derecho
+		botonFlechaDer = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
 		botonFlechaDer.setToolTipText("Use the arrows to choose the condition");
+        //cuando se pulse sobre el boton de la derecha, aparecerá seleccionada la condición siguiente
+        //si se llega a la condición más alta, no se hace nada		
 		botonFlechaDer.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
             	if(valorActualCondition+1 < sesion.getMicroarrayData().getNumConditions()){
@@ -274,10 +298,13 @@ public class KeggDiagram extends Diagram {
             	}            
         	}
         });	
+		//mientras se use el skin, estas opciones son ignoradas...		
 		botonFlechaDer.setBorder(null);
 		botonFlechaDer.setFocusPainted(false);
-		botonFlechaDer.setContentAreaFilled(false);				
+		botonFlechaDer.setContentAreaFilled(false);		
+		botonFlechaDer.setBorderPainted(false);
 		
+		//creación del campo de texto que contendrá el nombre de la condición (por defecto contendrá la de la posición 0)
 		jtf = new JTextField(this.sesion.getMicroarrayData().getConditionName(0));
 		valorActualCondition = 0;
 		jtf.setToolTipText(this.sesion.getMicroarrayData().getConditionName(0));
@@ -286,12 +313,22 @@ public class KeggDiagram extends Diagram {
 		jtf.setSize(new Dimension(100, 25));
 		jtf.setHorizontalAlignment(JTextField.CENTER);
 		
+		//creación del panel que albergará los 3 elementos relativos a la selección de la condición
 		JPanel panelSeleccionCondicion = new JPanel(new BorderLayout(3, 3));
+		//se añaden los citados elementos al panel
+		panelSeleccionCondicion.add(botonFlechaIzq, BorderLayout.WEST);
+		panelSeleccionCondicion.add(botonFlechaDer, BorderLayout.EAST);
+		panelSeleccionCondicion.add(jtf, BorderLayout.CENTER);
+		
+		//este panel con la selección de la condición se colocará en la parte derecha del panel inferior derecha
 		panelInferiorDerecha.add(panelSeleccionCondicion, BorderLayout.WEST);
 		
+		//creación del botón para realizar la llamada al servidor de Kegg y obtener la imagen
 		botonObtenerImagen = new JButton("Get image");
 		botonObtenerImagen.setToolTipText("Click here to get the image. You should choose 1 organism and 1 pathway first.");
 		botonObtenerImagen.setEnabled(false);
+		//este botón posee un oyente que hará que, cuando sea pulsado, se desactiven todos los demás botones de Kegg, se muestre una barra de progreso y se realice la llamada al servidor
+		//todo esto además se hará desde un hilo que no bloqueará la interfaz del programa
 		botonObtenerImagen.addActionListener(new ActionListener(){
 
 			@Override
@@ -300,16 +337,27 @@ public class KeggDiagram extends Diagram {
 		        	  
 		            @Override  
 		            protected Void doInBackground() throws Exception {  
+		            	//se deshabilitan los botones y combos
 		            	botonObtenerImagen.setEnabled(false);
 		            	botonFlechaIzq.setEnabled(false);
 		            	botonFlechaDer.setEnabled(false);
-		            	//se pone visible la progressbar para que el usuario sepa que se está trabajando en 2º plano
-		            	progressBar.setVisible(true);				            	
+		        		combo1.setEnabled(false);
+		        		combo2.setEnabled(false);		            	
+		            	//se pone visible la progressBar para que el usuario sepa que se está trabajando en 2º plano
+		            	progressBar.setVisible(true);				         
+		            	//se monta en el panel la imagen por defecto
 		            	mountPanelsWithNewImage(urlImagenPorDefecto, true);
-		            	loadKeggImage();
+		            	//se realiza la obtención de la imagen
+		            	getKeggImage();
+		            	//se habilitan de nuevo los botones y combox
 		            	botonObtenerImagen.setEnabled(true);
 		            	botonFlechaIzq.setEnabled(true);
-		            	botonFlechaDer.setEnabled(true);		            	
+		            	botonFlechaDer.setEnabled(true);		
+		        		combo1.setEnabled(true);
+		        		combo2.setEnabled(true);	
+		        		//se desactiva de la vista la progressBar
+		            	progressBar.setVisible(false);		
+		            	
 		                return null;  
 		            }
 		              
@@ -319,26 +367,47 @@ public class KeggDiagram extends Diagram {
 			}
 			
 		});
+		//se añade el citado botón al panel inferior derecha
 		panelInferiorDerecha.add(botonObtenerImagen, BorderLayout.EAST);
 		
-		panelSeleccionCondicion.add(botonFlechaIzq, BorderLayout.WEST);
-		panelSeleccionCondicion.add(botonFlechaDer, BorderLayout.EAST);
-		panelSeleccionCondicion.add(jtf, BorderLayout.CENTER);
-		
+		//el panel inferior derecha se añade, como parece lógico, en la parte derecha del panel inferior
 		panelInferior.add(panelInferiorDerecha, BorderLayout.EAST);
 	}
 
-
+	/**
+	 * Create the panel with the progress bar
+	 */	
 	private void createProgressBar() {
+		//creación del panel para la barra de progreso
+		panelProgressBar = new JPanel(new BorderLayout(10, 10));
+		//creación de la barra de progreso
 		progressBar = new JProgressBar(0, 100);
 		progressBar.setPreferredSize(new Dimension(70,15));
+		//texto que aparecerá si se pasa el ratón por encima de la barra de progreso
 		progressBar.setToolTipText("Loading KEGG information...");
+		//es indeterminada, es decir, no se puede saber qué porcentaje del trabajo está hecho 
+		//esto es debido a que se realiza en un servidor externo ajeno a este programa
 		progressBar.setIndeterminate(true);
+		//se coloca la barra en la parte derecha del panel para así aparecer en la parte superior derecha
 		panelProgressBar.add(progressBar, BorderLayout.EAST);
+		//el panel de la barra de progreso aparecerá en la parte superior de la ventana
+		this.add(panelProgressBar, BorderLayout.NORTH);
+		this.revalidate();		
 	}
 
-
-	private void createComboBoxes() throws Exception {
+	/**
+	 * Create the panel with combobox 
+	 */
+	private void createComboBoxesPanel() {
+		//creación del Layout para los comboboxes y sus separaciones
+		GridLayout layoutComoBoxes = new GridLayout(1,2);
+		layoutComoBoxes.setHgap(10);
+		layoutComoBoxes.setVgap(10);
+		
+		//creación del panel que albergará los comboboxes
+		panelComboBoxes = new JPanel(layoutComoBoxes);
+		panelComboBoxes.setOpaque(true);
+		
 		//se obtiene la lista de organismos
 		String[] organismosSeleccionables = kegg.getOrganism();
 		int organismoSeleccionado = 0;
@@ -416,21 +485,11 @@ public class KeggDiagram extends Diagram {
         worker.execute();
 	}
 
-	private void creatPanelImagen() {
-		panelImagen = new JPanel();
-		panelImagen.setLayout(new BoxLayout(panelImagen, BoxLayout.LINE_AXIS));
-		panelImagen.setOpaque(true);
-		
-		loadImage(urlImagenPorDefecto, true);
-		
-		panelImagen.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));		
-	}
-
-	private void loadKeggImage() throws Exception {
-		//se desactiva la posibilidad de modificar el contenido mientras se está cargando la imagen
-		combo1.setEnabled(false);
-		combo2.setEnabled(false);
-		
+	/**
+	 * Load image from Kegg server in the Kegg image panel
+	 */
+	private void getKeggImage() {
+		//se obtiene el identificador del pathway
 		String id_pathway = kegg.getPathwayIdFromDefinition((String) combo2.getSelectedItem(), definitionPathways);
 		
 		System.out.println("id_pathway = "+id_pathway);
@@ -441,14 +500,12 @@ public class KeggDiagram extends Diagram {
 			//una vez mostrada la iamgen, se actualiza el Diagram por si hay elementos seleccionados
 			this.update();
 		}
-		
-		//se habilitan los combobox de nuevo
-		combo1.setEnabled(true);
-		combo2.setEnabled(true);	
-		//se desactiva de la vista la progressBar
-    	progressBar.setVisible(false);
 	}
 
+	/**
+	 * Fill combobox2 with the pathways
+	 * @throws Exception
+	 */
 	private void fillComboBox2() throws Exception {
 		//se deshabilita para que mientras se está rellenando no se pueda tocar
 		combo2.setEnabled(false);
@@ -472,9 +529,13 @@ public class KeggDiagram extends Diagram {
 		progressBar.setVisible(false);
 	}
 
+	/**
+	 * Show the image
+	 * @param pathway Pathway of the image
+	 */
 	private void showImage(String pathway) {
 		try {
-			String url = kegg.generarImagenKegg(pathway, valorActualCondition);
+			String url = kegg.generateKeggImage(pathway, valorActualCondition);
 
 			URL u = new URL(url);
 			InputStream in = u.openStream();
@@ -496,6 +557,11 @@ public class KeggDiagram extends Diagram {
 		}
 	}
 
+	/**
+	 * Mount panels of Kegg window with a new image
+	 * @param url Image url
+	 * @param isDefaultImage Boolean to indicate if the image to show is the default image or not
+	 */
 	private void mountPanelsWithNewImage(String url, boolean isDefaultImage) {
 		//se eliminan todos los elementos del panel
 		panelImagen.removeAll();
@@ -505,14 +571,15 @@ public class KeggDiagram extends Diagram {
 		panelImagen.add(panelInferior);		
 	}
 	
+	/**
+	 * Load an image in the panelImagen
+	 * @param url Image url
+	 * @param isDefaultImage Boolean to indicate if the image to show is the default image or not
+	 */
 	private void loadImage(String url, boolean isDefaultImage) {
 		// Get the image to use.
 		ImageIcon imagen = null;
-		try {
-			imagen = createImageIcon(url);
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+		imagen = KeggDiagram.createImageIcon(url);
 
 		//Se crea el scrollpane
 		if(!isDefaultImage){
@@ -532,16 +599,32 @@ public class KeggDiagram extends Diagram {
 	}
 	
     /**
-     * Método que crear un ImageIcon a partir de una ruta
-     * @param path Ruta de la imagen
-     * @return ImageIcon con la imagen contenida en el path
+     * Returns an ImageIcon, or null if the path was invalid
+     * @param path Image path
+     * @return ImageIcon with the image of the path
      */
-    public static ImageIcon crearImageIcon(String path) {
-        java.net.URL imgURL = ClassLoader.getSystemResource(path);
+    public static ImageIcon createImageIcon(String path) {
+    	URL imgURL = null;
+    	//si la ruta empieza por http, será una imagen en internet
+    	if(path.startsWith("http")){
+    		try {
+				imgURL = new URL(path);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+    	}
+    	//si no, será una imagen local
+    	else{
+    		imgURL = ClassLoader.getSystemResource(path);
+    	}
+    	
+    	//si se ha conseguido una imagen, se devuelve el ImageIcon correspondiente
         if (imgURL != null) {
             return new ImageIcon(imgURL);
-        } else {
-            System.err.println("No se encuentra el fichero:" + path);
+        } 
+        //si no, se devuelve null
+        else {
+            System.err.println("Couldn't find file:" + path);
             return null;
         }
     }    	

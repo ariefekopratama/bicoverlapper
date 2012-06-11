@@ -1,14 +1,11 @@
 package es.usal.bicoverlapper.view.diagram.kegg;
 
 import java.awt.Color;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import keggapi.Definition;
@@ -65,7 +62,7 @@ public class Kegg {
 		return keggElements;
 	}
 
-	public String generarImagenKegg(String pathway, int numCondition) throws Exception {
+	public String generateKeggImage(String pathway, int numCondition) throws Exception {
 		int[] element_id_list = null;
 		String[] bgs = null;
 		String[] fgs = null;
@@ -259,20 +256,26 @@ public class Kegg {
 	/**
 	 * Devuelve la lista de organismos
 	 * 
-	 * @return
-	 * @throws Exception
+	 * @return Lista de organismos o en caso de producirse error una lista vacía
 	 */
-	public String[] getOrganism() throws Exception {
-		Definition[] d = serv.list_organisms();
-		String[] paths = new String[d.length];
-		for (int i = 0; i < d.length; i++) {
-			paths[i] = d[i].getDefinition();
+	public String[] getOrganism() {
+		Definition[] d;
+		try {
+			d = serv.list_organisms();
+			String[] paths = new String[d.length];
+			for (int i = 0; i < d.length; i++) {
+				paths[i] = d[i].getDefinition();
+			}
+			
+			//se ordena por orden alfabético
+			Arrays.sort(paths);
+
+			return paths;			
+		} catch (RemoteException e) {
+			e.printStackTrace();
 		}
 		
-		//se ordena por orden alfabético
-		Arrays.sort(paths);
-
-		return paths;
+		return new String[0];
 	}
 
 	/**

@@ -202,7 +202,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 							break;
 						}
 						else{
-							JOptionPane.showMessageDialog(null, "Sorry, the other views can't be updated", "Error", JOptionPane.ERROR_MESSAGE);	
+							JOptionPane.showMessageDialog(null, "Sorry, views can't be updated", "Error", JOptionPane.ERROR_MESSAGE);	
 						}
 					}
 					
