@@ -194,6 +194,11 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 							//Si no se quiere actualizar la propia vista Kegg
 							//sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
 							
+							//si está el shift apretado se unirán los nuevos elementos seleccionados a los que ya hubiera (si es que había alguno)
+							if(e.isShiftDown() && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
+								genesSeleccionados.addAll(sesion.getSelectedGenesBicluster());
+							}
+							
 							//Si se desea actualizar la propia vista Kegg (así se consigue que si se selecciona un elemento y hay repetidos en la imagen, se autoseleccionen)
 							sesion.setSelectedBicluster(new Selection(genesSeleccionados, conditions));	
 							sesion.updateAll();
