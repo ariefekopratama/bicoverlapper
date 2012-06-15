@@ -32,26 +32,6 @@ public class Kegg {
 		KEGGLocator locator = new KEGGLocator();
 		serv = locator.getKEGGPort();
 		sesion = _sesion;
-		
-		//en principio no va a hacer falta leer este fichero
-		/*
-		long start = System.currentTimeMillis();
-        try {
-            String pathKOMapping = "es/usal/bicoverlapper/view/diagram/kegg/komappingTOTAL.ser";
-            InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(pathKOMapping);
-            if(null == is){
-                System.out.println("problems al canto");
-            }
-            else{
-	            ObjectInputStream oin = new ObjectInputStream(is);
-	            koterms = (TreeMap<String, ArrayList<String>>) oin.readObject();
-	            oin.close();
-            }
-            System.out.println("koterms read in "+(System.currentTimeMillis() - start) / 1000 + " seconds");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        */
 	}
 
 	public KEGGPortType getServ() {
@@ -66,6 +46,12 @@ public class Kegg {
 		int[] element_id_list = null;
 		String[] bgs = null;
 		String[] fgs = null;
+		//variable que servirá para comprobar qué tipo de identificador de gen ha sido probado
+		//0 = id
+		//1 = entrezId
+		//2 = ensemblId
+		//3 => dejar de probar ya que no hay coincidencias
+		int tipoIdentificador = 0;
 		
 		long start = System.currentTimeMillis();
 		
@@ -87,69 +73,91 @@ public class Kegg {
 		System.out.println("mapaGenes.size()="+mapaGenes.size());
 		
 		System.out.println("pathwayElements.length es "+pathwayElements.length);
-		// extraigo los element_id_list, lo de los colores es sólo ahora que no
-		// tengo de dónde extraerlos y los genero aleatorios
-		for (int i = 0; i < pathwayElements.length; i++) {
-			if(pathwayElements[i].getType().equals("gene")){
-				ArrayList<Double> valoresExpresion = null;
-				boolean hayExpresion = false;
-				valoresExpresion = new ArrayList<Double>();
-				String[] nombresKO = pathwayElements[i].getNames();
-				
-				//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
-				//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
-				//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
-				TreeMap<String, ArrayList<String>> koTermsEnPathway=new TreeMap<String, ArrayList<String>>();
-				for (String nombreKO : nombresKO){
-					ArrayList<String> elementosDeKoterms = new ArrayList<String>();
-					//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
-					if(nombreKO.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
-						//se guarda el número del gen sin el identificador del organismo
-						elementosDeKoterms.add(nombreKO.split("\\:")[1]);
-						koTermsEnPathway.put(nombreKO, elementosDeKoterms);
+
+		do{
+			//se recorren todos los pathway elements
+			for (int i = 0; i < pathwayElements.length; i++) {
+				//si el elemento es de tipo gen (ya que para otro tipo de elementos no se coloreará)
+				if(pathwayElements[i].getType().equals("gene")){
+					ArrayList<Double> valoresExpresion = null;
+					boolean hayExpresion = false;
+					valoresExpresion = new ArrayList<Double>();
+					//se obtienen los nombres de ese pathwayElement (nótese que puede ser 1 nombre o más de uno)
+					String[] nombresKO = pathwayElements[i].getNames();
+					
+					//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
+					//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
+					//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
+					TreeMap<String, ArrayList<String>> KOTermsEnPathway=new TreeMap<String, ArrayList<String>>();
+					for (String nombreKO : nombresKO){
+						ArrayList<String> elementosDeKOterms = new ArrayList<String>();
+						//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
+						if(nombreKO.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
+							//se guarda el número del gen sin el identificador del organismo
+							elementosDeKOterms.add(nombreKO.split("\\:")[1]);
+							KOTermsEnPathway.put(nombreKO, elementosDeKOterms);
+						}
+						//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
 					}
-					//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
-				}
-				
-				//para cada gen en el microarray
-				for (GeneAnnotation g : mapaGenes.values()) {		
-					//para cada gen en el pathway
-					for (ArrayList<String> listaGenes: koTermsEnPathway.values()) {	
-						for(String gen: listaGenes){
-							//si coinciden, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
-							if(null != g.id && gen.equals(g.id)){									
-								hayExpresion = true;
-								double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
-								valoresExpresion.add(valorExp);			
-								//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
+					
+					//para cada gen en el microarray
+					for (GeneAnnotation g : mapaGenes.values()) {		
+						//para cada gen en el pathway
+						for (ArrayList<String> listaGenes: KOTermsEnPathway.values()) {	
+							for(String gen: listaGenes){
+								//si coinciden con el identificador que se esté comparando en cada momento, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
+								if(tipoIdentificador == 0 && null != g.id && gen.equals(g.id)){									
+									hayExpresion = true;
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									valoresExpresion.add(valorExp);			
+									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
+								}
+								else if(tipoIdentificador == 1 && null != g.entrezId && gen.equals(g.entrezId)){									
+									hayExpresion = true;
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									valoresExpresion.add(valorExp);			
+									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
+								}
+								else if(tipoIdentificador == 2 && null != g.ensemblId && gen.equals(g.ensemblId)){									
+									hayExpresion = true;
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									valoresExpresion.add(valorExp);			
+									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
+								}								
 							}
 						}
 					}
-				}
-				
-				//si se han producido coincidencias, entonces quiere decir que para ese elemento habrá que calcular un coloreado
-				if(hayExpresion){
-					//por tanto se añade el elemento a la lista
-					elementIdList.add(pathwayElements[i].getElement_id());
-					resultadosValidos.add(pathwayElements[i]);
-					//se calcula el valor medio para todos los genes de ese elemento
-					float media = calcularMedia(valoresExpresion);
-					//System.out.println("pathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id()+", media = "+media);
-					/*
-					for (Double in : valoresExpresion) {
-						System.out.println("valor = "+in);
+					
+					//si se han producido coincidencias, entonces quiere decir que para ese elemento habrá que calcular un coloreado
+					if(hayExpresion){
+						//por tanto se añade el elemento a la lista
+						elementIdList.add(pathwayElements[i].getElement_id());
+						resultadosValidos.add(pathwayElements[i]);
+						//se calcula el valor medio para todos los genes de ese elemento
+						float media = calcularMedia(valoresExpresion);
+						
+						System.out.println("ELEMENTO "+pathwayElements[i].getElement_id());
+						for (Double valorExp : valoresExpresion) {
+							System.out.println(valorExp);
+						}
+						System.out.println("Media = "+media);
+						
+						//se guarda esta media en la lista de muestras con la que se coloreará la imagen
+						samplesList.add(media);
 					}
-					*/
-					//se guarda esta media en la lista de muestras con la que se coloreará la imagen
-					samplesList.add(media);
+				}
+				else{
+					//TODO: en principio nada con los elementos que no sean genes, pero en un futuro podría necesitarse hacer algo con ellos
 				}
 			}
-			else{
-				//System.out.println("he encontrado uno que no es gene");
-			}
-		}
+			
+			//al llegar a este punto significa que se han buscado todos los elementos
+			//por tanto, el tipoIdentificador se incrementará por si hay que seguir buscando
+			tipoIdentificador++;
+			
+		} while(resultadosValidos.isEmpty() && tipoIdentificador < 4);
 		
-		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds");		
+		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds y tipoIdentificador usado es "+(tipoIdentificador-1));		
 
 		if(!elementIdList.isEmpty()){
 			//se convierten las colecciones anteriores en arrays
@@ -160,8 +168,12 @@ public class Kegg {
 			bgs = new String[element_id_list.length];
 	
 			//se interpolan los colores de la muestra
-			interpolateColors(element_id_list, samples, fgs, bgs);
-	
+			if(sesion.getScaleMode() == Session.numerical){
+				interpolateColorsNumerical(element_id_list, samples, fgs, bgs);
+			}
+			else if(sesion.getScaleMode() == Session.quantile){
+				interpolateColorsQuantile(element_id_list, samples, fgs, bgs);
+			}
 			// como todo en principio debería haber mantenido el orden, ahora ya
 			// tendría cada elemento con su fg y bg correspondiente
 			// como el id es único para cada resultado, añado el resultado que es lo
@@ -513,8 +525,41 @@ public class Kegg {
 		}
 		return colored;
 	}
+	
+	public void interpolateColorsQuantile(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
+		try {
+			for (int i = 0; i < element_id_list.length; i++) {
+				fgs[i] = "#007700";
 
-	public void interpolateColors(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
+				int quantile = sesion.getMicroarrayData().getQuantile(samples[i]);
+
+				int g = 0;
+				int b = 0;
+				int r = 0;
+
+				if (quantile < 50) {
+					b = 255;
+					r = (int)Math.round(255-((50.0-quantile)/50)*255);
+					g = r;
+				} 
+				
+				else {
+					r = 255;
+					g = (int)Math.round(255-((quantile-50.0)/50)*255);
+					b = g;
+				}
+
+				// System.out.println("Muestra número "+i+"\t"+r+"\t"+g+"\t"+b);
+				bgs[i] = "#" + ColorToHex(r, g, b);
+
+				System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"quantile="+quantile+"\t"+bgs[i]+"\t"+fgs[i]);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void interpolateColorsNumerical(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
 		try {
 			float[] ranks = this.getRanks(samples);
 
@@ -561,7 +606,7 @@ public class Kegg {
 				// esto es para probar los blancos
 				// bgs[i]="#FFFFFF";
 
-				//System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"ranks[i]="+ranks[i]+"\t"+bgs[i]+"\t"+fgs[i]);
+				System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"ranks[i]="+ranks[i]+"\t"+bgs[i]+"\t"+fgs[i]);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -615,7 +660,7 @@ public class Kegg {
 
 		for (int i = 0; i < samples.length; i++) {
 			ranks[i] = (samples[i] - min) / (max - min);
-			// System.out.println("Para el sample="+samples[i]+" el rank="+ranks[i]);
+			System.out.println("Para el sample="+samples[i]+" el rank="+ranks[i]+", con max = "+max+" y min = "+min);
 		}
 
 		return ranks;

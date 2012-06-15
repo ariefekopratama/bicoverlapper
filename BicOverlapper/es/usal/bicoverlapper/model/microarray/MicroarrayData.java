@@ -265,7 +265,13 @@ public class MicroarrayData {
 	public String sortingFactor = "Column ID";
 	
 	private BicOverlapperWindow ventana;
-
+	
+	private double[] medianCols;
+	private ArrayList<Double[]> quantileCols;
+	private double[] quantiles=new double[100];//min. expression value to be in quantile i%
+	private double mediana;
+	
+	
 	/**
 	 * Constructor from a file
 	 * 
@@ -493,6 +499,9 @@ public class MicroarrayData {
 			averageCols[i] /= numGenes;
 		average /= numGenes * numConditions;
 		computeSd();
+		
+		this.computeQuantiles();
+		
 		return ret;
 	}
 
@@ -3855,10 +3864,79 @@ public class MicroarrayData {
 		return selectHiLo(highEFV, highEF, 0, lowEFV, lowEF, 0);
 	}
 
-	
+	/**
+	 * Returns the string to identificate an organism in Kegg
+	 * @return
+	 */
 	public String getOrganismKEGG(){
 		String [] campos = organism.split("\\s+");
 		String ogranismKegg = campos[0].charAt(0)+"" + campos[1].charAt(0)+"" + campos[1].charAt(1)+"";
 		return ogranismKegg.toLowerCase();
+	}
+	
+	/**
+	 * Creates the quantile classification
+	 */
+	public void computeQuantiles() {
+		medianCols = new double[numConditions];
+		quantileCols = new ArrayList<Double[]>();
+
+		long t = System.currentTimeMillis();
+		double[] numbers = new double[numConditions * numGenes];
+		int cont = 0;
+		double step = numGenes * 0.01;
+
+		for (int j = 0; j < numConditions; j++) {
+			Double[] qq = new Double[100];
+			double[] numberCols = new double[numGenes];
+			for (int i = 0; i < numGenes; i++) {
+				numbers[cont++] = matrix[i][j];
+				numberCols[i] = matrix[i][j];
+			}
+			Arrays.sort(numberCols);
+			medianCols[j] = numberCols[(int) (numGenes * 0.5)];
+			for (int i = 0; i < 100; i++) {
+				qq[i] = numberCols[(int) (step * i)];
+				// System.out.println("quantile "+(i+1)+" for column "+j+" up to "+qq[i]);
+			}
+
+			quantileCols.add(qq);
+		}
+		Arrays.sort(numbers);
+		mediana = numbers[(int) (numGenes * numConditions * 0.5)];
+
+		step = numGenes * numConditions * 0.01;
+		for (int i = 0; i < 100; i++) {
+			quantiles[i] = numbers[(int) (step * i)];
+			// System.out.println("quantile "+(i+1)+" up to "+quantiles[i]);
+		}
+		System.out.println("Median computation takes "
+				+ (System.currentTimeMillis() - t) / 1000.0 + " mediana="
+				+ mediana);
+	}
+	
+	/**
+	 * Get the quantile of an expression
+	 * @param exp Expression to get the associated quantile
+	 * @return The associated quantile
+	 */
+	public int getQuantile(float exp) {
+		for (int i = 0; i < 100; i++)
+			if (exp < quantiles[i])
+				return i;
+		return 100;
+	}
+
+	/**
+	 * Get the quantile of an expression and a column
+	 * @param exp Expression to get the associated quantile
+	 * @param column Column of the quantile
+	 * @return The associated quantile
+	 */
+	public int getQuantile(float exp, int column) {
+		for (int i = 0; i < 100; i++)
+			if (exp < this.quantileCols.get(column)[i])
+				return i;
+		return 100;
 	}
 }

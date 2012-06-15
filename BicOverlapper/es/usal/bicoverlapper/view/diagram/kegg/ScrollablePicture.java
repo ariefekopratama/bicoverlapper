@@ -191,9 +191,6 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 							rectangles.add(itm.getRectangle());
 							this.repaint();
 							
-							//Si no se quiere actualizar la propia vista Kegg
-							//sesion.setSelectedBiclustersExcept(new Selection(genesSeleccionados, conditions), "Kegg");	
-							
 							//si está el shift apretado se unirán los nuevos elementos seleccionados a los que ya hubiera (si es que había alguno)
 							if(e.isShiftDown() && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
 								genesSeleccionados.addAll(sesion.getSelectedGenesBicluster());
@@ -215,6 +212,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 					System.out.println("Circle: Has picado sobre "+ itm.getTitle());
 				}
 				else{
+					//en principio se mantiene la selección si se pica sobre una posición sin elementos, así que este código queda comentado
 					//si se hace clic y no hay coincidencias, se pintará la imagen sin nada seleccionado
 					//dibujarBordeKeggElement = false;
 					//rectangles.clear();
@@ -230,7 +228,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		if(dibujarBordeKeggElement){
 			//se modifica el grosor de las líneas
 		    g2.setStroke(new BasicStroke(3.0f));			
-		    //se modifica el color de las líneas
+		    //se modifica el color de las líneas, utilizando el que esté marcado en la sesión como color de selección
 		    g2.setPaint(sesion.getSelectionColor());
 		    for (Rectangle2D.Double rectangle : rectangles) {
 		    	g2.drawRect((int)rectangle.getX() - distanciaAlElemento, (int)rectangle.getY() - distanciaAlElemento, (int)rectangle.getWidth()+(2*distanciaAlElemento), (int)rectangle.getHeight()+(2*distanciaAlElemento));
