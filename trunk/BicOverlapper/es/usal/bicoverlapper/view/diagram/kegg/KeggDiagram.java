@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Rectangle2D;
+import java.beans.PropertyVetoException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
@@ -26,16 +27,30 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
+import prefuse.Constants;
+import prefuse.action.ActionList;
+import prefuse.util.ColorLib;
+import prefuse.visual.VisualItem;
+
 import keggapi.Definition;
 import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
+import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
+import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
+import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
+import es.usal.bicoverlapper.view.diagram.heatmap.ExpressionColorAction;
+import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
+import es.usal.bicoverlapper.view.diagram.parallelCoordinates.ParallelCoordinatesDiagram;
 
 public class KeggDiagram extends Diagram {
 	private static final long serialVersionUID = 1L;
@@ -64,6 +79,25 @@ public class KeggDiagram extends Diagram {
 
 	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/view/diagram/kegg/keggDefaultImage.gif";	
 	
+	//todo lo de aquí para abajo son atributos para el tema de los cuantiles
+	private boolean configurando = false;
+	
+	private int scaleModeKegg;
+	
+	//configuración del color
+	private static final int lowColor = 0;
+	private static final int zeroColor = 1;
+	private static final int highColor = 2;
+	private static final int selectionColor = 3;
+	private static final int hoverColor = 4;
+	
+	private Color[] paleta;
+	private JTextField[] muestraColor;
+	private String[] textoLabel = { 	"Lowest Expression", "Zero Expression", 
+										"Highest expression", "Selection", "Hover" 
+								};	
+	
+	
 	/**
 	 * Default constructor
 	 */	
@@ -78,6 +112,9 @@ public class KeggDiagram extends Diagram {
 	 */	
 	public KeggDiagram(Session sesion, Dimension dim) {
 		super(new BorderLayout());
+		
+		scaleModeKegg = sesion.getScaleMode();
+		
 		int num = sesion.getNumHeatmapDiagrams();
 		this.setName("Kegg " + num);
 		this.sesion = sesion;
@@ -90,6 +127,13 @@ public class KeggDiagram extends Diagram {
 		//System.out.println("ESTO ES LA BIBLIOTECA sesion.getMicroarrayData().chip="+sesion.getMicroarrayData().chip);
 		//System.out.println("ESTO ES EL NOMBRE DEL ORGANISMO sesion.getMicroarrayData().organism="+sesion.getMicroarrayData().organism);
 		//System.out.println("ESTO ES LA BIBLIOTECA SI ARRIBA DA BIOMART sesion.getMicroarrayData().rname="+sesion.getMicroarrayData().rname);
+		
+		paleta = new Color[] { 	
+								sesion.lowExpColor, sesion.avgExpColor,
+								sesion.hiExpColor, sesion.getSelectionColor(),
+								sesion.getHoverColor() 
+							};		
+		muestraColor = new JTextField[paleta.length];
 	}
 	
 	/**
@@ -168,15 +212,21 @@ public class KeggDiagram extends Diagram {
 	
 	/**
 	 * Mapping internal ids with gen ids
-	 * @param internalIds List with the internal ids
+	 * @param internalIdsSelected List with the internal ids
 	 * @return Selected genes
 	 */
-	private List<String> mapearInternalIdconIdGen(List<Integer> internalIds) {
+	private List<String> mapearInternalIdconIdGen(List<Integer> internalIdsSelected) {
+		//creación de la lista de genes seleccionados
 		List<String> genesSeleccionados = new LinkedList<String>();
+		//obtención de los genes presentes en el experimento
 		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+		//para cada uno de los genes presentes en el experimento...
 		for (GeneAnnotation g : mapaGenes.values()) {
-			for (Integer gen : internalIds) {
+			//para cada uno de los internalId seleccionados
+			for (Integer gen : internalIdsSelected) {
+				//si coinciden
 				if(g.internalId == (gen)){
+					//se añade el id del gen a la lista de genes seleccionados
 					genesSeleccionados.add(g.id);
 				}
 			}
@@ -424,9 +474,12 @@ public class KeggDiagram extends Diagram {
 		//se añaden todos los organismos al desplegable
 		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
-		//se selecciona en el desplegable el organismo cuyo microarray ha sido cargado
-		combo1.setSelectedIndex(organismoSeleccionado);
-		combo1.setPreferredSize(new java.awt.Dimension(351, 23));
+		//se selecciona en el desplegable el organismo cuyo microarray ha sido cargado, siempre que este se encuentre entre los de la lista obtenida
+		//o sea, que el índice de organismoSeleccionado sea menor que la longitud total de los organismosSeleccionables
+		if(organismoSeleccionado < organismosSeleccionables.length){
+			combo1.setSelectedIndex(organismoSeleccionado);
+		}
+		combo1.setPreferredSize(new Dimension(351, 23));
 		combo1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				try {	
@@ -628,4 +681,78 @@ public class KeggDiagram extends Diagram {
             return null;
         }
     }    	
+    
+	/**
+	 * Pops up a configuration panel for heatmap visual properties
+	 */
+	public void configure() {
+		if (!configurando) {
+			configurando = true;
+			JInternalFrame ventanaConfig = this.getVentanaConfig();
+
+			// Obtenemos el gestor de eventos de configuracion
+			ConfigurationMenuManager gestor = new ConfigurationMenuManager(this, ventanaConfig, paleta, muestraColor);
+
+			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
+			JPanel panelParametros = new KeggParameterConfigurationPanel(sesion);
+			this.setPanelParametros(panelParametros);
+			JPanel panelBotones = this.getPanelBotones(gestor);
+
+			// Configuramos la ventana de configuracion
+			//this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
+			//para que sólo salgan los parámetros
+			this.initPanelConfig(null, null, panelParametros, panelBotones);
+
+			// Mostramos la ventana de configuracion
+			ventanaConfig.setLocation(getPosition());
+			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1") + " " + this.getName());
+			sesion.getDesktop().add(ventanaConfig);
+			try {
+				ventanaConfig.setSelected(true);
+			} catch (PropertyVetoException e) {
+				e.printStackTrace();
+			}
+			ventanaConfig.pack();
+			ventanaConfig.setVisible(true);
+		}
+	}    
+	
+	/**
+	 * Notifies the end of configuration
+	 */
+	public void endConfig(boolean ok) {
+		if (!ok) {
+			configurando = false;
+			return;
+		}
+		sesion.setSelectionColor(paleta[KeggDiagram.selectionColor]);
+		sesion.setHoverColor(paleta[KeggDiagram.hoverColor]);
+
+		//si el tipo de escala actual es diferente al que ha seleccionado el usuario...
+		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelParametros()).getScaleModeSelected();
+		if(scaleModeKegg != scaleModeSelectedByUser){
+			//se establece ese tipo de escala en la sesión
+			sesion.setScaleMode(scaleModeSelectedByUser);
+			scaleModeKegg = scaleModeSelectedByUser;
+			//se informa al usuario que la nueva escala se usará en la próxima imagen que se cargue
+			JOptionPane.showMessageDialog(null,
+					"The new scale mode will be applicated when you get a new image", "Information",
+					JOptionPane.INFORMATION_MESSAGE);			
+		}
+		
+		sesion.updateConfigExcept(this.getName());
+		this.configurando = false;
+		
+		System.out.println("scaleModeKegg = "+scaleModeKegg);
+	}
+	
+	public void updateConfig() {		
+		paleta[KeggDiagram.selectionColor] = sesion.getSelectionColor();
+		paleta[KeggDiagram.hoverColor] = sesion.getHoverColor();
+		
+		scaleModeKegg = sesion.getScaleMode();
+		
+		repaintAll = true;
+		this.repaint();
+	}	
 }

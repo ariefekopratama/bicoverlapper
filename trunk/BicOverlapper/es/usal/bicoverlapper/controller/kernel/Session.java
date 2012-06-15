@@ -13,7 +13,6 @@ import java.awt.Point;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JComponent;
@@ -141,10 +140,15 @@ public class Session implements KeyListener {
 	public boolean onlyHover;// if true, no additional actions for selection are
 								// done, only for hovering
 
-	//Carlos
-	//para avisar al BubbleMap o al Ovelapper de que hay demasiados genes
+	//variables para avisar a Ovelapper de que hay demasiados genes
 	private boolean tooManyGenes;
 	public static int MAX_GENES = 1000;
+	
+	//variable para indicar si la escala seleccionada son los cuantiles o es numérica
+	public static final int numerical = 0;
+	public static final int quantile = 1;
+	private int scaleMode = quantile;
+	
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a
 	 * <code>JDesktopPane</code>, with empty data
@@ -1485,5 +1489,19 @@ public class Session implements KeyListener {
 
 	public void setTooManyGenes(boolean tooManyGenes) {
 		this.tooManyGenes = tooManyGenes;
+	}
+
+	/**
+	 * @return the scaleMode
+	 */
+	public int getScaleMode() {
+		return scaleMode;
+	}
+
+	/**
+	 * @param scaleMode the scaleMode to set
+	 */
+	public void setScaleMode(int scaleMode) {
+		this.scaleMode = scaleMode;
 	}
 }

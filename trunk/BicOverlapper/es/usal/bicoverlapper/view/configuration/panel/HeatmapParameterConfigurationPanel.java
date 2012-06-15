@@ -2,8 +2,6 @@ package es.usal.bicoverlapper.view.configuration.panel;
 
 import java.awt.Dimension;
 
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
