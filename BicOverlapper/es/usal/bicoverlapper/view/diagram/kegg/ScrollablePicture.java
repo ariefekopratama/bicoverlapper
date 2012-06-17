@@ -14,7 +14,12 @@ import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
-
+/**
+ * Class to manage Kegg images
+ * 
+ * @author Carlos Martín Casado
+ *
+ */
 public class ScrollablePicture extends JLabel implements Scrollable, MouseListener {
 
 	private static final long serialVersionUID = -8290814532621669389L;
@@ -29,61 +34,6 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	
 	//parámetro que indica la distancia a la cual se dibujará el borde de selección del elemento
 	public static final int distanciaAlElemento = 2;
-	
-	// Este es el método que permite realizar la modificación del
-	// canal alfa de la imagen
-	private AlphaComposite creaComposite(float alfa) {
-		int tipo = AlphaComposite.SRC_OVER;
-		return (AlphaComposite.getInstance(tipo, alfa));
-	}
-
-	// Este método es el encargado de dibujar en pantalla los
-	// cuadrados azul y verde, opaco uno y con variación en el canal
-	// alfa del cuadrado verde
-	private void dibujaCuadrados(Graphics2D g2, float alfa, Rectangle2D.Double rectangle, String bg) {
-		Composite compOriginal = g2.getComposite();
-		// Ahora se modifica el canal alfa del objeto para poderlo hacer
-		// transparente
-		g2.setComposite(creaComposite(alfa));
-		g2.setPaint(Color.decode(bg));
-		g2.fill(rectangle);
-		// Se recuperan los valores originales del objeto Graphics2D
-		g2.setComposite(compOriginal);
-	}
-
-	private void dibujaCirculos(Graphics2D g2, float alfa, Circle circle, String bg) {
-		Composite compOriginal = g2.getComposite();
-		// Ahora se modifica el canal alfa del objeto para poderlo hacer
-		// transparente
-		g2.setComposite(creaComposite(alfa));
-		g2.setPaint(Color.decode(bg));
-		g2.fillOval((int) (circle.getCenter().getX() - circle.getRadius()),
-				(int) (circle.getCenter().getY() - circle.getRadius()),
-				2 * (int) circle.getRadius(), 2 * (int) circle.getRadius());
-		// Se recuperan los valores originales del objeto Graphics2D
-		g2.setComposite(compOriginal);
-	}
-
-	/**
-	 * Método que colorea la imagen con la imagen extraída del html
-	 * 
-	 * En principio DEPRECATED puesto que coloreo la imagen en el servidor
-	 */
-	/*
-	public void paintComponent(Graphics g) {
-		super.paintComponent(g);
-		Graphics2D g2 = (Graphics2D) g;
-		if (listaElementosImg != null) {
-			for (LinkItem itm : listaElementosImg) {
-				if (itm.getRectangle() != null) {
-					dibujaCuadrados(g2, 0.3F, itm.getRectangle(), itm.getBg());
-				} else if (itm.getCircle() != null) {
-					dibujaCirculos(g2, 0.3F, itm.getCircle(), itm.getBg());
-				}
-			}
-		}
-	}
-	*/
 
 	public ScrollablePicture(ImageIcon i, Session _sesion) {
 		super(i);
@@ -132,45 +82,43 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	// presionado
 
 	/**
-	 * Método que detecta la presión del botón izquierdo del ratón sobre el
-	 * panel
+	 * Invoked when a mouse button has been pressed on a component.
 	 */
 	public void mousePressed(MouseEvent e) {
 		// System.out.println("mouse Pressed "+e.getX()+" "+e.getY());
 	}
 
 	/**
-	 * Método que detecta la liberación del botón izquierdo del ratón sobre el
-	 * panel
+	 * Invoked when a mouse button has been released on a component.
 	 */
 	public void mouseReleased(MouseEvent e) {
 		// System.out.println("mouse Released "+e.getX()+" "+e.getY());
 	}
 
 	/**
-	 * Método que detecta la entrada del cursor del ratón sobre el panel
+	 * Invoked when the mouse enters a component.
 	 */
 	public void mouseEntered(MouseEvent e) {
 		// System.out.println("mouse Entered "+e.getX()+" "+e.getY());
 	}
 
 	/**
-	 * Método que detecta la salida del cursor del ratón del panel
+	 * Invoked when the mouse exits a component.
 	 */
 	public void mouseExited(MouseEvent e) {
 		// System.out.println("mouse Exited "+e.getX()+" "+e.getY());
 	}
 
 	/**
-	 * Método que detecta el click del botón izquierdo del ratón sobre el panel y coloreará si fuese pertinene el elemento
+	 * Invoked when the mouse button has been clicked (pressed and released) on a component.
 	 */
 	public void mouseClicked(MouseEvent e) {
 		this.detectarYColorearSeleccion(e);
 	}
 	
 	/**
-	 * Detección de la posición de clic de ratón y coloreado del elemento en caso de que se haya pinchado sobre alguno
-	 * @param e Evento de ratón
+	 * When a colored element is clicked, this method paints a rectangle around it
+	 * @param e MouseEvent
 	 */
 	private void detectarYColorearSeleccion(MouseEvent e) {
 		if (listaElementosImg != null) {
@@ -222,6 +170,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		}		
 	}
 
+	/**
+	 * Paint rectangles around elements selected
+	 */
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
@@ -236,6 +187,11 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		}
 	}		
 
+	/**
+	 * Mapping genes with internal ids
+	 * @param geneNames List of gene names
+	 * @return LinkedList<Integer> whit internal ids
+	 */
 	private LinkedList<Integer> mapearGenesConInternalId(String[] geneNames) {
 		LinkedList<Integer> genesSeleccionados = new LinkedList<Integer>();
 		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
@@ -249,6 +205,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		return genesSeleccionados;
 	}
 
+	/**
+	 * Get the preferred size
+	 */
 	public Dimension getPreferredSize() {
 		if (missingPicture) {
 			return new Dimension(320, 480);
@@ -257,24 +216,40 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		}
 	}
 
+	/**
+	 * Get the preferred scrollable viewport size
+	 */
 	public Dimension getPreferredScrollableViewportSize() {
 		return getPreferredSize();
 	}
 
+	/**
+	 * Get the scrollable tracks viewport width
+	 */
 	public boolean getScrollableTracksViewportWidth() {
 		return false;
 	}
 
+	/**
+	 * Get the scrollable tracks viewport height
+	 */
 	public boolean getScrollableTracksViewportHeight() {
 		return false;
 	}
 
+	/**
+	 * Set max unit increment
+	 * @param pixels Number of pixels
+	 */
 	public void setMaxUnitIncrement(int pixels) {
 		maxUnitIncrement = pixels;
 	}
 	
 	//Estos métodos sirven para desplazar el scroll tantos píxeles como se devuelven en el return
 	//si hiciesen return 0 no se podría mover el scroll pinchando en las flechitas o en una parte del scroll donde no esté la barra
+	/**
+	 * Get scrollable unit increment
+	 */
 	public int getScrollableUnitIncrement(Rectangle visibleRect,
 			int orientation, int direction) {
 		// Get the current position.
@@ -297,6 +272,9 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		}
 	}
 
+	/**
+	 * Get scrollable block increment
+	 */
 	public int getScrollableBlockIncrement(Rectangle visibleRect,
 			int orientation, int direction) {
 		if (orientation == SwingConstants.HORIZONTAL) {
@@ -306,19 +284,31 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		}
 	}
 
-	public List<Rectangle2D.Double> getRectangles() {
-		return rectangles;
-	}
-
-	public void setRectangles(List<Rectangle2D.Double> rectangles) {
-		this.rectangles = rectangles;
-	}
-
+	/**
+	 * @return the dibujarBordeKeggElement
+	 */
 	public boolean isDibujarBordeKeggElement() {
 		return dibujarBordeKeggElement;
 	}
 
+	/**
+	 * @param dibujarBordeKeggElement the dibujarBordeKeggElement to set
+	 */
 	public void setDibujarBordeKeggElement(boolean dibujarBordeKeggElement) {
 		this.dibujarBordeKeggElement = dibujarBordeKeggElement;
+	}
+
+	/**
+	 * @return the rectangles
+	 */
+	public List<Rectangle2D.Double> getRectangles() {
+		return rectangles;
+	}
+
+	/**
+	 * @param rectangles the rectangles to set
+	 */
+	public void setRectangles(List<Rectangle2D.Double> rectangles) {
+		this.rectangles = rectangles;
 	}
 }

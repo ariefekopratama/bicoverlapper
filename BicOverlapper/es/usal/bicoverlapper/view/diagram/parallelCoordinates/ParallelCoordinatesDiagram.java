@@ -1620,8 +1620,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			// Mostramos la ventana de configuracion
 			ventanaConfig.setLocation(getPosition());
-			ventanaConfig.setTitle(Translator.instance.configureLabels
-					.getString("s1") + " " + this.getName());
+			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1") + " " + this.getName());
 			sesion.getDesktop().add(ventanaConfig);
 			try {
 				ventanaConfig.setSelected(true);

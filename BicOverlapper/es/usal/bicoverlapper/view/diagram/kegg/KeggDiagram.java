@@ -35,23 +35,20 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
-import prefuse.Constants;
-import prefuse.action.ActionList;
-import prefuse.util.ColorLib;
-import prefuse.visual.VisualItem;
-
 import keggapi.Definition;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
-import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
-import es.usal.bicoverlapper.view.diagram.heatmap.ExpressionColorAction;
-import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
-import es.usal.bicoverlapper.view.diagram.parallelCoordinates.ParallelCoordinatesDiagram;
 
+/**
+ * Class to create Kegg view
+ * 
+ * @author Carlos Martín Casado
+ *
+ */
 public class KeggDiagram extends Diagram {
 	private static final long serialVersionUID = 1L;
 	private Session sesion;
@@ -77,7 +74,7 @@ public class KeggDiagram extends Diagram {
 	private int valorActualCondition;
 	private String organism;
 
-	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/view/diagram/kegg/keggDefaultImage.gif";	
+	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/resources/images/keggDefaultImage.gif";	
 	
 	//todo lo de aquí para abajo son atributos para el tema de los cuantiles
 	private boolean configurando = false;
@@ -96,7 +93,6 @@ public class KeggDiagram extends Diagram {
 	private String[] textoLabel = { 	"Lowest Expression", "Zero Expression", 
 										"Highest expression", "Selection", "Hover" 
 								};	
-	
 	
 	/**
 	 * Default constructor
@@ -313,7 +309,7 @@ public class KeggDiagram extends Diagram {
 		panelInferiorDerecha.setOpaque(true);
 		
 		//creación del botón izquierdo
-		botonFlechaIzq = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playIzq.png"));
+		botonFlechaIzq = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playIzq.png"));
 		botonFlechaIzq.setToolTipText("Use the arrows to choose the condition");
 		//mientras se use el skin, estas opciones son ignoradas...
 		botonFlechaIzq.setBorder(null);
@@ -334,7 +330,7 @@ public class KeggDiagram extends Diagram {
         });
 		
 		//creación del botón derecho
-		botonFlechaDer = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/view/diagram/kegg/playDer.png"));
+		botonFlechaDer = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playDer.png"));
 		botonFlechaDer.setToolTipText("Use the arrows to choose the condition");
         //cuando se pulse sobre el boton de la derecha, aparecerá seleccionada la condición siguiente
         //si se llega a la condición más alta, no se hace nada		
@@ -459,7 +455,7 @@ public class KeggDiagram extends Diagram {
 		panelComboBoxes.setOpaque(true);
 		
 		//se obtiene la lista de organismos
-		String[] organismosSeleccionables = kegg.getOrganism();
+		String[] organismosSeleccionables = kegg.getOrganisms();
 		int organismoSeleccionado = 0;
 		//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
 		for (String organismo : organismosSeleccionables) {
@@ -564,7 +560,7 @@ public class KeggDiagram extends Diagram {
 		combo2.setEnabled(false);
 		
 		// se desea mostrar los pathways del organismo seleccionado en el combobox1
-		String organismId = kegg.searchOrganism((String) combo1.getSelectedItem());
+		String organismId = kegg.getOrganismId((String) combo1.getSelectedItem());
 
 		Definition[] pathways = kegg.getDefinitionPathwaysFromOrganism(organismId);
 		definitionPathways = pathways;

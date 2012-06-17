@@ -279,13 +279,14 @@ public class HeatmapDiagram extends Diagram {
 		// TODO: If max!=-(min), the filling won't be the middle color for
 		// average values.
 		
-		//Carlos, modificando esto para la escala
+		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
+		
 		// exprColor.setMaxScale(md.max);
 		// exprColor.setMinScale(md.min);
 
@@ -557,13 +558,13 @@ public class HeatmapDiagram extends Diagram {
 		for (int i = paletteTemp.length; i < palette.length; i++)
 			palette[i] = paletteTemp2[i - paletteTemp.length];
 		
-		//Carlos, modificando esto para la escala
+		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-		}		
+		}
 		
 		// exprColor=new ExpressionColorAction("matrix", "level",
 		// Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
@@ -1201,9 +1202,13 @@ public class HeatmapDiagram extends Diagram {
 			palette[i] = paletteTemp2[i - paletteTemp.length];
 
 		
-		//Carlos, aquí no sé si poner el mismo if-else que en los demás usos de exprColor porque está a numerical ya...
-		exprColor = new ExpressionColorAction("matrix", "level",
-				Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+		//en función del tipo de escala seleccionado se entrará por un camino u otro
+		if(sesion.getScaleMode() == Session.quantile){
+			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		}
+		else{
+			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+		}
 		
 		
 		exprColor.setMaxScale(md.max);

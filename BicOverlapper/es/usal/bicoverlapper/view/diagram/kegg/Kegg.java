@@ -15,16 +15,20 @@ import keggapi.PathwayElement;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
+/**
+ * Class to manage Kegg information
+ * 
+ * @author Carlos Martín Casado
+ *
+ */
 public class Kegg {
 	
 	private KEGGPortType serv;
 	private List<KeggElement> keggElements = new ArrayList<KeggElement>();
 	private Session sesion;
-	private TreeMap<String, ArrayList<String>> koterms;
 	
 	/**
 	 * Binds the service to the soap port
-	 * 
 	 * @throws Exception
 	 */
 	public Kegg(Session _sesion) throws Exception {
@@ -34,14 +38,21 @@ public class Kegg {
 		sesion = _sesion;
 	}
 
-	public KEGGPortType getServ() {
-		return serv;
-	}
-
+	/**
+	 * Get list of Kegg elements
+	 * @return List of Kegg elements
+	 */
 	public List<KeggElement> getKeggElements() {
 		return keggElements;
 	}
 
+	/**
+	 * Generate Kegg image as from the selected pathway and the expression of genes in the experiment loaded
+	 * @param pathway Pathway of the organism
+	 * @param numCondition Condition selected
+	 * @return URL with the image generated
+	 * @throws Exception 
+	 */
 	public String generateKeggImage(String pathway, int numCondition) throws Exception {
 		int[] element_id_list = null;
 		String[] bgs = null;
@@ -195,7 +206,7 @@ public class Kegg {
 		//pongo element_id_listAux en vez de element_id_list porque quiero todos los elementos de la imagen en blanco
 		//String url = k.colorKegg2(pathway, element_id_listAux, fgs, bgs);
 
-		String url = this.colorKeggInTheCloud(pathway, element_id_list, fgs, bgs);
+		String url = this.colorKeggInTheCloudHTML(pathway, element_id_list, fgs, bgs);
 		
 		System.out.println("colorKeggInTheCloud took "
 				+ (System.currentTimeMillis() - startColorKegg) / 1000 + " seconds");		
@@ -206,14 +217,15 @@ public class Kegg {
 		return url;
 	}
 
-	/*
-	 * Método para calcular el promedio de una lista
+	/**
+	 * Get the medium of a list
+	 * @param valoresExpresion List with values
+	 * @return Float with the medium of the values
 	 */
 	private float calcularMedia(List<Double> valoresExpresion) {
 		double suma = 0;
 		for (Double valor : valoresExpresion) {
 			suma += valor;
-			//System.out.println("valor = "+valor+", suma = "+suma+", valoresExpresion.size() = "+valoresExpresion.size());
 		}
 		return (float) (suma/valoresExpresion.size());
 	}
@@ -221,8 +233,8 @@ public class Kegg {
 	/**
 	 * Retrieves all the pathways for a given organism
 	 * 
-	 * @param organism
-	 * @return
+	 * @param organism Organism to seek its pathways
+	 * @return String[] with pathways
 	 * @throws Exception
 	 */
 	public String[] getPathwaysFromOrganism(String organism) throws Exception {
@@ -240,8 +252,8 @@ public class Kegg {
 	/**
 	 * Retrieves all the pathways for a given organism
 	 * 
-	 * @param organism
-	 * @return
+	 * @param organism Organism to seek its pathways
+	 * @return Definition[] with pathways
 	 * @throws RemoteException
 	 */
 	public Definition[] getDefinitionPathwaysFromOrganism(String organism) throws RemoteException {
@@ -252,9 +264,9 @@ public class Kegg {
 	/**
 	 * Retrieves the pathway id for a given pathway definition
 	 * 
-	 * @param path
-	 * @param d
-	 * @return
+	 * @param path Pathway to seek its id
+	 * @param d Definition[] with all definition pathways
+	 * @return String with the id
 	 */
 	public String getPathwayIdFromDefinition(String path, Definition[] d) {
 		for (int i = 0; i < d.length; i++) {
@@ -266,11 +278,11 @@ public class Kegg {
 	}
 
 	/**
-	 * Devuelve la lista de organismos
+	 * Get list organisms
 	 * 
-	 * @return Lista de organismos o en caso de producirse error una lista vacía
+	 * @return String[] with the organisms
 	 */
-	public String[] getOrganism() {
+	public String[] getOrganisms() {
 		Definition[] d;
 		try {
 			d = serv.list_organisms();
@@ -291,14 +303,13 @@ public class Kegg {
 	}
 
 	/**
-	 * Devuelve la clave de un organismo determinado
+	 * Get the id of an organism
 	 * 
-	 * @param organism
-	 *            Organismo del que se desea obtener la clave
-	 * @return
+	 * @param organism Organism to seek the id
+	 * @return String with the id
 	 * @throws Exception
 	 */
-	public String searchOrganism(String organism) throws Exception {
+	public String getOrganismId(String organism) throws Exception {
 		Definition[] d = serv.list_organisms();
 
 		for (int i = 0; i < d.length; i++) {
@@ -313,8 +324,8 @@ public class Kegg {
 	/**
 	 * * Retrieves all the organism for a given pathway
 	 * 
-	 * @param pathway
-	 * @return
+	 * @param pathway Pathway to seek organisms
+	 * @return String[] with organisms
 	 * @throws Exception
 	 */
 	public String[] getOrganismsFromPathway(String pathway) throws Exception {
@@ -346,118 +357,16 @@ public class Kegg {
 	}
 
 	/**
-	 * returns all pathways DEPRECATED: use bioconductor KEGG instead (much
-	 * faster)
+	 * Color the elements in ids in the Kegg pathway pathid, with the
+	 * foreground and background colors specified
 	 * 
-	 * @return
+	 * @param pathid  something like pathway:hsa4031
+	 * @param ids ko ids like ko:K010267
+	 * @param fgs Foreground colors like #FF0000
+	 * @param bgs Background colors like #00FF00
+	 * @return - the url to the colored kegg pathway in html
 	 */
-	public String[] getAllPathways() {
-		try {
-			ArrayList<String> ret = new ArrayList<String>();
-			Definition[] orgs = serv.list_organisms();
-
-			// System.out.println("We have "+orgs.length+" organisms");
-			for (int i = 0; i < orgs.length; i++) {
-				String org = orgs[i].getDefinition();
-				org = org.substring(0, org.indexOf(" ("));
-
-				Definition[] paths = serv.list_pathways(orgs[i].getEntry_id());
-				// System.out.println("Organism "+org+" has "+paths.length+" pathways");
-				for (int j = 1; j < paths.length; j++) {
-					String path = paths[j].getDefinition();
-					path = path.substring(0, path.indexOf(" - ")).replace("/","");
-					// System.out.println(path+" in \t"+org);
-					if (!ret.contains(path))
-						ret.add(path);
-				}
-			}
-			// System.out.println("A total of "+ret.size()+" pathways");
-			String[] ret2 = new String[ret.size()];
-			for (int i = 0; i < ret2.length; i++)
-				ret2[i] = ret.get(i);
-			return ret2;
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return null;
-	}
-
-	/**
-	 * Colors the elements in ids in the Kegg pathway pathid, with the
-	 * foreground and background colors specified DEPRECATED: entrezgene ids are
-	 * preferred to ko ids, see colorKegg2
-	 * 
-	 * @param pathid
-	 *            something like pathway:hsa4031
-	 * @param ids
-	 *            ko ids like ko:K010267
-	 * @param fgcolors
-	 *            like #FF0000
-	 * @param bgcolors
-	 *            like #00FF00
-	 * @return - the url to the colored kegg pathway
-	 */
-	public String colorKegg(String pathid, String[] ids, String[] fgcolors,
-			String[] bgcolors) {
-		String colored = null;
-		try {
-			colored = serv.get_html_of_colored_pathway_by_objects(pathid, ids, fgcolors, bgcolors);
-			System.out.println("Finished " + colored);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return colored;
-	}
-
-	/**
-	 * Colors Kegg (colorea por el identificador normal, en principio usaremos
-	 * esta)
-	 * 
-	 * @param pathid
-	 *            something like pathway:hsa4031
-	 * @param ids
-	 *            entrez ids like hsa:10267
-	 * @param fgcolors
-	 *            like #FF0000
-	 * @param bgcolors
-	 *            like #00FF00
-	 * @return
-	 */
-	public String colorKegg2(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
-		String colored = null;
-		try {
-			/*
-			 * //si se utiliza esta versión se colorea la imagen en el servidor
-			 * de kegg pero tarda muchísimo
-			 * colored=serv.get_html_of_colored_pathway_by_elements(pathid,
-			 * element_id_list, fgcolors, bgcolors); //si utilizo esta versión,
-			 * se colorean en el servidor de kegg por defecto, así que aparecen
-			 * los verdes que no queremos
-			 * //colored=serv.get_html_of_colored_pathway_by_elements(pathid,
-			 * element_id_list, null, null);
-			 */
-			// se crean 2 arrays auxiliares para rellenarlos de blanco (que es
-			// lo que menos se tarda en colorear en kegg)
-			String[] fgAux = new String[element_id_list.length];
-			String[] bgAux = new String[element_id_list.length];
-			for (int i = 0; i < element_id_list.length; i++) {
-				bgAux[i] = "#FFFFFF";
-				fgAux[i] = "#000000";
-			}
-			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgAux, bgAux);
-
-			System.out.println("Finished " + colored);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return colored;
-	}
-	
-	
-	
-	
-	public String colorKeggInTheCloud(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
+	public String colorKeggInTheCloudHTML(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
 		String colored = null;
 		try {
 			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgcolors, bgcolors);
@@ -472,48 +381,18 @@ public class Kegg {
 		}
 		return colored;
 	}	
-	
 
 	/**
-	 * Colors Kegg (esta versión devuelve el png simplemente)
+	 * Color the elements in ids in the Kegg pathway pathid, with the
+	 * foreground and background colors specified
 	 * 
-	 * @param pathid
-	 *            something like pathway:hsa4031
-	 * @param ids
-	 *            entrez ids like hsa:10267
-	 * @param fgcolors
-	 *            like #FF0000
-	 * @param bgcolors
-	 *            like #00FF00
-	 * @return
+	 * @param pathid  something like pathway:hsa4031
+	 * @param ids ko ids like ko:K010267
+	 * @param fgs Foreground colors like #FF0000
+	 * @param bgs Background colors like #00FF00
+	 * @return - the url to the colored kegg pathway in png
 	 */
-	public String colorKegg3(String pathid, String[] ids, String[] fgcolors,
-			String[] bgcolors) {
-		String colored = null;
-		try {
-			colored = serv.color_pathway_by_objects(pathid, ids, fgcolors,
-					bgcolors);
-			System.out.println("Finished " + colored);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return colored;
-	}
-
-	/**
-	 * Colors Kegg (esta versión devuelve el png simplemente)
-	 * 
-	 * @param pathid
-	 *            something like pathway:hsa4031
-	 * @param ids
-	 *            entrez ids like hsa:10267
-	 * @param fgcolors
-	 *            like #FF0000
-	 * @param bgcolors
-	 *            like #00FF00
-	 * @return
-	 */
-	public String colorKegg4(String pathid, int[] element_id_list,
+	public String colorKeggInTheCloudPNG(String pathid, int[] element_id_list,
 			String[] fgcolors, String[] bgcolors) {
 		String colored = null;
 		try {
@@ -526,6 +405,13 @@ public class Kegg {
 		return colored;
 	}
 	
+	/**
+	 * Interpolate colors using quantile scale
+	 * @param element_id_list List of elements
+	 * @param samples Expression of elements
+	 * @param fgs Foreground colors like #FF0000
+	 * @param bgs Background colors like #00FF00
+	 */
 	public void interpolateColorsQuantile(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
 		try {
 			for (int i = 0; i < element_id_list.length; i++) {
@@ -559,17 +445,19 @@ public class Kegg {
 		}
 	}
 
+	/**
+	 * Interpolate colors using numerical scale
+	 * @param element_id_list List of elements
+	 * @param samples Expression of elements
+	 * @param fgs Foreground colors like #FF0000
+	 * @param bgs Background colors like #00FF00
+	 */
 	public void interpolateColorsNumerical(int[] element_id_list, float[] samples, String[] fgs, String[] bgs) {
 		try {
 			float[] ranks = this.getRanks(samples);
 
 			for (int i = 0; i < element_id_list.length; i++) {
 				fgs[i] = "#007700";
-
-				// con esta combinación vamos de blanco a rojo
-				// int r= 255;
-				// int g= (int)((1.0-ranks[i])*255);
-				// int b= g;
 
 				int g = 0;
 				int b = 0;
@@ -603,9 +491,6 @@ public class Kegg {
 				// System.out.println("Muestra número "+i+"\t"+r+"\t"+g+"\t"+b);
 				bgs[i] = "#" + ColorToHex(r, g, b);
 
-				// esto es para probar los blancos
-				// bgs[i]="#FFFFFF";
-
 				System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"ranks[i]="+ranks[i]+"\t"+bgs[i]+"\t"+fgs[i]);
 			}
 		} catch (Exception e) {
@@ -614,27 +499,11 @@ public class Kegg {
 	}
 
 	/**
-	 * Converts an RGB color to its corresponding hexadecimal value
-	 * 
-	 * CALCULA MAL PORQUE ELIMINA LOS 0 DE LA IZQUIERDA
-	 * 
-	 * @param r
-	 * @param g
-	 * @param b
-	 * @return
-	 */
-	public String Color2Hex(int r, int g, int b) {
-		Color c = new Color(r, g, b);
-		String hex = Integer.toHexString(c.getRGB() & 0x00ffffff).toUpperCase();
-		return hex;
-	}
-
-	/**
 	 * Convers an RGB color to its corresponding hexadecimal value
 	 * 
-	 * @param r
-	 * @param g
-	 * @param b
+	 * @param r Red component
+	 * @param g Green component
+	 * @param b Blue component
 	 * @return
 	 */
 	public String ColorToHex(int r, int g, int b) {
@@ -643,6 +512,11 @@ public class Kegg {
 		return rgb.substring(2, rgb.length()).toUpperCase();
 	}
 
+	/**
+	 * Get ranks of a list os samples
+	 * @param samples float[] with samples
+	 * @return ranks
+	 */
 	public float[] getRanks(float[] samples) {
 		if (samples.length < 1) {
 			System.err.println("The sample is empty");
@@ -666,6 +540,11 @@ public class Kegg {
 		return ranks;
 	}
 
+	/**
+	 * Get max value of a list
+	 * @param numbers float[] of numbers
+	 * @return float with max value
+	 */
 	public static float getMaxValue(float[] numbers) {
 		float maxValue = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -677,6 +556,11 @@ public class Kegg {
 		return maxValue;
 	}
 
+	/**
+	 * Get min value of a list
+	 * @param numbers float[] of numbers
+	 * @return float with min value
+	 */
 	public static float getMinValue(float[] numbers) {
 		float minValue = numbers[0];
 		for (int i = 1; i < numbers.length; i++) {
@@ -688,6 +572,11 @@ public class Kegg {
 		return minValue;
 	}
 	
+	/**
+	 * Convert List<Integer> to int[]
+	 * @param list List of Integers
+	 * @return int[] with the same elements as List<Integer>
+	 */
     public static int[] toIntArray(List<Integer> list) {  
 	    int[] intArray = new int[list.size()];  
 	    int i = 0;  
@@ -698,6 +587,11 @@ public class Kegg {
 	    return intArray;  
     }  
     
+	/**
+	 * Convert List<Float> to float[]
+	 * @param list List of Floats
+	 * @return float[] with the same elements as List<Float>
+	 */
     public static float[] toFloatArray(List<Float> list) {  
 	    float[] floatArray = new float[list.size()];  
 	    int i = 0;  
