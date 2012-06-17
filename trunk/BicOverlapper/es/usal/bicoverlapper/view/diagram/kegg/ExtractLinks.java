@@ -16,6 +16,7 @@ import javax.swing.text.html.parser.ParserDelegator;
 
 /**
  * Extract links from HTML
+ * 
  * @author Carlos Martín Casado
  */
 public class ExtractLinks {
@@ -72,7 +73,8 @@ public class ExtractLinks {
 		@Override
         public void handleSimpleTag(HTML.Tag tag, MutableAttributeSet attrSet, int pos) 
         {
-			if (tag == HTML.Tag.AREA) {  //check what kind of tag
+			//se comprueba el tipo de etiqueta
+			if (tag == HTML.Tag.AREA) {
 				//get the attributes
 				href = (String) attrSet.getAttribute(HTML.Attribute.HREF);
 				title = (String) attrSet.getAttribute(HTML.Attribute.TITLE);
@@ -116,7 +118,7 @@ public class ExtractLinks {
 	}	
 	
 	/**
-	 * Método para comprobar si el título contiene los nombres del elemento kegg (para realizar el mapeo de lo leído del html y el KeggElement)
+	 * Check if title contains the name of Kegg elements
 	 * @param title
 	 * @param names
 	 * @return

@@ -2,6 +2,12 @@ package es.usal.bicoverlapper.view.diagram.kegg;
 
 import keggapi.PathwayElement;
 
+/**
+ * Class to save Kegg elements attributes
+ * 
+ * @author Carlos Martín Casado
+ *
+ */
 public class KeggElement {
 
 	//elemento propiamente dicho
@@ -19,21 +25,26 @@ public class KeggElement {
 	public PathwayElement getElement() {
 		return element;
 	}
-	
-	
+
+	/**
+	 * Get the names of the element
+	 * @return Names of the element
+	 */
+	public String[] getNames() {
+		return element.getNames();
+	}
+
+	/**
+	 * @return the foreground
+	 */
 	public String getForeground() {
 		return foreground;
 	}
 
+	/**
+	 * @return the background
+	 */
 	public String getBackground() {
 		return background;
-	}
-
-	/**
-	 * Método que retorna los nombres del elemento (lo que voy a necesitar para buscar en el título y mapear un elemento del html con uno de estos)
-	 * @return
-	 */
-	public String[] getNames() {
-		return element.getNames();
 	}	
 }
