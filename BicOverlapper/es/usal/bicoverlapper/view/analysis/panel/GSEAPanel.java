@@ -231,41 +231,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 							setVisible(false);
 							
 						 	}
-						 /*else if(ef1.equals("rest") && ef2.equals(ef1))
-						 	{// case 1, rest vs rest, perform diffexp between every combination of efvs for each ef
-							 System.out.println("rest vs rest case");
-							 ArrayList<Object> p=new ArrayList<Object>();
-							   p.add(new Double(pvalueValue.getText()).doubleValue());
-							   p.add(new Double(expressionValue.getText()).doubleValue());
-							   p.add(reg);
-							   p.add(fileName);
-							   p.add(description.getText());
-							
-							AnalysisProgressMonitor apm=new AnalysisProgressMonitor(b, AnalysisProgressMonitor.AnalysisTask.LIMMAALL, p);
-							   apm.run();
-							   t=apm.getTask();
-							   Thread wt=new Thread() {
-									public void run() {
-										try{
-											String fileName=t.get();
-											if(fileName==null)	
-												JOptionPane.showMessageDialog(null,
-									                    "No biclusters found",
-									                    "Error",JOptionPane.ERROR_MESSAGE);
-											
-											else
-												{
-												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
-												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
-												}
-											}catch(Exception e){e.printStackTrace();}
-									}
-								};
-							wt.start();
-							setVisible(false);
-						 	}*/
+						 
 						 else if(!efv1.equals("rest") && !efv2.equals("rest") && (efv1.equals(ef1) || efv2.equals(ef2)) && ef1.equals(ef2))//same ef, not rest
 							{ 	//TODO: 4b, 5, 6
 							System.out.println("EF vs EFV case");
@@ -384,7 +350,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 
 			MicroarrayData md=session.getMicroarrayData();
 			ArrayList<String> efs=new ArrayList<String>();
-			efs.add("rest");
+			//efs.add("rest");
 			for(String ef:md.experimentFactors)
 				{
 				efs.add(ef);
@@ -414,8 +380,6 @@ public class GSEAPanel extends javax.swing.JFrame {
 					group1.setLayout(null);
 					group1.setBounds(13, 136, 134, 89);
 					group1.setAutoscrolls(true);
-					group1.setPreferredSize(new java.awt.Dimension(226, 175));
-
 				}
 			}
 			

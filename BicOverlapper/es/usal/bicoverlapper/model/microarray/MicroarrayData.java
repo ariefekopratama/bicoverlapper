@@ -3796,9 +3796,8 @@ public class MicroarrayData {
 			for (int j = 0; j < numConditions; j++) {
 				if (!highEFV.equals("none333")
 						&& ((highEFV.equals("rest") 
-								&& null != efvsH 
-								&& !efvsH[j].equals(lowEFV)) 
-								|| (null != efvsH  && efvsH[j].equals(highEFV)))) // TODO:the first part of the if could be done less times.
+								&& (efvsH==null || (null != efvsH && !efvsH[j].equals(lowEFV))) 
+								|| (null != efvsH  && efvsH[j].equals(highEFV)))) ) // TODO:the first part of the if could be done less times.
 					if (matrix[i][j] < averageCols[j] + sdsAbove * sdCols[j]) {
 						add = false;
 						break;

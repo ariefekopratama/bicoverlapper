@@ -477,18 +477,23 @@ public class NetworkDiagram extends Diagram {
 			{
 			//LinkedList l=sesion.getSelectedGenesBicluster();
 			//Quitamos todos los que estuvieran antes en el bicluster
-			currentGenes.clear();
-			if(selg!=null && selg.size()>0)
-				{//marcamos como seleccionados todos los nodos uqe estén en l
-				int inicio=0;
-				for(int i=inicio;i<selg.size();i++)//Las que vienen  de las burbujas meten un elemento primero!!!
-					{
-					IntIterator it=trnd.getGraph().getNodeTable().rows(ExpressionParser.predicate("id="+selg.get(i)));
-					if(it.hasNext())
+			if(!selg.equals(sesion.getSelectedGenesBicluster()))
+				{
+				currentGenes.clear();
+				
+				if(selg!=null && selg.size()>0)
+					{//marcamos como seleccionados todos los nodos uqe estén en l
+					
+					int inicio=0;
+					for(int i=inicio;i<selg.size();i++)//Las que vienen  de las burbujas meten un elemento primero!!!
 						{
-						Node n=trnd.getGraph().getNode((Integer)it.next());
-						VisualItem item=v.getVisualItem("graph.nodes", n);
-						currentGenes.addItem(item);
+						IntIterator it=trnd.getGraph().getNodeTable().rows(ExpressionParser.predicate("id="+selg.get(i)));
+						if(it.hasNext())
+							{
+							Node n=trnd.getGraph().getNode((Integer)it.next());
+							VisualItem item=v.getVisualItem("graph.nodes", n);
+							currentGenes.addItem(item);
+							}
 						}
 					}
 				}
