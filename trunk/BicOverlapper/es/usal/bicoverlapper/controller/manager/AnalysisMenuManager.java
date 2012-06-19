@@ -80,6 +80,12 @@ public class AnalysisMenuManager implements ActionListener {
 
 	}
 
+	public void cleanPanels()
+		{
+		gseaPanel=null;
+		difExpPanel=null;
+		}
+	
 	/**
 	 * Constructor to build a MenuManager
 	 * 

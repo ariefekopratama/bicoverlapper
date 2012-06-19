@@ -1065,6 +1065,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		}
 
 		ventana.analysisMenu.setEnabled(false);
+		ventana.cleanPanels();
+		
 		ventana.viewMenu.setEnabled(false);
 	}
 

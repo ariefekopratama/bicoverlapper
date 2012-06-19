@@ -87,6 +87,8 @@ public class BicOverlapperWindow extends JFrame {
 	
 	public JMenuItem menuAnalysisRetrieveDescriptors;
 
+	private AnalysisMenuManager amm;
+
 	/**
 	 * Default constructor
 	 * 
@@ -270,7 +272,7 @@ public class BicOverlapperWindow extends JFrame {
 		// menuArchivoSalir.addActionListener(gestorMenuArchivo);
 
 		// Create menu "Analysis"
-		AnalysisMenuManager amm = new AnalysisMenuManager(this);
+		amm = new AnalysisMenuManager(this);
 		analysisMenu = new JMenu(
 				Translator.instance.menuLabels.getString("analysis"));
 		analysisMenu.setEnabled(false);
@@ -608,6 +610,10 @@ public class BicOverlapperWindow extends JFrame {
 		return desktop;
 	}
 
+	public void cleanPanels()
+		{
+		amm.cleanPanels();
+		}
 	/**
 	 * Sets the application desktop
 	 * 

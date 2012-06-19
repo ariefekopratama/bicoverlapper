@@ -12,8 +12,9 @@ loadMatrix=function(filePath=NULL, numEFs=0)
 	#require(stringr)
 	
 	#Read file
-	m=read.csv(filePath, sep="\t")
-	
+	m=read.csv(filePath, sep="\t", header=FALSE)#, stringsAsFactors=FALSE)
+	colnames(m)=gsub("[ ]+$", "", as.character(unlist(m[1,])))
+	m=m[-1,]
 		
 	#Parse experimental factors
 	efs=c()
@@ -22,7 +23,8 @@ loadMatrix=function(filePath=NULL, numEFs=0)
 		for(i in 1:numEFs)
 		{
 			#row=str_trim(as.character(as.matrix(m[1,])))
-			row=as.character(as.matrix(m[1,]))
+			row=gsub("[ ]+$", "", as.character(unlist(m[1,])))
+			#row=as.character(as.matrix(m[1,]))
 			efvs=c(efvs,list(row[-1]))
 			efs=c(efs,row[1])
 			m=m[-1,]
@@ -30,7 +32,8 @@ loadMatrix=function(filePath=NULL, numEFs=0)
 		
 	#Parse gene names and expression values
 	geneNames=gsub("[ ]+", "", as.character(m[,1]))
-	ann=colnames(m)[1]
+	ann=gsub("^.*/", "", colnames(m)[1])
+	
 	m=m[,-1]
 		
 	m=apply(m, 2,function(x){as.numeric(x)})

@@ -88,8 +88,10 @@ gsea=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, membership=NA
 	
 	
 	#1) Prepare expression matrix
-	eset$targetPhenotype=ef
-	eset=eset[,which(eset$targetPhenotype %in% c(efv1, efv2))]
+	eset$targetPhenotype=gsub("[ ]+$","", as.character(ef))
+	#eset$targetPhenotype=ef
+	
+	#eset=eset[,which(eset$targetPhenotype %in% c(efv1, efv2))]	#size should not be reduced or the matrix won't be invertible (necessary fro lmPerGene)
 	eset$targetPhenotype[which(eset$targetPhenotype %in% efv1)]="class1"
 	eset$targetPhenotype[which(eset$targetPhenotype %in% efv2)]="class2"
 	
