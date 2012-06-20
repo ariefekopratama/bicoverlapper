@@ -124,6 +124,13 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						String ef1=null;
 						String efv1=null;
 						boolean ne1=false;
+						
+						if(null == group1.getSelectedValue() || null == group2.getSelectedValue()){
+							String msgError = "There is no information about experimental factor in the expression file, so no differential expression analysis can be done. Please add this information as described in the help (format section).";
+							JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+						
 						String g1=group1.getSelectedValue().toString();
 						String g2=group2.getSelectedValue().toString();
 						

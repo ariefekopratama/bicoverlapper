@@ -475,6 +475,11 @@ public class KeggDiagram extends Diagram {
 		if(organismoSeleccionado < organismosSeleccionables.length){
 			combo1.setSelectedIndex(organismoSeleccionado);
 		}
+		//en caso de no encontrarse en la lista, se avisa al usuario
+		else{
+			String msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";
+			JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+		}
 		combo1.setPreferredSize(new Dimension(351, 23));
 		combo1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
