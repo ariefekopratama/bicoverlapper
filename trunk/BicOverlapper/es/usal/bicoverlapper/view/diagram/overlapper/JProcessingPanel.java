@@ -90,6 +90,7 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	Image backBuffer;
 	Image img;
 	Graphics2D gfinal;
+	private Timer timer;
 	
 
 //	********************************************************************************
@@ -630,7 +631,9 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 	public void stop()
 		{
 		started=false;
+		timer.stop();
 		}
+	
 	public void run()
 		{
 		//int delay = 100; //milliseconds
@@ -641,7 +644,8 @@ public abstract class JProcessingPanel extends JComponent implements Runnable{
 		    	  repaint();
 		      }
 		  };
-		new Timer(delay, taskPerformer).start();
+		timer=new Timer(delay, taskPerformer);
+		timer.start();
 		}
 	
 	//public abstract void draw();

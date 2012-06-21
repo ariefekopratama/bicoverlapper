@@ -840,7 +840,7 @@ public class Graph {
 	public void drawHoverDualNode() {
 		Overlapper bv = (Overlapper) applet;
 
-		if (hoverNode != null) {
+		if (hoverNode != null &&  hoverNode.getClass().toString().contains("DualNode")) {
 			DualNode hn = (DualNode) hoverNode;
 
 			Iterator<DualNode> itDrawMates = this.dualNodes.values().iterator();
@@ -1014,18 +1014,31 @@ public class Graph {
 		Overlapper bv = (Overlapper) applet;
 		selectedNodes.clear();
 		selectedClusters.clear();
+		selectedDualNodes.clear();
+		
 		ArrayList<String> b = null;
 		if (bs.getConditions().size() >= bv.microarrayData.getNumConditions() - 1)
 			b = bv.microarrayData.getNames(bs.getGenes(),
 					new LinkedList<Integer>());
 		else
 			b = bv.microarrayData.getNames(bs.getGenes(), bs.getConditions());
-		for (int i = 0; i < b.size(); i++) {
+		for (int i = 0; i < b.size(); i++) 
+			{
 			String l = b.get(i);
 			Node n = nodes.get(l);
 			if (n != null)
 				selectedNodes.put(l, n);
-		}
+			}
+		for(String l:b)
+			{
+			Iterator<DualNode> it=dualNodes.values().iterator();
+			while(it.hasNext())
+				{
+				DualNode dn=it.next();
+				if(dn.subNodes.containsKey(l))
+					selectedDualNodes.put(dn.label, dn);
+				}
+			}
 	}
 
 	/**

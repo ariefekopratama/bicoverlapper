@@ -48,7 +48,7 @@ public class DiagramWindow extends JInternalFrame {
 		this.setClosable(true);
 		this.setResizable(true);
 		this.setMaximizable(true);
-						
+		
 		GestorVentana gestor = new GestorVentana();
 		this.addComponentListener(gestor);
 		this.addInternalFrameListener(gestor);
@@ -308,7 +308,6 @@ public class DiagramWindow extends JInternalFrame {
 		}
 
 		public void internalFrameClosed(InternalFrameEvent e) {
-			
 			sesion.removeVentana(thisVentana);
 			diagram.removeAll();
 			Runtime.getRuntime().gc();
