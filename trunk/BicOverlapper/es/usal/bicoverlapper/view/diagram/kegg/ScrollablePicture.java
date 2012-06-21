@@ -13,6 +13,7 @@ import javax.swing.*;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
+import es.usal.bicoverlapper.view.diagram.Diagram;
 
 /**
  * Class to manage Kegg images
@@ -32,12 +33,15 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	private boolean dibujarBordeKeggElement = false;
 	private List<Rectangle2D.Double> rectangles = new ArrayList<Rectangle2D.Double>();
 	
+	private Diagram panel;
+	
 	//parámetro que indica la distancia a la cual se dibujará el borde de selección del elemento
 	public static final int distanciaAlElemento = 2;
 
-	public ScrollablePicture(ImageIcon i, Session _sesion) {
+	public ScrollablePicture(ImageIcon i, Session _sesion, Diagram _panel) {
 		super(i);
 		sesion = _sesion;
+		panel = _panel;
 		if (i == null) {
 			missingPicture = true;
 			setText("No picture found.");
@@ -54,9 +58,10 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		addMouseListener(this); // handle mouse drags
 	}
 
-	public ScrollablePicture(ImageIcon i, List<LinkItem> listaElementosImg, Session _sesion, int numCondition) {
+	public ScrollablePicture(ImageIcon i, List<LinkItem> listaElementosImg, Session _sesion, int numCondition, Diagram _panel) {
 		super(i);
 		sesion = _sesion;
+		panel = _panel;
 		valorActualCondition = numCondition;
 		if (i == null) {
 			missingPicture = true;
@@ -113,7 +118,13 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	 * Invoked when the mouse button has been clicked (pressed and released) on a component.
 	 */
 	public void mouseClicked(MouseEvent e) {
-		this.detectarYColorearSeleccion(e);
+		if(e.getButton() == MouseEvent.BUTTON3){
+			//se escucha el botón derecho para lanzar el panel de configuración de KeggDiagram
+			this.panel.configure();
+		}
+		else{
+			this.detectarYColorearSeleccion(e);
+		}
 	}
 	
 	/**
