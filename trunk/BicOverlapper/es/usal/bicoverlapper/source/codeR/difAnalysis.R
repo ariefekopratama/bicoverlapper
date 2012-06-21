@@ -234,7 +234,7 @@ diffAnalysisAll=function(m, ef=list(), efNames=c(),
 			pvalT=7, diffT=0.8, byRank=FALSE, numRank=50, return ="all")
 	{
 	ret=lapply(ef, function(x){
-		diffAnalysisEFall(m, ef=x, pvalT, diffT, byRank, numRank, return)
+		diffAnalysisEFall(m=m, ef=x, pvalT=pvalT, diffT=diffT, byRank=byRank, numRank=numRank, return=return)
 		})
 	names(ret)=efNames
 	ret

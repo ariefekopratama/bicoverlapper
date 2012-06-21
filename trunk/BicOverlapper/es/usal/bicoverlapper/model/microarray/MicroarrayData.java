@@ -3803,8 +3803,8 @@ public class MicroarrayData {
 						break;
 					}
 				if (!lowEFV.equals("none333")
-						&& ((lowEFV.equals("rest") 
-								&& !efvsL[j].equals(highEFV)) || efvsL[j].equals(lowEFV)))
+						&& ((lowEFV.equals("rest") && (efvsL==null || !efvsL[j].equals(highEFV))) || (null!=efvsL && efvsL[j].equals(lowEFV))))
+
 					if (matrix[i][j] > averageCols[j] + sdsBelow * sdCols[j]) {
 						add = false;
 						break;

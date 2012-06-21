@@ -309,6 +309,10 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	private int contStability = 0;
 
 	private long totalTime;
+
+	private int magnifierAnchorX;
+
+	private int magnifierAnchorY;
 	
 	public static int maxNodes = 1000;
 
@@ -1641,7 +1645,11 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 				&& (mouseX <= xTopMagnifier + magnifierLength)
 				&& (mouseY >= yTopMagnifier)
 				&& (mouseY <= yTopMagnifier + magnifierHeight)) {
+				//&& (mouseY+(magnifierHeight-(mouseY-yTopMagnifier)) < yTopOverviewBox + overviewBoxHeight)) {
 			movingMagnifier = true;
+			magnifierAnchorX=mouseX;
+			magnifierAnchorY = mouseY;
+			
 			return;
 		}
 
@@ -1962,16 +1970,23 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 					&& (mouseX < xTopOverviewBox + overviewBoxLength)
 					&& (mouseY > yTopOverviewBox)
 					&& (mouseY < yTopOverviewBox + overviewBoxHeight)) {
-				if (movingMagnifier) {
+				if (movingMagnifier) {	//TODO: magnifier movew below the overviewBox!!
+					
 					navigate = true;
+					
 					xTopMagnifier = mouseX - magnifierLength / 2;
-					if (xTopMagnifier <= screenWidth - overviewBoxLength)
-						xTopMagnifier = (screenWidth - overviewBoxLength);
+					if (xTopMagnifier < screenWidth - overviewBoxLength)
+						xTopMagnifier = screenWidth - overviewBoxLength;
+					if (xTopMagnifier+magnifierLength > xTopOverviewBox + overviewBoxLength)
+						xTopMagnifier = xTopOverviewBox + overviewBoxLength - magnifierLength;
+					
 
 					yTopMagnifier = mouseY - magnifierHeight / 2;
-					if (yTopMagnifier <= 0)
+					if (yTopMagnifier < 0)
 						yTopMagnifier = 0;
-
+					if (yTopMagnifier+magnifierHeight > yTopOverviewBox + overviewBoxHeight)
+						yTopMagnifier = yTopOverviewBox + overviewBoxHeight - magnifierHeight;
+					
 					// Factor applied to calculate the offset in the real graph
 					offsetX = (xTopOverviewBox - xTopMagnifier) * (1 / factor);
 					offsetY = (yTopOverviewBox - yTopMagnifier) * (1 / factor);
@@ -2013,7 +2028,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 						((DualNode) g.getDragNode()).positionSubNodes();
 				} else // Selecci—n de ‡rea
 				{
-					selectionArea.add(new Point2D.Double(xpress, ypress));
+					if(selectionArea!=null)	selectionArea.add(new Point2D.Double(xpress, ypress));
 				}
 			}
 		}

@@ -179,9 +179,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 						String reg="";
 						switch(regulation.getSelectedIndex())
 							{
-							case 0: reg="all"; break;
-							case 1: reg="up"; break;
-							case 2: reg="down"; break;
+							//case 0: reg="all"; break;
+							case 0: reg="up"; break;
+							case 1: reg="down"; break;
 							default: reg="all"; break;	
 							}
 						
@@ -445,11 +445,11 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			{
 				ComboBoxModel regulationModel = 
 					new DefaultComboBoxModel(
-							new String[] { "up and down regulated", "up regulated in group 1", "down regulated in group 1" });
+							new String[] { "up regulated in group 1", "down regulated in group 1" });
 				regulation = new JComboBox();
 				this.add(regulation);
 				regulation.setModel(regulationModel);
-				regulation.setSelectedIndex(2);
+				regulation.setSelectedIndex(0);
 				regulation.setBounds(39, 83, 192, 21);
 			}
 
@@ -457,7 +457,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			ArrayList<String> efs=new ArrayList<String>();
 			//NOTA: lo quitamos, es poco intuitivo, incrementa mucho la combinatoria y su funci—n
 			// se puede realizar mendiante el resto. Adem‡s con los nuevos cambios es dif’cil de implementar
-			//efs.add("rest");
+			efs.add("rest");
 			for(String ef:md.experimentFactors)
 				{
 				efs.add(ef);

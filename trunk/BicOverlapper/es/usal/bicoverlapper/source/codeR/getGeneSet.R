@@ -10,15 +10,19 @@ getGeneSet=function(geneNames,environment)
     gl=mget(geneNames, environment, ifnotfound=NA) #GO for human has about 20000 terms (about 6s in the mget), PATH for human has abut 7000
     print(paste("time in getting terms from the environment", Sys.time()-t1))  
     
-    #In R (slightly more than 2s for 10000x100 matrix) (for a )
+    #In R (slightly more than 2s for 10000x100 matrix) (for hgu133plus2 + GO it crashes: too much memory, about 50000 genes and about 10000 terms -> a matrix of more than 640á10e6 values)
     t1=Sys.time()
     u <- unique(unlist(gl))
     u <- u[!is.na(u)]
-    mm <- sapply(gl,function(x) match(u,unlist(x), nomatch=0))
-    mm[mm>0]=1
+	
+	#--
+	#mm <- sapply(gl,function(x) u[match(unique(unlist(x)), u, nomatch=0)])#using lists
+	mm <- sapply(gl,function(x) match(u,unlist(x), nomatch=0))
+	mm[mm>0]=1
     colnames(mm)=geneNames
     rownames(mm)=u
-    print(paste("time in building the matrix", Sys.time()-t1))  
+    #--
+	print(paste("time in building the matrix", Sys.time()-t1))  
     
     mm
     }

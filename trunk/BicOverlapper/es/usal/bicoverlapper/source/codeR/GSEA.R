@@ -1,7 +1,9 @@
 getGSMatrix=function(gnames=NA, envir=NA, type="GO")
 {
 	gs0=getGeneSet(gnames,envir)
-	if(type=="GO")  gs0=gs0[grep("^GO:", rownames(gs0)),]
+	if(type=="GO") 
+		gs0=gs0[grep("^GO:", rownames(gs0)),]
+		#gs0=lapply(gs0, function(x) { x[grep("^GO:", x)]}) #using lists
 	gs0
 }
 
@@ -79,7 +81,7 @@ gsea=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, membership=NA
 		if(type=="GO")
 			require(GO.db)
 		else
-			return(paste("Error: type",type,"not supported. Try GO or KEGG."))
+			return(paste("Error: type",type,"not supported. Try GO or PATH (for KEGG)."))
 	}
 	
 	if(filterCutoff>=1 || filterCutoff<0)
@@ -99,11 +101,7 @@ gsea=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, membership=NA
 	require("genefilter")
 	filt = nsFilter(eset, var.cutoff = filterCutoff)$eset #Some people uses 60%, under the assumption that only about 40% of the genes are expressed on a given tissue (cutoff in default is by quantiles)
 	
-	#1.b) Define the gene set ------------------------------------------------------------
-	#envir=hgu133plus2PMID                
 	#1.c) Get the relevant set for our matrix
-	#gs0=getGeneSet(featureNames(filt),envir)
-	#if(type=="GO")  gs0=gs0[grep("^GO:", rownames(gs0)),]
 	if(!is.na(gs0))
 		{
 		gs0=gs0[,featureNames(filt)]
@@ -115,12 +113,29 @@ gsea=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, membership=NA
 		
 	
 	#1.d) Filter out genes in the expression matrix not in any of the GSs
+	
+	#--
 	haveGS = which(apply(gs0,2,sum)>0) #Take all genes at least in one path
 	workingEset = filt[haveGS, ]  #reduce the expr matrix to only genes with at least one path
 	gs=gs0[rowSums(gs0)>=minGenesInGS,]
 	rm(gs0)
 	gs = gs[, featureNames(workingEset)] 	
 	
+	#working with lists till the last moment (might save some memory, but will be slower...
+	#haveGS=sapply(gs0, function(x) length(x))
+	#workingEset=filt[names(haveGS)[which(haveGS>0)],]
+	#gs = gs0[featureNames(workingEset)] 	
+	#ug=unlist(gs)
+	#sizes=sapply(unique(ug), function(x) length(which(ug==x)) )
+	#gs=lapply(gs, function(x) x [which(x %in% names(sizes)[which(sizes>=minGenesInGS)])])
+	#now, finally, convert it to a matrix (much smaller, in the case of hgu133plus2+GO, it is a matrix of 6767x8492 instead of 54675x11708)
+	#mat=matrix(0, length(gs), length(unique(unlist(gs))))
+	#rownames(mat)=names((gs))
+	#colnames(mat)=unique(unlist(gs))
+	#mat2=sapply(rownames(mat), function(x){ mat[x,which(colnames(mat) %in% gs[[x]])]=1; mat[x,] })
+	#--
+
+
 	
 	#2) Gene Set Enrichment Analysis
 	ret=gseaLite(workingEset, geneSets=gs, model=model, sdThreshold=sdThreshold, type=type)
@@ -135,7 +150,6 @@ gseaEF=function(eset=NA, filterCutoff=0.5, minGenesInGS=5, envir=NA, model=NA, e
 	require("genefilter")
 	filt = nsFilter(eset, var.cutoff = filterCutoff)$eset #Some people uses 60%, under the assumption that only about 40% of the genes are expressed on a given tissue (cutoff in default is by quantiles)
 	
-	#gs=getGSMatrix(featureNames(filt), envir, type)
 	gs0=getGSMatrix(featureNames(filt), envir, type)
 	gs=matrix(0,dim(gs0)[1], dim(eset)[1])
 	colnames(gs)=featureNames(eset)
