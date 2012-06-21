@@ -933,8 +933,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	
 			//AQUÍ HAY QUE TENER MUCHO CUIDADO PORQUE DECIR QUE X <= LIMITX NO VALE PARA NADA, SÓLO MIRA LA ÚLTIMA X
 			//HABRÍA QUE IR GUARDANDO UN VALOR MÁXIMO DE X + ANCHURA Y VERLO AQUÍ
-			//if ((y <= limitY && x <= limitX))// smaller
-			if ((y <= limitY && xMaxima <= limitX))// smaller
+			//antes había if ((y <= limitY && x <= limitX))// smaller
+			if ((y <= limitY && xMaxima <= limitX))
 			{
 				if(hasDecreased){
 					end = true;

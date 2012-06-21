@@ -37,6 +37,7 @@ import javax.swing.SwingWorker;
 
 import keggapi.Definition;
 import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationListener;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
@@ -637,15 +638,20 @@ public class KeggDiagram extends Diagram {
 
 		//Se crea el scrollpane
 		if(!isDefaultImage){
-			picture = new ScrollablePicture(imagen, listaElementosImg, this.sesion, valorActualCondition);
+			picture = new ScrollablePicture(imagen, listaElementosImg, this.sesion, valorActualCondition, this);
 		}
 		else{
-			picture = new ScrollablePicture(imagen, this.sesion);
+			picture = new ScrollablePicture(imagen, this.sesion, this);
 		}
 		pictureScrollPane = new JScrollPane(picture);
 		pictureScrollPane.setPreferredSize(new Dimension(1024, 768));
 		pictureScrollPane.setViewportBorder(BorderFactory.createLineBorder(Color.black));
+		
+		//se añade el oyente para el panel de configuración al ScrollPane que contendrá la imagen
+		//pero también será necesario añadírselo a la propia imagen si se desea que funcione este botón derecho sobre ella
+		pictureScrollPane.addMouseListener(new ConfigurationListener(this));
 
+		//se añade el JScrollPane al panel de la imagen
 		panelImagen.add(pictureScrollPane);
 		
 		//para que se recargue el panel con la imagen nueva es necesario llamar a revalidate()
@@ -704,8 +710,6 @@ public class KeggDiagram extends Diagram {
 			//para que sólo salgan los parámetros
 			this.initPanelConfig(null, null, panelParametros, panelBotones);
 
-			// Mostramos la ventana de configuracion
-			ventanaConfig.setLocation(getPosition());
 			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1") + " " + this.getName());
 			sesion.getDesktop().add(ventanaConfig);
 			try {
@@ -714,6 +718,16 @@ public class KeggDiagram extends Diagram {
 				e.printStackTrace();
 			}
 			ventanaConfig.pack();
+
+			//Con esto se mostraría como se muestra en todos los demás diagramas
+			//ventanaConfig.setLocation(getPosition());
+			//pero parece ser que quiere que salga centrada			
+			int posicionX = (sesion.getMainWindow().getWidth()/2) - (ventanaConfig.getWidth()/2);
+			int posicionY = (sesion.getMainWindow().getHeight()/2) - (ventanaConfig.getHeight()/2);
+			//ventanaConfig.setLocation(sesion.getMainWindow().getWidth()/2, sesion.getMainWindow().getHeight()/2);
+			ventanaConfig.setLocation(posicionX, posicionY);	
+			
+			//Se hace visible la ventana
 			ventanaConfig.setVisible(true);
 		}
 	}    
@@ -736,9 +750,11 @@ public class KeggDiagram extends Diagram {
 			sesion.setScaleMode(scaleModeSelectedByUser);
 			scaleModeKegg = scaleModeSelectedByUser;
 			//se informa al usuario que la nueva escala se usará en la próxima imagen que se cargue
-			JOptionPane.showMessageDialog(null,
-					"The new scale mode will be applicated when you get a new image", "Information",
-					JOptionPane.INFORMATION_MESSAGE);			
+			//String msgInfo = "The new scale mode will be applied when you get a new image";
+			//JOptionPane.showMessageDialog(null, msgInfo, "Information", JOptionPane.INFORMATION_MESSAGE);			
+			
+			//parece ser que al final se desea que se recargue la imagen directamente
+			botonObtenerImagen.doClick();
 		}
 		
 		sesion.updateConfigExcept(this.getName());
