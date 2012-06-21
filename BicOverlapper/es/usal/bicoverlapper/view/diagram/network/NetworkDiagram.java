@@ -477,7 +477,7 @@ public class NetworkDiagram extends Diagram {
 			{
 			//LinkedList l=sesion.getSelectedGenesBicluster();
 			//Quitamos todos los que estuvieran antes en el bicluster
-			if(!selg.equals(sesion.getSelectedGenesBicluster()))
+			if(selg==null || !selg.equals(sesion.getSelectedGenesBicluster()))
 				{
 				currentGenes.clear();
 				

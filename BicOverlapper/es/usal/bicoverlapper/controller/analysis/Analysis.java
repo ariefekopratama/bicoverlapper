@@ -1275,6 +1275,15 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
+		
+		if(getMicroarrayData().isBioMaRt)
+		{
+		System.err.println("GSEA Error: biomart ids not supported");
+		JOptionPane.showMessageDialog(null,
+				"GSEA does not support biomaRt ids, only platforms corresponding go BioConductor dbs are supported (e.g. hgu133av2.db)", "Error",
+				JOptionPane.ERROR_MESSAGE);
+		return null;
+		}
 
 		if (outFile.length() == 0) // tempfile
 		{
@@ -1288,6 +1297,7 @@ public class Analysis {
 				outFile = outFile.concat(".bic");
 			}
 		}
+	
 
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/getGeneSet.R\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/GSEA.R\")");
@@ -1367,6 +1377,14 @@ public class Analysis {
 		if (!matrixLoaded)
 			loadMatrix(m);
 
+		if(getMicroarrayData().isBioMaRt)
+			{
+			System.err.println("GSEA Error: biomart ids not supported");
+			JOptionPane.showMessageDialog(null,
+					"GSEA does not support biomaRt ids, only platforms corresponding go BioConductor dbs are supported (e.g. hgu133av2.db)", "Error",
+					JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
 		if (outFile.length() == 0) // tempfile
 		{
 			outFile = "gsea" + (int) (100000 * Math.random()) + ".tmp";
@@ -1455,6 +1473,15 @@ public class Analysis {
 		if (!matrixLoaded)
 			loadMatrix(m);
 
+		if(getMicroarrayData().isBioMaRt)
+			{
+			System.err.println("GSEA Error: biomart ids not supported");
+			JOptionPane.showMessageDialog(null,
+					"GSEA does not support biomaRt ids, only platforms corresponding go BioConductor dbs are supported (e.g. hgu133av2.db)", "Error",
+					JOptionPane.ERROR_MESSAGE);
+			return null;
+			}
+		
 		if (outFile.length() == 0) // tempfile
 		{
 			outFile = "gsea" + (int) (100000 * Math.random()) + ".tmp";
