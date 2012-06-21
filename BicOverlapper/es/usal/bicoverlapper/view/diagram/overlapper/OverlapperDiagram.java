@@ -131,6 +131,7 @@ private static final long serialVersionUID = 1L;
 		super(new BorderLayout());//
 		int num = session.getNumBubbleMapDiagrams();
 		this.sesion = session;
+		
 
 		this.setName(Translator.instance.menuLabels.getString("s10")+" "+num);
 		
@@ -150,6 +151,11 @@ private static final long serialVersionUID = 1L;
 		}
 	
 
+	public void destroy()
+		{
+		bv.stop();
+		}
+	
 	/**
 	 * Once the panel is built and session is set, this method builds the interface, including the BiclusVis visualization
 	 */
@@ -426,6 +432,7 @@ private static final long serialVersionUID = 1L;
 	 */
 	public void update() 
 		{
+		if(sesion.onlyHover)	return;
 		if(sesion.getSelectedBicluster()!=null)
 			{
 			if(bv!=null)		bv.updateGraph(sesion.getSelectedBicluster());

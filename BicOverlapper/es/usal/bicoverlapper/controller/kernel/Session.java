@@ -489,6 +489,10 @@ public class Session implements KeyListener {
 	 *            <code>VentanaPanel</code> que queremos sea eliminada.
 	 */
 	public void removeVentana(DiagramWindow ventana) {
+		if(ventana.getTitle().contains("erlapper"))	//On this case we must be sure that the overlapper stops computing layouts!
+			{
+			((OverlapperDiagram)ventana.getDiagram()).destroy();
+			}
 		for (int i = 0; i < ventanas.size(); i++) {
 			DiagramWindow ventanaAux = ventanas.elementAt(i);
 			if (ventana.getTitle().equals(ventanaAux.getTitle())) {

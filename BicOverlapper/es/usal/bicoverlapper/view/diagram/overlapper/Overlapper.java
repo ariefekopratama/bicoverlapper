@@ -313,6 +313,10 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	private int magnifierAnchorX;
 
 	private int magnifierAnchorY;
+
+	private Timer timer;
+
+	private Timer timerLayout;
 	
 	public static int maxNodes = 1000;
 
@@ -490,6 +494,10 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	 *            Graphics in which the visualization is to be drawn
 	 */
 	public synchronized void paintComponent(Graphics g) {
+		if(!this.started)	{pauseSimulation=true; timer.stop(); return;}
+		
+		
+		
 		long ts = System.currentTimeMillis();
 		gfinal = (Graphics2D) g;
 		if (g != null && gfinal != null) {
@@ -522,8 +530,6 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 				else
 					qualityHints.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 				qualityHints.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED);
-				// qualityHints.put(RenderingHints.KEY_RENDERING,
-				// RenderingHints.VALUE_RENDER_QUALITY);
 				gr.setRenderingHints(qualityHints);
 
 				Color bg = this.getBackground();
@@ -578,7 +584,8 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			}
 		};
 
-		new Timer(delay, taskPerformerLayout).start();
+		timerLayout=new Timer(delay, taskPerformerLayout);
+		timerLayout.start();
 
 		ActionListener taskPerformer = new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
@@ -586,7 +593,15 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			}
 		};
 
-		new Timer(delay, taskPerformer).start();
+		timer=new Timer(delay, taskPerformer);
+		timer.start();
+	}
+	
+	public void stop()
+	{
+	started=false;
+	timer.stop();
+	timerLayout.stop();
 	}
 
 	/**
@@ -823,14 +838,15 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	// sobre todo, tengo todo preparado para aplicar
 	// métricas de manera particular
 	public synchronized void doLayout() {
-		if (computeDualLayout && g.dualNodes != null && g.dualNodes.size() > 0) {
+		if (computeDualLayout && g.dualNodes != null && g.dualNodes.size() > 0) 
+			{
 			doDualLayout();
 			return;
-		}
+			}
 		sumOfForces = 0;
 		Iterator<Node> it = g.getNodes().values().iterator();
 		for (int i = 0; i < g.getNodes().size(); i++) // N(N-1)/2 complexity
-		{
+			{
 			ForcedNode n = (ForcedNode) it.next();
 			// ------------------- spring force ------------------------------
 			TreeMap<String, Edge> edges = g.getEdgesFrom(n);
@@ -896,7 +912,9 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 	private void applyLayout(ForcedNode n) {
 		// -----------------------
 		boolean zoomed = false;
-
+		double oldX=n.getX();
+		double oldY=n.getY();
+		
 		if (n != g.getDragNode() && !n.isFixed()) {
 			while (n.getForce().getX() > scapeForce
 					|| n.getForce().getY() > scapeForce)
@@ -923,8 +941,11 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 							|| n.getPosition().getY() > totalHeight
 							|| n.getPosition().getX() < 0 || n.getPosition()
 							.getY() < 0)) {
-				increaseOverview(2);
-				zoomed = true;
+				//increaseOverview(2);
+				//zoomed = true;
+				n.setX(oldX);
+				n.setY(oldY);
+				pauseSimulation=true;
 			}
 		}
 		n.setForce(nullVector); // una vez cambiada la posición, estas fuerzas
@@ -1120,19 +1141,20 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 		sumOfForces = 0;
 		Iterator<DualNode> it = g.dualNodes.values().iterator();
 		for (int i = 0; i < g.dualNodes.size(); i++) // N(N-1)/2 complexity
-		{
+			{
 			DualNode n = it.next();
+			GraphPoint2D oldP=n.getPosition();
+			
 			ArrayList<Edge> ed = g.getDualEdgesFrom(n);
 			for (int j = 0; j < ed.size(); j++)// ----------------- spring force
-			{
+				{
 				SpringEdge e = (SpringEdge) ed.get(j);
-				// GraphPoint2D f = e.getForceFrom();
 				GraphPoint2D f = e.getDualForceFrom();
 				n.applyForce(f);
 				sumOfForces += Math.abs(Math.sqrt(f.getX() * f.getX()
 						+ f.getY() * f.getY()));
 
-			}
+				}
 			// System.out.println("Fuerza de spring para "+n.label+": "+n.getForce().getX()+", "+n.getForce().getY());
 			Iterator<DualNode> it2 = g.dualNodes.values().iterator();
 			while (it2.hasNext()) {
@@ -1149,9 +1171,8 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 
 						if (r > 0.1)// To avoid extremely high forces
 						{
-							// double f = -G*(n.getMass()*b.getMass()/(r*r));
 							double f = -G / (r * r);
-
+							
 							vf.setX(dx * f);
 							vf.setY(dy * f);
 							n.applyForce(vf);
@@ -1198,16 +1219,18 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 								|| n.getPosition().getY() > totalHeight
 								|| n.getPosition().getX() < 0 || n
 								.getPosition().getY() < 0)) {
-					increaseOverview(2);
-					zoomed = true;
+					//increaseOverview(2);
+					//zoomed = true;
+					n.setPosition(oldP);
+					pauseSimulation=true;
 				}
 			}
 			n.setForce(nullVector); // una vez cambiada la posición, estas
 									// fuerzas ya no actúan sobre el nodo
-
 		}// for (each node)
 
-		/*
+		//this.pauseSimulation=true;
+			/*
 		 * System.out.println("Sum of forces "+sumOfForces);
 		 * if(antSumOfForces!=0) { if(antSumOfForces-sumOfForces<0.001) {
 		 * contStability++; if(contStability>4) { pause(); contStability=0;
@@ -1784,43 +1807,70 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 				g.getDragNode().fix(true);
 			}
 			g.setDragNode(null);
-		} else {
+		} 
+		else {
 			if (selectionArea != null) // --------area selection
-			{
-				g.clearSelectedNodes();
-				g.getSelectedClusters().clear();
-
-				if (!drawDual) {
+				{
+				//g.clearSelectedNodes();
+				//g.getSelectedClusters().clear();
+	
+				if (!drawDual)
+					{
 					Iterator<Node> it = g.getNodes().values().iterator();
-					while (it.hasNext()) {
+					ArrayList<Node> selectedNodes=new ArrayList<Node>();
+					while (it.hasNext()) 
+						{
 						Node n = it.next();
-
+	
 						Polygon pol = new Polygon();
 						for (Point2D.Double p : selectionArea)
 							pol.addPoint((int) p.x, (int) p.y);
-						if (pol.contains(n.getX(), n.getY())) {
-							g.addSelectedNode(n);
+						if (pol.contains(n.getX(), n.getY())) 
+							{
+							//g.addSelectedNode(n);
+							selectedNodes.add(n);
 							nodeSelected = true;
+							}
 						}
-					}
-				} else {
-					g.clearSelectedDualNodes();
-					Iterator<DualNode> it = g.getDualNodes().values()
-							.iterator();
-					while (it.hasNext()) {
+					if(selectedNodes.size()>0)
+						{
+						g.clearSelectedNodes();
+						g.getSelectedClusters().clear();
+						for(Node n:selectedNodes)	g.addSelectedNode(n);
+						}
+					} 
+				else 
+					{
+					//g.clearSelectedDualNodes();
+					Iterator<DualNode> it = g.getDualNodes().values().iterator();
+					ArrayList<DualNode> selectedDualNodes=new ArrayList<DualNode>();
+					ArrayList<Node> selectedNodes=new ArrayList<Node>();
+					
+					while (it.hasNext()) 
+						{
 						DualNode n = it.next();
-
+	
 						Polygon pol = new Polygon();
 						for (Point2D.Double p : selectionArea)
 							pol.addPoint((int) p.x, (int) p.y);
-						if (pol.contains(n.getX(), n.getY())) {
-							g.addSelectedDualNode(n);
-							g.addSelectedNodes(n.subNodes);
+						if (pol.contains(n.getX(), n.getY())) 
+							{
+							//g.addSelectedDualNode(n);
+							//g.addSelectedNodes(n.subNodes);
+							selectedNodes.addAll(n.subNodes.values());
+							selectedDualNodes.add(n);
 							nodeSelected = true;
+							}
+						}
+					if(selectedDualNodes.size()>0)
+						{
+						g.clearSelectedNodes();
+						g.getSelectedClusters().clear();
+						g.clearSelectedDualNodes();
+						for(DualNode dn:selectedDualNodes)	g.addSelectedDualNode(dn);
+						for(Node n:selectedNodes)			g.addSelectedNode(n);
 						}
 					}
-
-				}
 				selectionArea = null;
 			}
 		}
@@ -1913,7 +1963,6 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 				}// end if(rigth button)
 			}// if !drawDual
 			else {
-				System.out.println("Selection of dual node");
 				Iterator<DualNode> itMM = g.dualNodes.values().iterator();
 
 				for (int i = 0; i < g.dualNodes.size(); i++) // --------- dual
@@ -2004,22 +2053,26 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			else
 				c = g.getSelectedNodes().values();
 
-			if (c != null && g.getDragNode() != null && c.size() > 0) // selected
-																		// nodes
-			{
+			if (c != null && g.getDragNode() != null && c.size() > 0 && c.contains(g.getDragNode())) // move all the selected nodes
+				{
 				Iterator<Node> it = c.iterator();
 				double mainX = -1;
 				double mainY = -1;
-				while (it.hasNext()) {
+				while (it.hasNext()) 
+					{
 					Node n = it.next();
-					if (mainX < 0) {
+					if (mainX < 0) 
+						{
 						mainX = n.getX();
 						mainY = n.getY();
-					}
+						}
 					n.setX(n.getX() - mainX + xpress);
 					n.setY(n.getY() - mainY + ypress);
-				}
-			} else // drag node or selection line
+					if(drawDual)
+						((DualNode) g.getDragNode()).positionSubNodes();
+					}
+				} 
+			else // drag node or selection line
 			{
 				if (g.getDragNode() != null) {
 					g.getDragNode().setX(xpress);
@@ -3128,10 +3181,6 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 		readResultSetsBicat();
 		readClustersBicat();
 
-		// readFile(null, " ", null, 2);//Yaxi's format
-		// readFile(null, ", ", null, 2);//Yaxi's format
-		// readFile(":", ", ", "|",2);//Yaxi's formatdf
-
 		if (initialOrdering && radial)
 			g = buildOrderedRadialGraph();
 		else {
@@ -3246,9 +3295,12 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 		cellHeight = screenHeight / Math.sqrt(numClusters);
 		double x, y;
 
-		x = screenWidth * (areaInc - 1) * 0.75 - cellWidth / 2;
-		y = screenHeight * (areaInc - 1) * 0.75 + cellHeight / 2;
-
+		//x = screenWidth * (areaInc - 1) * 0.75 - cellWidth / 2;
+		//y = screenHeight * (areaInc - 1) * 0.75 + cellHeight / 2;
+		double initX = screenWidth*(areaInc-1)*0.5;// - cellWidth / 2;
+		x = initX;
+		y = screenHeight*(areaInc-1)*0.5;// - cellHeight / 2;
+		
 		// El contador de nodos usados en lugar de filas por columnas
 		nNodes = 0;
 		int color = Overlapper.bicColor1;
@@ -3269,8 +3321,8 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 			{
 				// Uniform position
 				x += cellWidth;
-				if (x >= screenWidth) {
-					x = cellWidth / 2;
+				if (x >= initX+screenWidth) {
+					x = initX;
 					y += cellHeight;
 				}
 
