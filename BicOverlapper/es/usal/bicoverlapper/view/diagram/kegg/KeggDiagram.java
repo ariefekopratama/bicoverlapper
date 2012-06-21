@@ -706,9 +706,9 @@ public class KeggDiagram extends Diagram {
 			JPanel panelBotones = this.getPanelBotones(gestor);
 
 			// Configuramos la ventana de configuracion
-			//this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
+			this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
 			//para que sólo salgan los parámetros
-			this.initPanelConfig(null, null, panelParametros, panelBotones);
+			//this.initPanelConfig(null, null, panelParametros, panelBotones);
 
 			ventanaConfig.setTitle(Translator.instance.configureLabels.getString("s1") + " " + this.getName());
 			sesion.getDesktop().add(ventanaConfig);
