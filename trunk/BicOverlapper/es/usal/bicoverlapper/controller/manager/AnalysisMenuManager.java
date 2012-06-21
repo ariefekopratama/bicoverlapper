@@ -84,6 +84,7 @@ public class AnalysisMenuManager implements ActionListener {
 		{
 		gseaPanel=null;
 		difExpPanel=null;
+		selectPanel=null;
 		}
 	
 	/**
