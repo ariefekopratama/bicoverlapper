@@ -68,8 +68,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	// atributos del panel del diagrama
 	private Session sesion;
 	private MicroarrayData datos;
-	int numC = 0; // Número de coordenadas
-	int numG = 0; // Número de líneas
+	int numConditions = 0; // Número de condiciones
+	int numGenes = 0; // Número de genes
 	private int alto;
 	private int ancho;
 	private boolean atributosIniciados = false, configurando = false,
@@ -385,21 +385,21 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void iniciarAtributos() {
 
 		// iniciamos los atributos de la representacion del diagrama
-		numC = datos.getNumConditions();
-		numG = datos.getNumGenes();
+		numConditions = datos.getNumConditions();
+		numGenes = datos.getNumGenes();
 
-		this.maxText = new double[numC];
-		this.minText = new double[numC];
-		this.ratio = new double[numC];
-		this.currentTextInf = new double[numC];
-		this.currentTextSup = new double[numC];
-		this.valorInf = new double[numC];
-		this.valorSup = new double[numC];
+		this.maxText = new double[numConditions];
+		this.minText = new double[numConditions];
+		this.ratio = new double[numConditions];
+		this.currentTextInf = new double[numConditions];
+		this.currentTextSup = new double[numConditions];
+		this.valorInf = new double[numConditions];
+		this.valorSup = new double[numConditions];
 		this.posicionesSupInf = new double[currentTextSup.length+currentTextInf.length];
 
 		// iniciamos los atributos del cambio de variables
-		this.ejesVars = new Line2D.Double[numC];
-		this.ordenVars = new int[numC];
+		this.ejesVars = new Line2D.Double[numConditions];
+		this.ordenVars = new int[numConditions];
 
 		if (sesion.getMicroarrayData() != null)
 			ordenVars = sesion.getMicroarrayData().columnOrder;
@@ -408,15 +408,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				ordenVars[i] = i;
 
 		// iniciamos los atributos de la seleccion de tuplas
-		tuplas = new Point2D.Double[numG][numC];
+		tuplas = new Point2D.Double[numGenes][numConditions];
 		tuplaSeleccionada = -1;
 		actualizarTuplas = true;
 
 		// iniciamos los valores de la acotacion del intervalo de representacion
-		this.scrollSup = new Rectangle2D.Double[numC];
-		this.scrollInf = new Rectangle2D.Double[numC];
-		this.cotaSup = new double[numC];
-		this.cotaInf = new double[numC];
+		this.scrollSup = new Rectangle2D.Double[numConditions];
+		this.scrollInf = new Rectangle2D.Double[numConditions];
+		this.cotaSup = new double[numConditions];
+		this.cotaInf = new double[numConditions];
 
 		calcularAtributos();
 
@@ -468,22 +468,22 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		if (sesion.areMicroarrayDataLoaded()) {
 			longEjeX = ancho - margenIzq - margenDer;
 			longEjeY = alto - margenSup - margenInf;
-			intervaloVar = longEjeX / (numC - 1);
+			intervaloVar = longEjeX / (numConditions - 1);
 
 			long t1 = System.currentTimeMillis();
 
-			double maxLineas[] = new double[numC];
-			double minLineas[] = new double[numC];
-			max = new double[numC];
-			min = new double[numC];
+			double maxLineas[] = new double[numConditions];
+			double minLineas[] = new double[numConditions];
+			max = new double[numConditions];
+			min = new double[numConditions];
 
 			if (sesion.getSelectedBicluster() != null
 					&& sesion.getSelectedBicluster().getGenes().size() > 0) {
-				for (int i = 0; i < numC; i++)
+				for (int i = 0; i < numConditions; i++)
 					maxLineas[i] = minLineas[i] = -111;
 				// 1) Determine max and min values for genes
 				LinkedList<Integer> lg = sesion.getSelectedGenesBicluster();
-				for (int i = 0; i < numC; i++) {
+				for (int i = 0; i < numConditions; i++) {
 					maxLineas[i] = datos.getExpressionAt(lg.get(0),
 							ordenVars[i]);
 					minLineas[i] = maxLineas[i];
@@ -497,7 +497,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					}
 				}
 			} else {
-				for (int j = 0; j < numC; j++) {
+				for (int j = 0; j < numConditions; j++) {
 					maxLineas[j] = sesion.getMicroarrayData().maxCols[j];
 					minLineas[j] = sesion.getMicroarrayData().minCols[j];
 				}
@@ -506,7 +506,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			// System.out.println("Time to compute min/maxLineas "+(System.currentTimeMillis()-t1)/1000.0);
 			t1 = System.currentTimeMillis();
 
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				if (ejesRelativos) {
 					min[i] = sesion.getMicroarrayData().minCols[i];
 					max[i] = sesion.getMicroarrayData().maxCols[i];			
@@ -535,7 +535,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			// System.out.println("Time to compute textInf/Sup "+(System.currentTimeMillis()-t1)/1000.0);
 			t1 = System.currentTimeMillis();
 
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				// double margen = (sesion.getMicroarrayData().maxCols[i] -
 				// sesion.getMicroarrayData().minCols[i])*((double)margenDiagrama/100);
 				// double
@@ -556,14 +556,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			double maxv = sesion.getMicroarrayData().maxCols[0], minv = sesion
 					.getMicroarrayData().minCols[0];
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				if (sesion.getMicroarrayData().maxCols[i] > maxv)
 					maxv = sesion.getMicroarrayData().maxCols[i];
 				if (sesion.getMicroarrayData().minCols[i] < minv)
 					minv = sesion.getMicroarrayData().minCols[i];
 			}
 
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				double dif = (maxv - minv);
 				if (dif > 0) {
 					if (dif < 1)
@@ -584,13 +584,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	}
 
 	private void computeLinePositions() {
-		for (int j = 0; j < numC; j++) {
+		for (int j = 0; j < numConditions; j++) {
 			int o = ordenVars[j];
 			// double mv=sesion.getMicroarrayData().maxCols[j];
 			double mv = max[j];
 			double r = ratio[j];
 			double pos = margenIzq + (intervaloVar * j);
-			for (int i = 0; i < numG; i++)
+			for (int i = 0; i < numGenes; i++)
 				tuplas[i][j] = new Point2D.Double(pos,
 						(mv - datos.getExpressionAt(i, o)) * r + margenSup);
 		}
@@ -608,13 +608,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			System.arraycopy(currentTextInf, 0, posicionesSupInf, currentTextSup.length, currentTextInf.length);
 			posicionesY = this.getRanks(posicionesSupInf);	
 			
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				
 				//Carlos
 				scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2,	posicionesY[i], anchoScroll, altoScroll);
-				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2, posicionesY[i+numC], anchoScroll, altoScroll);
+				scrollInf[i].setRect(margenIzq + i * intervaloVar - anchoScroll / 2, posicionesY[i+numConditions], anchoScroll, altoScroll);
 				cotaSup[i] = posicionesY[i];
-				cotaInf[i] = posicionesY[i+numC];	
+				cotaInf[i] = posicionesY[i+numConditions];	
 				
 				//antes había esto
 				//scrollSup[i].setRect(margenIzq + i * intervaloVar - anchoScroll/2, margenSup - altoScroll - margenScroll, anchoScroll, altoScroll);
@@ -628,7 +628,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 	private void drawScrolls(Graphics2D g2) {
 		System.currentTimeMillis();
-		for (int i = 0; i < numC; i++) {
+		for (int i = 0; i < numConditions; i++) {
 			int k = ordenVars[i];
 
 			// Rectangle2D.Double r=(Rectangle2D.Double)scrollSup[i].clone();
@@ -772,7 +772,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 		Font f = g2.getFont();
 		FontRenderContext frc = g2.getFontRenderContext();
-		for (int i = 1; i < numC; i++) {
+		for (int i = 1; i < numConditions; i++) {
 			int k = ordenVars[i];
 			valor = currentTextSup[k];
 			cad = datos.format(valor, i);
@@ -801,7 +801,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		// representamos las etiquetas de las condiciones
 		g2.setPaint(paleta[colorEtiquetaVar]);
 
-		for (int i = 0; i < numC; i++) {
+		for (int i = 0; i < numConditions; i++) {
 			int k = ordenVars[i];
 			TextLayout texto = new TextLayout(datos.getColumnLabel(k),
 					g2.getFont(), g2.getFontRenderContext());
@@ -863,18 +863,18 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		t2 = System.currentTimeMillis();
 
 		Selection selecBic = this.sesion.getSelectedBicluster();
-		float maxSelecY[] = new float[numC];
-		float minSelecY[] = new float[numC];
+		float maxSelecY[] = new float[numConditions];
+		float minSelecY[] = new float[numConditions];
 
 		// ------------------------------- preparación de las líneas con el gp
-		boolean[] first = new boolean[numC];
-		for (int i = 0; i < numC; i++)
+		boolean[] first = new boolean[numConditions];
+		for (int i = 0; i < numConditions; i++)
 			first[i] = true;
 
 		if (selecBic != null) {
 			int nc = selecBic.getConditions().size();
 			int ng = selecBic.getGenes().size();
-			if (nc < numC - 1 && ng < maxLineas)// Partial profile
+			if (nc < numConditions - 1 && ng < maxLineas)// Partial profile
 			{
 				for (int i : selecBic.getGenes()) {
 					if (tuplaSeleccionada != i) {
@@ -882,7 +882,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						int init = nc - 1;
 						if (init < 0)
 							init = 0;
-						gpLineasSelec.append(getLine(i, init, numC - 1), false);
+						gpLineasSelec.append(getLine(i, init, numConditions - 1), false);
 					}
 				}
 			} else // Whole profile
@@ -890,7 +890,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				if (ng < maxLineas)// We need to compute the whole lines
 				{
 					for (int i : selecBic.getGenes()) {
-						for (int j = 0; j < numC; j++) {
+						for (int j = 0; j < numConditions; j++) {
 							float x1 = (float) tuplas[i][j].getX();
 							float y1 = (float) tuplas[i][ordenVars[j]].getY();
 
@@ -902,7 +902,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					}
 				} else {
 					for (int i : selecBic.getGenes()) {
-						for (int j = 0; j < numC; j++) {
+						for (int j = 0; j < numConditions; j++) {
 							float y1 = (float) tuplas[i][j].getY();
 							if (first[j]) {
 								maxSelecY[j] = minSelecY[j] = y1;
@@ -966,21 +966,21 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				g2.setPaint(paleta[colorBicluster].brighter().brighter());
 				g2.draw(gpLineasSelecBic);
 			} else {
-				int[] px = new int[numC * 2];
-				int[] py = new int[numC * 2];
-				for (int i = 0; i < numC; i++) // upper points
+				int[] px = new int[numConditions * 2];
+				int[] py = new int[numConditions * 2];
+				for (int i = 0; i < numConditions; i++) // upper points
 				{
 					int k = ordenVars[i];
 
 					py[i] = (int) maxSelecY[k];
 					px[i] = (int) (margenIzq + intervaloVar * i);
 				}
-				for (int i = 0; i < numC; i++) // lower points
+				for (int i = 0; i < numConditions; i++) // lower points
 				{
-					int c = numC - i - 1;
+					int c = numConditions - i - 1;
 					int k = ordenVars[c];
-					py[i + numC] = (int) minSelecY[k];
-					px[i + numC] = (int) (margenIzq + intervaloVar * (c));
+					py[i + numConditions] = (int) minSelecY[k];
+					px[i + numConditions] = (int) (margenIzq + intervaloVar * (c));
 				}
 				Color c = sesion.getSelectionColor();
 				Color sc = new Color(c.getRed(), c.getGreen(), c.getBlue(), 100);
@@ -992,7 +992,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		if (tuplaSeleccionada > -1) {
 			g2.setPaint(paleta[colorLineaMarcada]);
 			g2.setStroke(new BasicStroke(3f));
-			for (int j = 0; j < (numC - 1); j++) {
+			for (int j = 0; j < (numConditions - 1); j++) {
 				g2.drawLine((int) tuplas[tuplaSeleccionada][j].x,
 						(int) tuplas[tuplaSeleccionada][ordenVars[j]].y,
 						(int) tuplas[tuplaSeleccionada][j + 1].x,
@@ -1006,7 +1006,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private GeneralPath getLine(int i, int beginVar, int endVar) {
 		GeneralPath gp = new GeneralPath();
 		gp = new GeneralPath();
-		if (beginVar < 0 || endVar >= numC)
+		if (beginVar < 0 || endVar >= numConditions)
 			System.err.println("Line out of bounds");
 		for (int j = beginVar; j <= endVar; j++) {
 			double x = tuplas[i][j].x;
@@ -1029,7 +1029,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void drawEjes(Graphics2D g2) {
 		g2.setPaint(paleta[colorEje]);
 
-		for (int i = 0; i < numC; i++) {
+		for (int i = 0; i < numConditions; i++) {
 			Line2D.Double ejeY = new Line2D.Double(
 					margenIzq + intervaloVar * i, margenSup, margenIzq
 							+ intervaloVar * i, alto - margenInf);
@@ -1057,15 +1057,15 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void drawBoxplots(Graphics2D g2) {
 
 		g2.setPaint(paleta[colorEje]);
-		upy = new int[numC];
-		doy = new int[numC];
+		upy = new int[numConditions];
+		doy = new int[numConditions];
 		float dash1[] = { 10.0f };
 
 		BasicStroke dashed = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
 				BasicStroke.JOIN_MITER, 10.0f, dash1, 0.0f);
 		Stroke stant = g2.getStroke();
 
-		for (int i = 0; i < numC; i++) {
+		for (int i = 0; i < numConditions; i++) {
 			// Dibujamos el eje, invisible en este caso
 			Line2D.Double ejeY = new Line2D.Double(
 					margenIzq + intervaloVar * i, margenSup, margenIzq
@@ -1163,11 +1163,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			g2.setStroke(dashed);
 			//línea discontinua inferior
-			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom) * ratio[k], x + w * 0.5, posicionesY[i+numC]);
+			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom) * ratio[k], x + w * 0.5, posicionesY[i+numConditions]);
 			g2.draw(l);
 			g2.setStroke(stant);
 			//línea horizontal tope inferior
-			l = new Line2D.Double(x + w * 0.3, posicionesY[i+numC], x + w * 0.7, posicionesY[i+numC]);
+			l = new Line2D.Double(x + w * 0.3, posicionesY[i+numConditions], x + w * 0.7, posicionesY[i+numConditions]);
 			g2.draw(l);
 
 			// Drawing the box
@@ -1197,9 +1197,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		int maxFold = 2;
 
 		for (int s = maxFold; s >= 0; s--) {
-			int[] px = new int[numC * 2];
-			int[] py = new int[numC * 2];
-			for (int i = 0; i < numC; i++) // upper points
+			int[] px = new int[numConditions * 2];
+			int[] py = new int[numConditions * 2];
+			for (int i = 0; i < numConditions; i++) // upper points
 			{
 				int k = ordenVars[i];
 				double val = Math.min(sesion.getMicroarrayData().averageCols[k]
@@ -1209,16 +1209,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						margenSup));
 				px[i] = (int) (margenIzq + intervaloVar * i);
 			}
-			for (int i = 0; i < numC; i++) // lower points
+			for (int i = 0; i < numConditions; i++) // lower points
 			{
-				int c = numC - i - 1;
+				int c = numConditions - i - 1;
 				int k = ordenVars[c];
 				double val = Math.max(sesion.getMicroarrayData().averageCols[k]
 						- sesion.getMicroarrayData().sdCols[k] * (s + 1),
 						min[k]);
-				py[i + numC] = (int) (Math.min(margenSup + (max[k] - val)
+				py[i + numConditions] = (int) (Math.min(margenSup + (max[k] - val)
 						* ratio[k], margenSup + this.longEjeY));
-				px[i + numC] = (int) (margenIzq + intervaloVar * (c));
+				px[i + numConditions] = (int) (margenIzq + intervaloVar * (c));
 			}
 
 			int grey = 220 - 40 * (maxFold - s);
@@ -1227,12 +1227,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}// OK
 
 		if (min != null && max != null) {
-			int[] linex = new int[numC];
-			upy = new int[numC];
-			doy = new int[numC];
-			int[] meany = new int[numC];
+			int[] linex = new int[numConditions];
+			upy = new int[numConditions];
+			doy = new int[numConditions];
+			int[] meany = new int[numConditions];
 			int grey = 170;
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				int k = ordenVars[i];
 				upy[i] = (int) (Math
 						.max(margenSup
@@ -1292,6 +1292,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * repaints it
 	 */
 	public void update() {		
+		
+		System.out.println("\n\nUPDATE PARALLELCOORDINATES\n\n");
+		
 		repaintAll = true;
 		gpLineasFondo = null;
 		tuplaSeleccionada = -1;
@@ -1355,7 +1358,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		posicionesY = this.getRanks(posicionesSupInf);		
 		
 		
-		for (int i = 0; i < numC; i++) {
+		for (int i = 0; i < numConditions; i++) {
 			Rectangle2D.Double scroll;
 
 			//Carlos
@@ -1377,13 +1380,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			*/
 			
 			scroll = new Rectangle2D.Double(margenIzq + i * intervaloVar - anchoScroll / 2, 
-					posicionesY[i+numC], anchoScroll, altoScroll);
+					posicionesY[i+numConditions], anchoScroll, altoScroll);
 			
 			scrollInf[i] = scroll;
 
 			//Carlos
 			cotaSup[i] = posicionesY[i];
-			cotaInf[i] = posicionesY[i+numC];	
+			cotaInf[i] = posicionesY[i+numConditions];	
 			
 			//antes había esto
 			//cotaSup[i] = margenSup - margenScroll;
@@ -1441,13 +1444,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		if (sesion.getSelectedBicluster() != null && sesion.getSelectedGenesBicluster().size() > 0) 
 		{			
 			//Carlos
-			double maxEtiquetas[] = new double[numC];
-			double minEtiquetas[] = new double[numC];
+			double maxEtiquetas[] = new double[numConditions];
+			double minEtiquetas[] = new double[numConditions];
 			
 			
-			double maxLineas[] = new double[numC];
-			double minLineas[] = new double[numC];
-			for (int i = 0; i < numC; i++)
+			double maxLineas[] = new double[numConditions];
+			double minLineas[] = new double[numConditions];
+			for (int i = 0; i < numConditions; i++)
 				maxLineas[i] = minLineas[i] = -111;
 
 			// 1) Determine max and min values for genes
@@ -1455,10 +1458,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for (int i = 0; i < lg.size(); i++) {
 				int pos = lg.get(i);
 								
-				for (int j = 0; j < numC; j++) {
+				for (int numC = 0; numC < numConditions; numC++) {
 					double y = 0;
 
-					int k = ordenVars[j];
+					int k = ordenVars[numC];
 					y = tuplas[pos][k].getY();
 					if (maxLineas[k] == -111)
 						maxLineas[k] = minLineas[k] = y;
@@ -1467,7 +1470,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							maxLineas[k] = y;
 						if (minLineas[k] > y)
 							minLineas[k] = y;
-					}
+					}					
 					
 					//Carlos
 					//si es la primera iteración se asignan los valores directamente
@@ -1476,7 +1479,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						minEtiquetas[k] = sesion.getMicroarrayData().matrix[pos][k];
 					}
 					//en los siguientes casos habrá que comprobar
-					else{
+					else{				
 						if(sesion.getMicroarrayData().matrix[pos][k] > maxEtiquetas[k]){
 							maxEtiquetas[k] = sesion.getMicroarrayData().matrix[pos][k];
 						}
@@ -1488,7 +1491,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			}	
 			
 			// 2) Set labels and scroll positions
-			for (int i = 0; i < numC; i++) {
+			for (int i = 0; i < numConditions; i++) {
 				int k = ordenVars[i];
 				scrollSup[k].y = minLineas[k] - this.altoScroll;
 				scrollInf[k].y = maxLineas[k];
@@ -1751,7 +1754,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							LinkedList<Integer> genes = new LinkedList<Integer>();
 							LinkedList<Integer> conditions = new LinkedList<Integer>();
 							genes.add(tuplaSeleccionada);
-							for (int k = 0; k < numC; k++)
+							for (int k = 0; k < numConditions; k++)
 								conditions.add(Integer.valueOf(ordenVars[k]));
 							sesion.setSelectedBiclustersExcept(new Selection(
 									genes, conditions), "arallel");
@@ -1791,7 +1794,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					if (tuplaSeleccionada != -1) {
 						// hover actions
 						LinkedList<Integer> conditions = new LinkedList<Integer>();
-						for (int k = 0; k < numC; k++)
+						for (int k = 0; k < numConditions; k++)
 							conditions.add(Integer.valueOf(k));
 						LinkedList<Integer> genes = new LinkedList<Integer>();
 						genes.add(tuplaSeleccionada);
@@ -1877,7 +1880,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						genes.add(Integer.valueOf(j));
 				}
 			} else {
-				for (int j = 0; j < numG; j++) // for each row
+				for (int j = 0; j < numGenes; j++) // for each row
 				{
 					Line ll = new Line(tuplas[j][interval].x, tuplas[j][k].y,
 							tuplas[j][interval + 1].x, tuplas[j][k2].y);
@@ -1889,7 +1892,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			repaintAll = true;
 
-			for (int j = 0; j < numC; j++)
+			for (int j = 0; j < numConditions; j++)
 				conditions.add(Integer.valueOf(j));
 
 			sesion.setSelectedBiclustersExcept(
@@ -1951,7 +1954,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				if (e.getX() < margenIzq)
 					nuevaPosicion = 0;
 				else if (e.getX() > (longEjeX + margenIzq))
-					nuevaPosicion = numC - 1;
+					nuevaPosicion = numConditions - 1;
 				else if (e.getX() < ejeSeleccionado.getX1())
 					nuevaPosicion = (int) ((e.getX() - margenIzq) / intervaloVar) + 1;
 				else
@@ -1959,7 +1962,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 				if (posSeleccionada != nuevaPosicion) {
 					{
-						int[] aux = new int[numC];
+						int[] aux = new int[numConditions];
 						aux[nuevaPosicion] = varSeleccionada;
 
 						if (nuevaPosicion < posSeleccionada) {
@@ -2064,7 +2067,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				scrollFijado = true;
 				scrollSeleccionado = null;
 
-				for (int i = 0; i < numC; i++) {
+				for (int i = 0; i < numConditions; i++) {
 					int k = ordenVars[i];
 					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[k].clone();
 					rs.x = scrollSup[i].x;
@@ -2166,7 +2169,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							&& sesion.getSelectedGenesBicluster().size() > 0) {
 						for (int i : sesion.getSelectedGenesBicluster()) {
 							int j;
-							for (j = 0; j < numC; j++)// TODO: we should try
+							for (j = 0; j < numConditions; j++)// TODO: we should try
 														// first the changed
 														// condition, which is
 														// the most probable to
@@ -2178,7 +2181,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 									break;// not this gene, try the next (break
 											// conditions loop)
 							}// If bicluster selected
-							if (j == numC)
+							if (j == numConditions)
 								genes.add(Integer.valueOf(i));
 						}
 					} else // This is the most time consuming loop, specially if
@@ -2188,16 +2191,16 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						// scroll, which will be the one removing a larger
 						// number of things
 						long t1 = System.currentTimeMillis();
-						for (int i = 0; i < numG; i++) {
+						for (int i = 0; i < numGenes; i++) {
 							int j;
-							for (j = 0; j < numC; j++) {
+							for (j = 0; j < numConditions; j++) {
 								int k = ordenVars[j];
 								double y1 = tuplas[i][k].y;
 								if (y1 < cotaSup[k] || y1 > cotaInf[k])
 									break;// not this gene, try the next (break
 											// conditions loop)
 							}
-							if (j == numC)
+							if (j == numConditions)
 								genes.add(Integer.valueOf(i));
 						}
 						// System.out.println("Time to do selection: "+(System.currentTimeMillis()-t1)/1000.0);
@@ -2206,7 +2209,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				// Si está pulsado Control, las restricciones en otras
 				// variables/selecciones anteriores no se tienen en cuenta
 				else {
-					for (int i = 0; i < numG; i++) {
+					for (int i = 0; i < numGenes; i++) {
 						boolean add = true;
 						if ((tuplas[i][varScroll].y < cotaSup[varScroll])
 								|| (tuplas[i][varScroll].y > cotaInf[varScroll]))
@@ -2231,7 +2234,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 				// genes were added in the above loop, then we select all the
 				// conditions
-				for (int j = 0; j < (numC); j++)
+				for (int j = 0; j < (numConditions); j++)
 					conditions.add(Integer.valueOf(j));
 
 				System.out.println("Time to set selected bicluster "
@@ -2294,7 +2297,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 						//Carlos
 						//lo mismo que para la cota superior
-						if ((nuevaCota >= cotaSup[k]) && (nuevaCota <= posicionesY[k+numC])) {
+						if ((nuevaCota >= cotaSup[k]) && (nuevaCota <= posicionesY[k+numConditions])) {
 							double posX = scrollInf[k].getX();
 							
 							//Carlos
@@ -2304,7 +2307,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							nuevaCota = cotaSup[k];
 						} else {
 							//Carlos
-							nuevaCota = posicionesY[k+numC];
+							nuevaCota = posicionesY[k+numConditions];
 							
 							//esto es lo que había antes
 							//nuevaCota = alto - margenInf + margenScroll;
@@ -2343,7 +2346,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				int zonaSelec = 2;
 
 				boolean zonaScroll = false;
-				for (int i = 0; i < numC; i++) {
+				for (int i = 0; i < numConditions; i++) {
 					int k = ordenVars[i];
 					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[i].clone();
 					rs.y = scrollSup[k].y;
