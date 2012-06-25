@@ -140,7 +140,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 					//se actualizan el resto de vistas con la selección
 					LinkedList<Integer> conditions = new LinkedList<Integer>();
 					conditions.add(valorActualCondition);
-					
+										
 					//si se dispone de los nombres de genes de ese elemento...
 					if(null != itm.getGeneNames()){
 						LinkedList<Integer> genesSeleccionados = this.mapearGenesConInternalId(itm.getGeneNames());

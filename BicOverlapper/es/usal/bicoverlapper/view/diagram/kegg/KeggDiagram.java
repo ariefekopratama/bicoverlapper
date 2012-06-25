@@ -72,14 +72,18 @@ public class KeggDiagram extends Diagram {
 	
 	private JProgressBar progressBar;
 	
-	private int valorActualCondition;
+	private int valorActualCondition = 0;
 	private String organism;
 
 	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/resources/images/keggDefaultImage.gif";	
 	
+	//índices para restaurar la vista
+	private int indexCombo1 = -1;
+	private int indexCombo2 = -1;
+	
 	//todo lo de aquí para abajo son atributos para el tema de los cuantiles
 	private boolean configurando = false;
-	
+		
 	private int scaleModeKegg;
 	
 	//configuración del color
@@ -112,8 +116,7 @@ public class KeggDiagram extends Diagram {
 		
 		scaleModeKegg = sesion.getScaleMode();
 		
-		int num = sesion.getNumHeatmapDiagrams();
-		this.setName("Kegg " + num);
+		this.setName("Kegg " + sesion.getNumKeggDiagrams());
 		this.sesion = sesion;
 
 		this.alto = (int) dim.getHeight();
@@ -201,9 +204,11 @@ public class KeggDiagram extends Diagram {
 		}
 		else{
 			//si no se ha seleccionado ningún gen, entonces se deja la imagen original
+			/*
 			picture.getRectangles().clear();
 			picture.setDibujarBordeKeggElement(false);
-			picture.repaint();			
+			picture.repaint();	
+			*/		
 		}
 	}
 	
@@ -351,10 +356,14 @@ public class KeggDiagram extends Diagram {
 		botonFlechaDer.setContentAreaFilled(false);		
 		botonFlechaDer.setBorderPainted(false);
 		
-		//creación del campo de texto que contendrá el nombre de la condición (por defecto contendrá la de la posición 0)
-		jtf = new JTextField(this.sesion.getMicroarrayData().getConditionName(0));
-		valorActualCondition = 0;
-		jtf.setToolTipText(this.sesion.getMicroarrayData().getConditionName(0));
+		//si el valor de la condición seleccionada es mayor que el número de condiciones posibles, algo va mal y se resetea su valor a 0
+		if(valorActualCondition >= this.sesion.getMicroarrayData().getNumConditions())
+		{
+			valorActualCondition = 0;
+		}
+		//creación del campo de texto que contendrá el nombre de la condición
+		jtf = new JTextField(this.sesion.getMicroarrayData().getConditionName(valorActualCondition));
+		jtf.setToolTipText(this.sesion.getMicroarrayData().getConditionName(valorActualCondition));		
 		jtf.setEditable(false);
 		jtf.setPreferredSize(new Dimension(100, 25));
 		jtf.setSize(new Dimension(100, 25));
@@ -457,29 +466,46 @@ public class KeggDiagram extends Diagram {
 		
 		//se obtiene la lista de organismos
 		String[] organismosSeleccionables = kegg.getOrganisms();
-		int organismoSeleccionado = 0;
-		//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
-		for (String organismo : organismosSeleccionables) {
-			if(organismo.contains(this.sesion.getMicroarrayData().organism)){
-				organism = organismo;
-				break;
-			}
-			organismoSeleccionado++;
-		}
+
 		combo1 = new JComboBox();
 		combo1.setToolTipText("Choose an organism");
 		//se añaden todos los organismos al desplegable
 		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
-		//se selecciona en el desplegable el organismo cuyo microarray ha sido cargado, siempre que este se encuentre entre los de la lista obtenida
-		//o sea, que el índice de organismoSeleccionado sea menor que la longitud total de los organismosSeleccionables
-		if(organismoSeleccionado < organismosSeleccionables.length){
-			combo1.setSelectedIndex(organismoSeleccionado);
+		
+		String msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";		
+		
+		//si ya hay un índice del combobox1 seleccionado...
+		if(indexCombo1 != -1){
+			//si ese índice no se sale de los márgenes...
+			if(indexCombo1 < organismosSeleccionables.length){
+				combo1.setSelectedIndex(indexCombo1);
+				organism = (String) combo1.getSelectedItem();
+			}
+			else{
+				JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+			}
 		}
-		//en caso de no encontrarse en la lista, se avisa al usuario
+		//si no hay un índice del combobox1 seleccionado todavía...
 		else{
-			String msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";
-			JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+			int organismoSeleccionado = 0;
+			//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
+			for (String organismo : organismosSeleccionables) {
+				if(organismo.contains(this.sesion.getMicroarrayData().organism)){
+					organism = organismo;
+					break;
+				}
+				organismoSeleccionado++;
+			}
+			//se selecciona en el desplegable el organismo cuyo microarray ha sido cargado, siempre que este se encuentre entre los de la lista obtenida
+			//o sea, que el índice de organismoSeleccionado sea menor que la longitud total de los organismosSeleccionables
+			if(organismoSeleccionado < organismosSeleccionables.length){
+				combo1.setSelectedIndex(organismoSeleccionado);
+			}
+			//en caso de no encontrarse en la lista, se avisa al usuario
+			else{
+				JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+			}
 		}
 		combo1.setPreferredSize(new Dimension(351, 23));
 		combo1.addActionListener(new ActionListener() {
@@ -527,17 +553,26 @@ public class KeggDiagram extends Diagram {
 		panelComboBoxes.add(combo2);
 
 		//a continuación se hace imprescindible rellenar el combobox2
-        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){  
+        final SwingWorker<Void, Void> workerCombo2 = new SwingWorker<Void, Void>(){  
       	  
             @Override  
             protected Void doInBackground() throws Exception {  
             	fillComboBox2();
                 return null;  
             }
+            
+            @Override
+            protected void done(){
+            	//si se ha restaurado una sesión, se recarga la imagen
+            	if(indexCombo1 != -1 && indexCombo2 != -1){
+            		revalidate();
+            		botonObtenerImagen.doClick();
+            	}
+            }
               
         };  
           
-        worker.execute();
+        workerCombo2.execute();
 	}
 
 	/**
@@ -548,6 +583,13 @@ public class KeggDiagram extends Diagram {
 		String id_pathway = kegg.getPathwayIdFromDefinition((String) combo2.getSelectedItem(), definitionPathways);
 		
 		System.out.println("id_pathway = "+id_pathway);
+		
+		//se almacenan los índices para cuando haya que restaurar esta vista
+		indexCombo1 = combo1.getSelectedIndex();
+		indexCombo2 = combo2.getSelectedIndex();
+		
+		System.out.println("indexCombo1 = "+indexCombo1);
+		System.out.println("indexCombo2 = "+indexCombo2);
 		
 		if (id_pathway != null) {
 			//se muestra la imagen
@@ -564,18 +606,27 @@ public class KeggDiagram extends Diagram {
 	private void fillComboBox2() throws Exception {
 		//se deshabilita para que mientras se está rellenando no se pueda tocar
 		combo2.setEnabled(false);
+		//se actualiza el organismo seleccionado
+		organism = (String) combo1.getSelectedItem();
 		
 		// se desea mostrar los pathways del organismo seleccionado en el combobox1
 		String organismId = kegg.getOrganismId((String) combo1.getSelectedItem());
 
 		Definition[] pathways = kegg.getDefinitionPathwaysFromOrganism(organismId);
 		definitionPathways = pathways;
+		
+		//se eliminan los elementos antiguos
 		combo2.removeAllItems();
 		combo2.addItem("");
 		for (int i = 0; i < pathways.length; i++) {
 			//sólo se coge la cadena hasta el "-", ya que lo que hay después es el nombre del organismo
 			combo2.addItem(pathways[i].getDefinition().replace(" - "+organism, ""));
 			//combo2.addItem(pathways[i].getDefinition());
+		}
+		
+		//si hay un índice seleccionado y este índice no sobrepasa el número de elementos en el combobox2, se mantiene
+		if(indexCombo2 != -1 && indexCombo2 < combo2.getItemCount()){
+			combo2.setSelectedIndex(indexCombo2);
 		}
 		
 		//se habilita al estar relleno
@@ -689,6 +740,10 @@ public class KeggDiagram extends Diagram {
         }
     }    	
     
+	public int getId() {
+		return es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID;
+	}
+    
 	/**
 	 * Pops up a configuration panel for heatmap visual properties
 	 */
@@ -771,5 +826,47 @@ public class KeggDiagram extends Diagram {
 		
 		repaintAll = true;
 		this.repaint();
+	}
+
+	/**
+	 * @return the indexCombo1
+	 */
+	public int getIndexCombo1() {
+		return indexCombo1;
+	}
+
+	/**
+	 * @return the indexCombo2
+	 */
+	public int getIndexCombo2() {
+		return indexCombo2;
+	}
+
+	/**
+	 * @param indexCombo1 the indexCombo1 to set
+	 */
+	public void setIndexCombo1(int indexCombo1) {
+		this.indexCombo1 = indexCombo1;
+	}
+
+	/**
+	 * @param indexCombo2 the indexCombo2 to set
+	 */
+	public void setIndexCombo2(int indexCombo2) {
+		this.indexCombo2 = indexCombo2;
+	}
+
+	/**
+	 * @return the valorActualCondition
+	 */
+	public int getValorActualCondition() {
+		return valorActualCondition;
+	}
+
+	/**
+	 * @param valorActualCondition the valorActualCondition to set
+	 */
+	public void setValorActualCondition(int valorActualCondition) {
+		this.valorActualCondition = valorActualCondition;
 	}	
 }

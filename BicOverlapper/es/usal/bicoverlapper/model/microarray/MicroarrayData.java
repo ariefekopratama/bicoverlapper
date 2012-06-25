@@ -1956,11 +1956,18 @@ public class MicroarrayData {
 		}
 
 		if (gr != null) {
+			System.out.println("MicroarrayData gr != null");
 			geneRequester = gr;
 			Thread wt = new Thread() {
 				public void run() {
 					try {
+						System.out.println("MicroarrayData antes de receiveGeneAnnotations");
+						System.out.println("Antes del at.get()");
+						//este at.get() sólo es para probar que no se bloquea al hacer el get, pero sobra, hay que quitarlo cuando se arregle el wordcloud
+						at.get();
+						System.out.println("Después del at.get()");
 						geneRequester.receiveGeneAnnotations(at.get());
+						System.out.println("MicroarrayData después de receiveGeneAnnotations");
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -1968,11 +1975,13 @@ public class MicroarrayData {
 			};
 			wt.start();
 		} else {
+			System.out.println("MicroarrayData gr = null");
 			//de momento en desuso porque las anotaciones no se cargan al arrancar
 			//at.addPropertyChangeListener(ventana.getMlpb());
 			//ventana.getMlpb().isListener();
 			at.execute();
 		}
+		System.out.println("retrieveGeneAnnotations finished");
 	}
 
 	public class HypergeometricTestTask extends
@@ -2795,10 +2804,11 @@ public class MicroarrayData {
 				else{
 					getGeneAnnotationNCBI();
 				}
+								
 				//Carlos
 				//el done lo hace automáticamente al terminar este método
 				//done();
-
+				
 				return galist;
 			}
 		}
