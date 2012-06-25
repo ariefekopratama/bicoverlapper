@@ -147,11 +147,13 @@ public class Kegg {
 						//se calcula el valor medio para todos los genes de ese elemento
 						float media = calcularMedia(valoresExpresion);
 						
-						System.out.println("ELEMENTO "+pathwayElements[i].getElement_id());
+						//System.out.println("ELEMENTO "+pathwayElements[i].getElement_id());
+						/*
 						for (Double valorExp : valoresExpresion) {
 							System.out.println(valorExp);
 						}
-						System.out.println("Media = "+media);
+						*/
+						//System.out.println("Media = "+media);
 						
 						//se guarda esta media en la lista de muestras con la que se coloreará la imagen
 						samplesList.add(media);
@@ -438,7 +440,7 @@ public class Kegg {
 				// System.out.println("Muestra número "+i+"\t"+r+"\t"+g+"\t"+b);
 				bgs[i] = "#" + ColorToHex(r, g, b);
 
-				System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"quantile="+quantile+"\t"+bgs[i]+"\t"+fgs[i]);
+				//System.out.println("Adding element "+element_id_list[i]+"\tvalue sample="+samples[i]+"\t"+"quantile="+quantile+"\t"+bgs[i]+"\t"+fgs[i]);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

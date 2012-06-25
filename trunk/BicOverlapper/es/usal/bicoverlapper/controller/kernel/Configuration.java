@@ -61,6 +61,7 @@ public class Configuration {
 	public static final int OVERLAPPER_ID = 13;
 	public static final int TRN_ID = 14;
 	public static final int CLOUD_ID = 15;
+	public static final int KEGG_ID = 16;
 
 	public Configuration() {
 		// TODO: give values to dimensions depending on screen size

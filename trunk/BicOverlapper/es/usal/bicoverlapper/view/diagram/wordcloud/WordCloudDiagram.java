@@ -229,8 +229,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				if (menuCloud.text.getSelectedIndex() == WordCloudParameterConfigurationPanel.DEFINITION)
 					reqSearch = false;
 			}
-			boolean gotOK = sesion.getMicroarrayData().checkGOAnnotations(
-					sesion.getSelectedGenesBicluster());
+			boolean gotOK = sesion.getMicroarrayData().checkGOAnnotations(sesion.getSelectedGenesBicluster());
 			if (annotOK
 					&& gotOK
 					&& menuCloud.text.getSelectedIndex() == WordCloudParameterConfigurationPanel.GO_TERM
@@ -240,9 +239,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				reqSearch = false;
 			}
 
-			if (reqSearch
-					&& (!innerCall || annot == null || (got == null && menuCloud.size
-							.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
+			if (reqSearch && (!innerCall || annot == null || 
+					(got == null && menuCloud.size.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
 				Point p = new Point(0, 0);
 				if (this.getParent() != null)
 					p = this.sesion.getDiagramWindow(this.getName())
@@ -252,8 +250,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					switch (menuCloud.ontology.getSelectedIndex()) {
 					case (WordCloudParameterConfigurationPanel.ALL):
 						doNOTupdate = true;
-						menuCloud.ontology
-								.setSelectedIndex(WordCloudParameterConfigurationPanel.BP);// NOTA:
+						menuCloud.ontology.setSelectedIndex(WordCloudParameterConfigurationPanel.BP);// NOTA:
 																							// Si
 																							// hago
 																							// esto
@@ -286,25 +283,20 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				} else {
 					switch (menuCloud.text.getSelectedIndex()) {
 					case (WordCloudParameterConfigurationPanel.GO_TERM):
-						this.sesion
-								.getMicroarrayData()
-								.retrieveGeneAnnotations(
+						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, true, false);
 						break;
 					case (WordCloudParameterConfigurationPanel.DEFINITION):
-						this.sesion.getMicroarrayData()
-								.retrieveGeneAnnotations(
+						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, false,
 										false);
 						break;
 					case (WordCloudParameterConfigurationPanel.KEGG_PATH):
-						this.sesion
-								.getMicroarrayData()
-								.retrieveGeneAnnotations(
+						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, false, true);
@@ -313,9 +305,13 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 						break;
 					}
 				}
+				
+				System.out.println("al final del update de wordclouddiagram");
+				
 				return;
 			} else {// Words (annot or got) do not change, just the sizes and
 					// combination
+				System.out.println("antes del addwords del update de wordclouddiagram");
 				addWords();
 			}
 		}
@@ -496,8 +492,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		addWords();
 	}
 
-	public synchronized void receiveGeneAnnotations(
-			ArrayList<GeneAnnotation> annot) {
+	public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot) {
+		System.out.println("ARRIBA DE RECEIVEGENEANNOTATIONS");
 		if (doNOTupdate) {
 			doNOTupdate = false;
 			return;
@@ -505,6 +501,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		System.out.println("receiveGeneAnnotations");
 		this.annot = annot;
 		addWords();
+		System.out.println("AL FINAL DE RECEIVEGENEANNOTATIONS");
 	}
 
 	/**

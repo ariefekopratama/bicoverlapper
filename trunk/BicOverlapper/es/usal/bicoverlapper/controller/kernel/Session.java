@@ -38,6 +38,8 @@ import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.bubbles.BubblesDiagram;
 import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.network.NetworkDiagram;
 import es.usal.bicoverlapper.view.diagram.overlapper.OverlapperDiagram;
 import es.usal.bicoverlapper.view.diagram.parallelCoordinates.ParallelCoordinatesDiagram;
@@ -106,6 +108,7 @@ public class Session implements KeyListener {
 	private int numVentanaTRN = 1;
 	private int numVentanaHeatmap = 1;
 	private int numVentanaWordCloud = 1;
+	private int numVentanaKegg = 1;
 	private int numVentanas = 1;
 
 	private int numColores = 0; // Número de colores que se han ido añadiendo
@@ -362,6 +365,20 @@ public class Session implements KeyListener {
 						wcdc.sizeIndex, wcdc.ontologyIndex);
 				this.setWordCloud(ventana);
 				break;
+			case es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID:
+				KeggDiagram panelK = new KeggDiagram(
+						this, dim);
+				ventana = new DiagramWindow(this, this.getDesktop(), panelK);
+				ventana.setSize(dim);
+				
+				KeggDiagramConfiguration kdc = (KeggDiagramConfiguration) configVentana;
+				panelK.setIndexCombo1(kdc.getIndexCombo1());
+				panelK.setIndexCombo2(kdc.getIndexCombo2());
+				panelK.setValorActualCondition(kdc.getValorActualCondition());
+				panelK.create();
+				panelK.run();	
+				this.setKegg(ventana);
+				break;				
 			default: // error tipo de ventana
 				break;
 			}
@@ -693,6 +710,19 @@ public class Session implements KeyListener {
 		this.numVentanaHeatmap++;
 		this.numVentanas++;
 	}
+	
+	/**
+	 * Register a Kegg diagram TODO: TO BE UNIFIED FOR ANY KIND OF DIAGRAM
+	 * 
+	 * @param dw
+	 *            <code>DiagramWindow</code> to register
+	 */
+	public void setKegg(DiagramWindow dw) {
+		this.ventanas.add(dw);
+		this.grupoVentanasDefecto.add(dw);
+		this.numVentanaKegg++;
+		this.numVentanas++;
+	}	
 
 	/**
 	 * Returns the number of ParallelCoordinatesDiagrams for this Session
@@ -1474,19 +1504,6 @@ public class Session implements KeyListener {
 		this.selectionColor = selectionColor;
 	}
 
-	/**
-	 * Register a Kegg diagram TODO: TO BE UNIFIED FOR ANY KIND OF DIAGRAM
-	 * 
-	 * @param dw
-	 *            <code>DiagramWindow</code> to register
-	 */
-	public void setKegg(DiagramWindow dw) {
-		this.ventanas.add(dw);
-		this.grupoVentanasDefecto.add(dw);
-		this.numVentanaWordCloud++;
-		this.numVentanas++;
-	}
-
 	public boolean isTooManyGenes() {
 		return tooManyGenes;
 	}
@@ -1507,5 +1524,12 @@ public class Session implements KeyListener {
 	 */
 	public void setScaleMode(int scaleMode) {
 		this.scaleMode = scaleMode;
+	}
+
+	/**
+	 * @return the numVentanaKegg
+	 */
+	public int getNumKeggDiagrams() {
+		return numVentanaKegg;
 	}
 }

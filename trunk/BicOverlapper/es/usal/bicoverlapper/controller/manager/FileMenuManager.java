@@ -61,6 +61,8 @@ import es.usal.bicoverlapper.view.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.panel.DownloadAEPanel;
+import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
 import es.usal.bicoverlapper.view.main.WorkDesktop;
@@ -601,8 +603,20 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 							elemento.getAttribute("ontology")).intValue();
 
 					config.addWindowConfiguration(wccd);
-				} else
+				} 
+				else if(identificador == Configuration.KEGG_ID){
+					KeggDiagramConfiguration kdc = new KeggDiagramConfiguration(configventana);
+					nodo = nodo.getNextSibling();
+					elemento = (Element) nodo;
+					kdc.setIndexCombo1(Integer.valueOf(elemento.getAttribute("combo1")).intValue());
+					kdc.setIndexCombo2(Integer.valueOf(elemento.getAttribute("combo2")).intValue());
+					kdc.setValorActualCondition(Integer.valueOf(elemento.getAttribute("condition")).intValue());
+
+					config.addWindowConfiguration(kdc);
+				}
+				else{
 					config.addWindowConfiguration(configventana);
+				}
 			}
 			this.sesion.setConfig(config);
 
@@ -851,6 +865,24 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 							wc.getMenuCloud().ontology.getSelectedIndex() + "");
 					ventana.appendChild(configwc);
 				}
+				
+				//Configuration of KEGG 
+				if(configVentana.getId() == Configuration.KEGG_ID){
+					Element configkd = documento
+							.createElement("keggSettings");
+					
+					KeggDiagram kd = (KeggDiagram) (sesion
+							.getDiagramWindow(configVentana.getTitle())
+							.getDiagram());
+					configkd.setAttribute("combo1",
+							kd.getIndexCombo1()+ "");		
+					configkd.setAttribute("combo2",
+							kd.getIndexCombo2()+ "");	
+					configkd.setAttribute("condition",
+							kd.getValorActualCondition()+ "");						
+					ventana.appendChild(configkd);
+				}
+				
 				config_Ventanas.appendChild(ventana);
 			}
 
