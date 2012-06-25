@@ -152,7 +152,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		return colorW;
 	}
 
-	public void update() {
+	public void update() {		
 		/*
 		 * Changes color to the terms that are related to the hovered gene (only
 		 * if <200 genes are selected)
@@ -197,7 +197,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			}
 			return;
 		}*/
-
+		
 		contZoom = 0;
 		maxChar = 0;
 		contChar = 0;
@@ -221,6 +221,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				&& sesion.getSelectedGenesBicluster().size() > 0) {
 			boolean reqSearch = true;
 
+			System.out.println("EL WORD CLOUD DETECTA GENES SELECCIONADOS");
+			
 			boolean annotOK = sesion.getMicroarrayData().checkAnnotations(
 					sesion.getSelectedGenesBicluster());
 			if (annotOK) {
@@ -493,15 +495,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot) {
-		System.out.println("ARRIBA DE RECEIVEGENEANNOTATIONS");
 		if (doNOTupdate) {
 			doNOTupdate = false;
 			return;
 		}
-		System.out.println("receiveGeneAnnotations");
 		this.annot = annot;
 		addWords();
-		System.out.println("AL FINAL DE RECEIVEGENEANNOTATIONS");
 	}
 
 	/**

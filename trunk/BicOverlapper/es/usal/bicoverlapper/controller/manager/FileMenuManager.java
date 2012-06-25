@@ -16,6 +16,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Random;
 
 import javax.swing.JDesktopPane;
@@ -56,6 +57,7 @@ import es.usal.bicoverlapper.controller.kernel.Configuration;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.util.Translator;
+import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.model.microarray.MicroarrayRequester;
 import es.usal.bicoverlapper.view.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
@@ -456,8 +458,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 			// 1) Load files in paths
 			NodeList micro = documento.getElementsByTagName("microarray_path");
-			String mp = ((Element) micro.item(0)).getFirstChild()
-					.getNodeValue();
+			String mp = ((Element) micro.item(0)).getFirstChild().getNodeValue();
 			fichero = new File(mp);
 			path = fichero.getPath();
 			readMicroarray();
@@ -621,18 +622,79 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			this.sesion.setConfig(config);
 
 			// 2) Set selection
+			//variable para notificar la lectura de genes erróneos
+			boolean genesErroneos = false;
 			LinkedList<Integer> g = new LinkedList<Integer>();
+			//se obtiene la lista de genes cargados del microarray
+			//contra ella se contrastarán los genes leídos en el XML
+			Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+			if(mapaGenes.size() == 0){
+				synchronized(sesion.getMicroarrayData().getrManager()){
+					sesion.getMicroarrayData().getrManager().wait();
+				}
+			}
+			System.out.println("\n\n\nmapaGenes.size() = "+mapaGenes.size()+"\n\n\n");
+			
+			//se obtienen los genes del XML
 			NodeList genes = documento.getElementsByTagName("gene");
 			for (int i = 0; i < genes.getLength(); i++) {
+				//para cada gen del XML
 				Element gene = (Element) genes.item(i);
-				g.add(new Integer(gene.getFirstChild().getNodeValue()));
+				int gen = new Integer(gene.getFirstChild().getNodeValue());
+				//se comprueba si ese gen está entre los leídos del microarray
+				//para conocer después si se ha producido alguna lectura errónea se mantiene una variable
+				boolean genErroneo = true;
+				for (GeneAnnotation ga : mapaGenes.values()) {
+					//si está entre los que se han leído del microarray
+					if(ga.internalId == gen){
+						//se añade a la lista de genes seleccionados
+						g.add(gen);
+						//se notifica que no se ha leído un gen erróneo
+						genErroneo = false;
+						//se deja de comprobar ese gen
+						break;
+					}
+				}
+				//con que haya un gen erróneo ya se notificará que ha habido lectura de genes erróneos
+				if(genErroneo){
+					genesErroneos = true;
+				}
 			}
+			
 			LinkedList<Integer> c = new LinkedList<Integer>();
+			boolean condicionesErroneas = false;
 			NodeList conditions = documento.getElementsByTagName("condition");
 			for (int i = 0; i < conditions.getLength(); i++) {
+				//para cada condición del XML
 				Element condition = (Element) conditions.item(i);
-				c.add(new Integer(condition.getFirstChild().getNodeValue()));
+				int cond = new Integer(condition.getFirstChild().getNodeValue());
+								
+				//se comprueba que esa condición cuadra entre las leídas del microarray
+				if(cond >= 0 && cond < sesion.getMicroarrayData().getNumConditions()){
+					c.add(cond);
+				}
+				else{
+					condicionesErroneas = true;
+				}
 			}
+			
+			//se notifica al usuario la existencia de condiciones erróneas en el fichero XML
+			if(genesErroneos || condicionesErroneas){
+				//el mensaje mostrado dependerá de los errores
+				String msgError = "";
+				if(genesErroneos && condicionesErroneas){
+					msgError = "Some genes and conditions of the xml file are wrong. They were ignored.";
+				}
+				else if(genesErroneos){
+					msgError = "Some genes of the xml file are wrong. They were ignored.";
+				}
+				else if(condicionesErroneas){
+					msgError = "Some conditions of the xml file are wrong. They were ignored.";					
+				}
+				
+				JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);	
+			}			
+			
 			Selection bs = new Selection(g, c);
 			if (bs.getGenes().size() > 0 || bs.getConditions().size() > 0)
 				sesion.setSelectedBiclustersExcept(bs, "");
