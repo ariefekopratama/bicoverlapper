@@ -158,45 +158,14 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		 * if <200 genes are selected)
 		 */
 		if(sesion.onlyHover)	return;
-		//It's a bit dazzling and confusing
-		/*if (sesion.onlyHover && sesion.getHoveredBicluster()!=null) {
-			if (sesion.getSelectedGenesBicluster().size() > sesion
-					.getMicroarrayData().getNumSparseGenes())
-				return;
-			Iterator<Word> it = words.values().iterator(); // reset colors
-			while (it.hasNext())
-				it.next().color = this.colorSeleccion;
-
-			GeneAnnotation ga = sesion
-					.getMicroarrayData()
-					.getGeneAnnotations(sesion.getHoveredBicluster().getGenes())
-					.get(0);
-			if (ga != null) {
-				switch (menuCloud.text.getSelectedIndex()) {
-				case WordCloudParameterConfigurationPanel.GO_TERM:
-					if (ga.goTerms != null)
-						System.err								.println("GA goterms should be an empty list, not null");
-					else
-						for (GOTerm gt : ga.goTerms) {
-							String[] dw = splitterAndFormat(gt.term);
-							for (String s : dw)
-								if (words.get(s) != null)
-									words.get(s).color = sesion.getHoverColor();
-						}
-					break;
-				case WordCloudParameterConfigurationPanel.DEFINITION:
-					String[] dw = splitterAndFormat(ga.description);
-					for (String s : dw)
-						if (words.get(s) != null)
-							words.get(s).color = sesion.getHoverColor();
-					break;
-				default:
-					break;
-				}
-				drawWords((Graphics2D) this.getGraphics());
+		if(sesion.isTooManyGenes())	
+			{
+			if (this.getGraphics() != null)
+				this.paintComponent(this.getGraphics());
+			return;	
 			}
-			return;
-		}*/
+		else
+			if(this.getGraphics()!=null)	drawFondo((Graphics2D)this.getGraphics());
 		
 		contZoom = 0;
 		maxChar = 0;
@@ -666,6 +635,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				/ (maxKey - minKey) + newMin;
 	}
 
+	public void drawTooManyGenes(Graphics2D g2)
+		{
+		drawFondo(g2);
+		g2.setPaint(Color.GRAY);
+		String s="Too many elements selected for this view";
+		g2.drawString(s, 50, (int)(this.getHeight()*0.5-10));
+		s="("+sesion.getSelectedGenesBicluster().size()+" selected, "+sesion.MAX_GENES+" allowed)";
+		g2.drawString(s, 80, (int)(this.getHeight()*0.5+10));
+		}
+	
 	public synchronized void drawWords(Graphics2D g2) {
 		drawFondo(g2);
 		RenderingHints qualityHints = new RenderingHints(null);
@@ -675,18 +654,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				RenderingHints.VALUE_RENDER_SPEED);
 		g2.setRenderingHints(qualityHints);
 
-		// System.out.println("Drawing words");
+		System.out.println("Drawing words");
 		Iterator<Word> it = words.values().iterator();
 		if (sortedWords != null && sortedWords.size() == words.size())
 			for (int i = 0; i < words.size(); i++) {
 				Word w = words.get(sortedWords.get(i));
 				g2.setPaint(w.getColor());
-				if (w == null)
-					System.out.println("w es null");
-				if (w.getText() == null)
-					System.out.println("wt es null");
-				if (w.getText().getBounds() == null)
-					System.out.println("wtb es null");
 				((TextLayout) w.getText()).draw(g2, (float) (w.getX()),
 						(float) (w.getY()));
 			}
@@ -702,7 +675,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			}
 
 		progress.setBounds(this.getWidth() - progress.getWidth() - 2,
-				this.getHeight() - progress.getHeight() - 2, 30, 10);
+				this.getHeight() - progress.getHeight() - 2, 50, 10);
 		// System.out.println("Words drawn");
 	}
 
@@ -741,7 +714,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			return;
 		FontRenderContext frc = g2.getFontRenderContext();
 
-		// System.out.println("Setting words");
+		 System.out.println("Setting words");
 		// 0) Alphabetic sort of words
 		if (words != null && words.size() > 0) {
 			String[] tal = words.keySet().toArray(new String[0]);
@@ -751,7 +724,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		if (sortedWords == null)
 			return;
 
-		// 1) Primera vuelta, chequeamos el tamaño
+		 System.out.println("First loop");
+			// 1) Primera vuelta, chequeamos el tamaño
 		for (String w : sortedWords) {
 			Word nW = words.get(w);
 			if (w.length() > 0 && nW != null) {
@@ -798,11 +772,14 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		y += maxAlto;// Si no el último salto no se tiene en cuenta.
 
 		// 2) Determinamos el factor de escala
+		 System.out.println("2) Determine scale factor");
+			
 		double scale = Math.min(this.getHeight() / y, this.getWidth() / maxAncho);
 
 		// 3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un
 		// bucle donde vamos disminuyendo poco a poco la escala
+		System.out.println("3) 2nd loop");
 		boolean end = false;
 		boolean increase = false;
 		// boolean increaseAnt=increase;
@@ -951,6 +928,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					scale /= 1.2;
 				}
 			}
+			System.out.println("end? "+end);
 			
 		} while (!end);
 		
@@ -961,9 +939,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	public synchronized void paintComponent(Graphics g) {
-		if (textChanged || innerCall)
-			setWords((Graphics2D) g);
-		drawWords((Graphics2D) g);
+		if(sesion.isTooManyGenes())
+			{
+			drawTooManyGenes((Graphics2D) g);
+			}
+		else
+			{
+			if (textChanged || innerCall)
+				setWords((Graphics2D) g);
+			drawWords((Graphics2D) g);
+			}
 	}
 
 	public int getId() {
@@ -978,29 +963,6 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	public void mouseEntered(MouseEvent e) {
-		/*
-		 * X=e.getX(); Y=e.getY(); //System.out.println("(X"+X+", "+Y+")");
-		 * Iterator it=words.keySet().iterator(); while(it.hasNext()) {
-		 * 
-		 * String w=(String)it.next(); if(w.length()>0 )//&& words.get(w).x!=0.0
-		 * && words.get(w).y!=0.0) {
-		 * //System.out.println("("+words.get(w).x+", "+words.get(w).y+")");
-		 * TextLayout T=(TextLayout)words.get(w).text; if(T!=null) { //if
-		 * (newSelection)
-		 * //words.get(w).setColor(PanelWords.this.colorSeleccion);
-		 * //System.out.println("T.with"+rW.getWidth());
-		 * if(X<(T.getBounds().getWidth()+words.get(w).x) && X>words.get(w).x &&
-		 * Y<(T.getBounds().getHeight()+words.get(w).y) && Y>words.get(w).y) {
-		 * if(nameSelected.contains(w)) { //nameSelected.remove(w);
-		 * words.get(w).setColor(PanelWords.this.colorSeleccion);
-		 * T.getBounds().setFrame(T.getBounds().getX(), T.getBounds().getY(),
-		 * 20, 20); System.out.println("W: "+nameSelected.toString()); } else {
-		 * //nameSelected.add(w); words.get(w).setColor(colorNameSelected);
-		 * System.out.println("W: "+nameSelected.toString()); }
-		 * existNameSelected=true; this.repaint(); } else {
-		 * existNameSelected=false; } } //else //
-		 * System.out.println("Esta vacio el TextLayout"); } }
-		 */
 	}
 
 	public void mouseExited(MouseEvent e) {
