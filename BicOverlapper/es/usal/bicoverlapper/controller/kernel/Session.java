@@ -955,17 +955,25 @@ public class Session implements KeyListener {
 	 */
 	public void setSelectedBiclustersExcept(Selection selectedBic, String noUpdate) {
 		setSelectedBicluster(selectedBic);
+		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
+		else												setTooManyGenes(false);
+		
 		this.updateExcept(noUpdate);
 	}
 
 	public void setSelectedBiclustersOnly(Selection selectedBic,
 			String onlyUpdate) {
 		setSelectedBicluster(selectedBic);
+		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
+		else												setTooManyGenes(false);
+		
 		this.updateOnly(onlyUpdate);
 	}
 
 	public void setSelectedBicluster(Selection selectedBic) {		
 		this.selectedBicluster = selectedBic;
+		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
+		else																			setTooManyGenes(false);
 		if (!undoOrRedo) {
 			if (contLog < selectionLog.size() - 1){
 				for (int i = selectionLog.size() - 1; i >= contLog; i--){

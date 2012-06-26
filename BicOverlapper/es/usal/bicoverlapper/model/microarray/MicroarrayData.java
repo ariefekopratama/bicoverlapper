@@ -2491,7 +2491,8 @@ public class MicroarrayData {
 									message = "adding term " + ids[i];
 									progress += 84.0 / ids.length;
 									setProgress(progress);
-									
+									if(ids.length!=t.length)
+										System.out.println("Ojo");
 									if(t!=null)	System.out.println("Addint term "+t[i]);
 									GOTerm gt = new GOTerm(t[i], ids[i], d[i], o[i], "", 1);
 									GOTerms.put(ids[i], gt);
