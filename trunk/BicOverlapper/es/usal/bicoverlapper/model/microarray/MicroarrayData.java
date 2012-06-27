@@ -2365,10 +2365,9 @@ public class MicroarrayData {
 						else
 							exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
 						
-						System.out.println("antes de donde se queda bastante rato");
+						System.out.println("Antes de la llamada que más tarda");
 						
 						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
-						System.out.println("en la 2356");
 						if (!chip.equals(rname)) 
 						{
 							exp = re.eval("df[,\"" + rname + "\"]");
