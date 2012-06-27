@@ -53,6 +53,7 @@ import es.usal.bicoverlapper.controller.data.filter.NetworkTabFileFilter;
 import es.usal.bicoverlapper.controller.data.filter.SyntrenFilter;
 import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.data.filter.XmlFileFilter;
+import es.usal.bicoverlapper.controller.data.parser.FileParser;
 import es.usal.bicoverlapper.controller.kernel.Configuration;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
@@ -805,6 +806,26 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		try {
 			if (fileName == null)
 				return;
+			
+			//se comprueba si hay ficheros temporales para, en tal caso, avisar al usuario de que debería guardarlos para restaurar sesión
+			String[] tmpFiles = FileParser.getFilesInDirectory(".", ".tmp");
+			if(tmpFiles.length != 0){
+				String tmpf ="";
+				for (String f : tmpFiles) {
+					tmpf += f+", ";
+				}
+				
+				//se elimina ", " añadidos al final para mostrar la cadena correctamente
+				tmpf = tmpf.substring(0, tmpf.length()-2);
+				
+				String msgError = "There are temporary files: "+tmpf+". To restore the project correctly, please save this files.";
+				JOptionPane.showMessageDialog(
+						null,
+						msgError,
+						"Warning",
+						JOptionPane.WARNING_MESSAGE);
+			}
+			
 			File file = null;
 			// TODO: Pass recent1 to recent2... and delete recent5, for example
 			int cont = 5;

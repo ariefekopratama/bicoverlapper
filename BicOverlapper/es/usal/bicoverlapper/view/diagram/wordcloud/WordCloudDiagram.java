@@ -152,21 +152,20 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		return colorW;
 	}
 
-	public void update() {		
+	public void update() {
 		/*
 		 * Changes color to the terms that are related to the hovered gene (only
 		 * if <200 genes are selected)
 		 */
-		if(sesion.onlyHover)	return;
-		if(sesion.isTooManyGenes())	
-			{
+		if (sesion.onlyHover)
+			return;
+		if (sesion.isTooManyGenes()) {
 			if (this.getGraphics() != null)
 				this.paintComponent(this.getGraphics());
-			return;	
-			}
-		else
-			if(this.getGraphics()!=null)	drawFondo((Graphics2D)this.getGraphics());
-		
+			return;
+		} else if (this.getGraphics() != null)
+			drawFondo((Graphics2D) this.getGraphics());
+
 		contZoom = 0;
 		maxChar = 0;
 		contChar = 0;
@@ -190,8 +189,6 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				&& sesion.getSelectedGenesBicluster().size() > 0) {
 			boolean reqSearch = true;
 
-			System.out.println("EL WORD CLOUD DETECTA GENES SELECCIONADOS");
-			
 			boolean annotOK = sesion.getMicroarrayData().checkAnnotations(
 					sesion.getSelectedGenesBicluster());
 			if (annotOK) {
@@ -200,7 +197,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				if (menuCloud.text.getSelectedIndex() == WordCloudParameterConfigurationPanel.DEFINITION)
 					reqSearch = false;
 			}
-			boolean gotOK = sesion.getMicroarrayData().checkGOAnnotations(sesion.getSelectedGenesBicluster());
+			boolean gotOK = sesion.getMicroarrayData().checkGOAnnotations(
+					sesion.getSelectedGenesBicluster());
 			if (annotOK
 					&& gotOK
 					&& menuCloud.text.getSelectedIndex() == WordCloudParameterConfigurationPanel.GO_TERM
@@ -210,8 +208,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				reqSearch = false;
 			}
 
-			if (reqSearch && (!innerCall || annot == null || 
-					(got == null && menuCloud.size.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
+			if (reqSearch
+					&& (!innerCall || annot == null || (got == null && menuCloud.size
+							.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
 				Point p = new Point(0, 0);
 				if (this.getParent() != null)
 					p = this.sesion.getDiagramWindow(this.getName())
@@ -221,16 +220,17 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					switch (menuCloud.ontology.getSelectedIndex()) {
 					case (WordCloudParameterConfigurationPanel.ALL):
 						doNOTupdate = true;
-						menuCloud.ontology.setSelectedIndex(WordCloudParameterConfigurationPanel.BP);// NOTA:
-																							// Si
-																							// hago
-																							// esto
-																							// así
-																							// me
-																							// hace
-																							// doble
-																							// actualización
-																							// majo
+						menuCloud.ontology
+								.setSelectedIndex(WordCloudParameterConfigurationPanel.BP);// NOTA:
+						// Si
+						// hago
+						// esto
+						// así
+						// me
+						// hace
+						// doble
+						// actualización
+						// majo
 					case (WordCloudParameterConfigurationPanel.BP):
 						ont = "BP";
 						break;
@@ -254,20 +254,25 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				} else {
 					switch (menuCloud.text.getSelectedIndex()) {
 					case (WordCloudParameterConfigurationPanel.GO_TERM):
-						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
+						this.sesion
+								.getMicroarrayData()
+								.retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, true, false);
 						break;
 					case (WordCloudParameterConfigurationPanel.DEFINITION):
-						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
+						this.sesion.getMicroarrayData()
+								.retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, false,
 										false);
 						break;
 					case (WordCloudParameterConfigurationPanel.KEGG_PATH):
-						this.sesion.getMicroarrayData().retrieveGeneAnnotations(
+						this.sesion
+								.getMicroarrayData()
+								.retrieveGeneAnnotations(
 										ArrayUtils.toIntArray(sesion
 												.getSelectedGenesBicluster()),
 										this, true, progress, null, false, true);
@@ -276,13 +281,14 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 						break;
 					}
 				}
-				
+
 				System.out.println("al final del update de wordclouddiagram");
-				
+
 				return;
 			} else {// Words (annot or got) do not change, just the sizes and
 					// combination
-				System.out.println("antes del addwords del update de wordclouddiagram");
+				System.out
+						.println("antes del addwords del update de wordclouddiagram");
 				addWords();
 			}
 		}
@@ -463,8 +469,10 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		addWords();
 	}
 
-	public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot) {
-		System.out.println("\n\nen el geneRequester.receiveGeneAnnotations de WORD CLOUD\n\n");
+	public synchronized void receiveGeneAnnotations(
+			ArrayList<GeneAnnotation> annot) {
+		System.out
+				.println("\n\nen el geneRequester.receiveGeneAnnotations de WORD CLOUD\n\n");
 		if (doNOTupdate) {
 			doNOTupdate = false;
 			return;
@@ -512,7 +520,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		String[] dw = splitter(desc);
 		for (int j = 0; j < dw.length; j++) {
 			dw[j] = dw[j].replace("(", "").replace(")", "").trim();
-		//			.toLowerCase();
+			// .toLowerCase();
 			dw[j] = dw[j] + " ";
 		}
 		return dw;
@@ -636,16 +644,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				/ (maxKey - minKey) + newMin;
 	}
 
-	public void drawTooManyGenes(Graphics2D g2)
-		{
+	public void drawTooManyGenes(Graphics2D g2) {
 		drawFondo(g2);
 		g2.setPaint(Color.GRAY);
-		String s="Too many elements selected for this view";
-		g2.drawString(s, 50, (int)(this.getHeight()*0.5-10));
-		s="("+sesion.getSelectedGenesBicluster().size()+" selected, "+sesion.MAX_GENES+" allowed)";
-		g2.drawString(s, 80, (int)(this.getHeight()*0.5+10));
-		}
-	
+		String s = "Too many elements selected for this view";
+		g2.drawString(s, 50, (int) (this.getHeight() * 0.5 - 10));
+		s = "(" + sesion.getSelectedGenesBicluster().size() + " selected, "
+				+ sesion.MAX_GENES + " allowed)";
+		g2.drawString(s, 80, (int) (this.getHeight() * 0.5 + 10));
+	}
+
 	public synchronized void drawWords(Graphics2D g2) {
 		drawFondo(g2);
 		RenderingHints qualityHints = new RenderingHints(null);
@@ -706,17 +714,18 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		double maxAlto = 0;
 		double maxAncho = 0;
 		double separationSpace = 1.5;
-		
+
 		double posicionXWord, separacionXWord;
 		double xMaxima;
-		
-		
-		
+
 		if (g2 == null)
 			return;
 		FontRenderContext frc = g2.getFontRenderContext();
 
-		 System.out.println("Setting words");
+		System.out.println("Setting words");
+		
+		sortedWords = null;
+		
 		// 0) Alphabetic sort of words
 		if (words != null && words.size() > 0) {
 			String[] tal = words.keySet().toArray(new String[0]);
@@ -726,9 +735,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		if (sortedWords == null)
 			return;
 
-		 System.out.println("First loop");
-			// 1) Primera vuelta, chequeamos el tamaño
+		System.out.println("First loop");
+		// 1) Primera vuelta, chequeamos el tamaño
 		for (String w : sortedWords) {
+			
+			System.out.println("word = "+w);
+			
 			Word nW = words.get(w);
 			if (w.length() > 0 && nW != null) {
 				String wc = "";
@@ -741,30 +753,34 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				Font f = g2.getFont().deriveFont((float) num);
 				TextLayout texto = new TextLayout(wc, f, frc);
 				altoTexto = texto.getBounds().getHeight();
-				anchoTexto = texto.getBounds().getWidth() + separationSpace * nW.size;
-				//si la palabra es mas ancha que el espacio disponible se pone a la izquierda del todo y se baja una línea
+				anchoTexto = texto.getBounds().getWidth() + separationSpace
+						* nW.size;
+				// si la palabra es mas ancha que el espacio disponible se pone
+				// a la izquierda del todo y se baja una línea
 				if (x + anchoTexto > this.getWidth()) {
 					x = 0;
 					y += maxAlto;
 					maxAlto = altoTexto;
 				}
-				//se actualiza el valor de la altura máxima
+				// se actualiza el valor de la altura máxima
 				if (maxAlto < altoTexto)
 					maxAlto = altoTexto;
-				//se actualiza el valor de la anchura máxima
+				// se actualiza el valor de la anchura máxima
 				if (maxAncho < anchoTexto)
 					maxAncho = anchoTexto;
 				nW.setX(x);
 				nW.setY(y);
 				nW.setText(texto);
 
-				//se desplaza la coordenada x a la derecha para la siguiente palabra si ello es posible
+				// se desplaza la coordenada x a la derecha para la siguiente
+				// palabra si ello es posible
 				if (x + anchoTexto <= this.getWidth())
 					x += anchoTexto;
-				
-				//Carlos
-				//no sé muy bien las consecuencias de esto, porque en principio es que la palabra es demasiado ancha para la ventana...
-				//para esto ya se ha introducido el xMaxima
+
+				// Carlos
+				// no sé muy bien las consecuencias de esto, porque en principio
+				// es que la palabra es demasiado ancha para la ventana...
+				// para esto ya se ha introducido el xMaxima
 				if (anchoTexto > this.getWidth()) {
 					y += altoTexto;
 					maxAlto = 0;
@@ -774,9 +790,10 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		y += maxAlto;// Si no el último salto no se tiene en cuenta.
 
 		// 2) Determinamos el factor de escala
-		 System.out.println("2) Determine scale factor");
-			
-		double scale = Math.min(this.getHeight() / y, this.getWidth() / maxAncho);
+		System.out.println("2) Determine scale factor");
+
+		double scale = Math.min(this.getHeight() / y, this.getWidth()
+				/ maxAncho);
 
 		// 3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un
@@ -786,14 +803,14 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		boolean increase = false;
 		// boolean increaseAnt=increase;
 		// boolean first=true;
-		
-		//Carlos
+
+		// Carlos
 		boolean hasDecreased = false;
 
 		maxAncho = 0;
-		
+
 		do {
-			//en cada vuelta se actualiza la xMaxima
+			// en cada vuelta se actualiza la xMaxima
 			xMaxima = 0;
 
 			x = 0;
@@ -813,12 +830,15 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					TextLayout texto = new TextLayout(wc, f, frc);
 
 					altoTexto = texto.getBounds().getHeight();
-					anchoTexto = texto.getBounds().getWidth() + separationSpace * nW.size;
-					
+					anchoTexto = texto.getBounds().getWidth() + separationSpace
+							* nW.size;
+
 					if (x + anchoTexto > this.getWidth()) // change to next line
 					{
-						// Sumamos a todas las de la línea anterior el maxAlto de esa línea
-						// de esta forma no se intercalarán las alturas y todas las de la línea siguiente empezarán a la misma altura
+						// Sumamos a todas las de la línea anterior el maxAlto
+						// de esa línea
+						// de esta forma no se intercalarán las alturas y todas
+						// las de la línea siguiente empezarán a la misma altura
 						for (int k = 0; k < wordsInLine.size(); k++) {
 							Word w2 = wordsInLine.get(k);
 							w2.setY(w2.getY() + .75 * maxAlto);
@@ -829,32 +849,41 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 						x = 0;
 						y += maxAlto;
 						maxAlto = altoTexto;
-						
-						//Carlos
-						//se comprueba la máxima x que se alcanza en el dibujo de las palabras
-						//esto funciona bien para el caso de pintar la palabra y dejar todo el espacio sobrante a la derecha
+
+						// Carlos
+						// se comprueba la máxima x que se alcanza en el dibujo
+						// de las palabras
+						// esto funciona bien para el caso de pintar la palabra
+						// y dejar todo el espacio sobrante a la derecha
 						/*
-						if((x + texto.getBounds().getWidth()) > xMaxima){
-							xMaxima = x + texto.getBounds().getWidth();
-							System.out.println("xMaxima="+xMaxima+", getWidth()="+this.getWidth());
+						 * if((x + texto.getBounds().getWidth()) > xMaxima){
+						 * xMaxima = x + texto.getBounds().getWidth();
+						 * System.out
+						 * .println("xMaxima="+xMaxima+", getWidth()="+
+						 * this.getWidth()); }
+						 */
+
+						if ((x + texto.getBounds().getWidth() + (separationSpace
+								* nW.size / 2)) > xMaxima) {
+							xMaxima = x + texto.getBounds().getWidth()
+									+ (separationSpace * nW.size / 2);
+							// System.out.println("xMaxima="+xMaxima+", getWidth()="+this.getWidth());
 						}
-						*/						
-						
-						if((x + texto.getBounds().getWidth() + (separationSpace * nW.size / 2)) > xMaxima){
-							xMaxima = x + texto.getBounds().getWidth() + (separationSpace * nW.size / 2);
-							//System.out.println("xMaxima="+xMaxima+", getWidth()="+this.getWidth());
-						}						
-						
+
 					}
 					if (maxAlto < altoTexto)
 						maxAlto = altoTexto;
-					
-					//si se desea posicionar la palabra en el centro de todo el espacio reservado en anchoTexto en vez de dejar todo el espacio a la derecha
-					//se colocará la coordenada X de la palabra en posicionXWord
-					//si se desea dejar a la izquierda y todo el espacio sobrante a la derecha, basta con hacer nW.setX(x);
+
+					// si se desea posicionar la palabra en el centro de todo el
+					// espacio reservado en anchoTexto en vez de dejar todo el
+					// espacio a la derecha
+					// se colocará la coordenada X de la palabra en
+					// posicionXWord
+					// si se desea dejar a la izquierda y todo el espacio
+					// sobrante a la derecha, basta con hacer nW.setX(x);
 					separacionXWord = (separationSpace * nW.size);
 					posicionXWord = x + (separacionXWord / 2);
-					
+
 					nW.setX(posicionXWord);
 					nW.setY(y);// debería ser directamente +maxAlto, pero no
 								// queda bien y no sé por qué.
@@ -883,44 +912,35 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			int limitY = this.getHeight() - menuCloud.getBounds().height;
 			// System.out.println("Occupied size: "+Math.floor((x/limitX)*100)+", "+Math.floor((y/limitY)*100));
 
-			//Carlos
-			//antes había esto
+			// Carlos
+			// antes había esto
 			/*
-			if ((y <= limitY && x <= limitX))// smaller
-			{
-				end = true;
-				increase = true;
-			} else// larger
-			{
-				increase = false;
-			}
+			 * if ((y <= limitY && x <= limitX))// smaller { end = true;
+			 * increase = true; } else// larger { increase = false; }
+			 * 
+			 * if (!end) { if (increase) { //
+			 * System.out.println("Increase scale "+scale); scale *= 1.5; } else
+			 * { // System.out.println("Decrease scale "+scale); scale /= 1.5; }
+			 * }
+			 */
 
-			if (!end) {
-				if (increase) {
-					// System.out.println("Increase scale "+scale);
-					scale *= 1.5;
-				} else {
-					// System.out.println("Decrease scale "+scale);
-					scale /= 1.5;
-				}
-			}
-			*/
-	
-			//AQUÍ HAY QUE TENER MUCHO CUIDADO PORQUE DECIR QUE X <= LIMITX NO VALE PARA NADA, SÓLO MIRA LA ÚLTIMA X
-			//HABRÍA QUE IR GUARDANDO UN VALOR MÁXIMO DE X + ANCHURA Y VERLO AQUÍ
-			//antes había if ((y <= limitY && x <= limitX))// smaller
-			if ((y <= limitY && xMaxima <= limitX))
-			{
-				if(hasDecreased){
+			// AQUÍ HAY QUE TENER MUCHO CUIDADO PORQUE DECIR QUE X <= LIMITX NO
+			// VALE PARA NADA, SÓLO MIRA LA ÚLTIMA X
+			// HABRÍA QUE IR GUARDANDO UN VALOR MÁXIMO DE X + ANCHURA Y VERLO
+			// AQUÍ
+			// antes había if ((y <= limitY && x <= limitX))// smaller
+			if ((y <= limitY && xMaxima <= limitX)) {
+				if (hasDecreased) {
 					end = true;
 				}
 				increase = true;
-				
+
 			} else// larger
 			{
 				increase = false;
 				hasDecreased = true;
-				System.out.println("decreased, y="+y+", x="+x+", limitY="+limitY+", limitX="+limitX);
+				System.out.println("decreased, y=" + y + ", x=" + x
+						+ ", limitY=" + limitY + ", limitX=" + limitX);
 			}
 
 			if (!end) {
@@ -930,27 +950,24 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					scale /= 1.2;
 				}
 			}
-			//System.out.println("end? "+end);
-			
+			// System.out.println("end? "+end);
+
 		} while (!end);
-		
+
 		textChanged = false;
-		
-		//necesita un repaint para que al redimensionar se actualice la vista
+
+		// necesita un repaint para que al redimensionar se actualice la vista
 		super.repaint();
 	}
 
 	public synchronized void paintComponent(Graphics g) {
-		if(sesion.isTooManyGenes())
-			{
+		if (sesion.isTooManyGenes()) {
 			drawTooManyGenes((Graphics2D) g);
-			}
-		else
-			{
+		} else {
 			if (textChanged || innerCall)
 				setWords((Graphics2D) g);
 			drawWords((Graphics2D) g);
-			}
+		}
 	}
 
 	public int getId() {
