@@ -1960,7 +1960,9 @@ public class MicroarrayData {
 			Thread wt = new Thread() {
 				public void run() {
 					try {
+						System.out.println("antes de geneRequester.receiveGeneAnnotations(at.get())");
 						geneRequester.receiveGeneAnnotations(at.get());
+						System.out.println("después de geneRequester.receiveGeneAnnotations(at.get())");
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
