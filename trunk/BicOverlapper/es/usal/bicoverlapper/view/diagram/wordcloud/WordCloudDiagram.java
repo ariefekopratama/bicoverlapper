@@ -464,6 +464,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	public synchronized void receiveGeneAnnotations(ArrayList<GeneAnnotation> annot) {
+		System.out.println("\n\nen el geneRequester.receiveGeneAnnotations de WORD CLOUD\n\n");
 		if (doNOTupdate) {
 			doNOTupdate = false;
 			return;
@@ -710,6 +711,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		double xMaxima;
 		
 		
+		
 		if (g2 == null)
 			return;
 		FontRenderContext frc = g2.getFontRenderContext();
@@ -928,7 +930,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					scale /= 1.2;
 				}
 			}
-			System.out.println("end? "+end);
+			//System.out.println("end? "+end);
 			
 		} while (!end);
 		

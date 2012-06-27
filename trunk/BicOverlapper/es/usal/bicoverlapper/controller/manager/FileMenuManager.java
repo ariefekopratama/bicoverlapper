@@ -458,12 +458,18 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 			// 1) Load files in paths
 			NodeList micro = documento.getElementsByTagName("microarray_path");
-			String mp = ((Element) micro.item(0)).getFirstChild().getNodeValue();
-			fichero = new File(mp);
-			path = fichero.getPath();
-			readMicroarray();
-			// When the microarray is read, the session continues loading at
-			// loadSessionAfterMicroarray
+			if(micro != null && null != micro.item(0)){
+				String mp = ((Element) micro.item(0)).getFirstChild().getNodeValue();
+				fichero = new File(mp);
+				path = fichero.getPath();
+				readMicroarray();
+				// When the microarray is read, the session continues loading at
+				// loadSessionAfterMicroarray
+			}
+			else{
+				//this.prepareDesktop();
+				this.loadSessionAfterMicroarray();
+			}
 
 		} catch (SAXException sxe) {
 			// error generado durante el parsing
@@ -511,21 +517,21 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			// 1) Load biclusters and trn
 			NodeList bic = documento.getElementsByTagName("biclusters_path");
 			if (bic != null && bic.item(0) != null) {
-				sesion.biclusteringPath = ((Element) bic.item(0))
-						.getFirstChild().getNodeValue();
-				fichero = new File(sesion.biclusteringPath);
+				String rutaFichero = ((Element) bic.item(0)).getFirstChild().getNodeValue();
+				fichero = new File(rutaFichero);
 				path = fichero.getAbsolutePath();
 				readBiclustering();
+				sesion.biclusteringPath = rutaFichero;
 			}
 
 			NodeList trn = documento.getElementsByTagName("trn_path");
 			if (trn != null && trn.item(0) != null) {
-				sesion.trnPath = ((Element) trn.item(0)).getFirstChild()
-						.getNodeValue();
-				fichero = new File(sesion.trnPath);
+				String rutaFichero = ((Element) trn.item(0)).getFirstChild().getNodeValue();
+				fichero = new File(rutaFichero);
 				path = fichero.getAbsolutePath();
 
 				readTRN("syntren");// TODO: Change to different types
+				sesion.trnPath = rutaFichero;
 			}
 
 			// 2) Load Visualizations
@@ -625,39 +631,52 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			//variable para notificar la lectura de genes erróneos
 			boolean genesErroneos = false;
 			LinkedList<Integer> g = new LinkedList<Integer>();
-			//se obtiene la lista de genes cargados del microarray
-			//contra ella se contrastarán los genes leídos en el XML
-			Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
-			if(mapaGenes.size() == 0){
-				synchronized(sesion.getMicroarrayData().getrManager()){
-					sesion.getMicroarrayData().getrManager().wait();
-				}
-			}
-			System.out.println("\n\n\nmapaGenes.size() = "+mapaGenes.size()+"\n\n\n");
-			
 			//se obtienen los genes del XML
-			NodeList genes = documento.getElementsByTagName("gene");
-			for (int i = 0; i < genes.getLength(); i++) {
-				//para cada gen del XML
-				Element gene = (Element) genes.item(i);
-				int gen = new Integer(gene.getFirstChild().getNodeValue());
-				//se comprueba si ese gen está entre los leídos del microarray
-				//para conocer después si se ha producido alguna lectura errónea se mantiene una variable
-				boolean genErroneo = true;
-				for (GeneAnnotation ga : mapaGenes.values()) {
-					//si está entre los que se han leído del microarray
-					if(ga.internalId == gen){
-						//se añade a la lista de genes seleccionados
-						g.add(gen);
-						//se notifica que no se ha leído un gen erróneo
-						genErroneo = false;
-						//se deja de comprobar ese gen
-						break;
+			NodeList genesXML = documento.getElementsByTagName("gene");
+			
+			//si se ha leído un microarray se contrastarán con él los genes leídos
+			if(null != sesion.getMicroarrayData()){
+				//se obtiene la lista de genes cargados del microarray
+				//contra ella se contrastarán los genes leídos en el XML
+				Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+				//es probable que aún no se disponga de la lista, por lo tanto habrá que esperar a que se disponga de ella en el wait
+				if(mapaGenes.size() == 0){
+					synchronized(sesion.getMicroarrayData().getrManager()){
+						sesion.getMicroarrayData().getrManager().wait();
 					}
 				}
-				//con que haya un gen erróneo ya se notificará que ha habido lectura de genes erróneos
-				if(genErroneo){
-					genesErroneos = true;
+				
+				for (int i = 0; i < genesXML.getLength(); i++) {
+					//para cada gen del XML
+					Element gene = (Element) genesXML.item(i);
+					int gen = new Integer(gene.getFirstChild().getNodeValue());
+					//se comprueba si ese gen está entre los leídos del microarray
+					//para conocer después si se ha producido alguna lectura errónea se mantiene una variable
+					boolean genErroneo = true;
+					for (GeneAnnotation ga : mapaGenes.values()) {
+						//si está entre los que se han leído del microarray
+						if(ga.internalId == gen){
+							//se añade a la lista de genes seleccionados
+							g.add(gen);
+							//se notifica que no se ha leído un gen erróneo
+							genErroneo = false;
+							//se deja de comprobar ese gen
+							break;
+						}
+					}
+					//con que haya un gen erróneo ya se notificará que ha habido lectura de genes erróneos
+					if(genErroneo){
+						genesErroneos = true;
+					}
+				}
+			}
+			//si no se ha leído un microarray se leen los genes sin comprobar
+			else{
+				for (int i = 0; i < genesXML.getLength(); i++) {
+					//para cada gen del XML
+					Element gene = (Element) genesXML.item(i);
+					int gen = new Integer(gene.getFirstChild().getNodeValue());
+					g.add(gen);
 				}
 			}
 			
@@ -668,14 +687,21 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 				//para cada condición del XML
 				Element condition = (Element) conditions.item(i);
 				int cond = new Integer(condition.getFirstChild().getNodeValue());
-								
-				//se comprueba que esa condición cuadra entre las leídas del microarray
-				if(cond >= 0 && cond < sesion.getMicroarrayData().getNumConditions()){
-					c.add(cond);
-				}
-				else{
-					condicionesErroneas = true;
-				}
+					
+					//si se ha leído un microarray se podrá realizar la comprobación
+					if(null != sesion.getMicroarrayData()){
+						//se comprueba que esa condición cuadra entre las leídas del microarray
+						if(cond >= 0 && cond < sesion.getMicroarrayData().getNumConditions()){
+							c.add(cond);
+						}
+						else{
+							condicionesErroneas = true;
+						}
+					}
+					//si no se ha leído un microarray no es posible realizar la comprobación anterior
+					else{
+						c.add(cond);
+					}
 			}
 			
 			//se notifica al usuario la existencia de condiciones erróneas en el fichero XML
