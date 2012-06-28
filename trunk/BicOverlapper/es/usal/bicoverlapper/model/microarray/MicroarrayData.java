@@ -12,6 +12,7 @@ import es.usal.bicoverlapper.utils.Sizeof;
 import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor;
 import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor2;
 import es.usal.bicoverlapper.view.analysis.monitor.HypergeometricTestProgressMonitor;
+import es.usal.bicoverlapper.view.data.monitor.MicroarrayAnnotationsLoadProgressBar;
 import es.usal.bicoverlapper.view.data.monitor.MicroarrayLoadProgressMonitor;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
 import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
@@ -271,6 +272,8 @@ public class MicroarrayData {
 	private double[] quantiles=new double[100];//min. expression value to be in quantile i%
 	private double mediana;
 	
+	//clase que controla la barra de progreso cuando se están obteniendo las anotaciones
+	//MicroarrayAnnotationsLoadProgressBar mlpb = null;
 	
 	/**
 	 * Constructor from a file
@@ -1471,8 +1474,7 @@ public class MicroarrayData {
 							
 							//Carlos
 							//de momento en desuso porque las anotaciones no se cargan al arrancar
-							//at.addPropertyChangeListener(ventana.getMlpb());
-							//ventana.getMlpb().isListener();							
+							at.addPropertyChangeListener(ventana.getMlpb());					
 							at.execute();
 
 						} catch (Exception e) {
@@ -1960,9 +1962,7 @@ public class MicroarrayData {
 			Thread wt = new Thread() {
 				public void run() {
 					try {
-						System.out.println("antes de geneRequester.receiveGeneAnnotations(at.get())");
 						geneRequester.receiveGeneAnnotations(at.get());
-						System.out.println("después de geneRequester.receiveGeneAnnotations(at.get())");
 					} catch (Exception e) {
 						e.printStackTrace();
 					}
@@ -1971,8 +1971,7 @@ public class MicroarrayData {
 			wt.start();
 		} else {
 			//de momento en desuso porque las anotaciones no se cargan al arrancar
-			//at.addPropertyChangeListener(ventana.getMlpb());
-			//ventana.getMlpb().isListener();
+			at.addPropertyChangeListener(ventana.getMlpb());
 			at.execute();
 		}
 		System.out.println("retrieveGeneAnnotations finished");
@@ -2346,12 +2345,21 @@ public class MicroarrayData {
 					//si el usuario no desea buscar los nombres en este momento...
 					if(res == JOptionPane.NO_OPTION){
 						//se activa la posibilidad de buscarlos manualmente
-						ventana.menuAnalysisRetrieveDescriptors.setEnabled(true);
+						ventana.getMenuAnalysisRetrieveDescriptors().setEnabled(true);
 					}
 					//si se desea buscar los nombres en este momento...
 					else if(res == JOptionPane.YES_OPTION){
+						//se visualiza la barra de progreso de carga de anotaciones
+						ventana.getMlpb().visualize();
+						
 						//una vez que se buscan, ya no se podrá repetir la búsqueda
-						ventana.menuAnalysisRetrieveDescriptors.setEnabled(false);
+						ventana.getMenuAnalysisRetrieveDescriptors().setEnabled(false);
+						
+						//también se inhabilitan durante este proceso las opciones que dependen de R (Biclustering, GSEA, Diffexp y Build correl network)
+						ventana.getAnalysisMenuBiclustering().setEnabled(false);
+						ventana.getMenuAnalysisGSEA().setEnabled(false);
+						ventana.getMenuAnalysisDifexp().setEnabled(false);
+						ventana.getMenuAnalysisBuildNetwork().setEnabled(false);
 						
 						if (re.eval("martEnsembl") == null)
 							exp = re.eval("martEnsembl=getEnsemblMart(species=\""
@@ -2364,9 +2372,7 @@ public class MicroarrayData {
 							}
 						else
 							exp = re.eval("df=getBMGenes(group, mart=martEnsembl, species=\""+ organism + "\", type=\"" + rname + "\")");*/
-						
-						System.out.println("Antes de la llamada que más tarda");
-						
+												
 						exp = re.eval("df=getBMatts(group, mart=martEnsembl, type=\""+ rname+ "\", attributes=c(\"ensembl_gene_id\",\""+ rname+ "\",\"entrezgene\", \"description\"))$ids");
 						if (!chip.equals(rname)) 
 						{
@@ -2598,6 +2604,14 @@ public class MicroarrayData {
 			setProgress(progress);
 
 			System.out.println("---END getMultipleGeneAnnotationsR---");
+			
+			//se habilitan las opciones inhabilitadas durante este método (Biclustering, GSEA, Diffexp y Build correl network)
+			ventana.getAnalysisMenuBiclustering().setEnabled(true);
+			ventana.getMenuAnalysisGSEA().setEnabled(true);
+			ventana.getMenuAnalysisDifexp().setEnabled(true);
+			ventana.getMenuAnalysisBuildNetwork().setEnabled(true);			
+			
+			//se elimina la barra de progreso
 
 			return galist;
 		}
@@ -2798,10 +2812,6 @@ public class MicroarrayData {
 				else{
 					getGeneAnnotationNCBI();
 				}
-								
-				//Carlos
-				//el done lo hace automáticamente al terminar este método
-				//done();
 				
 				rManager.notify();
 				
@@ -2814,6 +2824,9 @@ public class MicroarrayData {
 			synchronized (geneAnnotations) {
 				geneAnnotations.notify();
 			}
+			
+			//se oculta la barra de progreso de la obtención de anotaciones
+			ventana.getMlpb().hide();
 		}
 
 	}

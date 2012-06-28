@@ -87,9 +87,11 @@ public class KeggDiagram extends Diagram {
 	private int scaleModeKegg;
 	
 	//configuración del color
+	/*
 	private static final int lowColor = 0;
 	private static final int zeroColor = 1;
 	private static final int highColor = 2;
+	*/
 	private static final int selectionColor = 3;
 	private static final int hoverColor = 4;
 	
