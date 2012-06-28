@@ -24,115 +24,107 @@ import com.sun.media.sound.Toolkit;
 
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 
-public class AnnotationProgressMonitor extends JPanel implements ActionListener,
-           PropertyChangeListener, Runnable {
+public class AnnotationProgressMonitor extends JPanel implements
+		ActionListener, PropertyChangeListener, Runnable {
 
-private static final long serialVersionUID = 7679749397384459601L;
-public ProgressMonitor progressMonitor;
-public JTextArea taskOutput;
-private MicroarrayData.AnnotationTask task;
-public JFrame frame;
-private Point location=null;
+	private static final long serialVersionUID = 7679749397384459601L;
+	public ProgressMonitor progressMonitor;
+	public JTextArea taskOutput;
+	private MicroarrayData.AnnotationTask task;
+	public JFrame frame;
+	private Point location = null;
 
-public MicroarrayData.AnnotationTask getTask() {
-	return task;
-}
-
-
-public void setTask(MicroarrayData.AnnotationTask task) {
-	this.task = task;
-	task.apm=this;
-}
-
-public AnnotationProgressMonitor() {
-	super(new BorderLayout());
-	this.setBounds(100, 100, 400, 500);
-	taskOutput = new JTextArea(8, 40);
-	taskOutput.setMargin(new Insets(5,5,5,5));
-	taskOutput.setEditable(false);
-	
-	add(new JScrollPane(taskOutput), BorderLayout.CENTER);
-	setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	public MicroarrayData.AnnotationTask getTask() {
+		return task;
 	}
 
-public AnnotationProgressMonitor(Point p) {
-	super(new BorderLayout());
-	this.setBounds((int)p.getX(), (int)p.getY(), 400, 500);
-	this.setLocation(p);
-	taskOutput = new JTextArea(8, 40);
-	taskOutput.setMargin(new Insets(5,5,5,5));
-	taskOutput.setEditable(false);
-	
-	location=p;
-	
-	add(new JScrollPane(taskOutput), BorderLayout.CENTER);
-	setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	public void setTask(MicroarrayData.AnnotationTask task) {
+		this.task = task;
+		task.apm = this;
 	}
 
+	public AnnotationProgressMonitor() {
+		super(new BorderLayout());
+		this.setBounds(100, 100, 400, 500);
+		taskOutput = new JTextArea(8, 40);
+		taskOutput.setMargin(new Insets(5, 5, 5, 5));
+		taskOutput.setEditable(false);
 
-/**
-* Invoked when task's progress property changes.
-*/
+		add(new JScrollPane(taskOutput), BorderLayout.CENTER);
+		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	}
 
-public void propertyChange(PropertyChangeEvent evt) 
-	{
-	if ("progress" == evt.getPropertyName() ) 
-		{
-		int progress = (Integer) evt.getNewValue();
-		progressMonitor.setProgress(progress);
-		
-		String message =String.format(task.message+"\n");
-		progressMonitor.setNote(message);
-		taskOutput.append(message);
-		
-		if (progressMonitor.isCanceled() || task.isDone() || progress>=100) 
-			{
-			if (progressMonitor.isCanceled()) 
-				{
-				task.cancel(true);
-				taskOutput.append("Task canceled.\n");
-				} 
-			else
-				{
-				frame.dispose();
+	public AnnotationProgressMonitor(Point p) {
+		super(new BorderLayout());
+		this.setBounds((int) p.getX(), (int) p.getY(), 400, 500);
+		this.setLocation(p);
+		taskOutput = new JTextArea(8, 40);
+		taskOutput.setMargin(new Insets(5, 5, 5, 5));
+		taskOutput.setEditable(false);
+
+		location = p;
+
+		add(new JScrollPane(taskOutput), BorderLayout.CENTER);
+		setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+	}
+
+	/**
+	 * Invoked when task's progress property changes.
+	 */
+
+	public void propertyChange(PropertyChangeEvent evt) {
+		if ("progress" == evt.getPropertyName()) {
+			int progress = (Integer) evt.getNewValue();
+			progressMonitor.setProgress(progress);
+
+			String message = String.format(task.message + "\n");
+			progressMonitor.setNote(message);
+			taskOutput.append(message);
+
+			if (progressMonitor.isCanceled() || task.isDone()
+					|| progress >= 100) {
+				if (progressMonitor.isCanceled()) {
+					task.cancel(true);
+					taskOutput.append("Task canceled.\n");
+				} else {
+					frame.dispose();
 				}
 			}
 		}
 	}
 
+	public void run() {
+		if (task == null)
+			return;
 
-public void run()
-	{
-	if(task==null)	return;
-	 
-	progressMonitor = new ProgressMonitor(AnnotationProgressMonitor.this,
-			 "Retrieving annotations",
-			 "Retrieving annotations...", 0, 100);
-	progressMonitor.setMillisToDecideToPopup(1000);
-	progressMonitor.setProgress(0);
-	
-	task.addPropertyChangeListener(AnnotationProgressMonitor.this);
-	
-	frame = new JFrame("Retrieving annotations ...");
-	if(location==null)	frame.setBounds(400, 200, 300, 100);
-	else				frame.setBounds(location.x+20,location.y+20, 300, 100);
-	frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		progressMonitor = new ProgressMonitor(AnnotationProgressMonitor.this,
+				"Retrieving annotations", "Retrieving annotations...", 0, 100);
+		progressMonitor.setMillisToDecideToPopup(1000);
+		progressMonitor.setProgress(0);
 
-	JComponent newContentPane = this;
-	newContentPane.setOpaque(true); //content panes must be opaque
-	frame.setContentPane(newContentPane);
-	frame.setAlwaysOnTop(true);
-	//Display the window.
-	frame.pack();
-	frame.setVisible(true);
-	task.execute();
-	//task.doInBackground();
+		task.addPropertyChangeListener(AnnotationProgressMonitor.this);
+
+		frame = new JFrame("Retrieving annotations ...");
+		if (location == null)
+			frame.setBounds(400, 200, 300, 100);
+		else
+			frame.setBounds(location.x + 20, location.y + 20, 300, 100);
+		frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+
+		JComponent newContentPane = this;
+		newContentPane.setOpaque(true); // content panes must be opaque
+		frame.setContentPane(newContentPane);
+		frame.setAlwaysOnTop(true);
+		// Display the window.
+		frame.pack();
+		frame.setVisible(true);
+		task.execute();
+		// task.doInBackground();
 	}
 
+	// @Override
+	public void actionPerformed(ActionEvent arg0) {
+		// TODO Auto-generated method stub
 
-//@Override
-public void actionPerformed(ActionEvent arg0) {
-	// TODO Auto-generated method stub
-	
-}
+	}
 }

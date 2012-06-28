@@ -85,8 +85,12 @@ public class BicOverlapperWindow extends JFrame {
 	
 	private MicroarrayAnnotationsLoadProgressBar mlpb;
 	
-	public JMenuItem menuAnalysisRetrieveDescriptors;
-
+	private JMenuItem menuAnalysisRetrieveDescriptors;
+	private JMenu analysisMenuBiclustering;
+	private JMenuItem menuAnalysisGSEA;
+	private JMenuItem menuAnalysisDifexp;
+	private JMenuItem menuAnalysisBuildNetwork;
+	
 	private AnalysisMenuManager amm;
 
 	/**
@@ -138,10 +142,8 @@ public class BicOverlapperWindow extends JFrame {
 			e1.printStackTrace();
 		}
 
-		
-		//Carlos
-		//de momento desactivado porque las anotaciones no se cargan al arrancar
-		//mlpb = new MicroarrayAnnotationsLoadProgressBar(this);
+		//se crea la barra de progreso para la obtención de anotaciones, que se activará cuando convenga
+		mlpb = new MicroarrayAnnotationsLoadProgressBar(this);
 	}
 
 	private void initDesktop() {
@@ -276,7 +278,7 @@ public class BicOverlapperWindow extends JFrame {
 		analysisMenu = new JMenu(
 				Translator.instance.menuLabels.getString("analysis"));
 		analysisMenu.setEnabled(false);
-		JMenu analysisMenuBiclustering = new JMenu(
+		analysisMenuBiclustering = new JMenu(
 				Translator.instance.menuLabels.getString("biclustering"));
 
 		JMenuItem menuAnalysisBimax = new JMenuItem(
@@ -311,13 +313,13 @@ public class BicOverlapperWindow extends JFrame {
 		menuAnalysisRetrieveDescriptors.setEnabled(false);
 		JMenuItem menuAnalysisSelect = new JMenuItem(
 				Translator.instance.menuLabels.getString("select"));
-		JMenuItem menuAnalysisDifexp = new JMenuItem(
+		menuAnalysisDifexp = new JMenuItem(
 				Translator.instance.menuLabels.getString("difexp"));
-		JMenuItem menuAnalysisBuildNetwork = new JMenuItem(
+		menuAnalysisBuildNetwork = new JMenuItem(
 				Translator.instance.menuLabels.getString("buildnet"));
-		JMenuItem menuAnalysisGSEA = new JMenuItem(
+		menuAnalysisGSEA = new JMenuItem(
 				Translator.instance.menuLabels.getString("gsea"));
-
+		
 		menuAnalysisSort.setMnemonic('S');
 		menuAnalysisSearch.setMnemonic('F');
 		menuAnalysisShow.setMnemonic('L');
@@ -628,5 +630,40 @@ public class BicOverlapperWindow extends JFrame {
 
 	public MicroarrayAnnotationsLoadProgressBar getMlpb() {
 		return mlpb;
+	}
+
+	/**
+	 * @return the menuAnalysisRetrieveDescriptors
+	 */
+	public JMenuItem getMenuAnalysisRetrieveDescriptors() {
+		return menuAnalysisRetrieveDescriptors;
+	}
+
+	/**
+	 * @return the analysisMenuBiclustering
+	 */
+	public JMenu getAnalysisMenuBiclustering() {
+		return analysisMenuBiclustering;
+	}
+
+	/**
+	 * @return the menuAnalysisGSEA
+	 */
+	public JMenuItem getMenuAnalysisGSEA() {
+		return menuAnalysisGSEA;
+	}
+
+	/**
+	 * @return the menuAnalysisDifexp
+	 */
+	public JMenuItem getMenuAnalysisDifexp() {
+		return menuAnalysisDifexp;
+	}
+
+	/**
+	 * @return the menuAnalysisBuildNetwork
+	 */
+	public JMenuItem getMenuAnalysisBuildNetwork() {
+		return menuAnalysisBuildNetwork;
 	}
 }
