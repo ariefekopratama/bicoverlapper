@@ -298,6 +298,17 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 	public void downloadExperiment(String id, String downloadPath) {
 		System.out.println("Downloading experiments " + downloadPath);
+		
+		//si no se ha introducido nada el campo solicitado...
+		if(downloadPath == null || downloadPath.equals("") || downloadPath.equals(".txt")){
+			String msgError = "Please introduce an ArrayExpress accession number to download and normalize";
+			JOptionPane.showMessageDialog(
+					null,
+					msgError, "Error",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		
 		fichero = new File(downloadPath);
 		prepareDesktop();
 		boolean error = false;

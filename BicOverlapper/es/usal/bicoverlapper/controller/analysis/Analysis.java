@@ -826,8 +826,15 @@ public class Analysis {
 		loadRLibrary("affy");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/downloadAndNormalize.R\")");
 		System.out.println("Calling download and normalize");
+				
+		//para que funcione tanto si la ruta se da con \ como si se da con /
+		path = path.replace("\\", "/");
+		
+		System.out.println("path = "+path);
+		
 		String fileName = path.substring(path.lastIndexOf("/") + 1);
-		path = path.substring(0, path.lastIndexOf("/"));
+		path = path.substring(0, path.lastIndexOf("/"));		
+				
 		exp = r.eval("downloadAndNormalize(experimentID=\"" + id
 				+ "\", path=\"" + path + "\", fileName=\"" + fileName + "\")");
 		if (exp == null) {
