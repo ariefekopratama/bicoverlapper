@@ -1,14 +1,6 @@
 package es.usal.bicoverlapper.view.configuration.panel;
 
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.FormLayout;
-
-import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
-import es.usal.bicoverlapper.controller.manager.FileMenuManager;
-import info.clearthought.layout.TableLayout;
-
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -17,16 +9,15 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 
-import javax.swing.ComboBoxModel;
-import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+
+import com.jgoodies.forms.layout.CellConstraints;
+
+import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
+import es.usal.bicoverlapper.controller.manager.FileMenuManager;
 
 /**
  * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
