@@ -85,7 +85,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	private String nameC = WordCloudParameterConfigurationPanel.GO_TERMS;
 	private ArrayList<String> nameSelected;
 	// private Color colorNameSelected;
-	public WordCloudParameterConfigurationPanel menuCloud = null;
+	private WordCloudParameterConfigurationPanel menuCloud = null;
 
 	private TreeMap<String, Word> words;
 	private boolean newSelection = true;
@@ -188,7 +188,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				&& sesion.getSelectedGenesBicluster() != null
 				&& sesion.getSelectedGenesBicluster().size() > 0) {
 			boolean reqSearch = true;
-
+			
 			boolean annotOK = sesion.getMicroarrayData().checkAnnotations(
 					sesion.getSelectedGenesBicluster());
 			if (annotOK) {
@@ -208,9 +208,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				reqSearch = false;
 			}
 
-			if (reqSearch
-					&& (!innerCall || annot == null || (got == null && menuCloud.size
-							.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
+			if (reqSearch && (!innerCall || annot == null || (got == null && menuCloud.size.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
 				Point p = new Point(0, 0);
 				if (this.getParent() != null)
 					p = this.sesion.getDiagramWindow(this.getName())

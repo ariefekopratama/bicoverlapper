@@ -830,11 +830,14 @@ public class Analysis {
 		//para que funcione tanto si la ruta se da con \ como si se da con /
 		path = path.replace("\\", "/");
 		
-		System.out.println("path = "+path);
+		System.out.println("path completo = "+path);
 		
 		String fileName = path.substring(path.lastIndexOf("/") + 1);
 		path = path.substring(0, path.lastIndexOf("/"));		
 				
+		System.out.println("path = "+path);
+		System.out.println("fileName = "+fileName);
+		
 		exp = r.eval("downloadAndNormalize(experimentID=\"" + id
 				+ "\", path=\"" + path + "\", fileName=\"" + fileName + "\")");
 		if (exp == null) {

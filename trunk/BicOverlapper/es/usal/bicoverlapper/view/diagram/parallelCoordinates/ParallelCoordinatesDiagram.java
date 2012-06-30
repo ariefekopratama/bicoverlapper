@@ -1291,10 +1291,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * Updates parallel coordinates with information in the session layer, and
 	 * repaints it
 	 */
-	public void update() {		
-		
-		System.out.println("\n\nUPDATE PARALLELCOORDINATES\n\n");
-		
+	public void update() {				
 		repaintAll = true;
 		gpLineasFondo = null;
 		tuplaSeleccionada = -1;
