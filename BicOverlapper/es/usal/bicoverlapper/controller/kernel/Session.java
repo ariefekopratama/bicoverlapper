@@ -361,9 +361,13 @@ public class Session implements KeyListener {
 					panelWC.run();
 				}
 				WordCloudDiagramConfiguration wcdc = (WordCloudDiagramConfiguration) configVentana;
-				panelWC.menuCloud.setIndices(wcdc.textIndex, wcdc.splitIndex,
+				panelWC.getMenuCloud().setIndices(wcdc.textIndex, wcdc.splitIndex,
 						wcdc.sizeIndex, wcdc.ontologyIndex);
 				this.setWordCloud(ventana);
+				
+				//este atributo se pone a false manualmente porque al hacer el setIndices se pone a true cuando no debería ser así
+				panelWC.innerCall = false;
+				
 				break;
 			case es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID:
 				KeggDiagram panelK = new KeggDiagram(
