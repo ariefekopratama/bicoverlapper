@@ -94,19 +94,19 @@ public class Kegg {
 					boolean hayExpresion = false;
 					valoresExpresion = new ArrayList<Double>();
 					//se obtienen los nombres de ese pathwayElement (nótese que puede ser 1 nombre o más de uno)
-					String[] nombresKO = pathwayElements[i].getNames();
+					String[] nombresGenes = pathwayElements[i].getNames();
 					
 					//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
 					//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
 					//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
-					TreeMap<String, ArrayList<String>> KOTermsEnPathway=new TreeMap<String, ArrayList<String>>();
-					for (String nombreKO : nombresKO){
-						ArrayList<String> elementosDeKOterms = new ArrayList<String>();
+					TreeMap<String, ArrayList<String>> mapaGenesEnPathway = new TreeMap<String, ArrayList<String>>();
+					for (String nombreGen : nombresGenes){
+						ArrayList<String> listaNombresGenes = new ArrayList<String>();
 						//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
-						if(nombreKO.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
-							//se guarda el número del gen sin el identificador del organismo
-							elementosDeKOterms.add(nombreKO.split("\\:")[1]);
-							KOTermsEnPathway.put(nombreKO, elementosDeKOterms);
+						if(nombreGen.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
+							//se guarda el nombre del gen sin el identificador del organismo
+							listaNombresGenes.add(nombreGen.split("\\:")[1]);
+							mapaGenesEnPathway.put(nombreGen, listaNombresGenes);
 						}
 						//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
 					}
@@ -114,7 +114,7 @@ public class Kegg {
 					//para cada gen en el microarray
 					for (GeneAnnotation g : mapaGenes.values()) {		
 						//para cada gen en el pathway
-						for (ArrayList<String> listaGenes: KOTermsEnPathway.values()) {	
+						for (ArrayList<String> listaGenes: mapaGenesEnPathway.values()) {	
 							for(String gen: listaGenes){
 								//si coinciden con el identificador que se esté comparando en cada momento, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
 								if(tipoIdentificador == 0 && null != g.id && gen.equals(g.id)){									
@@ -168,7 +168,7 @@ public class Kegg {
 			//por tanto, el tipoIdentificador se incrementará por si hay que seguir buscando
 			tipoIdentificador++;
 			
-		} while(resultadosValidos.isEmpty() && tipoIdentificador < 4);
+		} while(resultadosValidos.isEmpty() && tipoIdentificador < 3);
 		
 		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds y tipoIdentificador usado es "+(tipoIdentificador-1));		
 
