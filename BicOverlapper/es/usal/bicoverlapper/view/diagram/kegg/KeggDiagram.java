@@ -276,7 +276,14 @@ public class KeggDiagram extends Diagram {
 		panelImagen.add(panelInferior);		
 				
 		//creación del panel de los comboboxes
-		this.createComboBoxesPanel();
+		boolean comboboxesCreated = this.createComboBoxesPanel();
+		//si ha habido algún problema creando el panel de los comboboxes, se aborta
+		if(!comboboxesCreated){
+			//se oculta la barra de progreso
+			progressBar.setVisible(false);
+			return;
+		}
+		
 		//este panel contiene, en la parte central, al panel de los comboboxes
 		panelInferior.add(panelComboBoxes, BorderLayout.CENTER);
 				
@@ -454,9 +461,13 @@ public class KeggDiagram extends Diagram {
 	}
 
 	/**
-	 * Create the panel with combobox 
+	 * Create the panel with comboboxes 
+	 * 
+	 * @return True if the panel was created, otherwise false.
 	 */
-	private void createComboBoxesPanel() {
+	private boolean createComboBoxesPanel() {
+		String msgError = "";
+		
 		//creación del Layout para los comboboxes y sus separaciones
 		GridLayout layoutComoBoxes = new GridLayout(1,2);
 		layoutComoBoxes.setHgap(10);
@@ -468,6 +479,11 @@ public class KeggDiagram extends Diagram {
 		
 		//se obtiene la lista de organismos
 		String[] organismosSeleccionables = kegg.getOrganisms();
+		if(organismosSeleccionables.length == 0){
+			msgError = "Unable to connect with KEGG server. Please, close this diagram, check your conexion and open this diagram again.";
+			JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
 
 		combo1 = new JComboBox();
 		combo1.setToolTipText("Choose an organism");
@@ -475,7 +491,7 @@ public class KeggDiagram extends Diagram {
 		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
 		
-		String msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";		
+		msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";		
 		
 		//si ya hay un índice del combobox1 seleccionado...
 		if(indexCombo1 != -1){
@@ -509,7 +525,9 @@ public class KeggDiagram extends Diagram {
 				JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
 			}
 		}
+		//tamaño del combobox1, que contiene los organismos
 		combo1.setPreferredSize(new Dimension(351, 23));
+		//acción asociada al combobox1
 		combo1.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent evt) {
 				try {	
@@ -534,14 +552,18 @@ public class KeggDiagram extends Diagram {
 			}
 		});
 
+		//combobox2, que contiene los pathways
 		combo2 = new JComboBox();
 		combo2.setToolTipText("Choose a pathway");
+		//acción asociada al combobox2
 		combo2.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent event) {
 				try {
+					//si se ha seleccionado un pathway, se habilita el botón de obtener imagen
 					if (combo2.getSelectedItem() != null && !combo2.getSelectedItem().equals("")){
 						botonObtenerImagen.setEnabled(true);
 					}
+					//si no, se deshabilita
 					else{
 						botonObtenerImagen.setEnabled(false);
 					}
@@ -554,7 +576,7 @@ public class KeggDiagram extends Diagram {
 		panelComboBoxes.add(combo1);
 		panelComboBoxes.add(combo2);
 
-		//a continuación se hace imprescindible rellenar el combobox2
+		//a continuación se rellena el combobox2
         final SwingWorker<Void, Void> workerCombo2 = new SwingWorker<Void, Void>(){  
       	  
             @Override  
@@ -573,8 +595,10 @@ public class KeggDiagram extends Diagram {
             }
               
         };  
-          
+        //se ejecuta el rellenado del combobox2 que se hace en 2º plano  
         workerCombo2.execute();
+        
+        return true;
 	}
 
 	/**
