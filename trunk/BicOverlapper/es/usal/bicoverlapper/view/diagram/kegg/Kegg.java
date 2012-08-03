@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -603,4 +604,28 @@ public class Kegg {
 	      
 	    return floatArray;  
     }    
+    
+	/**
+	 * Mapping internal ids with gen ids
+	 * @param internalIdsSelected List with the internal ids
+	 * @return Selected genes
+	 */
+	public List<String> mapearInternalIdconIdGen(List<Integer> internalIdsSelected) {
+		//creación de la lista de genes seleccionados
+		List<String> genesSeleccionados = new LinkedList<String>();
+		//obtención de los genes presentes en el experimento
+		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
+		//para cada uno de los genes presentes en el experimento...
+		for (GeneAnnotation g : mapaGenes.values()) {
+			//para cada uno de los internalId seleccionados
+			for (Integer gen : internalIdsSelected) {
+				//si coinciden
+				if(g.internalId == (gen)){
+					//se añade el id del gen a la lista de genes seleccionados
+					genesSeleccionados.add(g.id);
+				}
+			}
+		}
+		return genesSeleccionados;
+	}    
 }

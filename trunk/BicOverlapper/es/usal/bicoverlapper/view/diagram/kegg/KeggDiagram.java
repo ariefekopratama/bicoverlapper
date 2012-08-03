@@ -56,8 +56,8 @@ public class KeggDiagram extends Diagram {
 	private int alto;
 	private int ancho;
 	private Kegg kegg;
-	private ScrollablePicture picture;
-	private JScrollPane pictureScrollPane;
+	private PathwayMapImage pathwayMapImage;
+	private JScrollPane pathwayMapImageScrollPane;
 	private JComponent panelImagen;
 	private JComponent panelInferior;
 	private JComponent panelComboBoxes;
@@ -171,7 +171,7 @@ public class KeggDiagram extends Diagram {
 		//esto debería estar controlado en Session, pero yo no lo toco no siendo que repercuta en otro lado...
 		if(!sesion.onlyHover && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
 			//se recogen los id de los genes seleccionados
-			List<String> genes = mapearInternalIdconIdGen(sesion.getSelectedGenesBicluster());
+			List<String> genes = kegg.mapearInternalIdconIdGen(sesion.getSelectedGenesBicluster());
 			List<Rectangle2D.Double> elementosKeggSeleccionados = new ArrayList<Rectangle2D.Double>();
 			
 			if (!genes.isEmpty() && listaElementosImg != null) {
@@ -193,49 +193,25 @@ public class KeggDiagram extends Diagram {
 			
 			//si hay algún elemento que contenga algún gen seleccionado, se marcará
 			if(!elementosKeggSeleccionados.isEmpty()){
-				picture.setRectangles(elementosKeggSeleccionados);
-				picture.setDibujarBordeKeggElement(true);
-				picture.repaint();
+				pathwayMapImage.setRectangles(elementosKeggSeleccionados);
+				pathwayMapImage.setDibujarBordeKeggElement(true);
+				pathwayMapImage.repaint();
 			}
 			//si no hay ningún elemento con ninguno de los genes seleccionadios, se dejará la imagen tal cual
 			else{
-				picture.getRectangles().clear();
-				picture.setDibujarBordeKeggElement(false);
-				picture.repaint();
+				pathwayMapImage.getRectangles().clear();
+				pathwayMapImage.setDibujarBordeKeggElement(false);
+				pathwayMapImage.repaint();
 			}
 		}
 		else{
-			//si no se ha seleccionado ningún gen, entonces se deja la imagen original
+			//si no se ha seleccionado ningún gen, y se quiere dejar la imagen original
 			/*
 			picture.getRectangles().clear();
 			picture.setDibujarBordeKeggElement(false);
 			picture.repaint();	
 			*/		
 		}
-	}
-	
-	/**
-	 * Mapping internal ids with gen ids
-	 * @param internalIdsSelected List with the internal ids
-	 * @return Selected genes
-	 */
-	private List<String> mapearInternalIdconIdGen(List<Integer> internalIdsSelected) {
-		//creación de la lista de genes seleccionados
-		List<String> genesSeleccionados = new LinkedList<String>();
-		//obtención de los genes presentes en el experimento
-		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
-		//para cada uno de los genes presentes en el experimento...
-		for (GeneAnnotation g : mapaGenes.values()) {
-			//para cada uno de los internalId seleccionados
-			for (Integer gen : internalIdsSelected) {
-				//si coinciden
-				if(g.internalId == (gen)){
-					//se añade el id del gen a la lista de genes seleccionados
-					genesSeleccionados.add(g.id);
-				}
-			}
-		}
-		return genesSeleccionados;
 	}
 
 	/**
@@ -715,21 +691,21 @@ public class KeggDiagram extends Diagram {
 
 		//Se crea el scrollpane
 		if(!isDefaultImage){
-			picture = new ScrollablePicture(imagen, listaElementosImg, this.sesion, valorActualCondition, this);
+			pathwayMapImage = new PathwayMapImage(imagen, listaElementosImg, this.sesion, valorActualCondition, this);
 		}
 		else{
-			picture = new ScrollablePicture(imagen, this.sesion, this);
+			pathwayMapImage = new PathwayMapImage(imagen, this.sesion, this);
 		}
-		pictureScrollPane = new JScrollPane(picture);
-		pictureScrollPane.setPreferredSize(new Dimension(1024, 768));
-		pictureScrollPane.setViewportBorder(BorderFactory.createLineBorder(Color.black));
+		pathwayMapImageScrollPane = new JScrollPane(pathwayMapImage);
+		pathwayMapImageScrollPane.setPreferredSize(new Dimension(1024, 768));
+		pathwayMapImageScrollPane.setViewportBorder(BorderFactory.createLineBorder(Color.black));
 		
 		//se añade el oyente para el panel de configuración al ScrollPane que contendrá la imagen
 		//pero también será necesario añadírselo a la propia imagen si se desea que funcione este botón derecho sobre ella
-		pictureScrollPane.addMouseListener(new ConfigurationListener(this));
+		pathwayMapImageScrollPane.addMouseListener(new ConfigurationListener(this));
 
 		//se añade el JScrollPane al panel de la imagen
-		panelImagen.add(pictureScrollPane);
+		panelImagen.add(pathwayMapImageScrollPane);
 		
 		//para que se recargue el panel con la imagen nueva es necesario llamar a revalidate()
 		panelImagen.revalidate();
