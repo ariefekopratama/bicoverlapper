@@ -21,7 +21,7 @@ import es.usal.bicoverlapper.view.diagram.Diagram;
  * @author Carlos Martín Casado
  *
  */
-public class ScrollablePicture extends JLabel implements Scrollable, MouseListener {
+public class PathwayMapImage extends JLabel implements Scrollable, MouseListener {
 
 	private static final long serialVersionUID = -8290814532621669389L;
 	private int maxUnitIncrement = 1;
@@ -38,7 +38,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 	//parámetro que indica la distancia a la cual se dibujará el borde de selección del elemento
 	public static final int distanciaAlElemento = 2;
 
-	public ScrollablePicture(ImageIcon i, Session _sesion, Diagram _panel) {
+	public PathwayMapImage(ImageIcon i, Session _sesion, Diagram _panel) {
 		super(i);
 		sesion = _sesion;
 		panel = _panel;
@@ -58,7 +58,7 @@ public class ScrollablePicture extends JLabel implements Scrollable, MouseListen
 		addMouseListener(this); // handle mouse drags
 	}
 
-	public ScrollablePicture(ImageIcon i, List<LinkItem> listaElementosImg, Session _sesion, int numCondition, Diagram _panel) {
+	public PathwayMapImage(ImageIcon i, List<LinkItem> listaElementosImg, Session _sesion, int numCondition, Diagram _panel) {
 		super(i);
 		sesion = _sesion;
 		panel = _panel;
