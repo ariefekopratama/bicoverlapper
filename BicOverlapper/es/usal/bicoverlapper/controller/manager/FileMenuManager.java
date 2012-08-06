@@ -64,8 +64,8 @@ import es.usal.bicoverlapper.view.configuration.ConfigurationHandler;
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.panel.DownloadAEPanel;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagramConfiguration;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
 import es.usal.bicoverlapper.view.main.WorkDesktop;
@@ -624,7 +624,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					config.addWindowConfiguration(wccd);
 				} 
 				else if(identificador == Configuration.KEGG_ID){
-					KeggDiagramConfiguration kdc = new KeggDiagramConfiguration(configventana);
+					KEGGDiagramConfiguration kdc = new KEGGDiagramConfiguration(configventana);
 					nodo = nodo.getNextSibling();
 					elemento = (Element) nodo;
 					kdc.setIndexCombo1(Integer.valueOf(elemento.getAttribute("combo1")).intValue());
@@ -991,7 +991,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					Element configkd = documento
 							.createElement("keggSettings");
 					
-					KeggDiagram kd = (KeggDiagram) (sesion
+					KEGGDiagram kd = (KEGGDiagram) (sesion
 							.getDiagramWindow(configVentana.getTitle())
 							.getDiagram());
 					configkd.setAttribute("combo1",
@@ -999,7 +999,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					configkd.setAttribute("combo2",
 							kd.getIndexCombo2()+ "");	
 					configkd.setAttribute("condition",
-							kd.getValorActualCondition()+ "");						
+							kd.getKeggModel().getValorActualCondition()+ "");						
 					ventana.appendChild(configkd);
 				}
 				

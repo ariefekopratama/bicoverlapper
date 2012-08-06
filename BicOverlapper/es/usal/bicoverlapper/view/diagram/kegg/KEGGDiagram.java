@@ -4,20 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyVetoException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -40,7 +31,6 @@ import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationListener;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
-import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
 
@@ -50,12 +40,12 @@ import es.usal.bicoverlapper.view.diagram.Diagram;
  * @author Carlos Martín Casado
  *
  */
-public class KeggDiagram extends Diagram {
+public class KEGGDiagram extends Diagram {
 	private static final long serialVersionUID = 1L;
 	private Session sesion;
 	private int alto;
 	private int ancho;
-	private Kegg kegg;
+	private KEGGModel keggModel;
 	private PathwayMapImage pathwayMapImage;
 	private JScrollPane pathwayMapImageScrollPane;
 	private JComponent panelImagen;
@@ -64,15 +54,12 @@ public class KeggDiagram extends Diagram {
 	private JComponent panelProgressBar;
 	private JComponent panelInferiorDerecha;
 	private JComboBox combo1, combo2;
-	private Definition[] definitionPathways;
-	private List<LinkItem> listaElementosImg;
 	private JButton botonFlechaIzq, botonFlechaDer;
 	private JTextField jtf;
 	private JButton botonObtenerImagen;
 	
 	private JProgressBar progressBar;
 	
-	private int valorActualCondition = 0;
 	private String organism;
 
 	public static final String urlImagenPorDefecto = "es/usal/bicoverlapper/resources/images/keggDefaultImage.gif";	
@@ -84,7 +71,7 @@ public class KeggDiagram extends Diagram {
 	//todo lo de aquí para abajo son atributos para el tema de los cuantiles
 	private boolean configurando = false;
 		
-	private int scaleModeKegg;
+	
 	
 	//configuración del color
 	/*
@@ -101,10 +88,12 @@ public class KeggDiagram extends Diagram {
 										"Highest expression", "Selection", "Hover" 
 								};	
 	
+	private KEGGController keggController;
+	
 	/**
 	 * Default constructor
 	 */	
-	public KeggDiagram(){
+	public KEGGDiagram(){
 		super();
 	}
 	
@@ -113,10 +102,8 @@ public class KeggDiagram extends Diagram {
 	 * @param session Session in which this diagram is in. It must have TRN data loaded
 	 * @param dim Dimension for this diagram
 	 */	
-	public KeggDiagram(Session sesion, Dimension dim) {
+	public KEGGDiagram(Session sesion, Dimension dim) {
 		super(new BorderLayout());
-		
-		scaleModeKegg = sesion.getScaleMode();
 		
 		this.setName("Kegg " + sesion.getNumKeggDiagrams());
 		this.sesion = sesion;
@@ -143,7 +130,10 @@ public class KeggDiagram extends Diagram {
 	 */
 	public void create() {		
 		try {
-			kegg = new Kegg(sesion);
+			this.keggModel = new KEGGModel(sesion);
+			keggModel.setScaleModeKegg(sesion.getScaleMode());
+			
+			this.keggController = new KEGGController(this, keggModel, sesion);
 			
 			//La creación se hace en un hilo para no congelar la interfaz gráfica
 	        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {  
@@ -166,52 +156,7 @@ public class KeggDiagram extends Diagram {
 	 * Updates the diagram by retrieving the last selection of data
 	 */
 	public void update(){
-		//si onlyHover es false y hay genes seleccionados...
-		//hay que meter la comprobación de "null != sesion.getSelectedBicluster()" porque si esto es nulo, el método sesion.getSelectedGenesBicluster() da nullpointerexception
-		//esto debería estar controlado en Session, pero yo no lo toco no siendo que repercuta en otro lado...
-		if(!sesion.onlyHover && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
-			//se recogen los id de los genes seleccionados
-			List<String> genes = kegg.mapearInternalIdconIdGen(sesion.getSelectedGenesBicluster());
-			List<Rectangle2D.Double> elementosKeggSeleccionados = new ArrayList<Rectangle2D.Double>();
-			
-			if (!genes.isEmpty() && listaElementosImg != null) {
-				//se buscan coincidencias entre los genes seleccionados y los elementos de Kegg en la imagen
-				for (LinkItem itm : listaElementosImg) {
-					//si se dispone de los nombres de genes de ese elemento...
-					if(null != itm.getGeneNames()){
-						for (String gen : genes) {
-							for (String genItm : itm.getGeneNames()) {
-								if(genItm.equals(gen)){
-									//si se encuentra coincidencia, se añade ese elemento para marcar como seleccionado en la imagen de Kegg
-									elementosKeggSeleccionados.add(itm.getRectangle());
-								}
-							}
-						}
-					}								
-				}
-			}
-			
-			//si hay algún elemento que contenga algún gen seleccionado, se marcará
-			if(!elementosKeggSeleccionados.isEmpty()){
-				pathwayMapImage.setRectangles(elementosKeggSeleccionados);
-				pathwayMapImage.setDibujarBordeKeggElement(true);
-				pathwayMapImage.repaint();
-			}
-			//si no hay ningún elemento con ninguno de los genes seleccionadios, se dejará la imagen tal cual
-			else{
-				pathwayMapImage.getRectangles().clear();
-				pathwayMapImage.setDibujarBordeKeggElement(false);
-				pathwayMapImage.repaint();
-			}
-		}
-		else{
-			//si no se ha seleccionado ningún gen, y se quiere dejar la imagen original
-			/*
-			picture.getRectangles().clear();
-			picture.setDibujarBordeKeggElement(false);
-			picture.repaint();	
-			*/		
-		}
+		keggController.update();
 	}
 
 	/**
@@ -300,7 +245,7 @@ public class KeggDiagram extends Diagram {
 		panelInferiorDerecha.setOpaque(true);
 		
 		//creación del botón izquierdo
-		botonFlechaIzq = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playIzq.png"));
+		botonFlechaIzq = new JButton(KEGGDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playIzq.png"));
 		botonFlechaIzq.setToolTipText("Use the arrows to choose the condition");
 		//mientras se use el skin, estas opciones son ignoradas...
 		botonFlechaIzq.setBorder(null);
@@ -311,9 +256,9 @@ public class KeggDiagram extends Diagram {
         //si se llega a la condición más baja, no se hace nada
 		botonFlechaIzq.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-            	if(valorActualCondition-1 >= 0){
-            		valorActualCondition--;
-            		String texto = sesion.getMicroarrayData().getConditionName(valorActualCondition);
+            	if(keggModel.getValorActualCondition()-1 >= 0){
+            		keggModel.setValorActualCondition(keggModel.getValorActualCondition()-1);
+            		String texto = sesion.getMicroarrayData().getConditionName(keggModel.getValorActualCondition());
             		jtf.setText(texto);
             		jtf.setToolTipText(texto);
             	}
@@ -321,15 +266,15 @@ public class KeggDiagram extends Diagram {
         });
 		
 		//creación del botón derecho
-		botonFlechaDer = new JButton(KeggDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playDer.png"));
+		botonFlechaDer = new JButton(KEGGDiagram.createImageIcon("es/usal/bicoverlapper/resources/images/playDer.png"));
 		botonFlechaDer.setToolTipText("Use the arrows to choose the condition");
         //cuando se pulse sobre el boton de la derecha, aparecerá seleccionada la condición siguiente
         //si se llega a la condición más alta, no se hace nada		
 		botonFlechaDer.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
-            	if(valorActualCondition+1 < sesion.getMicroarrayData().getNumConditions()){
-            		valorActualCondition++;
-            		String texto = sesion.getMicroarrayData().getConditionName(valorActualCondition);
+            	if(keggModel.getValorActualCondition()+1 < sesion.getMicroarrayData().getNumConditions()){
+            		keggModel.setValorActualCondition(keggModel.getValorActualCondition()+1);
+            		String texto = sesion.getMicroarrayData().getConditionName(keggModel.getValorActualCondition());
             		jtf.setText(texto);
             		jtf.setToolTipText(texto);
             	}            
@@ -342,13 +287,13 @@ public class KeggDiagram extends Diagram {
 		botonFlechaDer.setBorderPainted(false);
 		
 		//si el valor de la condición seleccionada es mayor que el número de condiciones posibles, algo va mal y se resetea su valor a 0
-		if(valorActualCondition >= this.sesion.getMicroarrayData().getNumConditions())
+		if(keggModel.getValorActualCondition() >= this.sesion.getMicroarrayData().getNumConditions())
 		{
-			valorActualCondition = 0;
+			keggModel.setValorActualCondition(0);
 		}
 		//creación del campo de texto que contendrá el nombre de la condición
-		jtf = new JTextField(this.sesion.getMicroarrayData().getConditionName(valorActualCondition));
-		jtf.setToolTipText(this.sesion.getMicroarrayData().getConditionName(valorActualCondition));		
+		jtf = new JTextField(this.sesion.getMicroarrayData().getConditionName(keggModel.getValorActualCondition()));
+		jtf.setToolTipText(this.sesion.getMicroarrayData().getConditionName(keggModel.getValorActualCondition()));		
 		jtf.setEditable(false);
 		jtf.setPreferredSize(new Dimension(100, 25));
 		jtf.setSize(new Dimension(100, 25));
@@ -370,44 +315,9 @@ public class KeggDiagram extends Diagram {
 		botonObtenerImagen.setEnabled(false);
 		//este botón posee un oyente que hará que, cuando sea pulsado, se desactiven todos los demás botones de Kegg, se muestre una barra de progreso y se realice la llamada al servidor
 		//todo esto además se hará desde un hilo que no bloqueará la interfaz del programa
-		botonObtenerImagen.addActionListener(new ActionListener(){
+		botonObtenerImagen.setActionCommand("1");
+		botonObtenerImagen.addActionListener(keggController);
 
-			@Override
-			public void actionPerformed(ActionEvent arg0) {
-		        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){  
-		        	  
-		            @Override  
-		            protected Void doInBackground() throws Exception {  
-		            	//se deshabilitan los botones y combos
-		            	botonObtenerImagen.setEnabled(false);
-		            	botonFlechaIzq.setEnabled(false);
-		            	botonFlechaDer.setEnabled(false);
-		        		combo1.setEnabled(false);
-		        		combo2.setEnabled(false);		            	
-		            	//se pone visible la progressBar para que el usuario sepa que se está trabajando en 2º plano
-		            	progressBar.setVisible(true);				         
-		            	//se monta en el panel la imagen por defecto
-		            	mountPanelsWithNewImage(urlImagenPorDefecto, true);
-		            	//se realiza la obtención de la imagen
-		            	getKeggImage();
-		            	//se habilitan de nuevo los botones y combox
-		            	botonObtenerImagen.setEnabled(true);
-		            	botonFlechaIzq.setEnabled(true);
-		            	botonFlechaDer.setEnabled(true);		
-		        		combo1.setEnabled(true);
-		        		combo2.setEnabled(true);	
-		        		//se desactiva de la vista la progressBar
-		            	progressBar.setVisible(false);		
-		            	
-		                return null;  
-		            }
-		              
-		        };  
-		          
-		        worker.execute();				
-			}
-			
-		});
 		//se añade el citado botón al panel inferior derecha
 		panelInferiorDerecha.add(botonObtenerImagen, BorderLayout.EAST);
 		
@@ -454,7 +364,7 @@ public class KeggDiagram extends Diagram {
 		panelComboBoxes.setOpaque(true);
 		
 		//se obtiene la lista de organismos
-		String[] organismosSeleccionables = kegg.getOrganisms();
+		String[] organismosSeleccionables = keggModel.getOrganisms();
 		if(organismosSeleccionables.length == 0){
 			msgError = "Unable to connect with KEGG server. Please, close this diagram, check your conexion and open this diagram again.";
 			JOptionPane.showMessageDialog(null, msgError, "Error", JOptionPane.ERROR_MESSAGE);
@@ -503,51 +413,16 @@ public class KeggDiagram extends Diagram {
 		}
 		//tamaño del combobox1, que contiene los organismos
 		combo1.setPreferredSize(new Dimension(351, 23));
+		combo1.setActionCommand("2");
 		//acción asociada al combobox1
-		combo1.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt) {
-				try {	
-			        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){  
-			        	  
-			            @Override  
-			            protected Void doInBackground() throws Exception {  
-			            	botonObtenerImagen.setEnabled(false);
-			            	//se pone visible la progressbar para que el usuario sepa que se está trabajando en 2º plano
-			            	progressBar.setVisible(true);
-			            	fillComboBox2();
-			                return null;  
-			            }
-			              
-			        };  
-			          
-			        worker.execute();					
-					
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+		combo1.addActionListener(keggController);
 
 		//combobox2, que contiene los pathways
 		combo2 = new JComboBox();
 		combo2.setToolTipText("Choose a pathway");
+		combo2.setActionCommand("3");
 		//acción asociada al combobox2
-		combo2.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent event) {
-				try {
-					//si se ha seleccionado un pathway, se habilita el botón de obtener imagen
-					if (combo2.getSelectedItem() != null && !combo2.getSelectedItem().equals("")){
-						botonObtenerImagen.setEnabled(true);
-					}
-					//si no, se deshabilita
-					else{
-						botonObtenerImagen.setEnabled(false);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
+		combo2.addActionListener(keggController);
 
 		panelComboBoxes.add(combo1);
 		panelComboBoxes.add(combo2);
@@ -578,44 +453,22 @@ public class KeggDiagram extends Diagram {
 	}
 
 	/**
-	 * Load image from Kegg server in the Kegg image panel
-	 */
-	private void getKeggImage() {
-		//se obtiene el identificador del pathway
-		String id_pathway = kegg.getPathwayIdFromDefinition((String) combo2.getSelectedItem(), definitionPathways);
-		
-		System.out.println("id_pathway = "+id_pathway);
-		
-		//se almacenan los índices para cuando haya que restaurar esta vista
-		indexCombo1 = combo1.getSelectedIndex();
-		indexCombo2 = combo2.getSelectedIndex();
-		
-		System.out.println("indexCombo1 = "+indexCombo1);
-		System.out.println("indexCombo2 = "+indexCombo2);
-		
-		if (id_pathway != null) {
-			//se muestra la imagen
-			showImage(id_pathway);			
-			//una vez mostrada la iamgen, se actualiza el Diagram por si hay elementos seleccionados
-			this.update();
-		}
-	}
-
-	/**
 	 * Fill combobox2 with the pathways
 	 * @throws Exception
 	 */
-	private void fillComboBox2() throws Exception {
+	public void fillComboBox2() throws Exception {
 		//se deshabilita para que mientras se está rellenando no se pueda tocar
 		combo2.setEnabled(false);
 		//se actualiza el organismo seleccionado
 		organism = (String) combo1.getSelectedItem();
 		
 		// se desea mostrar los pathways del organismo seleccionado en el combobox1
-		String organismId = kegg.getOrganismId((String) combo1.getSelectedItem());
+		String organismId = keggModel.getOrganismId((String) combo1.getSelectedItem());
 
-		Definition[] pathways = kegg.getDefinitionPathwaysFromOrganism(organismId);
-		definitionPathways = pathways;
+		Definition[] pathways = keggModel.getDefinitionPathwaysFromOrganism(organismId);
+		//definitionPathways = pathways;
+		keggModel.setDefinitionPathways(pathways);
+		
 		
 		//se eliminan los elementos antiguos
 		combo2.removeAllItems();
@@ -638,39 +491,11 @@ public class KeggDiagram extends Diagram {
 	}
 
 	/**
-	 * Show the image
-	 * @param pathway Pathway of the image
-	 */
-	private void showImage(String pathway) {
-		try {
-			String url = kegg.generateKeggImage(pathway, valorActualCondition);
-
-			URL u = new URL(url);
-			InputStream in = u.openStream();
-			InputStreamReader reader = new InputStreamReader(in);
-
-			ExtractLinks fl = new ExtractLinks(kegg.getKeggElements());
-
-			listaElementosImg = fl.getLinks(reader);
-
-			//para que se monte el coloreado desde el programa java se pone false
-			//mountPanelsWithNewImage(url.replace("html", "png"), false);
-			//pero para poder extraer los links y que actúe el oyente he comentado el paintComponent en ScrollablePicture
-			//así, aquí pondré ahora false y no se coloreará en java, sólo se activará el mouseListener
-			mountPanelsWithNewImage(url.replace("html", "png"), false);
-		} catch (MalformedURLException mURLe) {
-			mURLe.printStackTrace();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * Mount panels of Kegg window with a new image
 	 * @param url Image url
 	 * @param isDefaultImage Boolean to indicate if the image to show is the default image or not
 	 */
-	private void mountPanelsWithNewImage(String url, boolean isDefaultImage) {
+	public void mountPanelsWithNewImage(String url, boolean isDefaultImage) {
 		//se eliminan todos los elementos del panel
 		panelImagen.removeAll();
 		//se carga la nueva imagen a mostrar
@@ -687,11 +512,11 @@ public class KeggDiagram extends Diagram {
 	private void loadImage(String url, boolean isDefaultImage) {
 		// Get the image to use.
 		ImageIcon imagen = null;
-		imagen = KeggDiagram.createImageIcon(url);
+		imagen = KEGGDiagram.createImageIcon(url);
 
 		//Se crea el scrollpane
 		if(!isDefaultImage){
-			pathwayMapImage = new PathwayMapImage(imagen, listaElementosImg, this.sesion, valorActualCondition, this);
+			pathwayMapImage = new PathwayMapImage(imagen, keggModel.getListaElementosImg(), this.sesion, keggModel.getValorActualCondition(), this);
 		}
 		else{
 			pathwayMapImage = new PathwayMapImage(imagen, this.sesion, this);
@@ -797,15 +622,15 @@ public class KeggDiagram extends Diagram {
 			configurando = false;
 			return;
 		}
-		sesion.setSelectionColor(paleta[KeggDiagram.selectionColor]);
-		sesion.setHoverColor(paleta[KeggDiagram.hoverColor]);
+		sesion.setSelectionColor(paleta[KEGGDiagram.selectionColor]);
+		sesion.setHoverColor(paleta[KEGGDiagram.hoverColor]);
 
 		//si el tipo de escala actual es diferente al que ha seleccionado el usuario...
 		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelParametros()).getScaleModeSelected();
-		if(scaleModeKegg != scaleModeSelectedByUser){
+		if(keggModel.getScaleModeKegg() != scaleModeSelectedByUser){
 			//se establece ese tipo de escala en la sesión
 			sesion.setScaleMode(scaleModeSelectedByUser);
-			scaleModeKegg = scaleModeSelectedByUser;
+			keggModel.setScaleModeKegg(scaleModeSelectedByUser);
 			//se informa al usuario que la nueva escala se usará en la próxima imagen que se cargue
 			//String msgInfo = "The new scale mode will be applied when you get a new image";
 			//JOptionPane.showMessageDialog(null, msgInfo, "Information", JOptionPane.INFORMATION_MESSAGE);			
@@ -817,14 +642,17 @@ public class KeggDiagram extends Diagram {
 		sesion.updateConfigExcept(this.getName());
 		this.configurando = false;
 		
-		System.out.println("scaleModeKegg = "+scaleModeKegg);
+		System.out.println("scaleModeKegg = "+keggModel.getScaleModeKegg());
 	}
 	
+	/**
+	 * Update the configuration
+	 */
 	public void updateConfig() {		
-		paleta[KeggDiagram.selectionColor] = sesion.getSelectionColor();
-		paleta[KeggDiagram.hoverColor] = sesion.getHoverColor();
+		paleta[KEGGDiagram.selectionColor] = sesion.getSelectionColor();
+		paleta[KEGGDiagram.hoverColor] = sesion.getHoverColor();
 		
-		scaleModeKegg = sesion.getScaleMode();
+		keggModel.setScaleModeKegg(sesion.getScaleMode());
 		
 		repaintAll = true;
 		this.repaint();
@@ -859,16 +687,58 @@ public class KeggDiagram extends Diagram {
 	}
 
 	/**
-	 * @return the valorActualCondition
+	 * @return the combo1
 	 */
-	public int getValorActualCondition() {
-		return valorActualCondition;
+	public JComboBox getCombo1() {
+		return combo1;
 	}
 
 	/**
-	 * @param valorActualCondition the valorActualCondition to set
+	 * @return the combo2
 	 */
-	public void setValorActualCondition(int valorActualCondition) {
-		this.valorActualCondition = valorActualCondition;
-	}	
+	public JComboBox getCombo2() {
+		return combo2;
+	}
+
+	/**
+	 * @return the botonFlechaIzq
+	 */
+	public JButton getBotonFlechaIzq() {
+		return botonFlechaIzq;
+	}
+
+	/**
+	 * @return the botonFlechaDer
+	 */
+	public JButton getBotonFlechaDer() {
+		return botonFlechaDer;
+	}
+
+	/**
+	 * @return the botonObtenerImagen
+	 */
+	public JButton getBotonObtenerImagen() {
+		return botonObtenerImagen;
+	}
+
+	/**
+	 * @return the progressBar
+	 */
+	public JProgressBar getProgressBar() {
+		return progressBar;
+	}
+
+	/**
+	 * @return the pathwayMapImage
+	 */
+	public PathwayMapImage getPathwayMapImage() {
+		return pathwayMapImage;
+	}
+
+	/**
+	 * @return the keggModel
+	 */
+	public KEGGModel getKeggModel() {
+		return keggModel;
+	}
 }

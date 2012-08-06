@@ -8,7 +8,7 @@ import keggapi.PathwayElement;
  * @author Carlos Martín Casado
  *
  */
-public class KeggElement {
+public class KEGGElement {
 
 	//elemento propiamente dicho
 	private PathwayElement element;
@@ -16,7 +16,7 @@ public class KeggElement {
 	private String foreground;
 	private String background;
 	
-	public KeggElement(PathwayElement _element, String _foreground, String _background){
+	public KEGGElement(PathwayElement _element, String _foreground, String _background){
 		element = _element;
 		foreground = _foreground;
 		background = _background;	
