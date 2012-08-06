@@ -17,7 +17,7 @@ import es.usal.bicoverlapper.view.diagram.parallelCoordinates.ParallelCoordinate
 import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
 import es.usal.bicoverlapper.view.main.DiagramWindow;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagram;
 
 /**
  * Class that handles the View Menu Options
@@ -158,7 +158,7 @@ public class ViewMenuManager implements ActionListener {
 				panel.repaint();
 			} else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s26"))){//Kegg
 				Dimension dim = config.getDimPanelKegg();
-				KeggDiagram panel = new KeggDiagram(sesion, dim);
+				KEGGDiagram panel = new KEGGDiagram(sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion, sesion.getDesktop(), panel);
 				panel.setWindow(ventana);
 				sesion.setKegg(ventana);

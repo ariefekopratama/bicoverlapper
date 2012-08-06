@@ -1,18 +1,17 @@
 package es.usal.bicoverlapper.view.diagram.kegg;
 
 import java.awt.Color;
+import java.awt.geom.Rectangle2D;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import keggapi.Definition;
 import keggapi.KEGGLocator;
 import keggapi.KEGGPortType;
-import keggapi.PathwayElement;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
@@ -22,17 +21,21 @@ import es.usal.bicoverlapper.model.gene.GeneAnnotation;
  * @author Carlos Martín Casado
  *
  */
-public class Kegg {
+public class KEGGModel {
 	
 	private KEGGPortType serv;
-	private List<KeggElement> keggElements = new ArrayList<KeggElement>();
+	private List<KEGGElement> keggElements = new ArrayList<KEGGElement>();
 	private Session sesion;
+	private Definition[] definitionPathways;
+	private List<LinkItem> listaElementosImg = null;
+	private int scaleModeKegg;
+	private int valorActualCondition = 0;
 	
 	/**
 	 * Binds the service to the soap port
 	 * @throws Exception
 	 */
-	public Kegg(Session _sesion) throws Exception {
+	public KEGGModel(Session _sesion) throws Exception {
 
 		KEGGLocator locator = new KEGGLocator();
 		serv = locator.getKEGGPort();
@@ -40,192 +43,11 @@ public class Kegg {
 	}
 
 	/**
-	 * Get list of Kegg elements
-	 * @return List of Kegg elements
-	 */
-	public List<KeggElement> getKeggElements() {
-		return keggElements;
-	}
-
-	/**
-	 * Generate Kegg image as from the selected pathway and the expression of genes in the experiment loaded
-	 * @param pathway Pathway of the organism
-	 * @param numCondition Condition selected
-	 * @return URL with the image generated
-	 * @throws Exception 
-	 */
-	public String generateKeggImage(String pathway, int numCondition) throws Exception {
-		int[] element_id_list = null;
-		String[] bgs = null;
-		String[] fgs = null;
-		//variable que servirá para comprobar qué tipo de identificador de gen ha sido probado
-		//0 = id
-		//1 = entrezId
-		//2 = ensemblId
-		//3 => dejar de probar ya que no hay coincidencias
-		int tipoIdentificador = 0;
-		
-		long start = System.currentTimeMillis();
-		
-		List<PathwayElement> resultadosValidos = new ArrayList<PathwayElement>();
-		
-		System.out.println("pathway = "+pathway);
-		// se consultan los elementos del pathway
-		PathwayElement[] pathwayElements = this.serv.get_elements_by_pathway(pathway);
-		// se crea la lista con los resultados
-		List<Integer> elementIdList = new ArrayList<Integer>();
-		// lista de samples
-		List<Float> samplesList = new ArrayList<Float>();
-		
-		//creo una lista de elementos que tendrá todos los elementos y que sólo usaré para obtener la imagen de KEGG en blanco
-		//int[] element_id_listAux = new int[results.length];
-		
-		//se recogen los genes de MicroarrayData
-		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
-		System.out.println("mapaGenes.size()="+mapaGenes.size());
-		
-		System.out.println("pathwayElements.length es "+pathwayElements.length);
-
-		do{
-			//se recorren todos los pathway elements
-			for (int i = 0; i < pathwayElements.length; i++) {
-				//si el elemento es de tipo gen (ya que para otro tipo de elementos no se coloreará)
-				if(pathwayElements[i].getType().equals("gene")){
-					ArrayList<Double> valoresExpresion = null;
-					boolean hayExpresion = false;
-					valoresExpresion = new ArrayList<Double>();
-					//se obtienen los nombres de ese pathwayElement (nótese que puede ser 1 nombre o más de uno)
-					String[] nombresGenes = pathwayElements[i].getNames();
-					
-					//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
-					//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
-					//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
-					TreeMap<String, ArrayList<String>> mapaGenesEnPathway = new TreeMap<String, ArrayList<String>>();
-					for (String nombreGen : nombresGenes){
-						ArrayList<String> listaNombresGenes = new ArrayList<String>();
-						//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
-						if(nombreGen.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
-							//se guarda el nombre del gen sin el identificador del organismo
-							listaNombresGenes.add(nombreGen.split("\\:")[1]);
-							mapaGenesEnPathway.put(nombreGen, listaNombresGenes);
-						}
-						//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
-					}
-					
-					//para cada gen en el microarray
-					for (GeneAnnotation g : mapaGenes.values()) {		
-						//para cada gen en el pathway
-						for (ArrayList<String> listaGenes: mapaGenesEnPathway.values()) {	
-							for(String gen: listaGenes){
-								//si coinciden con el identificador que se esté comparando en cada momento, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
-								if(tipoIdentificador == 0 && null != g.id && gen.equals(g.id)){									
-									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
-									valoresExpresion.add(valorExp);			
-									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
-								}
-								else if(tipoIdentificador == 1 && null != g.entrezId && gen.equals(g.entrezId)){									
-									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
-									valoresExpresion.add(valorExp);			
-									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
-								}
-								else if(tipoIdentificador == 2 && null != g.ensemblId && gen.equals(g.ensemblId)){									
-									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
-									valoresExpresion.add(valorExp);			
-									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
-								}								
-							}
-						}
-					}
-					
-					//si se han producido coincidencias, entonces quiere decir que para ese elemento habrá que calcular un coloreado
-					if(hayExpresion){
-						//por tanto se añade el elemento a la lista
-						elementIdList.add(pathwayElements[i].getElement_id());
-						resultadosValidos.add(pathwayElements[i]);
-						//se calcula el valor medio para todos los genes de ese elemento
-						float media = calcularMedia(valoresExpresion);
-						
-						//System.out.println("ELEMENTO "+pathwayElements[i].getElement_id());
-						/*
-						for (Double valorExp : valoresExpresion) {
-							System.out.println(valorExp);
-						}
-						*/
-						//System.out.println("Media = "+media);
-						
-						//se guarda esta media en la lista de muestras con la que se coloreará la imagen
-						samplesList.add(media);
-					}
-				}
-				else{
-					//TODO: en principio nada con los elementos que no sean genes, pero en un futuro podría necesitarse hacer algo con ellos
-				}
-			}
-			
-			//al llegar a este punto significa que se han buscado todos los elementos
-			//por tanto, el tipoIdentificador se incrementará por si hay que seguir buscando
-			tipoIdentificador++;
-			
-		} while(resultadosValidos.isEmpty() && tipoIdentificador < 3);
-		
-		System.out.println("for principal took " + (System.currentTimeMillis() - start) / 1000 + " seconds y tipoIdentificador usado es "+(tipoIdentificador-1));		
-
-		if(!elementIdList.isEmpty()){
-			//se convierten las colecciones anteriores en arrays
-			element_id_list = toIntArray(elementIdList);
-			float[] samples = toFloatArray(samplesList);		
-								
-			fgs = new String[element_id_list.length];
-			bgs = new String[element_id_list.length];
-	
-			//se interpolan los colores de la muestra
-			if(sesion.getScaleMode() == Session.numerical){
-				interpolateColorsNumerical(element_id_list, samples, fgs, bgs);
-			}
-			else if(sesion.getScaleMode() == Session.quantile){
-				interpolateColorsQuantile(element_id_list, samples, fgs, bgs);
-			}
-			// como todo en principio debería haber mantenido el orden, ahora ya
-			// tendría cada elemento con su fg y bg correspondiente
-			// como el id es único para cada resultado, añado el resultado que es lo
-			// que tiene más información
-			int i = 0;
-			for (PathwayElement resultadoValido: resultadosValidos) {
-				keggElements.add(new KeggElement(resultadoValido, fgs[i], bgs[i]));
-				i++;
-			}
-		}
-		
-		System.out.println("El número de resultados válidos encontrados es "+keggElements.size());
-		
-		//para medir sólo lo que tarda este método
-		long startColorKegg = System.currentTimeMillis();
-		System.out.println("Llamando a colorKeggInTheCloud");
-		
-		//aquí creo que me dan igual fgs y bgs porque van a ir en blanco
-		//pongo element_id_listAux en vez de element_id_list porque quiero todos los elementos de la imagen en blanco
-		//String url = k.colorKegg2(pathway, element_id_listAux, fgs, bgs);
-
-		String url = this.colorKeggInTheCloudHTML(pathway, element_id_list, fgs, bgs);
-		
-		System.out.println("colorKeggInTheCloud took "
-				+ (System.currentTimeMillis() - startColorKegg) / 1000 + " seconds");		
-		
-		System.out.println("generarImagenKegg took "
-				+ (System.currentTimeMillis() - start) / 1000 + " seconds");
-
-		return url;
-	}
-
-	/**
 	 * Get the medium of a list
 	 * @param valoresExpresion List with values
 	 * @return Float with the medium of the values
 	 */
-	private float calcularMedia(List<Double> valoresExpresion) {
+	public float calcularMedia(List<Double> valoresExpresion) {
 		double suma = 0;
 		for (Double valor : valoresExpresion) {
 			suma += valor;
@@ -357,55 +179,6 @@ public class Kegg {
 			tokens[i] = orgs.get(i);
 		// System.out.println("getOrganismsFromPathway took "+(System.currentTimeMillis()-start)/1000+" seconds");
 		return tokens;
-	}
-
-	/**
-	 * Color the elements in ids in the Kegg pathway pathid, with the
-	 * foreground and background colors specified
-	 * 
-	 * @param pathid  something like pathway:hsa4031
-	 * @param ids ko ids like ko:K010267
-	 * @param fgs Foreground colors like #FF0000
-	 * @param bgs Background colors like #00FF00
-	 * @return - the url to the colored kegg pathway in html
-	 */
-	public String colorKeggInTheCloudHTML(String pathid, int[] element_id_list, String[] fgcolors, String[] bgcolors) {
-		String colored = null;
-		try {
-			colored = serv.get_html_of_colored_pathway_by_elements(pathid, element_id_list, fgcolors, bgcolors);
-			if(null != element_id_list){
-				System.out.println("Finished " + colored);
-			}
-			else{
-				System.out.println("Finished "+ colored);
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return colored;
-	}	
-
-	/**
-	 * Color the elements in ids in the Kegg pathway pathid, with the
-	 * foreground and background colors specified
-	 * 
-	 * @param pathid  something like pathway:hsa4031
-	 * @param ids ko ids like ko:K010267
-	 * @param fgs Foreground colors like #FF0000
-	 * @param bgs Background colors like #00FF00
-	 * @return - the url to the colored kegg pathway in png
-	 */
-	public String colorKeggInTheCloudPNG(String pathid, int[] element_id_list,
-			String[] fgcolors, String[] bgcolors) {
-		String colored = null;
-		try {
-			colored = serv.color_pathway_by_elements(pathid, element_id_list,
-					fgcolors, bgcolors);
-			System.out.println("Finished " + colored);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return colored;
 	}
 	
 	/**
@@ -627,5 +400,99 @@ public class Kegg {
 			}
 		}
 		return genesSeleccionados;
+	}
+
+	/**
+	 * @return the definitionPathways
+	 */
+	public Definition[] getDefinitionPathways() {
+		return definitionPathways;
+	}
+
+	/**
+	 * @param definitionPathways the definitionPathways to set
+	 */
+	public void setDefinitionPathways(Definition[] definitionPathways) {
+		this.definitionPathways = definitionPathways;
+	}
+
+	/**
+	 * @return the listaElementosImg
+	 */
+	public List<LinkItem> getListaElementosImg() {
+		return listaElementosImg;
+	}
+
+	/**
+	 * @param listaElementosImg the listaElementosImg to set
+	 */
+	public void setListaElementosImg(List<LinkItem> listaElementosImg) {
+		this.listaElementosImg = listaElementosImg;
+	}
+
+	/**
+	 * @return the scaleModeKegg
+	 */
+	public int getScaleModeKegg() {
+		return scaleModeKegg;
+	}
+
+	/**
+	 * @param scaleModeKegg the scaleModeKegg to set
+	 */
+	public void setScaleModeKegg(int scaleModeKegg) {
+		this.scaleModeKegg = scaleModeKegg;
+	}
+
+	public List<Rectangle2D.Double> buscarElementosConGenesSeleccionados() {
+		//se recogen los id de los genes seleccionados
+		List<String> genes = this.mapearInternalIdconIdGen(sesion.getSelectedGenesBicluster());
+		List<Rectangle2D.Double> elementosKeggSeleccionados = new ArrayList<Rectangle2D.Double>();
+		
+		if (!genes.isEmpty() && this.getListaElementosImg() != null) {
+			//se buscan coincidencias entre los genes seleccionados y los elementos de Kegg en la imagen
+			for (LinkItem itm : this.getListaElementosImg()) {
+				//si se dispone de los nombres de genes de ese elemento...
+				if(null != itm.getGeneNames()){
+					for (String gen : genes) {
+						for (String genItm : itm.getGeneNames()) {
+							if(genItm.equals(gen)){
+								//si se encuentra coincidencia, se añade ese elemento para marcar como seleccionado en la imagen de Kegg
+								elementosKeggSeleccionados.add(itm.getRectangle());
+							}
+						}
+					}
+				}								
+			}
+		}
+		return elementosKeggSeleccionados;
+	}
+
+	/**
+	 * @return the valorActualCondition
+	 */
+	public int getValorActualCondition() {
+		return valorActualCondition;
+	}
+
+	/**
+	 * @param valorActualCondition the valorActualCondition to set
+	 */
+	public void setValorActualCondition(int valorActualCondition) {
+		this.valorActualCondition = valorActualCondition;
+	}
+
+	/**
+	 * @return the keggElements
+	 */
+	public List<KEGGElement> getKeggElements() {
+		return keggElements;
+	}
+
+	/**
+	 * @param keggElements the keggElements to set
+	 */
+	public void setKeggElements(List<KEGGElement> keggElements) {
+		this.keggElements = keggElements;
 	}    
 }

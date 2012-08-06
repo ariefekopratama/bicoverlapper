@@ -10,7 +10,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import es.usal.bicoverlapper.controller.kernel.Session;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagram;
 
 public class KeggParameterConfigurationPanel extends javax.swing.JPanel implements ActionListener {
 	/**

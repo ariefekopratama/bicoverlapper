@@ -38,8 +38,8 @@ import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 import es.usal.bicoverlapper.view.configuration.WordCloudDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.bubbles.BubblesDiagram;
 import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagram;
-import es.usal.bicoverlapper.view.diagram.kegg.KeggDiagramConfiguration;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagram;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagramConfiguration;
 import es.usal.bicoverlapper.view.diagram.network.NetworkDiagram;
 import es.usal.bicoverlapper.view.diagram.overlapper.OverlapperDiagram;
 import es.usal.bicoverlapper.view.diagram.parallelCoordinates.ParallelCoordinatesDiagram;
@@ -370,15 +370,15 @@ public class Session implements KeyListener {
 				
 				break;
 			case es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID:
-				KeggDiagram panelK = new KeggDiagram(
+				KEGGDiagram panelK = new KEGGDiagram(
 						this, dim);
 				ventana = new DiagramWindow(this, this.getDesktop(), panelK);
 				ventana.setSize(dim);
 				
-				KeggDiagramConfiguration kdc = (KeggDiagramConfiguration) configVentana;
+				KEGGDiagramConfiguration kdc = (KEGGDiagramConfiguration) configVentana;
 				panelK.setIndexCombo1(kdc.getIndexCombo1());
 				panelK.setIndexCombo2(kdc.getIndexCombo2());
-				panelK.setValorActualCondition(kdc.getValorActualCondition());
+				panelK.getKeggModel().setValorActualCondition(kdc.getValorActualCondition());
 				panelK.create();
 				panelK.run();	
 				this.setKegg(ventana);

@@ -21,7 +21,7 @@ import javax.swing.text.html.parser.ParserDelegator;
  */
 public class ExtractLinks {
 
-	List<KeggElement> keggElements;
+	List<KEGGElement> keggElements;
 
 	/**
 	 * Swing HTMLEditorKit Parser
@@ -97,7 +97,7 @@ public class ExtractLinks {
 				
 				//ahora se mapea lo que se lee del html con un keggElement
 				//la forma de hacerlo es con el título y el campo names de kegg
-				for (KeggElement ke : keggElements) {					
+				for (KEGGElement ke : keggElements) {					
 					//si se encuentra alguna coincidencia, se setea el fg y el bg y se sale
 					if(checkElement(title, ke.getNames())){
 						itm.setFg(ke.getForeground());
@@ -113,7 +113,7 @@ public class ExtractLinks {
         }
 	}
 	
-	public ExtractLinks(List<KeggElement> _keggElements){
+	public ExtractLinks(List<KEGGElement> _keggElements){
 		keggElements = _keggElements;
 	}	
 	

@@ -4,17 +4,17 @@ import java.awt.Dimension;
 
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 
-public class KeggDiagramConfiguration extends DiagramConfiguration {
+public class KEGGDiagramConfiguration extends DiagramConfiguration {
 
 	private int indexCombo1;
 	private int indexCombo2;
 	private int valorActualCondition;
 	
-	public KeggDiagramConfiguration(int id, String name, int posX, int posY, Dimension dim) {
+	public KEGGDiagramConfiguration(int id, String name, int posX, int posY, Dimension dim) {
 		super(id, name, posX, posY, dim);
 	}
 
-	public KeggDiagramConfiguration(DiagramConfiguration dc) {
+	public KEGGDiagramConfiguration(DiagramConfiguration dc) {
 		super(dc.getId(), dc.getTitle(), dc.getPosX(), dc.getPosY(), dc.getDim());
 	}
 
