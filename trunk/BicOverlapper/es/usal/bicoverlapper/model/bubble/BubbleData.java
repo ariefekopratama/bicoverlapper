@@ -135,7 +135,7 @@ public class BubbleData {
 						//antes estaba así
 						//b.name = new StringTokenizer(cad, ":").nextToken();
 						StringTokenizer stAux = new StringTokenizer(cad, ":");
-						b.name = stAux.nextToken();
+						b.setName(stAux.nextToken());
 						/*
 						if(stAux.hasMoreTokens()){
 							int numNodos;
@@ -157,7 +157,7 @@ public class BubbleData {
 					
 					}
 					else{
-						b.name = "" + cont;
+						b.setName("" + cont);
 						JOptionPane.showMessageDialog(
 								null,
 								"Biclustering format without bicluster names deprecated, please refer to format section on the help",
@@ -170,7 +170,7 @@ public class BubbleData {
 					if (areGenes) {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
-							b.genes.add(c);
+							b.getGenes().add(c);
 
 							//se controla el número de genes leídos
 							genesLeidos.add(c);
@@ -187,13 +187,13 @@ public class BubbleData {
 					} else {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
-							b.conditions.add(c);							
+							b.getConditions().add(c);							
 							if (!conditions.containsKey(c))
 								conditions.put(c, contc++);
 						}
-						b.size = b.genes.size() * b.conditions.size();
+						b.setSize(b.getGenes().size() * b.getConditions().size());
 						if (md == null)
-							b.homogeneity = 0.5;
+							b.setHomogeneity(0.5);
 						else {
 							String[] s = genes.keySet().toArray(new String[0]);
 							ArrayList<String> gl = new ArrayList<String>();
@@ -203,17 +203,17 @@ public class BubbleData {
 							ArrayList<String> cl = new ArrayList<String>();
 							for (int i = 0; i < s.length; i++)
 								cl.add(s[i]);
-							b.homogeneity = md.getConstance(gl, cl, 0);
+							b.setHomogeneity(md.getConstance(gl, cl, 0));
 							if (maxHomogeneity == -1)
-								maxHomogeneity = minHomogeneity = b.homogeneity;
+								maxHomogeneity = minHomogeneity = b.getHomogeneity();
 							else {
-								if (b.homogeneity > maxHomogeneity)
-									maxHomogeneity = b.homogeneity;
-								if (b.homogeneity < minHomogeneity)
-									minHomogeneity = b.homogeneity;
+								if (b.getHomogeneity() > maxHomogeneity)
+									maxHomogeneity = b.getHomogeneity();
+								if (b.getHomogeneity() < minHomogeneity)
+									minHomogeneity = b.getHomogeneity();
 							}
 						}
-						b.method = method;
+						b.setMethod(method);
 						bubbles.add(b);
 						isSize = true;// para el siguiente
 					}
@@ -242,31 +242,31 @@ public class BubbleData {
 	 * MDS projections
 	 * 
 	 */
-	void doProjection() {
+	private void doProjection() {
 		for (int i = 0; i < bubbles.size(); i++) {
 			Bubble b = bubbles.get(i);
 			float x = 0;
 			float y = 0;
 
-			for (int j = 0; j < b.genes.size(); j++) {
-				String gen = b.genes.get(j);
+			for (int j = 0; j < b.getGenes().size(); j++) {
+				String gen = b.getGenes().get(j);
 				x += genes.get(gen).floatValue();
 			}
-			x /= b.genes.size();
+			x /= b.getGenes().size();
 
-			for (int j = 0; j < b.conditions.size(); j++) {
-				String con = b.conditions.get(j);
+			for (int j = 0; j < b.getConditions().size(); j++) {
+				String con = b.getConditions().get(j);
 				y += conditions.get(con).floatValue();
 			}
-			y /= b.conditions.size();
+			y /= b.getConditions().size();
 
-			b.position.x = x;
-			b.position.y = y;
+			b.getPosition().x = x;
+			b.getPosition().y = y;
 		}
 	}
 
 	// Build prefuse structure from bubbles projected with doProjection();
-	void buildGraphFromProjection() {
+	private void buildGraphFromProjection() {
 		// Añadimos todos los identificadores
 		nodes = new Table();
 		nodes.addColumn("id", int.class);
@@ -296,23 +296,23 @@ public class BubbleData {
 			row = nodes.addRow();
 
 			nodes.setInt(row, "id", row + 1);
-			nodes.set(i, "genes", b.genes);// En principio son listas de
+			nodes.set(i, "genes", b.getGenes());// En principio son listas de
 											// enteros!
-			nodes.set(i, "conditions", b.conditions);
-			nodes.set(row, "size", b.size);
-			nodes.set(row, "width", b.conditions.size());
-			nodes.set(row, "height", b.genes.size());
-			nodes.set(row, "x", b.position.x);
-			nodes.set(row, "y", b.position.y);
-			nodes.set(row, "homogeneity", (b.homogeneity - minHomogeneity)
+			nodes.set(i, "conditions", b.getConditions());
+			nodes.set(row, "size", b.getSize());
+			nodes.set(row, "width", b.getConditions().size());
+			nodes.set(row, "height", b.getGenes().size());
+			nodes.set(row, "x", b.getPosition().x);
+			nodes.set(row, "y", b.getPosition().y);
+			nodes.set(row, "homogeneity", (b.getHomogeneity()- minHomogeneity)
 					/ (maxHomogeneity - minHomogeneity));
 			// System.out.println("Bic de tam "+b.genes.size()+"x"+b.conditions.size()+" con homog "+b.homogeneity+"\t"+(b.homogeneity-minHomogeneity)/(maxHomogeneity-minHomogeneity));
-			nodes.set(row, "resultType", b.method);
-			nodes.set(row, "name", b.name);
+			nodes.set(row, "resultType", b.getMethod());
+			nodes.set(row, "name", b.getName());
 		}
 	}
 
-	void buildBubbleTable(String bubbles) {
+	private void buildBubbleTable(String bubbles) {
 		nodes = new Table();
 		nodes.addColumn("id", int.class);
 		nodes.addColumn("genes", LinkedList.class);
@@ -340,7 +340,7 @@ public class BubbleData {
 	 * Construye los datos de Tuplas de Prefuse a partir de fichero de burbujas
 	 * y de dos ficheros con los genes y condiciones de cada burbuja
 	 */
-	void buildNodeTable(String bubbles, String genes, String conditions) {
+	private void buildNodeTable(String bubbles, String genes, String conditions) {
 		// Añadimos todos los identificadores
 		nodes = new Table();
 		nodes.addColumn("id", int.class);
@@ -392,7 +392,7 @@ public class BubbleData {
 	 * Añade nuevas filas, correspondientes a otros ficheros de resultados. Se
 	 * distinguen unos de otros mediante la condición "resultType"
 	 */
-	void addResults(String bubbles, String genes, String conditions) {
+	private void addResults(String bubbles, String genes, String conditions) {
 		fsgn = new FileStructure(bubbles, ' ');
 		fsg = new FileStructure(genes, ' ');
 		fsc = new FileStructure(conditions, ' ');
@@ -430,7 +430,7 @@ public class BubbleData {
 		numberOfMethods++;
 	}
 
-	void buildNodeTable(String genes, String conditions) {
+	private void buildNodeTable(String genes, String conditions) {
 		nodes = new Table();
 		nodes.addColumn("id", int.class);
 		nodes.addColumn("genes", LinkedList.class);
@@ -463,7 +463,7 @@ public class BubbleData {
 		}
 	}
 
-	void buildEdgeTable(String adjacency) {
+	private void buildEdgeTable(String adjacency) {
 		edges = new Table();
 		edges.addColumn("id", int.class);
 		edges.addColumn("source", int.class);

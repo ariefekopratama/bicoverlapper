@@ -56,7 +56,7 @@ public class DataReader {
 		double t1 = System.currentTimeMillis();
 		double t2 = System.currentTimeMillis();
 		MicroarrayData md = new MicroarrayData(path, false, skipRows,
-				skipColumns, 1, mr, sesion.analysis, sesion);
+				skipColumns, 1, mr, sesion.getAnalysis(), sesion);
 		sesion.setMicroarrayData(md);
 		t1 = System.currentTimeMillis();
 		System.out.println("Time to load microarray data: " + (t1 - t2) / 1000
@@ -73,7 +73,7 @@ public class DataReader {
 			String fileType) throws FileNotFoundException, IOException {
 		BufferedReader in = new BufferedReader(new FileReader(fichero));
 		String variable = null;
-		BicOverlapperWindow window = sesion.mainWindow;
+		BicOverlapperWindow window = sesion.getMainWindow();
 		JDesktopPane desktop = sesion.getDesktop();
 
 		variable = in.readLine();
@@ -118,13 +118,13 @@ public class DataReader {
 
 		boolean error = false;// TODO: check possible errors
 		if (!error) {
-			window.viewMenu.setEnabled(true);
-			window.menuViewTRN.setEnabled(true);
+			window.getViewMenu().setEnabled(true);
+			window.getMenuViewTRN().setEnabled(true);
 			if (path != null && path.length() > 0) {
 				try {
 					BufferedWriter pathWriter = new BufferedWriter(
 							new FileWriter(
-									sesion.reader
+									sesion.getReader()
 											.getPath("es/usal/bicoverlapper/data/networkPath.txt")));
 					pathWriter.write(path);
 					pathWriter.close();
@@ -200,7 +200,7 @@ public class DataReader {
 	}
 
 	public void readBiclusterResults(String path, String fileName, String file,	Session sesion) {
-		BicOverlapperWindow window = sesion.mainWindow;
+		BicOverlapperWindow window = sesion.getMainWindow();
 		JDesktopPane desktop = sesion.getDesktop();
 		boolean error = false;
 
@@ -228,14 +228,14 @@ public class DataReader {
 			error = true;
 		}
 		if (!error) {
-			window.viewMenu.setEnabled(true);
-			window.menuViewOverlapper.setEnabled(true);
-			window.menuViewBubbles.setEnabled(true);
+			window.getViewMenu().setEnabled(true);
+			window.getMenuViewOverlapper().setEnabled(true);
+			window.getMenuViewBubbles().setEnabled(true);
 			if (path != null && path.length() > 0) {
 				try {
 					BufferedWriter pathWriter = new BufferedWriter(
 							new FileWriter(
-									sesion.reader
+									sesion.getReader()
 											.getPath("es/usal/bicoverlapper/data/groupsPath.txt")));
 					pathWriter.write(path);
 					pathWriter.close();

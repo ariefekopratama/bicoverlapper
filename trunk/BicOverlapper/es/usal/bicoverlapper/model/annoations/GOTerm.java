@@ -9,23 +9,23 @@ public class GOTerm {
 	/**
 	 * Name of the GO term
 	 */
-	public String term;
+	private String term;
 	/**
 	 * GO ID
 	 */
-	public String id;
+	private String id;
 	/**
 	 * Further definition of the GO Term. It's available in R packages, but not in QuickGO
 	 */
-	public String definition;
+	private String definition;
 	/**
 	 * Ontology, either BP, MF or CC
 	 */
-	public String ontology;
+	private String ontology;
 	/**
 	 * Type of evidence, for example IEA
 	 */
-	public String evidence;
+	private String evidence;
 	/**
 	 * In the case of a GOTerm associated to a single gene, it conveys the number of times that
 	 * these GOTerm has been associated to the gene. It's usually 1, but, for example in QuickGO,
@@ -43,7 +43,7 @@ public class GOTerm {
 	 * In the case of a GOTerm associated to a group of genes, it is the p-value of a hypergeometric
 	 * test against all the genes in the microarray data matrix.
 	 */
-	public double pvalue;//In case of hypergeometric tests
+	private double pvalue;//In case of hypergeometric tests
 	
 	public GOTerm()
 		{
@@ -64,4 +64,102 @@ public class GOTerm {
 		evidence=e;
 		occurences=oc;
 		}
+
+	/**
+	 * @return the term
+	 */
+	public String getTerm() {
+		return term;
+	}
+
+	/**
+	 * @return the id
+	 */
+	public String getId() {
+		return id;
+	}
+
+	/**
+	 * @return the definition
+	 */
+	public String getDefinition() {
+		return definition;
+	}
+
+	/**
+	 * @return the ontology
+	 */
+	public String getOntology() {
+		return ontology;
+	}
+
+	/**
+	 * @return the evidence
+	 */
+	public String getEvidence() {
+		return evidence;
+	}
+
+	/**
+	 * @return the occurences
+	 */
+	public int getOccurences() {
+		return occurences;
+	}
+
+	/**
+	 * @return the pvalue
+	 */
+	public double getPvalue() {
+		return pvalue;
+	}
+
+	/**
+	 * @param term the term to set
+	 */
+	public void setTerm(String term) {
+		this.term = term;
+	}
+
+	/**
+	 * @param id the id to set
+	 */
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	/**
+	 * @param definition the definition to set
+	 */
+	public void setDefinition(String definition) {
+		this.definition = definition;
+	}
+
+	/**
+	 * @param ontology the ontology to set
+	 */
+	public void setOntology(String ontology) {
+		this.ontology = ontology;
+	}
+
+	/**
+	 * @param evidence the evidence to set
+	 */
+	public void setEvidence(String evidence) {
+		this.evidence = evidence;
+	}
+
+	/**
+	 * @param occurences the occurences to set
+	 */
+	public void setOccurences(int occurences) {
+		this.occurences = occurences;
+	}
+
+	/**
+	 * @param pvalue the pvalue to set
+	 */
+	public void setPvalue(double pvalue) {
+		this.pvalue = pvalue;
+	}
 }

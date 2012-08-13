@@ -31,6 +31,10 @@ import es.usal.bicoverlapper.controller.manager.FileMenuManager;
  */
 public class DownloadAEPanel extends javax.swing.JFrame implements
 		ActionListener, KeyListener {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -7706517702422086245L;
 	private JLabel name;
 	private JTextField jTextField1;
 	private JButton selectFile;

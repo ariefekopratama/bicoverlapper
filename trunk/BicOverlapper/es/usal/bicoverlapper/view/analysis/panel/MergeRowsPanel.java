@@ -84,8 +84,8 @@ public class MergeRowsPanel extends javax.swing.JFrame {
 			if(ga!=null && ga.values()!=null && ga.values().size()>0)
 				{
 				GeneAnnotation a=ga.values().iterator().next();
-				if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-				if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+				if(a.getName()!=null && a.getName().length()>0)	rowNames.add(session.getMicroarrayData().rname);
+				if(a.getDescription()!=null && a.getDescription().length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
 				}
 		}
 		}
@@ -102,21 +102,21 @@ public class MergeRowsPanel extends javax.swing.JFrame {
 				jButton1.setLayout(null);
 				jButton1.addActionListener(new java.awt.event.ActionListener() {
 					public void actionPerformed(java.awt.event.ActionEvent e) {
-						session=session.mainWindow.getActiveWorkDesktop().getSession();
+						session=session.getMainWindow().getActiveWorkDesktop().getSession();
 						if(session!=null)	
 							{
 							String s=jList2.getSelectedValues()[0].toString();
 							String p=session.getMicroarrayData().path+"/"+session.getMicroarrayData().name+"-mergedBy"+s+".txt";
 							
-							session.analysis.mergeRows(s, filterNA.isSelected(), p);
+							session.getAnalysis().mergeRows(s, filterNA.isSelected(), p);
 							session.microarrayPath=p;
 							
 							//TODO: Not too elegant/SE
 							FileMenuManager fmm=(FileMenuManager)session.getMicroarrayData().microarrayRequester;
-							fmm.fichero=new File(p);
+							fmm.setFichero(new File(p));
 							fmm.prepareDesktop();
 							try{
-								fmm.sesion.reader.readMicroarray(p, fmm.sesion, session.getMicroarrayData().microarrayRequester);
+								fmm.getSesion().getReader().readMicroarray(p, fmm.getSesion(), session.getMicroarrayData().microarrayRequester);
 							}catch(Exception ex){ex.printStackTrace();}
 							setVisible(false);
 							}
@@ -143,7 +143,7 @@ public class MergeRowsPanel extends javax.swing.JFrame {
 				jLabel2.setToolTipText("Averages the expression of every row corresponding to the same ID");
 			}
 			{
-				String[] ids=session.analysis.r.eval("gsub(\""+session.getMicroarrayData().chip+"\", \"\", ls("+session.getMicroarrayData().chip+".db))").asStringArray();
+				String[] ids=session.getAnalysis().r.eval("gsub(\""+session.getMicroarrayData().chip+"\", \"\", ls("+session.getMicroarrayData().chip+".db))").asStringArray();
 				
 				ListModel jList2Model = 
 					new DefaultComboBoxModel(ids);

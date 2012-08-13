@@ -17,7 +17,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Map;
-import java.util.Random;
 
 import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
@@ -84,10 +83,10 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 	private MicroarrayFilter microFilter = new MicroarrayFilter();
 
-	public Session sesion;
+	private Session sesion;
 	private String path;
 	private boolean addVista;
-	public File fichero;
+	private File fichero;
 	private JDesktopPane desktop;
 	private boolean loadingSession;
 	private Document documento;
@@ -311,18 +310,17 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		
 		fichero = new File(downloadPath);
 		prepareDesktop();
-		boolean error = false;
 		try {
-			sesion.analysis.loadRscripts();
+			sesion.getAnalysis().loadRscripts();
 			ArrayList<Object> p = new ArrayList<Object>();
 			p.add(id);
 			p.add(downloadPath);
 			// sesion.analysis.downloadExperiment(id, path);
-			// sesion.reader.readMicroarray(path, sesion, this);
+			// sesion.getReader().readMicroarray(path, sesion, this);
 			// sesion.microarrayPath=fichero.getAbsolutePath();
 
 			AnalysisProgressMonitor apm = new AnalysisProgressMonitor(
-					sesion.analysis,
+					sesion.getAnalysis(),
 					AnalysisProgressMonitor.AnalysisTask.DOWNLOAD_MATRIX, p,
 					"Downloading experiment...");
 			apm.run();
@@ -339,7 +337,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 						}
 
 						else {
-							sesion.reader.readMicroarray(fileName, sesion,
+							sesion.getReader().readMicroarray(fileName, sesion,
 									receiver);
 							sesion.microarrayPath = fichero.getAbsolutePath();
 						}
@@ -362,7 +360,6 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			JOptionPane.showMessageDialog(null,
 					"Format Error: " + e3.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
-			error = true;
 		}
 	}
 
@@ -376,7 +373,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		if (status == 0)// && sesion.getMicroarrayData()!=null)
 		{
 			// Actualizar las ventanas activas
-			sesion.analysis.setMicroarrayData(sesion.getMicroarrayData());
+			sesion.getAnalysis().setMicroarrayData(sesion.getMicroarrayData());
 			sesion.microarrayPath = fichero.getAbsolutePath();
 			try {
 				pathWriter = new BufferedWriter(new FileWriter(
@@ -389,16 +386,16 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 			sesion.updateData();
 
-			ventana.analysisMenu.setEnabled(true);
+			ventana.getAnalysisMenu().setEnabled(true);
 
-			ventana.viewMenu.setEnabled(true);
-			ventana.menuViewParallelCoordinates.setEnabled(true);
-			ventana.menuViewHeatmap.setEnabled(true);
-			ventana.menuViewCloud.setEnabled(true);
-			ventana.menuViewKegg.setEnabled(true);
+			ventana.getViewMenu().setEnabled(true);
+			ventana.getMenuViewParallelCoordinates().setEnabled(true);
+			ventana.getMenuViewHeatmap().setEnabled(true);
+			ventana.getMenuViewCloud().setEnabled(true);
+			ventana.getMenuViewKegg().setEnabled(true);
 			
-			ventana.menuArchivoExportSelection.setEnabled(true);
-			ventana.menuViewCloud.setEnabled(true);
+			ventana.getMenuArchivoExportSelection().setEnabled(true);
+			ventana.getMenuViewCloud().setEnabled(true);
 
 			if (addVista)
 				ventana.addWorkDesktop(new WorkDesktop(desktop, sesion));
@@ -612,14 +609,14 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 							configventana);
 					nodo = nodo.getNextSibling();
 					elemento = (Element) nodo;
-					wccd.textIndex = Integer.valueOf(
-							elemento.getAttribute("text")).intValue();
-					wccd.splitIndex = Integer.valueOf(
-							elemento.getAttribute("split")).intValue();
-					wccd.sizeIndex = Integer.valueOf(
-							elemento.getAttribute("size")).intValue();
-					wccd.ontologyIndex = Integer.valueOf(
-							elemento.getAttribute("ontology")).intValue();
+					wccd.setTextIndex(Integer.valueOf(
+							elemento.getAttribute("text")).intValue());
+					wccd.setSplitIndex(Integer.valueOf(
+							elemento.getAttribute("split")).intValue());
+					wccd.setSizeIndex(Integer.valueOf(
+							elemento.getAttribute("size")).intValue());
+					wccd.setOntologyIndex(Integer.valueOf(
+							elemento.getAttribute("ontology")).intValue());
 
 					config.addWindowConfiguration(wccd);
 				} 
@@ -667,7 +664,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					boolean genErroneo = true;
 					for (GeneAnnotation ga : mapaGenes.values()) {
 						//si está entre los que se han leído del microarray
-						if(ga.internalId == gen){
+						if(ga.getInternalId() == gen){
 							//se añade a la lista de genes seleccionados
 							g.add(gen);
 							//se notifica que no se ha leído un gen erróneo
@@ -1151,19 +1148,17 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 
 	public void readTRN(String fileType) {
 		boolean error = false;
-		boolean addVista = false;
 		if (this.ventana.getActiveWorkDesktop() != null)
 			sesion = this.ventana.getActiveWorkDesktop().getSession();
 		else {
 			desktop = new JDesktopPane();
 			desktop.setName(fichero.getName());
-			addVista = true;
 			System.out.println("En el Session de readTRN\n");
 			sesion = new Session(desktop, ventana);
 		}
 
 		try {
-			sesion.reader.readTRN(path, fichero, sesion, fileType);
+			sesion.getReader().readTRN(path, fichero, sesion, fileType);
 			sesion.trnPath = fichero.getAbsolutePath();
 
 		} catch (FileNotFoundException e1) {
@@ -1195,9 +1190,9 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 				ex.printStackTrace();
 			}
 
-			ventana.viewMenu.setEnabled(true);
-			ventana.menuViewTRN.setEnabled(true);
-			ventana.analysisMenu.setEnabled(true);
+			ventana.getViewMenu().setEnabled(true);
+			ventana.getMenuViewTRN().setEnabled(true);
+			ventana.getAnalysisMenu().setEnabled(true);
 		}
 	}
 
@@ -1216,17 +1211,17 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			sesion = new Session(desktop, ventana);
 		}
 
-		ventana.analysisMenu.setEnabled(false);
+		ventana.getAnalysisMenu().setEnabled(false);
 		ventana.cleanPanels();
 		
-		ventana.viewMenu.setEnabled(false);
+		ventana.getViewMenu().setEnabled(false);
 	}
 
 	public void readMicroarray() {
 		prepareDesktop();
 		System.out.println("---desktop ready, session started");
 		try {
-			sesion.reader.readMicroarray(path, sesion, this);
+			sesion.getReader().readMicroarray(path, sesion, this);
 			sesion.microarrayPath = fichero.getAbsolutePath();
 
 		} catch (FileNotFoundException e1) {
@@ -1252,42 +1247,64 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	 */
 	public void readMicroarray(String path) {
 		prepareDesktop();
-		boolean error = false;
 		try {
-			sesion.analysis.loadRscripts();
-			sesion.reader.readMicroarray(path, sesion, this);
+			sesion.getAnalysis().loadRscripts();
+			sesion.getReader().readMicroarray(path, sesion, this);
 			sesion.microarrayPath = fichero.getAbsolutePath();
 		} catch (FileNotFoundException e1) {
 			JOptionPane.showMessageDialog(null,
 					"File not found: " + fichero.getName(), "Error",
 					JOptionPane.ERROR_MESSAGE);
-			error = true;
 		} catch (IOException e2) {
 			JOptionPane.showMessageDialog(null,
 					"I/O Error: " + e2.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
-			error = true;
 		} catch (Exception e3) {
 			JOptionPane.showMessageDialog(null,
 					"Format Error: " + e3.getMessage(), "Error",
 					JOptionPane.ERROR_MESSAGE);
-			error = true;
 		}
 	}
 
 	public void readBiclustering() {
 		desktop = new JDesktopPane();
 		desktop.setName(fichero.getName());
-		boolean addVista = false;
 		if (this.ventana.getActiveWorkDesktop() != null)
 			sesion = this.ventana.getActiveWorkDesktop().getSession();
 		else {
-			addVista = true;
 			System.out.println("En el Session de readBiclustering\n");
 			sesion = new Session(desktop, ventana);
 		}
 
-		sesion.reader.readBiclusterResults(path, fichero.getName(), sesion);
+		sesion.getReader().readBiclusterResults(path, fichero.getName(), sesion);
 		sesion.biclusteringPath = fichero.getAbsolutePath();
+	}
+
+	/**
+	 * @return the sesion
+	 */
+	public Session getSesion() {
+		return sesion;
+	}
+
+	/**
+	 * @param sesion the sesion to set
+	 */
+	public void setSesion(Session sesion) {
+		this.sesion = sesion;
+	}
+
+	/**
+	 * @return the fichero
+	 */
+	public File getFichero() {
+		return fichero;
+	}
+
+	/**
+	 * @param fichero the fichero to set
+	 */
+	public void setFichero(File fichero) {
+		this.fichero = fichero;
 	}
 }

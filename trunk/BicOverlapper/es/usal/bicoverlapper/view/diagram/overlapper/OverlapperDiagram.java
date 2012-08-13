@@ -432,7 +432,7 @@ private static final long serialVersionUID = 1L;
 	 */
 	public void update() 
 		{
-		if(sesion.onlyHover)	return;
+		if(sesion.isOnlyHover())	return;
 		if(sesion.getSelectedBicluster()!=null)
 			{
 			if(bv!=null)		bv.updateGraph(sesion.getSelectedBicluster());

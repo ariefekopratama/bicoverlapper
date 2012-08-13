@@ -66,11 +66,11 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	private String[] textoLabel = { "Word", "Selected word", "Background" };
 	private JTextField[] muestraColor = new JTextField[paleta.length];
 
-	public List<GOTerm> got = null;
+	private List<GOTerm> got = null;
 	private ArrayList<GeneAnnotation> annot = null;
-	public boolean textChanged = false; // to not repeat hypergeometric tests
+	private boolean textChanged = false; // to not repeat hypergeometric tests
 										// and other R calls
-	public boolean innerCall = false;// to differentiate updates from combo
+	private boolean innerCall = false;// to differentiate updates from combo
 										// boxes from internal updates
 
 	// Atributos propios de la clase --------------------
@@ -97,7 +97,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	private boolean Enought = true;
 	private List<String> sortedWords = null;
 
-	public boolean doNOTupdate = false;
+	private boolean doNOTupdate = false;
 
 	private JLabel progress;
 
@@ -157,7 +157,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		 * Changes color to the terms that are related to the hovered gene (only
 		 * if <200 genes are selected)
 		 */
-		if (sesion.onlyHover)
+		if (sesion.isOnlyHover())
 			return;
 		if (sesion.isTooManyGenes()) {
 			if (this.getGraphics() != null)
@@ -244,7 +244,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 								.println("No annotation package especified, trying with "
 										+ sesion.getMicroarrayData()
 												.getAnnotationPackage());
-						sesion.analysis.loadRLibrary(sesion.getMicroarrayData()
+						sesion.getAnalysis().loadRLibrary(sesion.getMicroarrayData()
 								.getAnnotationPackage());
 					}
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(
@@ -293,7 +293,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 	}
 
-	public void addWords() {
+	private void addWords() {
 		long t1 = System.currentTimeMillis();
 		int cont = 0;
 		if (annot == null || annot.size() == 0) {
@@ -312,28 +312,28 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				cont = 0;
 				for (GeneAnnotation a : annot) {
 					ArrayList<String> added = new ArrayList<String>();
-					if (a.goTerms != null) {
-						if (a.goTerms.size() > 0)
+					if (a.getGoTerms() != null) {
+						if (a.getGoTerms().size() > 0)
 							cont++;
-						for (GOTerm go : a.goTerms) {
+						for (GOTerm go : a.getGoTerms()) {
 							if (go != null) {
 								boolean add = true;
 								switch (menuCloud.ontology.getSelectedIndex()) {
 								case WordCloudParameterConfigurationPanel.BP:
-									if (!go.ontology.equals("BP"))
+									if (!go.getOntology().equals("BP"))
 										add = false;
 									break;
 								case WordCloudParameterConfigurationPanel.CC:
-									if (!go.ontology.equals("CC"))
+									if (!go.getOntology().equals("CC"))
 										add = false;
 									break;
 								case WordCloudParameterConfigurationPanel.MF:
-									if (!go.ontology.equals("MF"))
+									if (!go.getOntology().equals("MF"))
 										add = false;
 									break;
 								}
 								if (add) {
-									String desc = go.term;
+									String desc = go.getTerm();
 									// System.out.println("Adding desc "+desc);
 									if (!added.contains(desc)) {
 										splitAndAdd(desc, 1, 1,
@@ -350,26 +350,26 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				break;
 			case WordCloudParameterConfigurationPanel.OCCURRENCES:
 				for (GeneAnnotation a : annot) {
-					if (a.goTerms != null) {
-						for (GOTerm go : a.goTerms) {
+					if (a.getGoTerms() != null) {
+						for (GOTerm go : a.getGoTerms()) {
 							if (go != null) {
 								boolean add = true;
 								switch (menuCloud.ontology.getSelectedIndex()) {
 								case WordCloudParameterConfigurationPanel.BP:
-									if (!go.ontology.equals("BP"))
+									if (!go.getOntology().equals("BP"))
 										add = false;
 									break;
 								case WordCloudParameterConfigurationPanel.CC:
-									if (!go.ontology.equals("CC"))
+									if (!go.getOntology().equals("CC"))
 										add = false;
 									break;
 								case WordCloudParameterConfigurationPanel.MF:
-									if (!go.ontology.equals("MF"))
+									if (!go.getOntology().equals("MF"))
 										add = false;
 									break;
 								}
 								if (add) {
-									String desc = go.term;
+									String desc = go.getTerm();
 									int oc = go.occurences;
 									splitAndAdd(desc, oc, oc,
 											this.colorSeleccion, false, null);
@@ -383,14 +383,14 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			case WordCloudParameterConfigurationPanel.PVALUES:
 				cont = 0;
 				for (GeneAnnotation a : annot)
-					if (a.goTerms != null && a.goTerms.size() > 0)
+					if (a.getGoTerms() != null && a.getGoTerms().size() > 0)
 						cont++;
 
 				for (GOTerm go : got) {
 					if (go != null) {
-						String desc = go.term;
-						double size = Math.abs(Math.log10(go.pvalue));
-						splitAndAdd(desc, go.pvalue, size, this.colorSeleccion,
+						String desc = go.getTerm();
+						double size = Math.abs(Math.log10(go.getPvalue()));
+						splitAndAdd(desc, go.getPvalue(), size, this.colorSeleccion,
 								false, null);
 					}
 				}
@@ -403,10 +403,10 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			for (int i = 0; i < annot.size(); i++) {
 				GeneAnnotation ga = annot.get(i);
 				if (ga != null) {
-					if (ga.description != null) {
-						if (ga.description.length() > 0)
+					if (ga.getDescription() != null) {
+						if (ga.getDescription().length() > 0)
 							cont++;
-						String desc = ga.description;
+						String desc = ga.getDescription();
 						int oc = 1;
 						switch (this.menuCloud.size.getSelectedIndex()) {
 						case WordCloudParameterConfigurationPanel.OCCURRENCES:
@@ -490,7 +490,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	 * @param c
 	 * @param unique
 	 */
-	public void splitAndAdd(String desc, double value, double size, Color c,
+	private void splitAndAdd(String desc, double value, double size, Color c,
 			boolean unique, ArrayList<String> alreadyAdded) {
 		ArrayList<String> added = new ArrayList<String>();
 		if (alreadyAdded != null)
@@ -514,7 +514,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	 * @param desc
 	 * @return
 	 */
-	public String[] splitterAndFormat(String desc) {
+	private String[] splitterAndFormat(String desc) {
 		String[] dw = splitter(desc);
 		for (int j = 0; j < dw.length; j++) {
 			dw[j] = dw[j].replace("(", "").replace(")", "").trim();
@@ -530,7 +530,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	 * @param desc
 	 * @return
 	 */
-	public String[] splitter(String desc) {
+	private String[] splitter(String desc) {
 		String[] dw = null;
 		ArrayList<String> added = new ArrayList<String>();
 		switch (this.menuCloud.split.getSelectedIndex()) {
@@ -551,7 +551,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		return null;
 	}
 
-	public void addWord(String w, double value, double size, Color colorW) {
+	private void addWord(String w, double value, double size, Color colorW) {
 		if (!valid(w))
 			return;
 		if (words != null && words.containsKey(w)) {
@@ -570,7 +570,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		maxChar += w.length();
 	}
 
-	public boolean valid(String w) {
+	private boolean valid(String w) {
 		if (w.length() < 2)
 			return false;
 		if (w.length() > 4)
@@ -642,7 +642,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				/ (maxKey - minKey) + newMin;
 	}
 
-	public void drawTooManyGenes(Graphics2D g2) {
+	private void drawTooManyGenes(Graphics2D g2) {
 		drawFondo(g2);
 		g2.setPaint(Color.GRAY);
 		String s = "Too many elements selected for this view";
@@ -1132,16 +1132,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	private class Word {
-		TextLayout text;
-		TextLayout contText;
-		String label;
-		double x;
-		double y;
-		double size;// size for this word, usually related to the figure of
+		private TextLayout text;
+		private TextLayout contText;
+		private String label;
+		private double x;
+		private double y;
+		private double size;// size for this word, usually related to the figure of
 					// merit
-		double value;// figure of merit for this word (number of occurences,
+		private double value;// figure of merit for this word (number of occurences,
 						// p-value, etc.)
-		Color color;
+		private Color color;
 
 		public Word(TextLayout text, double x, double y, double value,
 				double size, Color c) {
@@ -1192,5 +1192,54 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		public void setColor(Color color) {
 			this.color = color;
 		}
+	}
+
+	/**
+	 * @return the got
+	 */
+	public List<GOTerm> getGot() {
+		return got;
+	}
+
+	/**
+	 * @param got the got to set
+	 */
+	public void setGot(List<GOTerm> got) {
+		this.got = got;
+	}
+
+	/**
+	 * @return the textChanged
+	 */
+	public boolean isTextChanged() {
+		return textChanged;
+	}
+
+	/**
+	 * @param textChanged the textChanged to set
+	 */
+	public void setTextChanged(boolean textChanged) {
+		this.textChanged = textChanged;
+	}
+
+	/**
+	 * @param innerCall the innerCall to set
+	 */
+	public void setInnerCall(boolean innerCall) {
+		this.innerCall = innerCall;
+	}
+
+	/**
+	 * @return the doNOTupdate
+	 */
+	public boolean isDoNOTupdate() {
+		return doNOTupdate;
+	}
+
+	/**
+	 * @param doNOTupdate the doNOTupdate to set
+	 */
+	public void setDoNOTupdate(boolean doNOTupdate) {
+		this.doNOTupdate = doNOTupdate;
 	}
 }

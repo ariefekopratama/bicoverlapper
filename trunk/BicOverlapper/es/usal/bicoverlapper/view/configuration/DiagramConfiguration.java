@@ -119,7 +119,7 @@ public class DiagramConfiguration {
 	 * STILL IN DEVELOPMENT
 	 * @return true if the window has any hook, false otherwise
 	 */
-	boolean areHooks(){
+	public boolean areHooks(){
 		return !anclajes.isEmpty();
 	}
 	

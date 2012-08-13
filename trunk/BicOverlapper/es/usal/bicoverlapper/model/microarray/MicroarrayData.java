@@ -1,23 +1,5 @@
 package es.usal.bicoverlapper.model.microarray;
 
-import es.usal.bicoverlapper.controller.analysis.Analysis;
-import es.usal.bicoverlapper.controller.data.reader.NCBIReader;
-import es.usal.bicoverlapper.controller.kernel.Selection;
-import es.usal.bicoverlapper.controller.kernel.Session;
-import es.usal.bicoverlapper.model.annoations.GOTerm;
-import es.usal.bicoverlapper.model.gene.GeneAnnotation;
-import es.usal.bicoverlapper.model.gene.GeneRequester;
-import es.usal.bicoverlapper.utils.RUtils;
-import es.usal.bicoverlapper.utils.Sizeof;
-import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor;
-import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor2;
-import es.usal.bicoverlapper.view.analysis.monitor.HypergeometricTestProgressMonitor;
-import es.usal.bicoverlapper.view.data.monitor.MicroarrayAnnotationsLoadProgressBar;
-import es.usal.bicoverlapper.view.data.monitor.MicroarrayLoadProgressMonitor;
-import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
-import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
-import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
-
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
@@ -53,6 +35,22 @@ import prefuse.data.expression.parser.ExpressionParser;
 import prefuse.data.io.DelimitedTextTableReader;
 import prefuse.data.util.Sort;
 import prefuse.util.collections.IntIterator;
+import es.usal.bicoverlapper.controller.analysis.Analysis;
+import es.usal.bicoverlapper.controller.data.reader.NCBIReader;
+import es.usal.bicoverlapper.controller.kernel.Selection;
+import es.usal.bicoverlapper.controller.kernel.Session;
+import es.usal.bicoverlapper.model.annoations.GOTerm;
+import es.usal.bicoverlapper.model.gene.GeneAnnotation;
+import es.usal.bicoverlapper.model.gene.GeneRequester;
+import es.usal.bicoverlapper.utils.RUtils;
+import es.usal.bicoverlapper.utils.Sizeof;
+import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor;
+import es.usal.bicoverlapper.view.analysis.monitor.AnnotationProgressMonitor2;
+import es.usal.bicoverlapper.view.analysis.monitor.HypergeometricTestProgressMonitor;
+import es.usal.bicoverlapper.view.data.monitor.MicroarrayLoadProgressMonitor;
+import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
+import gov.nih.nlm.ncbi.www.soap.eutils.esearch.IdListType;
+import gov.nih.nlm.ncbi.www.soap.eutils.esummary.DocSumType;
 
 /**
  * Class with data of Microarray expression levels, using Prefuse Tables
@@ -306,7 +304,7 @@ public class MicroarrayData {
 		experimentFactorValues = new HashMap<String, String[]>();
 		this.filePath = this.path; // CUIDADO CON ESTE THIS.PATH PORQUE VALE
 									// NULL
-		this.ventana = sesion.mainWindow;
+		this.ventana = sesion.getMainWindow();
 
 		// añadido para que funcione en windows (en principio en unix no dará
 		// problemas)
@@ -627,16 +625,16 @@ public class MicroarrayData {
 	public void browseEntrezGene(int geneId) {
 		try {
 			GeneAnnotation g = this.geneAnnotations.get(geneId);
-			if (g.entrezId == null || g.entrezId.length() == 0) {
-				System.err.println("No entrez id for the gene " + g.name
+			if (g.getEntrezId() == null || g.getEntrezId().length() == 0) {
+				System.err.println("No entrez id for the gene " + g.getName()
 						+ ". Opening entrez gene home page");
 				java.awt.Desktop.getDesktop()
 						.browse(java.net.URI
-								.create("http://www.ncbi.nlm.nih.gov/gene?term="+g.id+"%20AND%20\""+organism.replace(" ", "%20")+"\"%5BOrganism%5D"));
+								.create("http://www.ncbi.nlm.nih.gov/gene?term="+g.getId()+"%20AND%20\""+organism.replace(" ", "%20")+"\"%5BOrganism%5D"));
 			} else
 				java.awt.Desktop.getDesktop().browse(
 						java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene/"
-								+ g.entrezId));
+								+ g.getEntrezId()));
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
@@ -803,7 +801,7 @@ public class MicroarrayData {
 		LinkedList<Integer> ret = new LinkedList<Integer>();
 		for (int i = 0; i < geneNames.length; i++) {
 			if (geneAnnotations.get(i) == null
-					|| geneAnnotations.get(i).goTerms == null)
+					|| geneAnnotations.get(i).getGoTerms() == null)
 				ret.add(i);
 		}
 		return ret;
@@ -1107,23 +1105,23 @@ public class MicroarrayData {
 		Iterator<GeneAnnotation> it = geneAnnotations.values().iterator();
 		while (it.hasNext()) {
 			GeneAnnotation ga = it.next();
-			if (!alreadyIn.contains(getGeneId(ga.id))) {
-				if ((ga.id != null && ga.id.contains(what))
-						|| (ga.description != null && ga.description
+			if (!alreadyIn.contains(getGeneId(ga.getId()))) {
+				if ((ga.getId() != null && ga.getId().contains(what))
+						|| (ga.getDescription() != null && ga.getDescription()
 								.contains(what))
-						|| (ga.aliases != null && ga.aliases.contains(what))
-						|| (ga.symbol != null && ga.symbol.contains(what))
-						|| (ga.organism != null && ga.organism.contains(what))
-						|| (ga.locus != null && ga.locus.contains(what))
-						|| (ga.entrezId != null && ga.entrezId.contains(what))
-						|| (ga.name != null && ga.name.contains(what)))
-					genes.add(getGeneId(ga.id));
-				else if (ga.goTerms != null) {
-					for (GOTerm gt : ga.goTerms) {
-						if ((gt.definition != null && gt.definition
+						|| (ga.getAliases() != null && ga.getAliases().contains(what))
+						|| (ga.getSymbol() != null && ga.getSymbol().contains(what))
+						|| (ga.getOrganism() != null && ga.getOrganism().contains(what))
+						|| (ga.getLocus() != null && ga.getLocus().contains(what))
+						|| (ga.getEntrezId() != null && ga.getEntrezId().contains(what))
+						|| (ga.getName() != null && ga.getName().contains(what)))
+					genes.add(getGeneId(ga.getId()));
+				else if (ga.getGoTerms() != null) {
+					for (GOTerm gt : ga.getGoTerms()) {
+						if ((gt.getDefinition() != null && gt.getDefinition()
 								.contains(what))
-								|| (gt.term != null && gt.term.contains(what))) {
-							genes.add(getGeneId(ga.id));
+								|| (gt.getTerm() != null && gt.getTerm().contains(what))) {
+							genes.add(getGeneId(ga.getId()));
 							break;
 						}
 					}
@@ -1156,47 +1154,47 @@ public class MicroarrayData {
 			GeneAnnotation ga = geneAnnotations.get(i);
 			if (ga != null) {
 				if (!exact) {
-					if ((ga.id != null && ga.id.contains(what))
-							|| (ga.description != null && ga.description
+					if ((ga.getId() != null && ga.getId().contains(what))
+							|| (ga.getDescription() != null && ga.getDescription()
 									.contains(what))
-							|| (ga.aliases != null && ga.aliases.contains(what))
-							|| (ga.symbol != null && ga.symbol.contains(what))
-							|| (ga.organism != null && ga.organism
+							|| (ga.getAliases() != null && ga.getAliases().contains(what))
+							|| (ga.getSymbol() != null && ga.getSymbol().contains(what))
+							|| (ga.getOrganism() != null && ga.getOrganism()
 									.contains(what))
-							|| (ga.locus != null && ga.locus.contains(what))
-							|| (ga.entrezId != null && ga.entrezId
+							|| (ga.getLocus() != null && ga.getLocus().contains(what))
+							|| (ga.getEntrezId() != null && ga.getEntrezId()
 									.contains(what))
-							|| (ga.name != null && ga.name.contains(what)))
-						genes.add(getGeneId(ga.id));
-					else if (ga.goTerms != null) {
-						for (GOTerm gt : ga.goTerms) {
-							if ((gt.definition != null && gt.definition
+							|| (ga.getName() != null && ga.getName().contains(what)))
+						genes.add(getGeneId(ga.getId()));
+					else if (ga.getGoTerms() != null) {
+						for (GOTerm gt : ga.getGoTerms()) {
+							if ((gt.getDefinition() != null && gt.getDefinition()
 									.contains(what))
-									|| (gt.term != null && gt.term
+									|| (gt.getTerm() != null && gt.getTerm()
 											.contains(what))) {
-								genes.add(getGeneId(ga.id));
+								genes.add(getGeneId(ga.getId()));
 								break;
 							}
 						}
 					}
 				} //non exact search
 				else {
-					if ((ga.id != null && ga.id.equals(what))
-							|| (ga.description != null && ga.description
+					if ((ga.getId() != null && ga.getId().equals(what))
+							|| (ga.getDescription() != null && ga.getDescription()
 									.equals(what))
-							|| (ga.aliases != null && ga.aliases.equals(what))
-							|| (ga.symbol != null && ga.symbol.equals(what))
-							|| (ga.organism != null && ga.organism.equals(what))
-							|| (ga.locus != null && ga.locus.equals(what))
-							|| (ga.entrezId != null && ga.entrezId.equals(what))
-							|| (ga.name != null && ga.name.equals(what)))
-						genes.add(getGeneId(ga.id));
-					else if (ga.goTerms != null) {
-						for (GOTerm gt : ga.goTerms) {
-							if ((gt.definition != null && gt.definition
+							|| (ga.getAliases() != null && ga.getAliases().equals(what))
+							|| (ga.getSymbol() != null && ga.getSymbol().equals(what))
+							|| (ga.getOrganism() != null && ga.getOrganism().equals(what))
+							|| (ga.getLocus() != null && ga.getLocus().equals(what))
+							|| (ga.getEntrezId() != null && ga.getEntrezId().equals(what))
+							|| (ga.getName() != null && ga.getName().equals(what)))
+						genes.add(getGeneId(ga.getId()));
+					else if (ga.getGoTerms() != null) {
+						for (GOTerm gt : ga.getGoTerms()) {
+							if ((gt.getDefinition() != null && gt.getDefinition()
 									.equals(what))
-									|| (gt.term != null && gt.term.equals(what))) {
-								genes.add(getGeneId(ga.id));
+									|| (gt.getTerm() != null && gt.getTerm().equals(what))) {
+								genes.add(getGeneId(ga.getId()));
 								break;
 							}
 						}
@@ -1225,43 +1223,43 @@ public class MicroarrayData {
 		while (it.hasNext()) {
 			GeneAnnotation ga = it.next();
 			if (!exact) {
-				if ((ga.id != null && ga.id.contains(what))
-						|| (ga.description != null && ga.description
+				if ((ga.getId() != null && ga.getId().contains(what))
+						|| (ga.getDescription() != null && ga.getDescription()
 								.contains(what))
-						|| (ga.aliases != null && ga.aliases.contains(what))
-						|| (ga.symbol != null && ga.symbol.contains(what))
-						|| (ga.organism != null && ga.organism.contains(what))
-						|| (ga.locus != null && ga.locus.contains(what))
-						|| (ga.entrezId != null && ga.entrezId.contains(what))
-						|| (ga.name != null && ga.name.contains(what)))
-					genes.add(getGeneId(ga.id));
-				else if (ga.goTerms != null) {
-					for (GOTerm gt : ga.goTerms) {
-						if ((gt.definition != null && gt.definition
+						|| (ga.getAliases() != null && ga.getAliases().contains(what))
+						|| (ga.getSymbol() != null && ga.getSymbol().contains(what))
+						|| (ga.getOrganism() != null && ga.getOrganism().contains(what))
+						|| (ga.getLocus() != null && ga.getLocus().contains(what))
+						|| (ga.getEntrezId() != null && ga.getEntrezId().contains(what))
+						|| (ga.getName() != null && ga.getName().contains(what)))
+					genes.add(getGeneId(ga.getId()));
+				else if (ga.getGoTerms() != null) {
+					for (GOTerm gt : ga.getGoTerms()) {
+						if ((gt.getDefinition() != null && gt.getDefinition()
 								.contains(what))
-								|| (gt.term != null && gt.term.contains(what))) {
-							genes.add(getGeneId(ga.id));
+								|| (gt.getTerm() != null && gt.getTerm().contains(what))) {
+							genes.add(getGeneId(ga.getId()));
 							break;
 						}
 					}
 				}
 			} else {
-				if ((ga.id != null && ga.id.equals(what))
-						|| (ga.description != null && ga.description
+				if ((ga.getId() != null && ga.getId().equals(what))
+						|| (ga.getDescription() != null && ga.getDescription()
 								.equals(what))
-						|| (ga.aliases != null && ga.aliases.equals(what))
-						|| (ga.symbol != null && ga.symbol.equals(what))
-						|| (ga.organism != null && ga.organism.equals(what))
-						|| (ga.locus != null && ga.locus.equals(what))
-						|| (ga.entrezId != null && ga.entrezId.equals(what))
-						|| (ga.name != null && ga.name.equals(what)))
-					genes.add(getGeneId(ga.id));
-				else if (ga.goTerms != null) {
-					for (GOTerm gt : ga.goTerms) {
-						if ((gt.definition != null && gt.definition
+						|| (ga.getAliases() != null && ga.getAliases().equals(what))
+						|| (ga.getSymbol() != null && ga.getSymbol().equals(what))
+						|| (ga.getOrganism() != null && ga.getOrganism().equals(what))
+						|| (ga.getLocus() != null && ga.getLocus().equals(what))
+						|| (ga.getEntrezId() != null && ga.getEntrezId().equals(what))
+						|| (ga.getName() != null && ga.getName().equals(what)))
+					genes.add(getGeneId(ga.getId()));
+				else if (ga.getGoTerms() != null) {
+					for (GOTerm gt : ga.getGoTerms()) {
+						if ((gt.getDefinition() != null && gt.getDefinition()
 								.equals(what))
-								|| (gt.term != null && gt.term.equals(what))) {
-							genes.add(getGeneId(ga.id));
+								|| (gt.getTerm() != null && gt.getTerm().equals(what))) {
+							genes.add(getGeneId(ga.getId()));
 							break;
 						}
 					}
@@ -1571,10 +1569,10 @@ public class MicroarrayData {
 		HashMap<String, GOTerm> terms = new HashMap<String, GOTerm>();
 
 		for (int i : genes) {
-			ArrayList<GOTerm> gt = geneAnnotations.get(i).goTerms;
+			ArrayList<GOTerm> gt = geneAnnotations.get(i).getGoTerms();
 			for (GOTerm g : gt) {
 				if (terms.get(g) == null)
-					terms.put(g.id, g);
+					terms.put(g.getId(), g);
 				else
 					terms.get(g).occurences++;
 			}
@@ -1612,7 +1610,7 @@ public class MicroarrayData {
 		boolean ret = true;
 		for (int i : genes) {
 			if (geneAnnotations.get(i) == null
-					|| geneAnnotations.get(i).goTerms == null) {
+					|| geneAnnotations.get(i).getGoTerms() == null) {
 				System.out.println("Gene " + i + " has null terms");
 				ret = false;
 				return ret;
@@ -1707,7 +1705,7 @@ public class MicroarrayData {
 			ArrayList<GOTerm> got = new ArrayList<GOTerm>();
 			for (int i = 0; i < evs.length; i++) {
 				GOTerm g = new GOTerm(t[i], ids[i], "", "", "", evs[i]);
-				g.pvalue = pval[i];
+				g.setPvalue(pval[i]);
 				got.add(g);
 			}
 			return got;
@@ -1750,15 +1748,15 @@ public class MicroarrayData {
 			GeneAnnotation ga = geneAnnotations.get(this.getGeneId(gene));
 			List<GOTerm> gol = null;
 
-			if (ga.goTerms == null || ga.goTerms.size() == 0)
+			if (ga.getGoTerms() == null || ga.getGoTerms().size() == 0)
 				gol = getTermsQuickGO(ga, oncePerGene);
 			else
-				gol = ga.goTerms;
+				gol = ga.getGoTerms();
 			for (GOTerm go : gol) {
-				if (gom.containsKey(go.term))
-					gom.get(go.term).occurences++;
+				if (gom.containsKey(go.getTerm()))
+					gom.get(go.getTerm()).occurences++;
 				else
-					gom.put(go.term, go);
+					gom.put(go.getTerm(), go);
 			}
 		}
 		return Arrays.asList(gom.values().toArray(new GOTerm[0]));
@@ -2142,7 +2140,7 @@ public class MicroarrayData {
 				ArrayList<GOTerm> got = new ArrayList<GOTerm>();
 				for (int i = 0; i < evs.length; i++) {
 					GOTerm g = new GOTerm(t[i], ids[i], "", "", "", evs[i]);
-					g.pvalue = pval[i];
+					g.setPvalue(pval[i]);
 					got.add(g);
 				}
 
@@ -2201,8 +2199,8 @@ public class MicroarrayData {
 		ArrayList<String> ret = new ArrayList<String>();
 		while (it.hasNext()) {
 			GeneAnnotation ga = it.next();
-			if (ga.entrezId != null)
-				ret.add(ga.entrezId);
+			if (ga.getEntrezId() != null)
+				ret.add(ga.getEntrezId());
 		}
 		return ret.toArray(new String[ret.size()]);
 	}
@@ -2266,7 +2264,7 @@ public class MicroarrayData {
 			REXP exp = null;
 			String group = "";
 			if (genes.length == numGenes) {
-				if (!rManager.matrixLoaded) {
+				if (!rManager.isMatrixLoaded()) {
 					System.out.println("Esperando a que la matriz se cargue");
 					try {
 						synchronized (rManager) {
@@ -2277,7 +2275,7 @@ public class MicroarrayData {
 					}
 				}
 				System.out.println("Matrix loaded, getting feature names");
-				if (!rManager.matrixLoaded)
+				if (!rManager.isMatrixLoaded())
 					rManager.loadMatrix(rMatrixName);
 				exp = re.eval("group=featureNames(" + rMatrixName + ")");
 			} else {
@@ -2523,42 +2521,42 @@ public class MicroarrayData {
 				GeneAnnotation ga = geneAnnotations.get(id);
 				if (ga == null) {
 					ga = new GeneAnnotation();
-					ga.internalId = id;
+					ga.setInternalId(id);
 					if (descriptions != null)
-						ga.description = descriptions[g];
+						ga.setDescription(descriptions[g]);
 					if (names != null) {
 						if (names[g] == null || names[g].equals("NA"))
-							ga.name = geneNames[g];// Set as gene name its id
+							ga.setName(geneNames[g]);// Set as gene name its id
 						else
-							ga.name = names[g];
+							ga.setName(names[g]);
 					}
 					if (entrezs != null)
-						ga.entrezId = entrezs[g];
+						ga.setEntrezId(entrezs[g]);
 					if (ensembls != null)
-						ga.ensemblId = ensembls[g];
+						ga.setEnsemblId(ensembls[g]);
 
-					ga.id = geneNames[g];
+					ga.setId(geneNames[g]);
 					geneAnnotations.put(id, ga);
 				} else {
 					if (descriptions != null)
-						ga.description = descriptions[g];
+						ga.setDescription(descriptions[g]);
 					if (names != null)
-						ga.name = names[g];
-					ga.internalId = id;
+						ga.setName(names[g]);
+					ga.setInternalId(id);
 				}
 
 				// In addition, if searched and found, we add the GO terms
 				String[] goids = null;
 
 				if (go != null) {
-					if (ga.goTerms == null)
-						ga.goTerms = new ArrayList<GOTerm>();
+					if (ga.getGoTerms() == null)
+						ga.setGoTerms(new ArrayList<GOTerm>());
 					RList goterms = null;
 
 					if (isBioMaRt) {
 						goids = go.at(g).asStringArray();
 					} else {
-						goterms = go.at(ga.id).asList();
+						goterms = go.at(ga.getId()).asList();
 						if (goterms != null)
 							goids = goterms.keys();
 					}
@@ -2568,13 +2566,13 @@ public class MicroarrayData {
 						for (int i = 0; i < goids.length; i++) {
 							if (goids[i].startsWith("GO:")) {
 								GOTerm gt = GOTerms.get(goids[i]);
-								if (gt != null && !ga.goTerms.contains(gt))
-									if (!gt.term.equals("biological_process")
-											&& !gt.term
+								if (gt != null && !ga.getGoTerms().contains(gt))
+									if (!gt.getTerm().equals("biological_process")
+											&& !gt.getTerm()
 													.equals("molecular_function")
-											&& !gt.term
+											&& !gt.getTerm()
 													.equals("cellular_component"))
-										ga.goTerms.add(gt);
+										ga.getGoTerms().add(gt);
 							}
 						}
 					}
@@ -2641,25 +2639,25 @@ public class MicroarrayData {
 					ga = new GeneAnnotation();
 					// System.out.println("GENE "+gene);
 					REXP exp = re.eval("group=c(\"" + gene + "\")");
-					ga.id = gene;
+					ga.setId(gene);
 					exp = re.eval("get(\"" + gene + "\"," + chip + rname + ")");
 					if (exp != null) {
 						// System.out.println("name: "+exp.asString());
-						ga.name = exp.asString();
+						ga.setName(exp.asString());
 					}
 					exp = re.eval("get(\"" + gene + "\"," + chip + rdescription
 							+ ")");
 					if (exp != null) {
 						// System.out.println("desc: "+exp.asString());
-						ga.description = exp.asString();
+						ga.setDescription(exp.asString());
 					}
 					galist.add(ga);
 				}
-				if (ga != null && ga.goTerms == null) {
+				if (ga != null && ga.getGoTerms() == null) {
 					// GoTerms
 					ArrayList<String> al = new ArrayList<String>();
-					al.add(ga.id);
-					ga.goTerms = getGOTermsR(al);
+					al.add(ga.getId());
+					ga.setGoTerms(getGOTermsR(al));
 					geneAnnotations.put(id, ga);
 				}
 			}
@@ -2731,7 +2729,7 @@ public class MicroarrayData {
 					} else {
 						System.err.println("Nothing found for gene " + gene);
 						ga = new GeneAnnotation();
-						ga.id = gene;
+						ga.setId(gene);
 
 						geneAnnotations.put(genes[g], ga);
 
@@ -2750,33 +2748,33 @@ public class MicroarrayData {
 							for (int k = 0; k < res[i].getItem().length; k++) {
 								if (res[i].getItem()[k].get_any() != null) {
 									String cad = res[i].getItem(k).getName();
-									ga.entrezId = res[i].getId();
+									ga.setEntrezId(res[i].getId());
 									if (cad.contains("Description"))
-										ga.description = res[i].getItem()[k]
-												.get_any()[0].getValue();
+										ga.setDescription(res[i].getItem()[k]
+												.get_any()[0].getValue());
 									else if (cad.contains("Name"))
-										ga.name = res[i].getItem()[k].get_any()[0]
-												.getValue();
+										ga.setName(res[i].getItem()[k].get_any()[0]
+												.getValue());
 									else if (cad.contains("Orgname"))
-										ga.organism = res[i].getItem()[k]
-												.get_any()[0].getValue();
+										ga.setOrganism(res[i].getItem()[k]
+												.get_any()[0].getValue());
 									else if (cad.contains("Symbol"))
-										ga.symbol = res[i].getItem()[k]
-												.get_any()[0].getValue();
+										ga.setSymbol(res[i].getItem()[k]
+												.get_any()[0].getValue());
 									else if (cad.contains("Gene type"))
-										ga.type = res[i].getItem()[k].get_any()[0]
-												.getValue();
+										ga.setType(res[i].getItem()[k].get_any()[0]
+												.getValue());
 									else if (cad.contains("OtherAliases")) {
-										ga.aliases = new ArrayList<String>();
+										ga.setAliases(new ArrayList<String>());
 										String aliases = res[i].getItem()[k]
 												.get_any()[0].getValue();
 										String[] al = aliases.split(",");
 										for (int j = 0; j < al.length; j++)
-											ga.aliases.add(al[j].trim());
+											ga.getAliases().add(al[j].trim());
 									}
 								}
 							}
-							ga.id = gene;
+							ga.setId(gene);
 							geneAnnotations.put(genes[g], ga);
 						}
 					}
@@ -2850,21 +2848,21 @@ public class MicroarrayData {
 	 *            only stored once.
 	 */
 	public List<GOTerm> getTermsQuickGO(GeneAnnotation ga, boolean unique) {
-		ArrayList<GOTerm> gol = requestQuickGO(ga.entrezId, unique);
+		ArrayList<GOTerm> gol = requestQuickGO(ga.getEntrezId(), unique);
 		if (gol == null || gol.size() == 0) // try with symbol
-			gol = requestQuickGO(ga.symbol, unique);
+			gol = requestQuickGO(ga.getSymbol(), unique);
 		if (gol == null || gol.size() == 0) // try with name
-			gol = requestQuickGO(ga.name, unique);
+			gol = requestQuickGO(ga.getName(), unique);
 
 		if (gol == null || gol.size() == 0) {// try with aliases
-			for (String alias : ga.aliases) {
+			for (String alias : ga.getAliases()) {
 				gol = requestQuickGO(alias, unique);
 				if (gol.size() > 0)
 					break;
 			}
 		}
 		if (gol != null && gol.size() > 0)
-			ga.goTerms = gol;
+			ga.setGoTerms(gol);
 		return gol;
 	}
 
@@ -2921,12 +2919,12 @@ public class MicroarrayData {
 				// if(!terms.contains(go)) terms.add(go);
 				// else terms.get(terms.indexOf(go)).occurences++;
 				if (!unique) {
-					if (!terms.containsKey(go.term))
-						terms.put(go.term, go);
+					if (!terms.containsKey(go.getTerm()))
+						terms.put(go.getTerm(), go);
 					else
-						terms.get(go.term).occurences++;
-				} else if (!terms.containsKey(go.term))
-					terms.put(go.term, go);
+						terms.get(go.getTerm()).occurences++;
+				} else if (!terms.containsKey(go.getTerm()))
+					terms.put(go.getTerm(), go);
 			}
 			// close input when finished
 			rd.close();
@@ -3232,7 +3230,7 @@ public class MicroarrayData {
 									.trim();
 
 					// TODO: Another thread reads in parallel the matrix into R
-					if (!rManager.matrixLoaded) {
+					if (!rManager.isMatrixLoaded()) {
 						Thread rt = new Thread() {
 							public void run() {
 								rManager.loadMatrix(rMatrixName);
@@ -3285,8 +3283,8 @@ public class MicroarrayData {
 								{
 									String annot = st.nextToken().trim();
 									GeneAnnotation ga = new GeneAnnotation();
-									ga.id = geneNames[i];
-									ga.internalId = i;
+									ga.setId(geneNames[i]);
+									ga.setInternalId(i);
 									assignAnnotation(i, annot,
 											colHeaders.get(j), false);
 								}
@@ -3437,21 +3435,21 @@ public class MicroarrayData {
 		GeneAnnotation ga = null;
 		if ((ga = geneAnnotations.get(id)) == null) {
 			ga = new GeneAnnotation();
-			ga.internalId = id;
+			ga.setInternalId(id);
 			geneAnnotations.put(id, ga);
 		}
 		if (isId)
-			ga.id = annotation;
+			ga.setId(annotation);
 
 		if (annotationType.equals("description"))
-			ga.description = annotation; // respecting biomart names on these
+			ga.setDescription(annotation); // respecting biomart names on these
 											// first three
 		else if (annotationType.equals("ensembl_gene_id"))
-			ga.ensemblId = annotation;
+			ga.setEnsemblId(annotation);
 		else if (annotationType.equals("entrezgene"))
-			ga.entrezId = annotation;
+			ga.setEntrezId(annotation);
 		else if (annotationType.equals("name"))
-			ga.name = annotation;
+			ga.setName(annotation);
 		// TODO: GO terms, KEGG paths, etc.
 		return;
 	}
@@ -3963,5 +3961,12 @@ public class MicroarrayData {
 	 */
 	public Analysis getrManager() {
 		return rManager;
+	}
+
+	/**
+	 * @return the organism
+	 */
+	public String getOrganism() {
+		return organism;
 	}
 }

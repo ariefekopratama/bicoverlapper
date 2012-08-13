@@ -27,10 +27,12 @@ import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
 import keggapi.Definition;
+import es.usal.bicoverlapper.controller.kegg.KEGGController;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationListener;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
+import es.usal.bicoverlapper.model.kegg.KEGGModel;
 import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
 
@@ -118,8 +120,8 @@ public class KEGGDiagram extends Diagram {
 		//System.out.println("ESTO ES LA BIBLIOTECA SI ARRIBA DA BIOMART sesion.getMicroarrayData().rname="+sesion.getMicroarrayData().rname);
 		
 		paleta = new Color[] { 	
-								sesion.lowExpColor, sesion.avgExpColor,
-								sesion.hiExpColor, sesion.getSelectionColor(),
+								sesion.getLowExpColor(), sesion.getAvgExpColor(),
+								sesion.getHiExpColor(), sesion.getSelectionColor(),
 								sesion.getHoverColor() 
 							};		
 		muestraColor = new JTextField[paleta.length];
@@ -377,7 +379,7 @@ public class KEGGDiagram extends Diagram {
 		ComboBoxModel comboBox1Model = new DefaultComboBoxModel(organismosSeleccionables);
 		combo1.setModel(comboBox1Model);
 		
-		msgError = "Organism "+sesion.getMicroarrayData().organism+" not found among KEGG organisms, please select one from the leftmost combo box";		
+		msgError = "Organism "+sesion.getMicroarrayData().getOrganism()+" not found among KEGG organisms, please select one from the leftmost combo box";		
 		
 		//si ya hay un índice del combobox1 seleccionado...
 		if(indexCombo1 != -1){
@@ -395,7 +397,7 @@ public class KEGGDiagram extends Diagram {
 			int organismoSeleccionado = 0;
 			//se busca en la lista el organismo cuyo microarray ha sido cargado por BicOverlapper
 			for (String organismo : organismosSeleccionables) {
-				if(organismo.contains(this.sesion.getMicroarrayData().organism)){
+				if(organismo.contains(this.sesion.getMicroarrayData().getOrganism())){
 					organism = organismo;
 					break;
 				}

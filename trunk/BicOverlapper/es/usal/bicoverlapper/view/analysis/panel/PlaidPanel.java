@@ -1,43 +1,29 @@
 package es.usal.bicoverlapper.view.analysis.panel;
 
-import javax.swing.JDesktopPane;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-
 import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.GridBagLayout;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import javax.swing.JTextField;
 import java.awt.Rectangle;
-import java.awt.GridLayout;
-import java.awt.Label;
-import javax.swing.JRadioButton;
-import java.awt.Checkbox;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.JCheckBox;
 import javax.swing.JButton;
-
-
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
-import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
-import es.usal.bicoverlapper.controller.util.Translator;
 
 
 /**
@@ -355,8 +341,8 @@ public class PlaidPanel{
 				public void actionPerformed(java.awt.event.ActionEvent e) {
 					if(session!=null)	
 						{
-						session=session.mainWindow.getActiveWorkDesktop().getSession();
-						Analysis b=session.analysis;
+						session=session.getMainWindow().getActiveWorkDesktop().getSession();
+						Analysis b=session.getAnalysis();
 					    
 						String fileName="";
 						if(resultsFile!=null)			
@@ -406,9 +392,9 @@ public class PlaidPanel{
 										else
 											{
 											if(fileName.indexOf("/")>-1)
-												session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 											else
-												session.reader.readBiclusterResults("",fileName, fileName, session);
+												session.getReader().readBiclusterResults("",fileName, fileName, session);
 											}
 										}catch(Exception e){e.printStackTrace();}
 								}

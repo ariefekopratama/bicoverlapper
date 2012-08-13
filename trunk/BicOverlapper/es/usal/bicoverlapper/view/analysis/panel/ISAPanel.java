@@ -115,8 +115,8 @@ public class ISAPanel extends javax.swing.JFrame {
 					public void actionPerformed(java.awt.event.ActionEvent e) {
 						if(session!=null)	
 							{
-							session=session.mainWindow.getActiveWorkDesktop().getSession();
-							Analysis b=session.analysis;
+							session=session.getMainWindow().getActiveWorkDesktop().getSession();
+							Analysis b=session.getAnalysis();
 						    
 							String fileName="";
 							if(resultsFile!=null)			
@@ -163,9 +163,9 @@ public class ISAPanel extends javax.swing.JFrame {
 										else
 											{
 											if(fileName.indexOf("/")>-1)
-												session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+												session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 											else
-												session.reader.readBiclusterResults("",fileName, fileName, session);
+												session.getReader().readBiclusterResults("",fileName, fileName, session);
 											}
 										}catch(Exception e){e.printStackTrace();}
 								}

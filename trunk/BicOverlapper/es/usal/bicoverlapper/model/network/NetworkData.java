@@ -29,7 +29,7 @@ public class NetworkData
 	private Graph g = null;			//Data
 	//Properties of graph
 	private int nNodes = 0;
-	int nEdges = 0;
+	private int nEdges = 0;
 	private LinkedList<int[]> ffls=null;
 	
 	/**

@@ -154,8 +154,8 @@ public class HeatmapDiagram extends Diagram {
 		this.ancho = (int) dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho, alto));
 		this.setSize(ancho, alto);
-		this.paleta = new Color[] { sesion.lowExpColor, sesion.avgExpColor,
-				sesion.hiExpColor, sesion.getSelectionColor(),
+		this.paleta = new Color[] { sesion.getLowExpColor(), sesion.getAvgExpColor(),
+				sesion.getHiExpColor(), sesion.getSelectionColor(),
 				sesion.getHoverColor() };
 		muestraColor = new JTextField[paleta.length];
 	}
@@ -492,7 +492,7 @@ public class HeatmapDiagram extends Diagram {
 
 	public void update() {
 		if (v != null && sesion != null) {
-			if (sesion.onlyHover) // HOVER
+			if (sesion.isOnlyHover()) // HOVER
 			{
 				System.out.println("Only hover!");
 				if (sesion.getSelectedGenesBicluster().size() <= md

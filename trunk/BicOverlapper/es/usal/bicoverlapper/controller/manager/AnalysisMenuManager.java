@@ -1,27 +1,11 @@
 package es.usal.bicoverlapper.controller.manager;
 
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.GridLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.beans.PropertyVetoException;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
 
 import es.usal.bicoverlapper.controller.kernel.Configuration;
 import es.usal.bicoverlapper.controller.kernel.Session;
@@ -32,20 +16,10 @@ import es.usal.bicoverlapper.view.analysis.panel.CCPanel;
 import es.usal.bicoverlapper.view.analysis.panel.DiffExpPanel;
 import es.usal.bicoverlapper.view.analysis.panel.GSEAPanel;
 import es.usal.bicoverlapper.view.analysis.panel.ISAPanel;
-import es.usal.bicoverlapper.view.analysis.panel.MergePanel;
 import es.usal.bicoverlapper.view.analysis.panel.PlaidPanel;
-import es.usal.bicoverlapper.view.analysis.panel.SearchPanel;
 import es.usal.bicoverlapper.view.analysis.panel.SelectPanel;
-import es.usal.bicoverlapper.view.analysis.panel.ShowPanel;
-import es.usal.bicoverlapper.view.analysis.panel.SortPanel;
 import es.usal.bicoverlapper.view.analysis.panel.XMotifsPanel;
-import es.usal.bicoverlapper.view.diagram.bubbles.BubblesDiagram;
-import es.usal.bicoverlapper.view.diagram.heatmap.HeatmapDiagram;
-import es.usal.bicoverlapper.view.diagram.network.NetworkDiagram;
-import es.usal.bicoverlapper.view.diagram.overlapper.OverlapperDiagram;
-import es.usal.bicoverlapper.view.diagram.wordcloud.WordCloudDiagram;
 import es.usal.bicoverlapper.view.main.BicOverlapperWindow;
-import es.usal.bicoverlapper.view.main.DiagramWindow;
 
 /**
  * Class that handles Analysis options (Biclustering)

@@ -66,8 +66,8 @@ import es.usal.bicoverlapper.view.main.DiagramWindow;
  */
 public class Session implements KeyListener {
 
-	public DataReader reader;
-	public BicOverlapperWindow mainWindow;
+	private DataReader reader;
+	private BicOverlapperWindow mainWindow;
 
 	// Datos del fichero de trabajo
 	private NetworkData datosTRN = null;
@@ -121,9 +121,9 @@ public class Session implements KeyListener {
 	private Color bicSet1Color;
 	private Color bicSet2Color;
 	private Color bicSet3Color;
-	public Color lowExpColor;
-	public Color avgExpColor;
-	public Color hiExpColor;
+	private Color lowExpColor;
+	private Color avgExpColor;
+	private Color hiExpColor;
 
 	public String microarrayPath = null;
 	public String biclusteringPath = null;
@@ -133,14 +133,14 @@ public class Session implements KeyListener {
 	/**
 	 * Biclustering class bound to this microarray data.
 	 */
-	public Analysis analysis = null;
+	private Analysis analysis = null;
 	private SearchPanel searchPanel;
 	private ShowPanel showPanel;
 	private SortPanel sortPanel;
 	private MergePanel mergePanel;
 	private MergeRowsPanel mergeRowsPanel;
 
-	public boolean onlyHover;// if true, no additional actions for selection are
+	private boolean onlyHover;// if true, no additional actions for selection are
 								// done, only for hovering
 
 	//variables para avisar a Ovelapper de que hay demasiados genes
@@ -161,12 +161,12 @@ public class Session implements KeyListener {
 	 */
 	public Session(JDesktopPane desktop, BicOverlapperWindow window) {
 		// Carlos
-		window.menuViewHeatmap.setEnabled(false);
-		window.menuViewParallelCoordinates.setEnabled(false);
-		window.menuViewTRN.setEnabled(false);
-		window.menuViewBubbles.setEnabled(false);
-		window.menuViewOverlapper.setEnabled(false);
-		window.menuViewCloud.setEnabled(false);
+		window.getMenuViewHeatmap().setEnabled(false);
+		window.getMenuViewParallelCoordinates().setEnabled(false);
+		window.getMenuViewTRN().setEnabled(false);
+		window.getMenuViewBubbles().setEnabled(false);
+		window.getMenuViewOverlapper().setEnabled(false);
+		window.getMenuViewCloud().setEnabled(false);
 		window.setTitle(window.titulo);
 
 		analysis = new Analysis(null);
@@ -361,12 +361,12 @@ public class Session implements KeyListener {
 					panelWC.run();
 				}
 				WordCloudDiagramConfiguration wcdc = (WordCloudDiagramConfiguration) configVentana;
-				panelWC.getMenuCloud().setIndices(wcdc.textIndex, wcdc.splitIndex,
-						wcdc.sizeIndex, wcdc.ontologyIndex);
+				panelWC.getMenuCloud().setIndices(wcdc.getTextIndex(), wcdc.getSplitIndex(),
+						wcdc.getSizeIndex(), wcdc.getOntologyIndex());
 				this.setWordCloud(ventana);
 				
 				//este atributo se pone a false manualmente porque al hacer el setIndices se pone a true cuando no debería ser así
-				panelWC.innerCall = false;
+				panelWC.setInnerCall(false);
 				
 				break;
 			case es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID:
@@ -1543,5 +1543,47 @@ public class Session implements KeyListener {
 	 */
 	public int getNumKeggDiagrams() {
 		return numVentanaKegg;
+	}
+
+	/**
+	 * @return the reader
+	 */
+	public DataReader getReader() {
+		return reader;
+	}
+
+	/**
+	 * @return the lowExpColor
+	 */
+	public Color getLowExpColor() {
+		return lowExpColor;
+	}
+
+	/**
+	 * @return the avgExpColor
+	 */
+	public Color getAvgExpColor() {
+		return avgExpColor;
+	}
+
+	/**
+	 * @return the hiExpColor
+	 */
+	public Color getHiExpColor() {
+		return hiExpColor;
+	}
+
+	/**
+	 * @return the analysis
+	 */
+	public Analysis getAnalysis() {
+		return analysis;
+	}
+
+	/**
+	 * @return the onlyHover
+	 */
+	public boolean isOnlyHover() {
+		return onlyHover;
 	}
 }

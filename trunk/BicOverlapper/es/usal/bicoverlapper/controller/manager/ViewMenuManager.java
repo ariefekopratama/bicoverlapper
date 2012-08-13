@@ -60,7 +60,7 @@ public class ViewMenuManager implements ActionListener {
 						sesion, dim);
 				DiagramWindow ventana = new DiagramWindow(sesion,
 						sesion.getDesktop(), panel);
-				ventana.setLocation(config.initPC.x, config.initPC.y);
+				ventana.setLocation(config.getInitPC().x, config.getInitPC().y);
 
 				panel.setWindow(ventana);
 
@@ -73,7 +73,7 @@ public class ViewMenuManager implements ActionListener {
 				panel.setWindow(ventana);
 				// ventana.setLocation(config.dimParallelCoordinatesWindow.width+config.dimHeatmapWindow.width+config.marginInternalWindowWidth*4,
 				// 0);
-				ventana.setLocation(config.initBM.x, config.initBM.y);
+				ventana.setLocation(config.getInitBM().x, config.getInitBM().y);
 				sesion.setBubbles(ventana);
 				panel.createAxisLayout();
 				panel.run();
@@ -87,7 +87,7 @@ public class ViewMenuManager implements ActionListener {
 				sesion.setTRN(ventana);
 				// ventana.setLocation(0,
 				// config.getSizePanelCoordenadas().height+30);
-				ventana.setLocation(config.initTRN.x, config.initTRN.y);
+				ventana.setLocation(config.getInitTRN().x, config.getInitTRN().y);
 				panel.create();
 				panel.run();
 				// System.out.println("Terminamos la vista");
@@ -99,7 +99,7 @@ public class ViewMenuManager implements ActionListener {
 				panel.setWindow(ventana);
 				sesion.setTRN(ventana);
 				// ventana.setLocation(config.getSizePanelCoordenadas().width+config.marginWidth*2,0);
-				ventana.setLocation(config.initHM.x, config.initHM.y);
+				ventana.setLocation(config.getInitHM().x, config.getInitHM().y);
 				panel.create();
 				panel.run();
 			} else if (e.getActionCommand().equals(Translator.instance.menuLabels.getString("s10"))) { //Overlapper
@@ -139,7 +139,7 @@ public class ViewMenuManager implements ActionListener {
 				sesion.setBubbleGraph(ventana);
 				// ventana.setLocation(0,
 				// config.getSizePanelCoordenadas().height);
-				ventana.setLocation(config.initO.x, config.initO.y);
+				ventana.setLocation(config.getInitO().x, config.getInitO().y);
 
 				panel.create();
 				panel.run();
@@ -153,7 +153,7 @@ public class ViewMenuManager implements ActionListener {
 				// config.getSizePanelCoordenadas().height+30);
 				// ventana.setLocation(0,
 				// config.getSizePanelCoordenadas().height+30);
-				ventana.setLocation(config.initWC.x, config.initWC.y);
+				ventana.setLocation(config.getInitWC().x, config.getInitWC().y);
 				sesion.setWordCloud(ventana);
 				panel.repaint();
 			} else if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s26"))){//Kegg
@@ -163,7 +163,7 @@ public class ViewMenuManager implements ActionListener {
 				panel.setWindow(ventana);
 				sesion.setKegg(ventana);
 				// aquí habrá que poner la localización por defecto
-				ventana.setLocation(config.initKegg.x, config.initKegg.y);
+				ventana.setLocation(config.getInitKegg().x, config.getInitKegg().y);
 				panel.create();
 				panel.run();				
 			}

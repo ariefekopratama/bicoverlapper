@@ -12,20 +12,15 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
-
 import javax.swing.WindowConstants;
-import javax.swing.SwingUtilities;
 
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
-import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
 import es.usal.bicoverlapper.controller.data.filter.GMLFilter;
-import es.usal.bicoverlapper.controller.data.filter.TRNFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
 
 
@@ -42,6 +37,10 @@ import es.usal.bicoverlapper.controller.kernel.Session;
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
 public class BuildNetworkPanel extends javax.swing.JFrame {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1359500023070611175L;
 	private JLabel JLabel1;
 	private JTextField sdThreshold;
 	private JLabel jLabel3;
@@ -140,9 +139,9 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 							{
 							if(write.isSelected())	fileName=defaultPath;
 							}
-						session=session.mainWindow.getActiveWorkDesktop().getSession();
+						session=session.getMainWindow().getActiveWorkDesktop().getSession();
 						
-						 Analysis b=session.analysis;
+						 Analysis b=session.getAnalysis();
 						 b.setFilterOptions(null);
 						
 						 System.out.println("Build network");
@@ -168,13 +167,13 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 											{
 											File file=new File(fileName);
 											String path=file.getAbsolutePath();
-											session.reader.readTRN(path, file, session, "gml");
+											session.getReader().readTRN(path, file, session, "gml");
 												
 											/*if(fileName.indexOf("/")>-1)
-												session.reader.readTRN(path, file, session, "gml");
+												session.getReader().readTRN(path, file, session, "gml");
 											else
 												{
-												session.reader.readTRN("", new File(fileName.substring(fileName.lastIndexOf("/")+1)), session, "gml");
+												session.getReader().readTRN("", new File(fileName.substring(fileName.lastIndexOf("/")+1)), session, "gml");
 												}*/
 											}
 										}catch(Exception e){e.printStackTrace();}

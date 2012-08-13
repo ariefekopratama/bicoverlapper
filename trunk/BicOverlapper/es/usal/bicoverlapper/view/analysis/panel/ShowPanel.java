@@ -74,11 +74,11 @@ public class ShowPanel extends javax.swing.JFrame {
 		if(ga!=null && ga.values()!=null && ga.values().size()>0)
 			{
 			GeneAnnotation a=ga.values().iterator().next();//TODO: that several names appear or not if they weren't found for everygene is totally random because of this next()
-			if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-			if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
-			if(a.ensemblId!=null && a.ensemblId.length()>0)	rowNames.add("ensembl id");
-			if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("entrez id");
-			if(a.symbol!=null && a.symbol.length()>0)	rowNames.add("symbol");
+			if(a.getName()!=null && a.getName().length()>0)	rowNames.add(session.getMicroarrayData().rname);
+			if(a.getDescription()!=null && a.getDescription().length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+			if(a.getEnsemblId()!=null && a.getEnsemblId().length()>0)	rowNames.add("ensembl id");
+			if(a.getEntrezId()!=null && a.getEntrezId().length()>0)	rowNames.add("entrez id");
+			if(a.getSymbol()!=null && a.getSymbol().length()>0)	rowNames.add("symbol");
 			}
 		if(jList1.getModel().getSize()!=rowNames.size())
 			{
@@ -127,11 +127,11 @@ public class ShowPanel extends javax.swing.JFrame {
 										String ss=null;
 										if(md.geneAnnotations.get(i)!=null)
 											{
-											if(s.equals(md.rname))			ss=md.geneAnnotations.get(i).name;
-											if(s.equals(md.rdescription))	ss=md.geneAnnotations.get(i).description;	
-											if(s.equals("entrez id"))		ss=md.geneAnnotations.get(i).entrezId;
-											if(s.equals("ensembl id"))		ss=md.geneAnnotations.get(i).ensemblId;
-											if(s.equals("symbol"))			ss=md.geneAnnotations.get(i).symbol;
+											if(s.equals(md.rname))			ss=md.geneAnnotations.get(i).getName();
+											if(s.equals(md.rdescription))	ss=md.geneAnnotations.get(i).getDescription();	
+											if(s.equals("entrez id"))		ss=md.geneAnnotations.get(i).getEntrezId();
+											if(s.equals("ensembl id"))		ss=md.geneAnnotations.get(i).getEnsemblId();
+											if(s.equals("symbol"))			ss=md.geneAnnotations.get(i).getSymbol();
 											//if(md.rowLabels[i].length()==0) ss=md.getGeneNames()[i];
 											//if(ss.length()==0) ss=md.getGeneNames()[i];
 											if(ss==null)		ss=md.getGeneNames()[i];
@@ -182,11 +182,11 @@ public class ShowPanel extends javax.swing.JFrame {
 				if(ga!=null && ga.values()!=null && ga.values().size()>0)
 					{
 					GeneAnnotation a=ga.values().iterator().next();
-					if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-					if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
-					if(a.ensemblId!=null && a.ensemblId.length()>0)	rowNames.add("ensembl id");
-					if(a.entrezId!=null && a.entrezId.length()>0)	rowNames.add("entrez id");
-					if(a.symbol!=null && a.symbol.length()>0)	rowNames.add("symbol");
+					if(a.getName()!=null && a.getName().length()>0)	rowNames.add(session.getMicroarrayData().rname);
+					if(a.getDescription()!=null && a.getDescription().length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+					if(a.getEnsemblId()!=null && a.getEnsemblId().length()>0)	rowNames.add("ensembl id");
+					if(a.getEntrezId()!=null && a.getEntrezId().length()>0)	rowNames.add("entrez id");
+					if(a.getSymbol()!=null && a.getSymbol().length()>0)	rowNames.add("symbol");
 					}
 				ListModel jList1Model = 
 					new DefaultComboBoxModel(rowNames.toArray(new String[0]));

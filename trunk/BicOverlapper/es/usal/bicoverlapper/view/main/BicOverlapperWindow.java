@@ -49,37 +49,37 @@ public class BicOverlapperWindow extends JFrame {
 	/**
 	 * Menu item to export selected entities
 	 */
-	public JMenuItem menuArchivoExportSelection;
+	private JMenuItem menuArchivoExportSelection;
 	/**
 	 * Menu item to view heatmaps
 	 */
-	public JMenuItem menuViewHeatmap;
+	private JMenuItem menuViewHeatmap;
 	/**
 	 * Menu item to view parallel coordinates
 	 */
-	public JMenuItem menuViewParallelCoordinates;
+	private JMenuItem menuViewParallelCoordinates;
 	/**
 	 * Menu item to view transcription regulatory networks
 	 */
-	public JMenuItem menuViewTRN;
+	private JMenuItem menuViewTRN;
 	/**
 	 * Menu item to view bubble map
 	 */
-	public JMenuItem menuViewBubbles;
+	private JMenuItem menuViewBubbles;
 	/**
 	 * Menu item to view overlapper
 	 */
-	public JMenuItem menuViewOverlapper;
+	private JMenuItem menuViewOverlapper;
 	/**
 	 * Menu item to view go tag cloud
 	 */
-	public JMenuItem menuViewCloud;
+	private JMenuItem menuViewCloud;
 	/**
 	 * Menu item to view kegg tool
 	 */
-	public JMenuItem menuViewKegg;
+	private JMenuItem menuViewKegg;
 
-	public JMenu analysisMenu, viewMenu;
+	private JMenu analysisMenu, viewMenu;
 
 	private FileMenuManager gestorMenuArchivo;
 	
@@ -665,5 +665,75 @@ public class BicOverlapperWindow extends JFrame {
 	 */
 	public JMenuItem getMenuAnalysisBuildNetwork() {
 		return menuAnalysisBuildNetwork;
+	}
+
+	/**
+	 * @return the menuArchivoExportSelection
+	 */
+	public JMenuItem getMenuArchivoExportSelection() {
+		return menuArchivoExportSelection;
+	}
+
+	/**
+	 * @return the menuViewHeatmap
+	 */
+	public JMenuItem getMenuViewHeatmap() {
+		return menuViewHeatmap;
+	}
+
+	/**
+	 * @return the menuViewParallelCoordinates
+	 */
+	public JMenuItem getMenuViewParallelCoordinates() {
+		return menuViewParallelCoordinates;
+	}
+
+	/**
+	 * @return the menuViewTRN
+	 */
+	public JMenuItem getMenuViewTRN() {
+		return menuViewTRN;
+	}
+
+	/**
+	 * @return the menuViewBubbles
+	 */
+	public JMenuItem getMenuViewBubbles() {
+		return menuViewBubbles;
+	}
+
+	/**
+	 * @return the menuViewOverlapper
+	 */
+	public JMenuItem getMenuViewOverlapper() {
+		return menuViewOverlapper;
+	}
+
+	/**
+	 * @return the menuViewCloud
+	 */
+	public JMenuItem getMenuViewCloud() {
+		return menuViewCloud;
+	}
+
+	/**
+	 * @return the menuViewKegg
+	 */
+	public JMenuItem getMenuViewKegg() {
+		return menuViewKegg;
+	}
+
+	/**
+	 * @return the viewMenu
+	 */
+	public JMenu getViewMenu() {
+		return viewMenu;
+	}
+
+	/**
+	 * @return the analysisMenu
+	 */
+	public JMenu getAnalysisMenu() {
+		return analysisMenu;
 	}
 }
