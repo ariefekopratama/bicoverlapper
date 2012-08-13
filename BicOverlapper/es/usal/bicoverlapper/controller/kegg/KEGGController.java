@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.view.diagram.kegg;
+package es.usal.bicoverlapper.controller.kegg;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +21,9 @@ import keggapi.PathwayElement;
 
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
+import es.usal.bicoverlapper.model.kegg.KEGGElement;
+import es.usal.bicoverlapper.model.kegg.KEGGModel;
+import es.usal.bicoverlapper.view.diagram.kegg.KEGGDiagram;
 
 public class KEGGController implements ActionListener {
 	
@@ -180,7 +183,7 @@ public class KEGGController implements ActionListener {
 		//si onlyHover es false y hay genes seleccionados...
 		//hay que meter la comprobación de "null != sesion.getSelectedBicluster()" porque si esto es nulo, el método sesion.getSelectedGenesBicluster() da nullpointerexception
 		//esto debería estar controlado en Session, pero yo no lo toco no siendo que repercuta en otro lado...
-		if(!sesion.onlyHover && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
+		if(!sesion.isOnlyHover() && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
 			List<Rectangle2D.Double> elementosKeggSeleccionados = keggModel.buscarElementosConGenesSeleccionados();
 			
 			//si hay algún elemento que contenga algún gen seleccionado, se marcará
@@ -277,21 +280,21 @@ public class KEGGController implements ActionListener {
 						for (ArrayList<String> listaGenes: mapaGenesEnPathway.values()) {	
 							for(String gen: listaGenes){
 								//si coinciden con el identificador que se esté comparando en cada momento, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
-								if(tipoIdentificador == 0 && null != g.id && gen.equals(g.id)){									
+								if(tipoIdentificador == 0 && null != g.getId() && gen.equals(g.getId())){									
 									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.getInternalId(), numCondition);
 									valoresExpresion.add(valorExp);			
 									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
 								}
-								else if(tipoIdentificador == 1 && null != g.entrezId && gen.equals(g.entrezId)){									
+								else if(tipoIdentificador == 1 && null != g.getEntrezId() && gen.equals(g.getEntrezId())){									
 									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.getInternalId(), numCondition);
 									valoresExpresion.add(valorExp);			
 									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
 								}
-								else if(tipoIdentificador == 2 && null != g.ensemblId && gen.equals(g.ensemblId)){									
+								else if(tipoIdentificador == 2 && null != g.getEnsemblId() && gen.equals(g.getEnsemblId())){									
 									hayExpresion = true;
-									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.internalId, numCondition);
+									double valorExp = sesion.getMicroarrayData().getExpressionAt(g.getInternalId(), numCondition);
 									valoresExpresion.add(valorExp);			
 									//System.out.println("gen = "+gen+"\tvalorExp = "+valorExp+"\tpathwayElements[i].getElement_id() = "+pathwayElements[i].getElement_id());
 								}								

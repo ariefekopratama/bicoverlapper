@@ -26,6 +26,11 @@ import javax.swing.JFrame;
 public class ParallelCoordinatesParameterConfigurationPanel extends javax.swing.JPanel {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -2125908237832425422L;
+
+	/**
 	* Auto-generated main method to display this 
 	* JPanel inside a new JFrame.
 	*/

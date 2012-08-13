@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.view.diagram.kegg;
+package es.usal.bicoverlapper.controller.kegg;
 
 import java.awt.Point;
 import java.awt.geom.Rectangle2D;
@@ -14,6 +14,10 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 
+import es.usal.bicoverlapper.model.kegg.Circle;
+import es.usal.bicoverlapper.model.kegg.KEGGElement;
+import es.usal.bicoverlapper.model.kegg.LinkItem;
+
 /**
  * Extract links from HTML
  * 
@@ -21,12 +25,12 @@ import javax.swing.text.html.parser.ParserDelegator;
  */
 public class ExtractLinks {
 
-	List<KEGGElement> keggElements;
+	private List<KEGGElement> keggElements;
 
 	/**
 	 * Swing HTMLEditorKit Parser
 	 */
-	class Parser extends HTMLEditorKit.ParserCallback {
+	class ParserHTML extends HTMLEditorKit.ParserCallback {
 		private static final int SIZE = 128;
 		private static final int INSIDE_LINK = 0;
 		private static final int OUTSIDE_LINK = 1;
@@ -38,7 +42,7 @@ public class ExtractLinks {
 		private String coords;
 		private StringBuilder text;
 
-		public Parser(List<LinkItem> links) {
+		public ParserHTML(List<LinkItem> links) {
 			this.links = links; //pass in our list
 		}
 
@@ -178,7 +182,7 @@ public class ExtractLinks {
 	public List<LinkItem> getLinks(String htmlContent) throws Exception {
 		List<LinkItem> links = new ArrayList<LinkItem>();
 		Reader reader = new StringReader(htmlContent);
-		new ParserDelegator().parse(reader, new Parser(links), true);
+		new ParserDelegator().parse(reader, new ParserHTML(links), true);
 		return links;
 	}
 
@@ -190,7 +194,7 @@ public class ExtractLinks {
 	 */
 	public List<LinkItem> getLinks(InputStreamReader reader) throws Exception {
 		List<LinkItem> links = new ArrayList<LinkItem>();
-		new ParserDelegator().parse(reader, new Parser(links), true);
+		new ParserDelegator().parse(reader, new ParserHTML(links), true);
 		return links;
 	}
 }

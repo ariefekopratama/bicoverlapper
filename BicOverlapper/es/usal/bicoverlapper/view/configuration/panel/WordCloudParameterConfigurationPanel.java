@@ -160,23 +160,23 @@ public class WordCloudParameterConfigurationPanel extends javax.swing.JPanel
 
 	public void actionPerformed(ActionEvent e) {
 
-		if (parent.doNOTupdate) {
-			parent.doNOTupdate = false;
+		if (parent.isDoNOTupdate()) {
+			parent.setDoNOTupdate(false);
 			return;
 		}
 		JComboBox cb = (JComboBox) e.getSource();
 		if (cb == text) {
 			if (!antName.equals((String) cb.getSelectedItem()))
-				parent.textChanged = true;
+				parent.setTextChanged(true);
 			else
-				parent.textChanged = false;
+				parent.setTextChanged(false);
 		} else
-			parent.textChanged = false;
+			parent.setTextChanged(false);
 
 		if (cb == ontology && size.getSelectedIndex() == PVALUES)
-			parent.got = null;
-		parent.innerCall = true;
-		if (cb == text && parent.textChanged) {
+			parent.setGot(null);
+		parent.setInnerCall(true);
+		if (cb == text && parent.isTextChanged()) {
 			if (((String) cb.getSelectedItem()).equals("go term")) {
 				split.addItem("complete");
 				size.addItem("p-value");

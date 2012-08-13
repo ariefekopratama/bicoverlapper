@@ -203,9 +203,9 @@ public class NetworkDiagram extends Diagram {
 		paleta[NetworkDiagram.searchColor] = sesion.getSearchColor();
 		paleta[NetworkDiagram.hoverColor] = sesion.getHoverColor();
 
-		paleta[NetworkDiagram.lowExpColor] = sesion.lowExpColor;
-		paleta[NetworkDiagram.avgExpColor] = sesion.avgExpColor;
-		paleta[NetworkDiagram.highExpColor] = sesion.hiExpColor;
+		paleta[NetworkDiagram.lowExpColor] = sesion.getLowExpColor();
+		paleta[NetworkDiagram.avgExpColor] = sesion.getAvgExpColor();
+		paleta[NetworkDiagram.highExpColor] = sesion.getHiExpColor();
 	}
 
 	/**

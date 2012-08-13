@@ -21,25 +21,12 @@ import es.usal.bicoverlapper.utils.RUtils;
  * 
  */
 public class Analysis {
-	MicroarrayData microarrayData = null;
-
-	public MicroarrayData getMicroarrayData() {
-		return microarrayData;
-	}
-
-	public void setMicroarrayData(MicroarrayData md) {
-		this.microarrayData = md;
-		// loadMatrix(microarrayData.rMatrixName);//TODO: By now, this means we
-		// have two copies of the matrix, one in MicroarrayData class and
-		// another one in R ExpressionSet eset. This is highly memory
-		// innefficient...
-	}
-
+	private MicroarrayData microarrayData = null;
 	public Rengine r = null;
-	REXP exp = null;
-	String defaultPath = "";
-	int[] filterOptions = null;
-	public boolean matrixLoaded = false;
+	private REXP exp = null;
+	private String defaultPath = "";
+	private int[] filterOptions = null;
+	private boolean matrixLoaded = false;
 
 	public int[] getFilterOptions() {
 		return filterOptions;
@@ -1546,4 +1533,22 @@ public class Analysis {
 		return outFile;
 	}
 
+	public MicroarrayData getMicroarrayData() {
+		return microarrayData;
+	}
+
+	public void setMicroarrayData(MicroarrayData md) {
+		this.microarrayData = md;
+		// loadMatrix(microarrayData.rMatrixName);//TODO: By now, this means we
+		// have two copies of the matrix, one in MicroarrayData class and
+		// another one in R ExpressionSet eset. This is highly memory
+		// innefficient...
+	}
+
+	/**
+	 * @return the matrixLoaded
+	 */
+	public boolean isMatrixLoaded() {
+		return matrixLoaded;
+	}
 }

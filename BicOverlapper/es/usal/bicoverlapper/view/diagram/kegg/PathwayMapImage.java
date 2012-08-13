@@ -13,6 +13,7 @@ import javax.swing.*;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
+import es.usal.bicoverlapper.model.kegg.LinkItem;
 import es.usal.bicoverlapper.view.diagram.Diagram;
 
 /**
@@ -208,8 +209,8 @@ public class PathwayMapImage extends JLabel implements Scrollable, MouseListener
 		Map<Integer, GeneAnnotation> mapaGenes = sesion.getMicroarrayData().getGeneAnnotations();
 		for (GeneAnnotation g : mapaGenes.values()) {
 			for (String gen : geneNames) {
-				if(g.id.equals(gen)){
-					genesSeleccionados.add(g.internalId);
+				if(g.getId().equals(gen)){
+					genesSeleccionados.add(g.getInternalId());
 				}
 			}
 		}

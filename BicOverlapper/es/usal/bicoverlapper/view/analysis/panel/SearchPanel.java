@@ -1,52 +1,21 @@
 package es.usal.bicoverlapper.view.analysis.panel;
 
-import javax.swing.JComponent;
-import javax.swing.JDesktopPane;
-import javax.swing.JFileChooser;
+import java.awt.Dimension;
+import java.awt.Rectangle;
+import java.io.File;
+
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-
-import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.GridBagLayout;
-import java.awt.Dimension;
-import java.awt.GridBagConstraints;
 import javax.swing.JTextField;
-import java.awt.Rectangle;
-import java.awt.GridLayout;
-import java.awt.Label;
-import javax.swing.JRadioButton;
-import java.awt.Checkbox;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.ArrayList;
 
-import javax.swing.JCheckBox;
-import javax.swing.JButton;
-
-
-
-import es.usal.bicoverlapper.controller.analysis.Analysis;
-import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
-import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
-import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
-import es.usal.bicoverlapper.controller.util.Translator;
-
-import javax.swing.JComboBox;
 
 
 /**
@@ -153,7 +122,7 @@ public class SearchPanel{
 			jButton1.setText("Search");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					session=session.mainWindow.getActiveWorkDesktop().getSession();
+					session=session.getMainWindow().getActiveWorkDesktop().getSession();
 					
 					if(session!=null)	
 						{

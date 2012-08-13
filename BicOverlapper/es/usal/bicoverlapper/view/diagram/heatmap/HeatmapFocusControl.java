@@ -119,7 +119,7 @@ class HeatmapFocusControl extends FocusControl
         				ArrayList<Object> params=new ArrayList<Object>();
 	    				params.add(numNeighbors);
 	    				params.add(sesion.getMicroarrayData().getGeneName(item.getInt("actualId")));
-	    				AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.analysis, AnalysisProgressMonitor.AnalysisTask.SEARCH_PATTERNS, params, "Searching similar patterns...");
+	    				AnalysisProgressMonitor apm=new AnalysisProgressMonitor(sesion.getAnalysis(), AnalysisProgressMonitor.AnalysisTask.SEARCH_PATTERNS, params, "Searching similar patterns...");
 	    				apm.run();
 	    				t=apm.getTask();
 						Thread wt=new Thread() {

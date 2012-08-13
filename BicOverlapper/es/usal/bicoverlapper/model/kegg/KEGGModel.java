@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.view.diagram.kegg;
+package es.usal.bicoverlapper.model.kegg;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
@@ -393,9 +393,9 @@ public class KEGGModel {
 			//para cada uno de los internalId seleccionados
 			for (Integer gen : internalIdsSelected) {
 				//si coinciden
-				if(g.internalId == (gen)){
+				if(g.getInternalId() == (gen)){
 					//se añade el id del gen a la lista de genes seleccionados
-					genesSeleccionados.add(g.id);
+					genesSeleccionados.add(g.getId());
 				}
 			}
 		}

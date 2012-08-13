@@ -1,43 +1,29 @@
 package es.usal.bicoverlapper.view.analysis.panel;
 
-import javax.swing.JComponent;
-import javax.swing.JDesktopPane;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JInternalFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JProgressBar;
-
 import java.awt.Component;
-import java.awt.Cursor;
-import java.awt.GridBagLayout;
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import javax.swing.JTextField;
 import java.awt.Rectangle;
-import java.awt.GridLayout;
-import java.awt.Label;
-import javax.swing.JRadioButton;
-import java.awt.Checkbox;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import javax.swing.JCheckBox;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
 
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
-import es.usal.bicoverlapper.controller.data.filter.TextFileFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
-import es.usal.bicoverlapper.controller.util.Translator;
 
 /**
  * This code was edited or generated using CloudGarden's Jigloo SWT/Swing GUI
@@ -69,8 +55,8 @@ public class BimaxPanel {
 	private JTextField jTextField212 = null;
 	private JButton jButton1 = null;
 	private Session session = null;
-	public File resultsFile = null;
-	public String defaultPath = ""; // @jve:decl-index=0:
+	private File resultsFile = null;
+	private String defaultPath = ""; // @jve:decl-index=0:
 	protected AnalysisTask t;
 	private JCheckBox jCheckBox2 = null;
 	private JCheckBox jCheckBox3 = null;
@@ -424,10 +410,10 @@ public class BimaxPanel {
 			jButton1.setText("Run Bimax");
 			jButton1.addActionListener(new java.awt.event.ActionListener() {
 				public void actionPerformed(java.awt.event.ActionEvent e) {
-					session = session.mainWindow.getActiveWorkDesktop()
+					session = session.getMainWindow().getActiveWorkDesktop()
 							.getSession();
 					if (session != null) {
-						Analysis b = session.analysis;
+						Analysis b = session.getAnalysis();
 
 						String fileName = "";
 						if (resultsFile != null) {
@@ -487,7 +473,7 @@ public class BimaxPanel {
 
 									else {
 										if (fileName.indexOf("/") > -1)
-											session.reader.readBiclusterResults(
+											session.getReader().readBiclusterResults(
 													fileName.substring(
 															0,
 															fileName.lastIndexOf("/")),
@@ -495,7 +481,7 @@ public class BimaxPanel {
 															.lastIndexOf("/") + 1),
 													fileName, session);
 										else
-											session.reader
+											session.getReader()
 													.readBiclusterResults("",
 															fileName, fileName,
 															session);

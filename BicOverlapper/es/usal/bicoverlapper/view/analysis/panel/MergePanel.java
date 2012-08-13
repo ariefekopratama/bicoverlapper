@@ -80,8 +80,8 @@ public class MergePanel extends javax.swing.JFrame {
 			if(ga!=null && ga.values()!=null && ga.values().size()>0)
 				{
 				GeneAnnotation a=ga.values().iterator().next();
-				if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-				if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+				if(a.getName()!=null && a.getName().length()>0)	rowNames.add(session.getMicroarrayData().rname);
+				if(a.getDescription()!=null && a.getDescription().length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
 				}
 		}
 		}
@@ -98,21 +98,21 @@ public class MergePanel extends javax.swing.JFrame {
 				jButton1.setLayout(null);
 				jButton1.addActionListener(new java.awt.event.ActionListener() {
 					public void actionPerformed(java.awt.event.ActionEvent e) {
-						session=session.mainWindow.getActiveWorkDesktop().getSession();
+						session=session.getMainWindow().getActiveWorkDesktop().getSession();
 						if(session!=null)	
 							{
 							String s=jList2.getSelectedValues()[0].toString();
 							String p=session.getMicroarrayData().path+"/"+session.getMicroarrayData().name+"-merged.txt";
 							
-							session.analysis.mergeColumns(s, p);
+							session.getAnalysis().mergeColumns(s, p);
 							session.microarrayPath=p;
 							
 							//TODO: Not too elegant/SE
 							FileMenuManager fmm=(FileMenuManager)session.getMicroarrayData().microarrayRequester;
-							fmm.fichero=new File(p);
+							fmm.setFichero(new File(p));
 							fmm.prepareDesktop();
 							try{
-								fmm.sesion.reader.readMicroarray(p, fmm.sesion, session.getMicroarrayData().microarrayRequester);
+								fmm.getSesion().getReader().readMicroarray(p, fmm.getSesion(), session.getMicroarrayData().microarrayRequester);
 							}catch(Exception ex){ex.printStackTrace();}
 							setVisible(false);
 							}

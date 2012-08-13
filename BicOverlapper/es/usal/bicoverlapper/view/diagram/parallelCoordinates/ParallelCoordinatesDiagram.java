@@ -63,24 +63,24 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 	private static final long serialVersionUID = -3509116578978086354L;
 
-	static String nombre = "Parallel Coordinates";
+	public static String nombre = "Parallel Coordinates";
 
 	// atributos del panel del diagrama
 	private Session sesion;
 	private MicroarrayData datos;
-	int numConditions = 0; // Número de condiciones
-	int numGenes = 0; // Número de genes
+	private int numConditions = 0; // Número de condiciones
+	private int numGenes = 0; // Número de genes
 	private int alto;
 	private int ancho;
 	private boolean atributosIniciados = false, configurando = false,
 			diagramaPintado = false;
 
 	// definicion de margenes del diagrama
-	final int margenDer = 30;
-	final int margenIzq = 80;
-	final int margenSup = 20;
-	final int margenInf = 100;
-	final int margenDiagrama = 10; // porcentaje de exceso en intervalo de
+	private final int margenDer = 30;
+	private final int margenIzq = 80;
+	private final int margenSup = 20;
+	private final int margenInf = 100;
+	private final int margenDiagrama = 10; // porcentaje de exceso en intervalo de
 									// representacion del diagrama
 
 	// *** Buffer especial para optimización en el dibujado de las líneas de
@@ -146,10 +146,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private boolean ejesRelativos = false; // if false, they correspond to the
 											// max/min for the whole set of axes
 	private boolean scrollFijado = false;
-	double anchoTextoCuota;
+	private double anchoTextoCuota;
 
 	// atributos usados para la gestion del intercambio de variables
-	public int[] ordenVars;
+	private int[] ordenVars;
 	private Line2D.Double[] ejesVars;
 	private int varSeleccionada = -1, posSeleccionada;
 	private Line2D.Double ejeSeleccionado, ejeReferencia = null;
@@ -166,8 +166,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 	private Rectangle2D.Double[] scrollSup, scrollInf;
 	private double[] cotaSup, cotaInf;
-	double[] valorSup, valorInf;
-	Rectangle2D.Double scrollSeleccionado = null;
+	private double[] valorSup, valorInf;
+	private Rectangle2D.Double scrollSeleccionado = null;
 	private int offset, altoScroll, anchoScroll, varScroll = -1, scrollPos,
 			posRef, margenScroll = 2;
 	private double nuevaCota;
@@ -194,8 +194,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private Object[] parametros = { new Boolean(false) };
 
 	// para el repintado selectivo
-	boolean moviendoEje = false;
-	boolean scrollMoved = false;
+	private boolean moviendoEje = false;
+	private boolean scrollMoved = false;
 
 	// Optimización del cómputo de lineas de fondo
 	GeneralPath gpLineasFondo = null;
@@ -1112,13 +1112,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				ArrayList<Object> params = new ArrayList<Object>();
 				params.add(sesion.getMicroarrayData().rMatrixName);
 				AnalysisProgressMonitor apm = new AnalysisProgressMonitor(
-						sesion.analysis,
+						sesion.getAnalysis(),
 						AnalysisProgressMonitor.AnalysisTask.LOAD_MATRIX,
 						params, "Computing percentiles...");
 				apm.run();
-				synchronized (sesion.analysis) {
+				synchronized (sesion.getAnalysis()) {
 					try {
-						sesion.analysis.wait();
+						sesion.getAnalysis().wait();
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
@@ -1346,7 +1346,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	/**
 	 * Resets scrolls to their initial positions
 	 */
-	void resetScrolls() {
+	private void resetScrolls() {
 		
 		//Carlos
 		//se cogen las posiciones iniciales y se calcula el rango de posiciones
@@ -1391,7 +1391,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 	}	
 	
-    public double[] getRanks(double[] samples) {
+	private double[] getRanks(double[] samples) {
         if (samples.length < 1) {
                 System.err.println("The sample is empty");
         }
@@ -1437,7 +1437,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	 * Sets the scrolls in the min and max value of the selected profiles for
 	 * each coordinate
 	 */
-	void fitScrolls() {
+	private void fitScrolls() {
 		if (sesion.getSelectedBicluster() != null && sesion.getSelectedGenesBicluster().size() > 0) 
 		{			
 			//Carlos
@@ -1699,7 +1699,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							params.add(sesion.getMicroarrayData().getGeneName(
 									tuplaSeleccionada));
 							AnalysisProgressMonitor apm = new AnalysisProgressMonitor(
-									sesion.analysis,
+									sesion.getAnalysis(),
 									AnalysisProgressMonitor.AnalysisTask.SEARCH_PATTERNS,
 									params, "Searching similar patterns...");
 							apm.run();

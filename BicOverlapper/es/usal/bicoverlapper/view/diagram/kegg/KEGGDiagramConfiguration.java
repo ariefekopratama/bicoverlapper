@@ -4,6 +4,12 @@ import java.awt.Dimension;
 
 import es.usal.bicoverlapper.view.configuration.DiagramConfiguration;
 
+/**
+ * Class to set the configuration of KEGGDiagram
+ * 
+ * @author Carlos Martín Casado
+ *
+ */
 public class KEGGDiagramConfiguration extends DiagramConfiguration {
 
 	private int indexCombo1;

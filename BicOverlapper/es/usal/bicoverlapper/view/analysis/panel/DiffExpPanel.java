@@ -1,9 +1,6 @@
 package es.usal.bicoverlapper.view.analysis.panel;
 
 import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -15,19 +12,13 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
-import javax.swing.JScrollPane;
-import javax.swing.WindowConstants;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.ListModel;
 import javax.swing.border.LineBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
@@ -35,7 +26,6 @@ import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.Analysi
 import es.usal.bicoverlapper.controller.data.filter.BiclusterResultsFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
-import es.usal.bicoverlapper.utils.RUtils;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -195,8 +185,8 @@ public class DiffExpPanel extends javax.swing.JFrame {
 							{
 							if(writeToFile.isSelected())	fileName=defaultPath;
 							}
-						 session=session.mainWindow.getActiveWorkDesktop().getSession();
-						 Analysis b=session.analysis;
+						 session=session.getMainWindow().getActiveWorkDesktop().getSession();
+						 Analysis b=session.getAnalysis();
 						 b.setFilterOptions(null);
 						
 						//EFV vs rest case
@@ -236,9 +226,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											else
 												{
 												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+													session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
+													session.getReader().readBiclusterResults("",fileName, fileName, session);
 												}
 											}catch(Exception e){e.printStackTrace();}
 									}
@@ -277,9 +267,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											else
 												{
 												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+													session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
+													session.getReader().readBiclusterResults("",fileName, fileName, session);
 												}
 											}catch(Exception e){e.printStackTrace();}
 									}
@@ -314,9 +304,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											else
 												{
 												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+													session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
+													session.getReader().readBiclusterResults("",fileName, fileName, session);
 												}
 											}catch(Exception e){e.printStackTrace();}
 									}
@@ -356,9 +346,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											else
 												{
 												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+													session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
+													session.getReader().readBiclusterResults("",fileName, fileName, session);
 												}
 											}catch(Exception e){e.printStackTrace();}
 									}
@@ -403,9 +393,9 @@ public class DiffExpPanel extends javax.swing.JFrame {
 											else
 												{
 												if(fileName.indexOf("/")>-1)
-													session.reader.readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
+													session.getReader().readBiclusterResults(fileName.substring(0, fileName.lastIndexOf("/")),fileName.substring(fileName.lastIndexOf("/")+1), fileName, session);
 												else
-													session.reader.readBiclusterResults("",fileName, fileName, session);
+													session.getReader().readBiclusterResults("",fileName, fileName, session);
 												}
 											}catch(Exception e){e.printStackTrace();}
 									}

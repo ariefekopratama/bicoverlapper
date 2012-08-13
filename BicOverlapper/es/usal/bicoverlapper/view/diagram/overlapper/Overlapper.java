@@ -1942,7 +1942,7 @@ public class Overlapper extends JProcessingPanel implements GeneRequester {
 						if (rightButtonNode.isGene()) {
 							GeneAnnotation ga = this.getMicroarrayData().geneAnnotations
 									.get(rightButtonNode.id);
-							if (ga != null && ga.goTerms != null) {
+							if (ga != null && ga.getGoTerms() != null) {
 								rightButtonNode
 										.setDetails(ga.getDetailedForm());
 							} else {

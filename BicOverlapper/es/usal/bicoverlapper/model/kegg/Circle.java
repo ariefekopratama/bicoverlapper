@@ -1,4 +1,4 @@
-package es.usal.bicoverlapper.view.diagram.kegg;
+package es.usal.bicoverlapper.model.kegg;
 
 import java.awt.Point;
 

@@ -11,52 +11,52 @@ import java.io.IOException;
  */
 public class Configuration {
 
-	public Dimension dimAplicacion = new Dimension(1300, 800);// 1000x600
+	private Dimension dimAplicacion = new Dimension(1300, 800);// 1000x600
 
-	public Dimension dimParallelCoordinatesWindow = new Dimension(900, 300);
-	public Dimension dimNetworkWindow = new Dimension(600, 430);
-	public Dimension dimHeatmapWindow = new Dimension(355, 610);// for 1280x800
-	public Dimension dimOverlapperWindow = new Dimension(900, 400);
-	public Dimension dimWordCloudWindow = new Dimension(355, 250);// for
+	private Dimension dimParallelCoordinatesWindow = new Dimension(900, 300);
+	private Dimension dimNetworkWindow = new Dimension(600, 430);
+	private Dimension dimHeatmapWindow = new Dimension(355, 610);// for 1280x800
+	private Dimension dimOverlapperWindow = new Dimension(900, 400);
+	private Dimension dimWordCloudWindow = new Dimension(355, 250);// for
 																	// 1280x800
 
 	// Carlos
 	// por ejemplo esta dimension inicial
-	public Dimension dimKeggWindow = new Dimension(355, 610);
+	private Dimension dimKeggWindow = new Dimension(355, 610);
 
-	public Dimension dimDataWindow = new Dimension(350, 300);
-	public Dimension dimPanelPuntos = new Dimension(900, 300);
-	public Dimension dimPanelHistograma = new Dimension(350, 300);
-	public Dimension dimPanelMapeo = new Dimension(350, 300);
-	public Dimension dimPanelDendrograma = new Dimension(900, 300);
-	public Dimension dimPanelBubbles = new Dimension(300, 300);
-	public Dimension dimPanelDataSelection = new Dimension(740, 560);
+	private Dimension dimDataWindow = new Dimension(350, 300);
+	private Dimension dimPanelPuntos = new Dimension(900, 300);
+	private Dimension dimPanelHistograma = new Dimension(350, 300);
+	private Dimension dimPanelMapeo = new Dimension(350, 300);
+	private Dimension dimPanelDendrograma = new Dimension(900, 300);
+	private Dimension dimPanelBubbles = new Dimension(300, 300);
+	private Dimension dimPanelDataSelection = new Dimension(740, 560);
 
-	public int marginInternalWindowWidth = 3 + 3; // margin of diagrams
-	public int marginInternalWindowHeight = 20 + 3; // margin of diagrams
-	public int marginExternalWindowWidth = 4 + 4;
-	public int marginExternalWindowHeight = 70 + 4;
+	private int marginInternalWindowWidth = 3 + 3; // margin of diagrams
+	private int marginInternalWindowHeight = 20 + 3; // margin of diagrams
+	private int marginExternalWindowWidth = 4 + 4;
+	private int marginExternalWindowHeight = 70 + 4;
 
-	public Point initPC, initHM, initWC, initBM, initO, initTRN, initKegg;
+	private Point initPC, initHM, initWC, initBM, initO, initTRN, initKegg;
 
-	static final int NoId = 0;
-	static final int DiagramaPuntosId = 1;
+	public static final int NoId = 0;
+	public static final int DiagramaPuntosId = 1;
 	/**
 	 * Unique identifier for Parallel Coordiantes Diagrams
 	 */
 	public static final int PARALLEL_COORDINATES_ID = 2;
-	static final int DendrogramaId = 3;
-	static final int HistogramaId = 4;
-	static final int MapeoId = 5;
+	public static final int DendrogramaId = 3;
+	public static final int HistogramaId = 4;
+	public static final int MapeoId = 5;
 	/**
 	 * Unique identifier for Bubble map Diagrams
 	 */
 	public static final int BUBBLE_MAP_ID = 6;
-	static final int TreeMapId = 7;
-	static final int CloudId = 8;
-	static final int TablaDatosId = 9;
-	static final int DataFilterId = 10;
-	static final int DataPersonFilterId = 11;
+	public static final int TreeMapId = 7;
+	public static final int CloudId = 8;
+	public static final int TablaDatosId = 9;
+	public static final int DataFilterId = 10;
+	public static final int DataPersonFilterId = 11;
 	public static final int HEATMAP_ID = 12;
 	public static final int OVERLAPPER_ID = 13;
 	public static final int TRN_ID = 14;
@@ -160,7 +160,7 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto del panel del diagrama de
 	 *         puntos.
 	 */
-	Dimension getSizePanelPuntos() {
+	public Dimension getSizePanelPuntos() {
 		return dimPanelPuntos;
 	}
 
@@ -182,7 +182,7 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto del panel del diagrama del
 	 *         histograma.
 	 */
-	Dimension getSizePanelHistograma() {
+	public Dimension getSizePanelHistograma() {
 		return new Dimension(
 				dimHeatmapWindow.width - marginInternalWindowWidth,
 				dimHeatmapWindow.height - marginInternalWindowHeight);
@@ -195,7 +195,7 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto del panel del diagrama del
 	 *         mapeo de color.
 	 */
-	Dimension getSizePanelMapeo() {
+	public Dimension getSizePanelMapeo() {
 		return dimPanelMapeo;
 	}
 
@@ -205,7 +205,7 @@ public class Configuration {
 	 * @return <code>Dimension</code> por defecto del panel del diagrama del
 	 *         dendrograma.
 	 */
-	Dimension getSizePanelDendrograma() {
+	public Dimension getSizePanelDendrograma() {
 		return dimPanelDendrograma;
 	}
 
@@ -214,7 +214,7 @@ public class Configuration {
 	 * 
 	 * @return <code>Dimension</code> por defecto de la ventana de datos.
 	 */
-	Dimension getSizePanelDatos() {
+	public Dimension getSizePanelDatos() {
 		return dimDataWindow;
 	}
 
@@ -227,7 +227,7 @@ public class Configuration {
 		return dimPanelBubbles;
 	}
 
-	void setDimPanelBubbles(Dimension dimPanelBubbles) {
+	public void setDimPanelBubbles(Dimension dimPanelBubbles) {
 		this.dimPanelBubbles = dimPanelBubbles;
 	}
 
@@ -242,7 +242,7 @@ public class Configuration {
 				dimNetworkWindow.height - marginInternalWindowHeight);
 	}
 
-	void setDimPanelTRN(Dimension dimPanelTRN) {
+	public void setDimPanelTRN(Dimension dimPanelTRN) {
 		this.dimNetworkWindow = dimPanelTRN;
 	}
 
@@ -257,7 +257,7 @@ public class Configuration {
 				dimHeatmapWindow.height - marginInternalWindowHeight);
 	}
 
-	void setDimPanelHeatmap(Dimension dimPanelHeatmap) {
+	public void setDimPanelHeatmap(Dimension dimPanelHeatmap) {
 		this.dimHeatmapWindow = dimPanelHeatmap;
 	}
 
@@ -283,19 +283,19 @@ public class Configuration {
 				- marginInternalWindowHeight);
 	}
 
-	void setDimPanelWordCloud(Dimension dimPanelWords) {
+	public void setDimPanelWordCloud(Dimension dimPanelWords) {
 		this.dimWordCloudWindow = dimPanelWords;
 	}
 
-	void setDimPanelBubbleGraph(Dimension dimPanelBubbleGraph) {
+	public void setDimPanelBubbleGraph(Dimension dimPanelBubbleGraph) {
 		this.dimOverlapperWindow = dimPanelBubbleGraph;
 	}
 
-	Dimension getDimPanelDataSelection() {
+	public Dimension getDimPanelDataSelection() {
 		return dimPanelDataSelection;
 	}
 
-	void setDimPanelDataSelection(Dimension dimPanelDataSelection) {
+	public void setDimPanelDataSelection(Dimension dimPanelDataSelection) {
 		this.dimPanelDataSelection = dimPanelDataSelection;
 	}
 
@@ -308,7 +308,56 @@ public class Configuration {
 		return dimKeggWindow;
 	}
 
-	void setDimPanelKegg(Dimension dimPanelKegg) {
+	public void setDimPanelKegg(Dimension dimPanelKegg) {
 		this.dimKeggWindow = dimPanelKegg;
+	}
+
+	/**
+	 * @return the initPC
+	 */
+	public Point getInitPC() {
+		return initPC;
+	}
+
+	/**
+	 * @return the initHM
+	 */
+	public Point getInitHM() {
+		return initHM;
+	}
+
+	/**
+	 * @return the initWC
+	 */
+	public Point getInitWC() {
+		return initWC;
+	}
+
+	/**
+	 * @return the initBM
+	 */
+	public Point getInitBM() {
+		return initBM;
+	}
+
+	/**
+	 * @return the initO
+	 */
+	public Point getInitO() {
+		return initO;
+	}
+
+	/**
+	 * @return the initTRN
+	 */
+	public Point getInitTRN() {
+		return initTRN;
+	}
+
+	/**
+	 * @return the initKegg
+	 */
+	public Point getInitKegg() {
+		return initKegg;
 	}
 }

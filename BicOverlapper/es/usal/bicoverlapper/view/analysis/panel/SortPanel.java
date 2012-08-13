@@ -86,8 +86,8 @@ public class SortPanel extends javax.swing.JFrame {
 			if(ga!=null && ga.values()!=null && ga.values().size()>0)
 				{
 				GeneAnnotation a=ga.values().iterator().next();
-				if(a.name!=null && a.name.length()>0)	rowNames.add(session.getMicroarrayData().rname);
-				if(a.description!=null && a.description.length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
+				if(a.getName()!=null && a.getName().length()>0)	rowNames.add(session.getMicroarrayData().rname);
+				if(a.getDescription()!=null && a.getDescription().length()>0)	rowNames.add(session.getMicroarrayData().rdescription);
 				}
 		}
 		}
