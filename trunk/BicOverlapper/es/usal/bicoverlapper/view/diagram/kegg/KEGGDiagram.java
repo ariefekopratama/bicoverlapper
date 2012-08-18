@@ -101,7 +101,7 @@ public class KEGGDiagram extends Diagram {
 	
 	/**
 	 * Session Constructor
-	 * @param session Session in which this diagram is in. It must have TRN data loaded
+	 * @param session Session in which this diagram is in. It must have microarrayData loaded
 	 * @param dim Dimension for this diagram
 	 */	
 	public KEGGDiagram(Session sesion, Dimension dim) {
@@ -366,6 +366,8 @@ public class KEGGDiagram extends Diagram {
 		panelComboBoxes.setOpaque(true);
 		
 		//se obtiene la lista de organismos
+		keggController.obtainOrganisms();
+		
 		String[] organismosSeleccionables = keggModel.getOrganisms();
 		if(organismosSeleccionables.length == 0){
 			msgError = "Unable to connect with KEGG server. Please, close this diagram, check your conexion and open this diagram again.";
@@ -467,10 +469,11 @@ public class KEGGDiagram extends Diagram {
 		// se desea mostrar los pathways del organismo seleccionado en el combobox1
 		String organismId = keggModel.getOrganismId((String) combo1.getSelectedItem());
 
-		Definition[] pathways = keggModel.getDefinitionPathwaysFromOrganism(organismId);
-		//definitionPathways = pathways;
-		keggModel.setDefinitionPathways(pathways);
+		//se obtienen los definition pathways del servidor
+		keggController.obtainDefinitionPathwaysFromOrganism(organismId);
 		
+		//se recuperan del modelo
+		Definition[] pathways = keggModel.getDefinitionPathways();		
 		
 		//se eliminan los elementos antiguos
 		combo2.removeAllItems();

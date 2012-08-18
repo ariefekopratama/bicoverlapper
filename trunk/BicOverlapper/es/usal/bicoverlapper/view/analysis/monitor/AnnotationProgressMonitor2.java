@@ -80,9 +80,9 @@ public void propertyChange(PropertyChangeEvent evt)
 		int progress = (Integer) evt.getNewValue();
 		//progressMonitor.setProgress(progress);
 		
-		String message =String.format(task.message+"\n");
+		String message =String.format(task.getMessage()+"\n");
 		label.setText(progress+"%");
-		label.setToolTipText(task.message);
+		label.setToolTipText(task.getMessage());
 		//progressMonitor.setNote(message);
 		//taskOutput.append(message);
 		

@@ -473,13 +473,14 @@ public class BimaxPanel {
 
 									else {
 										if (fileName.indexOf("/") > -1)
-											session.getReader().readBiclusterResults(
-													fileName.substring(
-															0,
-															fileName.lastIndexOf("/")),
-													fileName.substring(fileName
-															.lastIndexOf("/") + 1),
-													fileName, session);
+											session.getReader()
+													.readBiclusterResults(
+															fileName.substring(
+																	0,
+																	fileName.lastIndexOf("/")),
+															fileName.substring(fileName
+																	.lastIndexOf("/") + 1),
+															fileName, session);
 										else
 											session.getReader()
 													.readBiclusterResults("",

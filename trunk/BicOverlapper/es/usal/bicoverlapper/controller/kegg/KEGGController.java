@@ -7,6 +7,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.TreeMap;
 import javax.swing.SwingWorker;
 import javax.xml.rpc.ServiceException;
 
+import keggapi.Definition;
 import keggapi.KEGGLocator;
 import keggapi.KEGGPortType;
 import keggapi.PathwayElement;
@@ -54,10 +56,13 @@ public class KEGGController implements ActionListener {
 			//se ha pulsado el botón obtener imagen
 			case 1: 
 				this.accionObtenerImagen();
+				break;
 			case 2:
 				this.accionSeleccionarOrganismoCombo1();
+				break;
 			case 3:
 				this.accionSeleccionarPathwayCombo2();
+				break;
 		}
 	}
 
@@ -65,7 +70,7 @@ public class KEGGController implements ActionListener {
 		try {
 			//si se ha seleccionado un pathway, se habilita el botón de obtener imagen
 			if (keggDiagram.getCombo2().getSelectedItem() != null && !keggDiagram.getCombo2().getSelectedItem().equals("")){
-				keggDiagram.getBotonObtenerImagen().setEnabled(true);
+				keggDiagram.getBotonObtenerImagen().setEnabled(true);				
 			}
 			//si no, se deshabilita
 			else{
@@ -120,9 +125,9 @@ public class KEGGController implements ActionListener {
             	keggDiagram.getBotonFlechaIzq().setEnabled(true);
             	keggDiagram.getBotonFlechaDer().setEnabled(true);
             	keggDiagram.getCombo1().setEnabled(true);
-            	keggDiagram.getCombo2().setEnabled(true);	
+            	keggDiagram.getCombo2().setEnabled(true);	                    	
         		//se desactiva de la vista la progressBar
-            	keggDiagram.getProgressBar().setVisible(false);		
+            	keggDiagram.getProgressBar().setVisible(false);
             	
                 return null;  
             }
@@ -157,21 +162,22 @@ public class KEGGController implements ActionListener {
 	 */
 	private void showImage(String pathway) {
 		try {
-			String url = this.generateKeggImage(pathway, keggModel.getValorActualCondition());
+			//se genera el mapa pathway coloreado
+			this.generateKeggImage(pathway, keggModel.getValorActualCondition());
 
-			URL u = new URL(url);
+			URL u = new URL(keggModel.getUrlPathwayMap());
 			InputStream in = u.openStream();
-			InputStreamReader reader = new InputStreamReader(in);
+			InputStreamReader readerURL = new InputStreamReader(in);
 
 			ExtractLinks fl = new ExtractLinks(keggModel.getKeggElements());
 
-			keggModel.setListaElementosImg(fl.getLinks(reader));
+			keggModel.setListaElementosImg(fl.getLinks(readerURL));
 
 			//para que se monte el coloreado desde el programa java se pone false
 			//mountPanelsWithNewImage(url.replace("html", "png"), false);
 			//pero para poder extraer los links y que actúe el oyente he comentado el paintComponent en ScrollablePicture
 			//así, aquí pondré ahora false y no se coloreará en java, sólo se activará el mouseListener
-			keggDiagram.mountPanelsWithNewImage(url.replace("html", "png"), false);
+			keggDiagram.mountPanelsWithNewImage(keggModel.getUrlPathwayMap().replace("html", "png"), false);
 		} catch (MalformedURLException mURLe) {
 			mURLe.printStackTrace();
 		} catch (Exception e) {
@@ -216,7 +222,7 @@ public class KEGGController implements ActionListener {
 	 * @return URL with the image generated
 	 * @throws Exception 
 	 */
-	public String generateKeggImage(String pathway, int numCondition) throws Exception {
+	public void generateKeggImage(String pathway, int numCondition) throws Exception {
 		int[] element_id_list = null;
 		String[] bgs = null;
 		String[] fgs = null;
@@ -262,14 +268,14 @@ public class KEGGController implements ActionListener {
 					//extrañamente montando este TreeMap previo tarda menos que recorriendo nombresKO abajo directamente
 					//así, se prepara un mapa que tiene por clave el nombre correspondiente y una lista 
 					//esa lista tendrá el nombre pero sin la identificación del organismo, es decir, si hay algo del tipo mmu:12345 se eliminará "mmu:"
-					TreeMap<String, ArrayList<String>> mapaGenesEnPathway = new TreeMap<String, ArrayList<String>>();
+					TreeMap<String, ArrayList<String>> mapaGenesEnPathwayElement = new TreeMap<String, ArrayList<String>>();
 					for (String nombreGen : nombresGenes){
 						ArrayList<String> listaNombresGenes = new ArrayList<String>();
 						//se comprueba que el comienzo del gen coincida con el organismo cargado en el experimento
 						if(nombreGen.startsWith(sesion.getMicroarrayData().getOrganismKEGG())){
 							//se guarda el nombre del gen sin el identificador del organismo
 							listaNombresGenes.add(nombreGen.split("\\:")[1]);
-							mapaGenesEnPathway.put(nombreGen, listaNombresGenes);
+							mapaGenesEnPathwayElement.put(nombreGen, listaNombresGenes);
 						}
 						//System.out.println("nombreKO = "+nombreKO+", pathwayElements[i].getType() = "+pathwayElements[i].getType()+ " orgamismKegg = "+sesion.getMicroarrayData().getOrganismKEGG());
 					}
@@ -277,7 +283,7 @@ public class KEGGController implements ActionListener {
 					//para cada gen en el microarray
 					for (GeneAnnotation g : mapaGenes.values()) {		
 						//para cada gen en el pathway
-						for (ArrayList<String> listaGenes: mapaGenesEnPathway.values()) {	
+						for (ArrayList<String> listaGenes: mapaGenesEnPathwayElement.values()) {	
 							for(String gen: listaGenes){
 								//si coinciden con el identificador que se esté comparando en cada momento, se marca la coincidencia y se guarda el valor de su expresión para calcular posteriormente su media
 								if(tipoIdentificador == 0 && null != g.getId() && gen.equals(g.getId())){									
@@ -379,7 +385,7 @@ public class KEGGController implements ActionListener {
 		System.out.println("generarImagenKegg took "
 				+ (System.currentTimeMillis() - start) / 1000 + " seconds");
 
-		return url;
+		keggModel.setUrlPathwayMap(url);
 	}	
 	
 	/**
@@ -429,5 +435,32 @@ public class KEGGController implements ActionListener {
 			e.printStackTrace();
 		}
 		return colored;
+	}	
+	
+	/**
+	 * Retrieves all the pathways for a given organism
+	 * 
+	 * @param organism Organism to seek its pathways
+	 * @return Definition[] with pathways
+	 * @throws RemoteException
+	 */
+	public void obtainDefinitionPathwaysFromOrganism(String organism) throws RemoteException {
+		Definition[] d = serv.list_pathways(organism);
+		keggModel.setDefinitionPathways(d);
+	}
+	
+	/**
+	 * Obtain list organisms
+	 * 
+	 * @return String[] with the organisms
+	 */
+	public void obtainOrganisms() {
+		Definition[] listOrganisms;
+		try {
+			listOrganisms = serv.list_organisms();
+			keggModel.setList_organisms(listOrganisms);
+		} catch (RemoteException e) {
+			keggModel.setList_organisms(null);
+		}
 	}	
 }

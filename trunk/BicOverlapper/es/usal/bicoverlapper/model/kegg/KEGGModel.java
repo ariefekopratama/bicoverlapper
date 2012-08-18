@@ -2,7 +2,6 @@ package es.usal.bicoverlapper.model.kegg;
 
 import java.awt.Color;
 import java.awt.geom.Rectangle2D;
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -10,8 +9,6 @@ import java.util.List;
 import java.util.Map;
 
 import keggapi.Definition;
-import keggapi.KEGGLocator;
-import keggapi.KEGGPortType;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.model.gene.GeneAnnotation;
 
@@ -23,22 +20,20 @@ import es.usal.bicoverlapper.model.gene.GeneAnnotation;
  */
 public class KEGGModel {
 	
-	private KEGGPortType serv;
 	private List<KEGGElement> keggElements = new ArrayList<KEGGElement>();
 	private Session sesion;
 	private Definition[] definitionPathways;
 	private List<LinkItem> listaElementosImg = null;
 	private int scaleModeKegg;
 	private int valorActualCondition = 0;
+	private Definition[] list_organisms;
+	private String urlPathwayMap;
 	
 	/**
 	 * Binds the service to the soap port
 	 * @throws Exception
 	 */
 	public KEGGModel(Session _sesion) throws Exception {
-
-		KEGGLocator locator = new KEGGLocator();
-		serv = locator.getKEGGPort();
 		sesion = _sesion;
 	}
 
@@ -62,8 +57,7 @@ public class KEGGModel {
 	 * @return String[] with pathways
 	 * @throws Exception
 	 */
-	public String[] getPathwaysFromOrganism(String organism) throws Exception {
-		Definition[] d = serv.list_pathways(organism);
+	public String[] getPathwaysFromOrganism(Definition[] d) throws Exception {
 		String[] paths = new String[d.length];
 		for (int i = 0; i < d.length; i++) {
 			System.out
@@ -81,10 +75,12 @@ public class KEGGModel {
 	 * @return Definition[] with pathways
 	 * @throws RemoteException
 	 */
+	/*
 	public Definition[] getDefinitionPathwaysFromOrganism(String organism) throws RemoteException {
 		Definition[] d = serv.list_pathways(organism);
 		return d;
 	}
+	*/
 
 	/**
 	 * Retrieves the pathway id for a given pathway definition
@@ -107,6 +103,7 @@ public class KEGGModel {
 	 * 
 	 * @return String[] with the organisms
 	 */
+	/*
 	public String[] getOrganisms() {
 		Definition[] d;
 		try {
@@ -126,6 +123,31 @@ public class KEGGModel {
 		
 		return new String[0];
 	}
+	*/
+	
+	/**
+	 * Get list organisms
+	 * 
+	 * @return String[] with the organisms
+	 */
+	public String[] getOrganisms() {
+		if(list_organisms != null && list_organisms.length>0)
+		{
+			String[] paths = new String[list_organisms.length];
+			for (int i = 0; i < list_organisms.length; i++) {
+				paths[i] = list_organisms[i].getDefinition();
+			}
+			
+			//se ordena por orden alfabético
+			Arrays.sort(paths);
+						
+			return paths;
+		}
+		else
+		{
+			return new String[0];
+		}
+	}	
 
 	/**
 	 * Get the id of an organism
@@ -135,11 +157,10 @@ public class KEGGModel {
 	 * @throws Exception
 	 */
 	public String getOrganismId(String organism) throws Exception {
-		Definition[] d = serv.list_organisms();
-
-		for (int i = 0; i < d.length; i++) {
-			if (d[i].getDefinition().startsWith(organism)) {
-				return d[i].getEntry_id();
+		for (int i = 0; i < list_organisms.length; i++) {
+			if (list_organisms[i].getDefinition().startsWith(organism)) {
+				System.out.println("organismId = "+list_organisms[i].getEntry_id());
+				return list_organisms[i].getEntry_id();
 			}
 		}
 
@@ -153,8 +174,8 @@ public class KEGGModel {
 	 * @return String[] with organisms
 	 * @throws Exception
 	 */
-	public String[] getOrganismsFromPathway(String pathway) throws Exception {
-		String d = serv.bfind("path " + pathway);
+	public String[] getOrganismsFromPathway(String pathway, String d ) throws Exception {
+		//String d = serv.bfind("path " + pathway);
 		String[] tokens = d.split("\n");
 		ArrayList<String> orgs = new ArrayList<String>();
 		for (int i = 0; i < tokens.length; i++) {
@@ -494,5 +515,33 @@ public class KEGGModel {
 	 */
 	public void setKeggElements(List<KEGGElement> keggElements) {
 		this.keggElements = keggElements;
+	}
+
+	/**
+	 * @return the list_organisms
+	 */
+	public Definition[] getList_organisms() {
+		return list_organisms;
+	}
+
+	/**
+	 * @param list_organisms the list_organisms to set
+	 */
+	public void setList_organisms(Definition[] list_organisms) {
+		this.list_organisms = list_organisms;
+	}
+
+	/**
+	 * @return the urlPathwayMap
+	 */
+	public String getUrlPathwayMap() {
+		return urlPathwayMap;
+	}
+
+	/**
+	 * @param urlPathwayMap the urlPathwayMap to set
+	 */
+	public void setUrlPathwayMap(String urlPathwayMap) {
+		this.urlPathwayMap = urlPathwayMap;
 	}    
 }
