@@ -69,7 +69,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	private List<GOTerm> got = null;
 	private ArrayList<GeneAnnotation> annot = null;
 	private boolean textChanged = false; // to not repeat hypergeometric tests
-										// and other R calls
+											// and other R calls
 	private boolean innerCall = false;// to differentiate updates from combo
 										// boxes from internal updates
 
@@ -188,7 +188,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				&& sesion.getSelectedGenesBicluster() != null
 				&& sesion.getSelectedGenesBicluster().size() > 0) {
 			boolean reqSearch = true;
-			
+
 			boolean annotOK = sesion.getMicroarrayData().checkAnnotations(
 					sesion.getSelectedGenesBicluster());
 			if (annotOK) {
@@ -208,7 +208,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 				reqSearch = false;
 			}
 
-			if (reqSearch && (!innerCall || annot == null || (got == null && menuCloud.size.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
+			if (reqSearch
+					&& (!innerCall || annot == null || (got == null && menuCloud.size
+							.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES))) {
 				Point p = new Point(0, 0);
 				if (this.getParent() != null)
 					p = this.sesion.getDiagramWindow(this.getName())
@@ -244,8 +246,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 								.println("No annotation package especified, trying with "
 										+ sesion.getMicroarrayData()
 												.getAnnotationPackage());
-						sesion.getAnalysis().loadRLibrary(sesion.getMicroarrayData()
-								.getAnnotationPackage());
+						sesion.getAnalysis().loadRLibrary(
+								sesion.getMicroarrayData()
+										.getAnnotationPackage());
 					}
 					this.sesion.getMicroarrayData().getGOTermsHypergeometric(
 							sesion.getSelectedGenesBicluster(), this, p, ont);
@@ -390,8 +393,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 					if (go != null) {
 						String desc = go.getTerm();
 						double size = Math.abs(Math.log10(go.getPvalue()));
-						splitAndAdd(desc, go.getPvalue(), size, this.colorSeleccion,
-								false, null);
+						splitAndAdd(desc, go.getPvalue(), size,
+								this.colorSeleccion, false, null);
 					}
 				}
 				break;
@@ -721,9 +724,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		FontRenderContext frc = g2.getFontRenderContext();
 
 		System.out.println("Setting words");
-		
+
 		sortedWords = null;
-		
+
 		// 0) Alphabetic sort of words
 		if (words != null && words.size() > 0) {
 			String[] tal = words.keySet().toArray(new String[0]);
@@ -736,9 +739,9 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		System.out.println("First loop");
 		// 1) Primera vuelta, chequeamos el tamaño
 		for (String w : sortedWords) {
-			
-			System.out.println("word = "+w);
-			
+
+			System.out.println("word = " + w);
+
 			Word nW = words.get(w);
 			if (w.length() > 0 && nW != null) {
 				String wc = "";
@@ -1137,10 +1140,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		private String label;
 		private double x;
 		private double y;
-		private double size;// size for this word, usually related to the figure of
-					// merit
-		private double value;// figure of merit for this word (number of occurences,
-						// p-value, etc.)
+		private double size;// size for this word, usually related to the figure
+							// of
+		// merit
+		private double value;// figure of merit for this word (number of
+								// occurences,
+		// p-value, etc.)
 		private Color color;
 
 		public Word(TextLayout text, double x, double y, double value,
@@ -1202,7 +1207,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	/**
-	 * @param got the got to set
+	 * @param got
+	 *            the got to set
 	 */
 	public void setGot(List<GOTerm> got) {
 		this.got = got;
@@ -1216,14 +1222,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	/**
-	 * @param textChanged the textChanged to set
+	 * @param textChanged
+	 *            the textChanged to set
 	 */
 	public void setTextChanged(boolean textChanged) {
 		this.textChanged = textChanged;
 	}
 
 	/**
-	 * @param innerCall the innerCall to set
+	 * @param innerCall
+	 *            the innerCall to set
 	 */
 	public void setInnerCall(boolean innerCall) {
 		this.innerCall = innerCall;
@@ -1237,7 +1245,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	/**
-	 * @param doNOTupdate the doNOTupdate to set
+	 * @param doNOTupdate
+	 *            the doNOTupdate to set
 	 */
 	public void setDoNOTupdate(boolean doNOTupdate) {
 		this.doNOTupdate = doNOTupdate;

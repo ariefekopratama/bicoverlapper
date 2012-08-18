@@ -2209,16 +2209,16 @@ public class MicroarrayData {
 	public class AnnotationTask extends
 			SwingWorker<ArrayList<GeneAnnotation>, Void>// implements Runnable
 	{
-		public String gene;
-		public String message;
-		public int id;
+		private String gene;
+		private String message;
+		private int id;
 
-		public int[] genes;
-		public GeneAnnotation ga;
+		private int[] genes;
+		private GeneAnnotation ga;
 		public AnnotationProgressMonitor apm;
-		public ArrayList<GeneAnnotation> galist = null;
-		public boolean searchGO;
-		public boolean searchKEGG;
+		private ArrayList<GeneAnnotation> galist = null;
+		private boolean searchGO;
+		private boolean searchKEGG;
 
 		public AnnotationTask() {
 			genes = null;
@@ -2827,6 +2827,12 @@ public class MicroarrayData {
 			ventana.getMlpb().hide();
 		}
 
+		/**
+		 * @return the message
+		 */
+		public String getMessage() {
+			return message;
+		}
 	}
 
 	/**

@@ -28,10 +28,10 @@ public class AnnotationProgressMonitor extends JPanel implements
 		ActionListener, PropertyChangeListener, Runnable {
 
 	private static final long serialVersionUID = 7679749397384459601L;
-	public ProgressMonitor progressMonitor;
-	public JTextArea taskOutput;
+	private ProgressMonitor progressMonitor;
+	private JTextArea taskOutput;
 	private MicroarrayData.AnnotationTask task;
-	public JFrame frame;
+	private JFrame frame;
 	private Point location = null;
 
 	public MicroarrayData.AnnotationTask getTask() {
@@ -77,7 +77,7 @@ public class AnnotationProgressMonitor extends JPanel implements
 			int progress = (Integer) evt.getNewValue();
 			progressMonitor.setProgress(progress);
 
-			String message = String.format(task.message + "\n");
+			String message = String.format(task.getMessage() + "\n");
 			progressMonitor.setNote(message);
 			taskOutput.append(message);
 

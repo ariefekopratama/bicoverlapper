@@ -133,7 +133,9 @@ public class PathwayMapImage extends JLabel implements Scrollable, MouseListener
 	 * @param e MouseEvent
 	 */
 	private void detectarYColorearSeleccion(MouseEvent e) {
+		//si hay elementos que han sido mapeados en esta imagen
 		if (listaElementosImg != null) {
+			//se recorren y comprueban todos ellos
 			for (LinkItem itm : listaElementosImg) {
 				if (itm.getRectangle() != null && itm.getRectangle().outcode(e.getX(), e.getY()) == 0) {
 					System.out.println("Rectangle: Has picado sobre "+ itm.getTitle());
@@ -149,7 +151,6 @@ public class PathwayMapImage extends JLabel implements Scrollable, MouseListener
 							//parámetros para pintar el reborde del rectángulo
 							dibujarBordeKeggElement = true;
 							rectangles.add(itm.getRectangle());
-							this.repaint();
 							
 							//si está el shift apretado se unirán los nuevos elementos seleccionados a los que ya hubiera (si es que había alguno)
 							if(e.isShiftDown() && null != sesion.getSelectedBicluster() && null != sesion.getSelectedGenesBicluster()){
