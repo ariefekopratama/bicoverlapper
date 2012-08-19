@@ -152,7 +152,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		return colorW;
 	}
 
-	public void update() {
+	public synchronized void update() {
 		/*
 		 * Changes color to the terms that are related to the hovered gene (only
 		 * if <200 genes are selected)
@@ -651,7 +651,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		String s = "Too many elements selected for this view";
 		g2.drawString(s, 50, (int) (this.getHeight() * 0.5 - 10));
 		s = "(" + sesion.getSelectedGenesBicluster().size() + " selected, "
-				+ sesion.MAX_GENES + " allowed)";
+				+ Session.MAX_GENES + " allowed)";
 		g2.drawString(s, 80, (int) (this.getHeight() * 0.5 + 10));
 	}
 
@@ -686,7 +686,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 		progress.setBounds(this.getWidth() - progress.getWidth() - 2,
 				this.getHeight() - progress.getHeight() - 2, 50, 10);
-		// System.out.println("Words drawn");
+		System.out.println("Words drawn");
 	}
 
 	public void resize() {
@@ -718,6 +718,12 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 		double posicionXWord, separacionXWord;
 		double xMaxima;
+		
+		//por defecto end está a true porque es posible que no se encuentren palabras a dibujar
+		//si no se tiene en cuenta esto se entraría en bucle infinito al incrementar la escala hasta infinito
+		//se pondrá end a false cuando se encuentra en "1) Primera vuelta" al menos una palabra
+		boolean end = true;
+		boolean increase = false;
 
 		if (g2 == null)
 			return;
@@ -737,13 +743,17 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			return;
 
 		System.out.println("First loop");
-		// 1) Primera vuelta, chequeamos el tamaño
+		// 1) Primera vuelta, chequeamos el tamaño		
 		for (String w : sortedWords) {
 
 			System.out.println("word = " + w);
 
 			Word nW = words.get(w);
 			if (w.length() > 0 && nW != null) {
+				
+				//al menos se ha encontrado una palabra, así que ya se podrá entrar al bucle que incrementa el tamaño
+				end = false;
+								
 				String wc = "";
 				if (this.menuCloud.size.getSelectedIndex() == WordCloudParameterConfigurationPanel.PVALUES)
 					wc = w.concat("(" + formatNumber(nW.value) + ")");
@@ -793,15 +803,15 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		// 2) Determinamos el factor de escala
 		System.out.println("2) Determine scale factor");
 
-		double scale = Math.min(this.getHeight() / y, this.getWidth()
-				/ maxAncho);
+		double scale = Math.min(this.getHeight() / y, this.getWidth() / maxAncho);
+		
+		//sólo para probar por qué sale infinity
+		double scaleInicial = scale;
 
 		// 3) Segunda vuelta vuelta, con los tamaños adecuados
 		// como puede haber saltos de línea por el escalado, lo hacemos en un
 		// bucle donde vamos disminuyendo poco a poco la escala
 		System.out.println("3) 2nd loop");
-		boolean end = false;
-		boolean increase = false;
 		// boolean increaseAnt=increase;
 		// boolean first=true;
 
@@ -810,6 +820,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 		maxAncho = 0;
 
+		// 3) Calculamos el tamaño del as palabras
+		System.out.println("3) Determine words size");		
 		do {
 			// en cada vuelta se actualiza la xMaxima
 			xMaxima = 0;
@@ -930,11 +942,15 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 			// HABRÍA QUE IR GUARDANDO UN VALOR MÁXIMO DE X + ANCHURA Y VERLO
 			// AQUÍ
 			// antes había if ((y <= limitY && x <= limitX))// smaller
+			
+			System.out.println("y = "+y+", limitY="+limitY+", xMaxima="+xMaxima+", limitX="+limitX+", hasDecreased="+hasDecreased+", end="+end+", scale="+scale+", scaleInicial="+scaleInicial);
+			
 			if ((y <= limitY && xMaxima <= limitX)) {
 				if (hasDecreased) {
 					end = true;
 				}
 				increase = true;
+				System.out.println("increase="+increase);
 
 			} else// larger
 			{
@@ -946,16 +962,26 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 			if (!end) {
 				if (increase) {
+					
+					if(scale*1.5 == Double.POSITIVE_INFINITY){
+						System.out.println("\n\n\n\n\n\nPOSITIVE_INFINITY ALCANZADO AL HACER scale*1.5 y scale valía "+scale);
+					}
+					
 					scale *= 1.5;
 				} else {
+					if(scale/1.2 == Double.POSITIVE_INFINITY){
+						System.out.println("\n\n\n\n\n\nPOSITIVE_INFINITY ALCANZADO AL HACER scale/1.2 y scale valía "+scale);
+					}					
+					
 					scale /= 1.2;
 				}
 			}
-			// System.out.println("end? "+end);
-
+			
 		} while (!end);
 
 		textChanged = false;
+		
+		System.out.println("4) Words set");
 
 		// necesita un repaint para que al redimensionar se actualice la vista
 		super.repaint();
