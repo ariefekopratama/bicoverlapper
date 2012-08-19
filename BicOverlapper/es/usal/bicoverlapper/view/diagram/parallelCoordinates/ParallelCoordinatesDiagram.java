@@ -1662,7 +1662,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		private AnalysisTask t;
 
 		public void mouseClicked(MouseEvent e) {
-			System.out.println("mouseClicked in GestorSeleccionarTupla");
 			Selection selecBic = sesion.getSelectedBicluster();
 			if (!scrollFijado && sesion.areMicroarrayDataLoaded()
 					&& selecBic != null && (selecBic.getGenes().size() > 0)) {
@@ -1767,7 +1766,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseMoved(MouseEvent e) {
-			System.out.println("mouseMoved in GestorSeleccionarTupla");
 			Selection selecBic = sesion.getSelectedBicluster();
 			if (sesion.areMicroarrayDataLoaded() && selecBic != null
 					&& (selecBic.getGenes().size() > 0)) {
@@ -1811,7 +1809,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseDragged(MouseEvent e) {
-			System.out.println("mouseDragged in GestorSeleccionarTupla");
 			if (scrollFijado || ejeSeleccionado != null || e.isControlDown())
 				return;
 			// Draw the line
@@ -1824,7 +1821,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mousePressed(MouseEvent e) {
-			System.out.println("mousePressed in GestorSeleccionarTupla");
 			// take first point of the slope
 			if (scrollFijado || ejeSeleccionado != null || e.isControlDown())
 				return;
@@ -1833,7 +1829,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			System.out.println("mouseReleased in GestorSeleccionarTupla");
 			if (scrollFijado || ejeSeleccionado != null || e.isControlDown())
 				return;
 
@@ -1918,7 +1913,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mousePressed(MouseEvent e) {
-			System.out.println("mousePressed in GestorCambioVars");
 			if (sesion.areMicroarrayDataLoaded() && atributosIniciados) {
 				ejeSeleccionado = null;
 				varSeleccionada = -1;
@@ -1949,7 +1943,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			System.out.println("mouseReleased in GestorCambioVars");
 			if (sesion.areMicroarrayDataLoaded() && (ejeSeleccionado != null)
 					&& varSeleccionada != -1) {
 				int nuevaPosicion = 0;
@@ -2012,7 +2005,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseDragged(MouseEvent e) {
-			System.out.println("mouseDragged in GestorCambioVars");
 			if (sesion.areMicroarrayDataLoaded() && (ejeSeleccionado != null)) {
 
 				double offset = ejeSeleccionado.getX1() - e.getPoint().getX();
@@ -2063,7 +2055,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mousePressed(MouseEvent e) {
-			System.out.println("mousePressed in GestorScrolls");
 			if (sesion.areMicroarrayDataLoaded()) {
 				posRef = e.getY();
 				offset = 0;
@@ -2105,7 +2096,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseReleased(MouseEvent e) {
-			System.out.println("mouseReleased in GestorScrolls");
 			if (ejeSeleccionado != null || scrollSeleccionado == null)
 				return; // estamos en un cambio de ejes o no hay scroll
 						// seleccionado
@@ -2260,7 +2250,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseDragged(MouseEvent e) {
-			System.out.println("mouseDragged in GestorScrolls");
 			if (sesion.areMicroarrayDataLoaded()) {
 				if (varScroll > -1) {
 
@@ -2346,7 +2335,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		}
 
 		public void mouseMoved(MouseEvent e) {
-			System.out.println("mouseMoved in GestorCursor");
 			if (sesion.areMicroarrayDataLoaded() && atributosIniciados
 					&& diagramaPintado) {
 				int zonaSelec = 2;
