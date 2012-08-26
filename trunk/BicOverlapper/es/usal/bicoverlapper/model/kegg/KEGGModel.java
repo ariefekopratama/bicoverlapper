@@ -33,7 +33,7 @@ public class KEGGModel {
 	 * Binds the service to the soap port
 	 * @throws Exception
 	 */
-	public KEGGModel(Session _sesion) throws Exception {
+	public KEGGModel(Session _sesion) {
 		sesion = _sesion;
 	}
 

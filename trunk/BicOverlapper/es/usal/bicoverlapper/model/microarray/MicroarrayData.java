@@ -2499,7 +2499,7 @@ public class MicroarrayData {
 									if(ids.length!=t.length)
 										System.out.println("Ojo");
 									if(t!=null){	
-										//System.out.println("Addint term "+t[i]);
+										System.out.println("Addint term "+t[i]);
 									}
 									GOTerm gt = new GOTerm(t[i], ids[i], d[i], o[i], "", 1);
 									GOTerms.put(ids[i], gt);
