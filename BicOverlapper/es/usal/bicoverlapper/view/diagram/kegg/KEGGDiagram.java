@@ -107,7 +107,7 @@ public class KEGGDiagram extends Diagram {
 	public KEGGDiagram(Session sesion, Dimension dim) {
 		super(new BorderLayout());
 		
-		this.setName("Kegg " + sesion.getNumKeggDiagrams());
+		this.setName("KEGG " + sesion.getNumKeggDiagrams());
 		this.sesion = sesion;
 
 		this.alto = (int) dim.getHeight();
