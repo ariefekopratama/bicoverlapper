@@ -645,8 +645,10 @@ public class KEGGDiagram extends Diagram {
 			//String msgInfo = "The new scale mode will be applied when you get a new image";
 			//JOptionPane.showMessageDialog(null, msgInfo, "Information", JOptionPane.INFORMATION_MESSAGE);			
 			
-			//parece ser que al final se desea que se recargue la imagen directamente
-			botonObtenerImagen.doClick();
+			if(null != botonObtenerImagen){
+				//se recarga la imagen directamente
+				botonObtenerImagen.doClick();
+			}
 		}
 		
 		sesion.updateConfigExcept(this.getName());
