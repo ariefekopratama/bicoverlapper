@@ -593,12 +593,12 @@ public class KEGGDiagram extends Diagram {
 			ConfigurationMenuManager gestor = new ConfigurationMenuManager(this, ventanaConfig, paleta, muestraColor);
 
 			JPanel panelColor = this.getPanelPaleta(paleta, textoLabel, muestraColor);
-			JPanel panelParametros = new KeggParameterConfigurationPanel(sesion);
-			this.setPanelParametros(panelParametros);
+			JPanel panelEscala = new KeggParameterConfigurationPanel(sesion);
+			this.setPanelEscala(panelEscala);
 			JPanel panelBotones = this.getPanelBotones(gestor);
 
 			// Configuramos la ventana de configuracion
-			this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
+			this.initPanelConfig(panelColor, null, null, panelBotones, panelEscala);
 			//para que sólo salgan los parámetros
 			//this.initPanelConfig(null, null, panelParametros, panelBotones);
 
@@ -636,7 +636,7 @@ public class KEGGDiagram extends Diagram {
 		sesion.setHoverColor(paleta[KEGGDiagram.hoverColor]);
 
 		//si el tipo de escala actual es diferente al que ha seleccionado el usuario...
-		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelParametros()).getScaleModeSelected();
+		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelEscala()).getScaleModeSelected();
 		if(keggModel.getScaleModeKegg() != scaleModeSelectedByUser){
 			//se establece ese tipo de escala en la sesión
 			sesion.setScaleMode(scaleModeSelectedByUser);

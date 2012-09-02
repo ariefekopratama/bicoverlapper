@@ -44,6 +44,7 @@ public abstract class Diagram extends JPanel {
 	private DiagramWindow ventanaPanel;
 	private JInternalFrame ventanaConfig;
 	private JPanel panelParametros;
+	private JPanel panelEscala;
 	protected Color colorSeleccion;
 
 	private boolean personas;
@@ -319,6 +320,29 @@ public abstract class Diagram extends JPanel {
 	}
 	
 	/**
+	 * Establece y configura el panel de la escala del diagrama.
+	 * 
+	 * @param panel <code>JPanel</code> que contiene la configuracion de la escala del diagrama.
+	 */
+	protected void setPanelEscala(JPanel panel){
+		// Configuramos el panel de configuracion de los parametros propios del panel
+		
+		if(this.panelEscala != null)
+			this.panelEscala.setBackground(Color.LIGHT_GRAY);
+		
+		this.panelEscala = panel;
+	}
+	
+	/**
+	 * Devuelve el panel de configuracion de la escala del diagrama.
+	 * 
+	 * @return <code>JPanel</code> con la configuracion de la escala del diagrama.
+	 */
+	protected JPanel getPanelEscala(){
+		return this.panelEscala;
+	}	
+	
+	/**
 	 * Collects the configured paremeters for the diagram
 	 *	@deprecated
 	 */
@@ -382,6 +406,50 @@ public abstract class Diagram extends JPanel {
 		if(panelParametros != null){
 			this.panelParametros = panelParametros;
 			tabbedPane.addTab(Translator.instance.configureLabels.getString("s8"), panelParametros);
+		}
+		
+		tabbedPane.setSelectedIndex(0);
+		
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
+		GridBagConstraints constraints = new GridBagConstraints();
+		constraints.gridx = 0;
+		constraints.gridy = 0;
+		constraints.weightx = 1.0;
+		constraints.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(tabbedPane,constraints);
+		constraints.weightx = 0.0;
+		constraints.gridy = 1;
+		panel.add(panelBotones,constraints);
+		ventanaConfig.setContentPane(panel);
+	}
+	
+	/**
+	 * Crea el panel de configuracion y lo establece como el panel de contenido de la ventana de configuracion.
+	 * 
+	 * @param panelPaleta <code>JPanel</code> con la interfaz de configuracion de la paleta de colores.
+	 * @param panelAnclajes <code>JPanel</code> con la interfaz de configuracion de los anclajes.
+	 * @param panelParametros <code>JPanel</code> con la interfaz de configuracion de los parametros.
+	 * @param panelBotones <code>JPanel</code> con la interfaz para aceptar y cancelar la configuracion establecida.
+	 */
+	protected void initPanelConfig(JPanel panelPaleta, JPanel panelAnclajes, JPanel panelParametros, JPanel panelBotones, JPanel panelEscala)
+	{
+		JTabbedPane tabbedPane = new JTabbedPane();
+		
+		if(panelPaleta != null)
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s31"), panelPaleta);
+		
+		if(panelAnclajes != null)
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s23"), panelAnclajes);
+		
+		if(panelParametros != null){
+			this.panelParametros = panelParametros;
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s8"), panelParametros);
+		}
+		
+		if(panelEscala != null){
+			this.panelEscala = panelEscala;
+			tabbedPane.addTab(Translator.instance.configureLabels.getString("s42"), panelEscala);		
 		}
 		
 		tabbedPane.setSelectedIndex(0);

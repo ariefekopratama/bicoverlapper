@@ -45,6 +45,7 @@ import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.microarray.MicroarrayData;
 import es.usal.bicoverlapper.utils.Sizeof;
 import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
+import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
 import es.usal.bicoverlapper.view.main.DiagramWindow;
 
@@ -128,6 +129,8 @@ public class HeatmapDiagram extends Diagram {
 	private boolean resort;
 
 	private HeatmapHoverControl hoverController;
+	
+	private int scaleModeHeatMap;
 
 	/**
 	 * Default constructor
@@ -158,6 +161,8 @@ public class HeatmapDiagram extends Diagram {
 				sesion.getHiExpColor(), sesion.getSelectionColor(),
 				sesion.getHoverColor() };
 		muestraColor = new JTextField[paleta.length];
+		
+		scaleModeHeatMap = sesion.getScaleMode();
 	}
 
 	// As create(), but uses less massive matrices
@@ -281,9 +286,11 @@ public class HeatmapDiagram extends Diagram {
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
+			System.out.println("EN GENERATEREST Y SESSION.QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
+			System.out.println("EN GENERATEREST Y SESSION.NUMERICAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
@@ -546,6 +553,8 @@ public class HeatmapDiagram extends Diagram {
 		paleta[HeatmapDiagram.selectionColor] = sesion.getSelectionColor();
 		paleta[HeatmapDiagram.hoverColor] = sesion.getHoverColor();
 
+		scaleModeHeatMap = sesion.getScaleMode();
+		
 		int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
 				paleta[HeatmapDiagram.lowColor].getRGB(),
 				paleta[HeatmapDiagram.zeroColor].getRGB());
@@ -560,9 +569,11 @@ public class HeatmapDiagram extends Diagram {
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
+			System.out.println("UPDATECONFIG Y SESSION.QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
+			System.out.println("UPDATECONFIG Y SESSION.NUMERAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
@@ -614,7 +625,7 @@ public class HeatmapDiagram extends Diagram {
 		color.add(new RepaintAction());
 
 		v.putAction("color", color);
-
+		
 		run();
 		this.repaint();
 		this.configurando = false;
@@ -1157,11 +1168,13 @@ public class HeatmapDiagram extends Diagram {
 					muestraColor);
 			JPanel panelParametros = new HeatmapParameterConfigurationPanel();
 			this.setPanelParametros(panelParametros);
+			JPanel panelEscala = new KeggParameterConfigurationPanel(sesion);
+			this.setPanelEscala(panelEscala);			
 			JPanel panelBotones = this.getPanelBotones(gestor);
 
 			// Configuramos la ventana de configuracion
-			this.initPanelConfig(panelColor, null, panelParametros,
-					panelBotones);
+			//this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
+			this.initPanelConfig(panelColor, null, panelParametros, panelBotones, panelEscala);
 
 			// Mostramos la ventana de configuracion
 			ventanaConfig.setLocation(getPosition());
@@ -1201,12 +1214,27 @@ public class HeatmapDiagram extends Diagram {
 		for (int i = paletteTemp.length; i < palette.length; i++)
 			palette[i] = paletteTemp2[i - paletteTemp.length];
 
+		//si el tipo de escala actual es diferente al que ha seleccionado el usuario...
+		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelEscala()).getScaleModeSelected();
+		if(scaleModeHeatMap != scaleModeSelectedByUser){
+			//se establece ese tipo de escala en la sesión
+			sesion.setScaleMode(scaleModeSelectedByUser);
+			scaleModeHeatMap = scaleModeSelectedByUser;
+
+			/*
+			if(null != botonObtenerImagen){
+				botonObtenerImagen.doClick();
+			}
+			*/
+		}		
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
+			System.out.println("ENDCONFIG ACTUALIZANDO A QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
+			System.out.println("ENDCONFIG ACTUALIZANDO A NUMERICAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
@@ -1227,6 +1255,8 @@ public class HeatmapDiagram extends Diagram {
 		this.run();
 		sesion.updateConfigExcept(this.getName());
 		this.configurando = false;
+		
+		System.out.println("scaleModeHeatMap = "+scaleModeHeatMap+" y sesion.getScaleMode() = "+sesion.getScaleMode());
 	}
 
 }

@@ -628,6 +628,9 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					kdc.setIndexCombo2(Integer.valueOf(elemento.getAttribute("combo2")).intValue());
 					kdc.setValorActualCondition(Integer.valueOf(elemento.getAttribute("condition")).intValue());
 
+					//se restablece la escala
+					sesion.setScaleMode(Integer.valueOf(elemento.getAttribute("scale")).intValue());
+					
 					config.addWindowConfiguration(kdc);
 				}
 				else{
@@ -996,7 +999,8 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 					configkd.setAttribute("combo2",
 							kd.getIndexCombo2()+ "");	
 					configkd.setAttribute("condition",
-							kd.getKeggModel().getValorActualCondition()+ "");						
+							kd.getKeggModel().getValorActualCondition()+ "");			
+					configkd.setAttribute("scale", sesion.getScaleMode()+"");
 					ventana.appendChild(configkd);
 				}
 				
