@@ -19,6 +19,10 @@ import javax.swing.JTextField;
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
 public class HeatmapParameterConfigurationPanel extends javax.swing.JPanel {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -8885170378283133582L;
 	private JTextField NumNeighbors;
 	public JTextField getNumNeighbors() {
 		return NumNeighbors;
