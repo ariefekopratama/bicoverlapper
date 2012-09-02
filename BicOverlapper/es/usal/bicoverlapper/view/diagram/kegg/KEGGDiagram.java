@@ -162,7 +162,7 @@ public class KEGGDiagram extends Diagram {
 	/**
 	 * Updates the diagram by retrieving the last selection of data
 	 */
-	public void update(){
+	public void update(){		
 		keggController.update();
 	}
 
@@ -660,9 +660,15 @@ public class KEGGDiagram extends Diagram {
 	/**
 	 * Update the configuration
 	 */
-	public void updateConfig() {		
+	public void updateConfig() {			
 		paleta[KEGGDiagram.selectionColor] = sesion.getSelectionColor();
 		paleta[KEGGDiagram.hoverColor] = sesion.getHoverColor();
+		
+		//si se ha actualizado la configuración desde otro diagrama y se ha cambaido la escala
+		//hay que actualizar los colores del mapa pathway
+		if(sesion.getScaleMode() != keggModel.getScaleModeKegg() && null != botonObtenerImagen){
+			botonObtenerImagen.doClick();
+		}
 		
 		keggModel.setScaleModeKegg(sesion.getScaleMode());
 		
