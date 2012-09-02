@@ -286,11 +286,9 @@ public class HeatmapDiagram extends Diagram {
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
-			System.out.println("EN GENERATEREST Y SESSION.QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
-			System.out.println("EN GENERATEREST Y SESSION.NUMERICAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
@@ -569,11 +567,9 @@ public class HeatmapDiagram extends Diagram {
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
-			System.out.println("UPDATECONFIG Y SESSION.QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
-			System.out.println("UPDATECONFIG Y SESSION.NUMERAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
@@ -1230,17 +1226,15 @@ public class HeatmapDiagram extends Diagram {
 		
 		//en función del tipo de escala seleccionado se entrará por un camino u otro
 		if(sesion.getScaleMode() == Session.quantile){
-			System.out.println("ENDCONFIG ACTUALIZANDO A QUANTILE");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
 		}
 		else{
-			System.out.println("ENDCONFIG ACTUALIZANDO A NUMERICAL");
 			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
 		
 		
-		exprColor.setMaxScale(md.max);
-		exprColor.setMinScale(md.min);
+		//exprColor.setMaxScale(md.max);
+		//exprColor.setMinScale(md.min);
 
 		ActionList color = (ActionList) v.getAction("color");
 		color.remove(exprColor);
@@ -1255,8 +1249,6 @@ public class HeatmapDiagram extends Diagram {
 		this.run();
 		sesion.updateConfigExcept(this.getName());
 		this.configurando = false;
-		
-		System.out.println("scaleModeHeatMap = "+scaleModeHeatMap+" y sesion.getScaleMode() = "+sesion.getScaleMode());
 	}
 
 }
