@@ -563,11 +563,12 @@ public class Session implements KeyListener {
 	public void updateExcept(String name) {
 
 		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) 
-			{
-			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
-			if (name == "" || !ventana.getTitle().contains(name))
+		{
+			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);			
+			if (name == "" || !ventana.getTitle().contains(name)){
 				ventana.updateDiagram();
 			}
+		}
 	}
 
 	// actualizar las ventanas activas menos las uqe tengan por título
@@ -935,8 +936,9 @@ public class Session implements KeyListener {
 
 		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) {
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
-			if (ventana.getTitle().contains(name))
+			if (ventana.getTitle().contains(name)){
 				ventana.updateDiagram();
+			}
 		}
 	}
 
@@ -959,8 +961,12 @@ public class Session implements KeyListener {
 	 */
 	public void setSelectedBiclustersExcept(Selection selectedBic, String noUpdate) {
 		setSelectedBicluster(selectedBic);
-		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
-		else												setTooManyGenes(false);
+		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES){
+			setTooManyGenes(true);
+		}
+		else{
+			setTooManyGenes(false);
+		}
 		
 		this.updateExcept(noUpdate);
 	}

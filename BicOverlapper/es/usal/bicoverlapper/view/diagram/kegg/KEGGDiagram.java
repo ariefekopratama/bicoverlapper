@@ -136,12 +136,6 @@ public class KEGGDiagram extends Diagram {
 	 */
 	public void create() {		
 		try {
-			/*
-			this.keggModel = new KEGGModel(sesion);
-			keggModel.setScaleModeKegg(sesion.getScaleMode());
-			
-			this.keggController = new KEGGController(this, keggModel, sesion);
-			*/
 			//La creación se hace en un hilo para no congelar la interfaz gráfica
 	        final SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {  
 	  
