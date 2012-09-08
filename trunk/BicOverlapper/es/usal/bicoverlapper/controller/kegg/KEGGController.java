@@ -205,14 +205,13 @@ public class KEGGController implements ActionListener {
 				keggDiagram.getPathwayMapImage().repaint();
 			}
 		}
-		else{
+		//si no se ha seleccionado ningún gen
+		else if(!sesion.isOnlyHover()){
 			//si no se ha seleccionado ningún gen, y se quiere dejar la imagen original
-			/*
-			picture.getRectangles().clear();
-			picture.setDibujarBordeKeggElement(false);
-			picture.repaint();	
-			*/		
-		}		
+			keggDiagram.getPathwayMapImage().getRectangles().clear();
+			keggDiagram.getPathwayMapImage().setDibujarBordeKeggElement(false);
+			keggDiagram.getPathwayMapImage().repaint();			
+		}
 	}
 
 	/**
