@@ -210,7 +210,7 @@ public class KEGGController implements ActionListener {
 			//si no se ha seleccionado ningún gen, y se quiere dejar la imagen original
 			keggDiagram.getPathwayMapImage().getRectangles().clear();
 			keggDiagram.getPathwayMapImage().setDibujarBordeKeggElement(false);
-			keggDiagram.getPathwayMapImage().repaint();			
+			keggDiagram.getPathwayMapImage().repaint();
 		}
 	}
 
