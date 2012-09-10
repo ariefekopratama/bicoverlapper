@@ -159,8 +159,7 @@ class BubbleFocusControl extends FocusControl {
 				for (int i = 0; i < bd.getGraph().getNodeCount(); i++) {
 					boolean add = true;
 					Node n = bd.getGraph().getNode(i);
-					ArrayList<String> lista = (ArrayList<String>) n
-							.get("genes");
+					ArrayList<String> lista = (ArrayList<String>) n.get("genes");
 					for (int j = 0; j < lgn.size(); j++) {
 						// if(!lgn.contains(lista.get(j)))
 						if (!lista.contains(lgn.get(j))) {
@@ -168,14 +167,8 @@ class BubbleFocusControl extends FocusControl {
 							break;
 						}
 					}
-
-					if (add
-							&& lcn.size() < sesion.getMicroarrayData().columnLabels.length - 1)// Si
-																								// todavía
-																								// se
-																								// puede
-																								// add
-					{
+					// Si todavía se puede add
+					if (add	&& lcn.size() < sesion.getMicroarrayData().columnLabels.length - 1) {
 						lista = (ArrayList<String>) n.get("conditions");
 						for (int j = 0; j < lcn.size(); j++) {
 							if (!lista.contains(lcn.get(j))) {
@@ -262,7 +255,8 @@ class BubbleFocusControl extends FocusControl {
 		LinkedList<Integer> lista = new LinkedList<Integer>();
 		String names[];
 		if (genes) {
-			//si se ha cargado un microarray se podrán vincular vistas, si no, no
+			// si se ha cargado un microarray se podrán vincular vistas, si no,
+			// no
 			if (null != this.sesion.getMicroarrayData()) {
 				names = this.sesion.getMicroarrayData().rowLabels;
 				for (int i = 0; i < l.size(); i++) {
@@ -270,16 +264,15 @@ class BubbleFocusControl extends FocusControl {
 					lista.add(sesion.getMicroarrayData().getGeneId(name));
 				}
 			}
-		} 
-		else 
-		{
-			//si se ha cargado un microarray se podrán vincular vistas, si no, no
-			if(null != this.sesion.getMicroarrayData()){
+		} else {
+			// si se ha cargado un microarray se podrán vincular vistas, si no,
+			// no
+			if (null != this.sesion.getMicroarrayData()) {
 				names = this.sesion.getMicroarrayData().columnLabels;
 				for (int i = 0; i < l.size(); i++) {
 					int pos = 0;
 					String name = (String) l.get(i);
-	
+
 					for (int j = 0; j < names.length; j++) {
 						if (names[j].equals(name)) {
 							pos = j;
