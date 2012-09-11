@@ -484,10 +484,10 @@ public class NetworkDiagram extends Diagram {
 		if (v != null && sesion != null
 				&& sesion.getSelectedBicluster() != null) {
 			// LinkedList l=sesion.getSelectedGenesBicluster();
-			// Quitamos todos los que estuvieran antes en el bicluster
-			if (selg == null
-					|| !selg.equals(sesion.getSelectedGenesBicluster())) {
+			// Quitamos todos los que estuvieran antes en el bicluster			
+			//if (selg == null || !selg.equals(sesion.getSelectedGenesBicluster())) {
 				currentGenes.clear();
+
 
 				if (selg != null && selg.size() > 0) {// marcamos como
 														// seleccionados todos
@@ -515,7 +515,7 @@ public class NetworkDiagram extends Diagram {
 						}
 					}
 				}
-			}
+			//}
 			if (selc != null && selc.size() >= 1) {
 				Iterator it = v.items("graph.nodes");
 

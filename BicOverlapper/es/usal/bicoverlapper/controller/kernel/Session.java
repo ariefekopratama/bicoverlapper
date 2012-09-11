@@ -140,18 +140,20 @@ public class Session implements KeyListener {
 	private MergePanel mergePanel;
 	private MergeRowsPanel mergeRowsPanel;
 
-	private boolean onlyHover;// if true, no additional actions for selection are
+	private boolean onlyHover;// if true, no additional actions for selection
+								// are
 								// done, only for hovering
 
-	//variables para avisar a Ovelapper de que hay demasiados genes
+	// variables para avisar a Ovelapper de que hay demasiados genes
 	private boolean tooManyGenes;
 	public static int MAX_GENES = 1000;
-	
-	//variable para indicar si la escala seleccionada son los cuantiles o es numérica
+
+	// variable para indicar si la escala seleccionada son los cuantiles o es
+	// numérica
 	public static final int numerical = 0;
 	public static final int quantile = 1;
 	private int scaleMode = quantile;
-	
+
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a
 	 * <code>JDesktopPane</code>, with empty data
@@ -177,7 +179,8 @@ public class Session implements KeyListener {
 		this.grupoVentanasDefecto = new Vector<DiagramWindow>(0, 1);
 
 		selectionLog = new LinkedList<Selection>();
-		selectionLog.add(new Selection(new LinkedList<Integer>(), new LinkedList<Integer>()));	
+		selectionLog.add(new Selection(new LinkedList<Integer>(),
+				new LinkedList<Integer>()));
 		contLog = 0;
 		// With black background
 		// this.selectionColor=Color.BLUE;
@@ -198,10 +201,9 @@ public class Session implements KeyListener {
 		this.avgExpColor = Color.WHITE;
 
 		/*
-		this.tooManyGenes = false;
-		this.numNodes = 0;
-		*/
-		
+		 * this.tooManyGenes = false; this.numNodes = 0;
+		 */
+
 		reader = new DataReader();
 		return;
 	}
@@ -361,28 +363,30 @@ public class Session implements KeyListener {
 					panelWC.run();
 				}
 				WordCloudDiagramConfiguration wcdc = (WordCloudDiagramConfiguration) configVentana;
-				panelWC.getMenuCloud().setIndices(wcdc.getTextIndex(), wcdc.getSplitIndex(),
-						wcdc.getSizeIndex(), wcdc.getOntologyIndex());
+				panelWC.getMenuCloud().setIndices(wcdc.getTextIndex(),
+						wcdc.getSplitIndex(), wcdc.getSizeIndex(),
+						wcdc.getOntologyIndex());
 				this.setWordCloud(ventana);
-				
-				//este atributo se pone a false manualmente porque al hacer el setIndices se pone a true cuando no debería ser así
+
+				// este atributo se pone a false manualmente porque al hacer el
+				// setIndices se pone a true cuando no debería ser así
 				panelWC.setInnerCall(false);
-				
+
 				break;
 			case es.usal.bicoverlapper.controller.kernel.Configuration.KEGG_ID:
-				KEGGDiagram panelK = new KEGGDiagram(
-						this, dim);
+				KEGGDiagram panelK = new KEGGDiagram(this, dim);
 				ventana = new DiagramWindow(this, this.getDesktop(), panelK);
 				ventana.setSize(dim);
-				
+
 				KEGGDiagramConfiguration kdc = (KEGGDiagramConfiguration) configVentana;
 				panelK.setIndexCombo1(kdc.getIndexCombo1());
 				panelK.setIndexCombo2(kdc.getIndexCombo2());
-				panelK.getKeggModel().setValorActualCondition(kdc.getValorActualCondition());
+				panelK.getKeggModel().setValorActualCondition(
+						kdc.getValorActualCondition());
 				panelK.create();
-				panelK.run();	
+				panelK.run();
 				this.setKegg(ventana);
-				break;				
+				break;
 			default: // error tipo de ventana
 				break;
 			}
@@ -510,10 +514,13 @@ public class Session implements KeyListener {
 	 *            <code>VentanaPanel</code> que queremos sea eliminada.
 	 */
 	public void removeVentana(DiagramWindow ventana) {
-		if(ventana.getTitle().contains("erlapper"))	//On this case we must be sure that the overlapper stops computing layouts!
-			{
-			((OverlapperDiagram)ventana.getDiagram()).destroy();
-			}
+		if (ventana.getTitle().contains("erlapper")) // On this case we must be
+														// sure that the
+														// overlapper stops
+														// computing layouts!
+		{
+			((OverlapperDiagram) ventana.getDiagram()).destroy();
+		}
 		for (int i = 0; i < ventanas.size(); i++) {
 			DiagramWindow ventanaAux = ventanas.elementAt(i);
 			if (ventana.getTitle().equals(ventanaAux.getTitle())) {
@@ -562,10 +569,9 @@ public class Session implements KeyListener {
 	 */
 	public void updateExcept(String name) {
 
-		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) 
-		{
-			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);			
-			if (name == "" || !ventana.getTitle().contains(name)){
+		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) {
+			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
+			if (name == "" || !ventana.getTitle().contains(name)) {
 				ventana.updateDiagram();
 			}
 		}
@@ -715,7 +721,7 @@ public class Session implements KeyListener {
 		this.numVentanaHeatmap++;
 		this.numVentanas++;
 	}
-	
+
 	/**
 	 * Register a Kegg diagram TODO: TO BE UNIFIED FOR ANY KIND OF DIAGRAM
 	 * 
@@ -727,7 +733,7 @@ public class Session implements KeyListener {
 		this.grupoVentanasDefecto.add(dw);
 		this.numVentanaKegg++;
 		this.numVentanas++;
-	}	
+	}
 
 	/**
 	 * Returns the number of ParallelCoordinatesDiagrams for this Session
@@ -936,7 +942,7 @@ public class Session implements KeyListener {
 
 		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) {
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
-			if (ventana.getTitle().contains(name)){
+			if (ventana.getTitle().contains(name)) {
 				ventana.updateDiagram();
 			}
 		}
@@ -959,67 +965,77 @@ public class Session implements KeyListener {
 	 * @param noUpdate
 	 *            Updates all Diagrams except those that contains this String
 	 */
-	public void setSelectedBiclustersExcept(Selection selectedBic, String noUpdate) {
+	public void setSelectedBiclustersExcept(Selection selectedBic,
+			String noUpdate) {
 		setSelectedBicluster(selectedBic);
-		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES){
+		if (selectedBicluster != null && selectedBicluster.getGenes().size() > MAX_GENES) {
 			setTooManyGenes(true);
-		}
-		else{
+		} else {
 			setTooManyGenes(false);
 		}
-		
+
 		this.updateExcept(noUpdate);
 	}
 
 	public void setSelectedBiclustersOnly(Selection selectedBic,
 			String onlyUpdate) {
 		setSelectedBicluster(selectedBic);
-		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
-		else												setTooManyGenes(false);
-		
+		if (selectedBicluster != null && selectedBicluster.getGenes().size() > MAX_GENES)
+			setTooManyGenes(true);
+		else
+			setTooManyGenes(false);
+
 		this.updateOnly(onlyUpdate);
 	}
 
-	public void setSelectedBicluster(Selection selectedBic) {		
+	public void setSelectedBicluster(Selection selectedBic) {
 		this.selectedBicluster = selectedBic;
-		if(selectedBicluster!=null && selectedBicluster.getGenes().size()>MAX_GENES)	setTooManyGenes(true);
-		else																			setTooManyGenes(false);
+		if (selectedBicluster != null && selectedBicluster.getGenes().size() > MAX_GENES)
+			setTooManyGenes(true);
+		else
+			setTooManyGenes(false);
 		if (!undoOrRedo) {
-			if (contLog < selectionLog.size() - 1){
-				for (int i = selectionLog.size() - 1; i >= contLog; i--){
+			if (contLog < selectionLog.size() - 1) {
+				for (int i = selectionLog.size() - 1; i >= contLog; i--) {
 					selectionLog.addLast(selectionLog.get(i));
 				}
 			}
-			
-			//selectionLog.add(selectedBicluster);
-			//selectionLog.add(new Selection(selectedBic.getGenes(), selectedBic.getConditions()));
-			
-			//Carlos
-			//ninguna de las 2 anteriores funciona porque estos descriptores probablemente sean manipulados en otro sitio
-			//por tanto se pierde su valor antiguo y no se restauraba, es necesario crear unos descriptores nuevos
-			if(null != selectedBic){
-				selectionLog.add(new Selection(new LinkedList<Integer>(selectedBic.getGenes()), new LinkedList<Integer>(selectedBic.getConditions())));
-			}
-			else{
-				//si entra por aquí es porque selectedBic es null, por tanto quiere decir que no hay nada seleccionado
+
+			// selectionLog.add(selectedBicluster);
+			// selectionLog.add(new Selection(selectedBic.getGenes(),
+			// selectedBic.getConditions()));
+
+			// Carlos
+			// ninguna de las 2 anteriores funciona porque estos descriptores
+			// probablemente sean manipulados en otro sitio
+			// por tanto se pierde su valor antiguo y no se restauraba, es
+			// necesario crear unos descriptores nuevos
+			if (null != selectedBic) {
+				selectionLog.add(new Selection(new LinkedList<Integer>(
+						selectedBic.getGenes()), new LinkedList<Integer>(
+						selectedBic.getConditions())));
+			} else {
+				// si entra por aquí es porque selectedBic es null, por tanto
+				// quiere decir que no hay nada seleccionado
 				selectionLog.add(null);
 			}
 
-						
-			//normalmente en el for de arriba no entra, así que hay que ver dónde me está machacando los valores de selectionLog
-			for(Selection s: selectionLog){
-				if(null != s){
-					System.out.println("selectionLog s.getGenes()="+s.getGenes()+" s.getConditions()="+s.getConditions());
+			// normalmente en el for de arriba no entra, así que hay que ver
+			// dónde me está machacando los valores de selectionLog
+			for (Selection s : selectionLog) {
+				if (null != s) {
+					System.out.println("selectionLog s.getGenes()="
+							+ s.getGenes() + " s.getConditions()="
+							+ s.getConditions());
 				}
 			}
-				
+
 			contLog = selectionLog.size() - 1;
 			if (selectionLog.size() > 10) {
 				selectionLog.removeFirst();
 				contLog--;
 			}
-		} 
-		else{
+		} else {
 			undoOrRedo = false;
 		}
 	}
@@ -1029,7 +1045,7 @@ public class Session implements KeyListener {
 	 */
 	public void undo() {
 		undoOrRedo = true;
-		System.out.println("Undo: "+contLog);
+		System.out.println("Undo: " + contLog);
 		if (contLog > 0)
 			contLog--;
 		setSelectedBiclustersExcept(selectionLog.get(contLog), "");
@@ -1538,7 +1554,8 @@ public class Session implements KeyListener {
 	}
 
 	/**
-	 * @param scaleMode the scaleMode to set
+	 * @param scaleMode
+	 *            the scaleMode to set
 	 */
 	public void setScaleMode(int scaleMode) {
 		this.scaleMode = scaleMode;

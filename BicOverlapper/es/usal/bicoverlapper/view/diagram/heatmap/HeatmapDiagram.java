@@ -129,7 +129,7 @@ public class HeatmapDiagram extends Diagram {
 	private boolean resort;
 
 	private HeatmapHoverControl hoverController;
-	
+
 	private int scaleModeHeatMap;
 
 	/**
@@ -157,11 +157,11 @@ public class HeatmapDiagram extends Diagram {
 		this.ancho = (int) dim.getWidth();
 		this.setPreferredSize(new Dimension(ancho, alto));
 		this.setSize(ancho, alto);
-		this.paleta = new Color[] { sesion.getLowExpColor(), sesion.getAvgExpColor(),
-				sesion.getHiExpColor(), sesion.getSelectionColor(),
-				sesion.getHoverColor() };
+		this.paleta = new Color[] { sesion.getLowExpColor(),
+				sesion.getAvgExpColor(), sesion.getHiExpColor(),
+				sesion.getSelectionColor(), sesion.getHoverColor() };
 		muestraColor = new JTextField[paleta.length];
-		
+
 		scaleModeHeatMap = sesion.getScaleMode();
 	}
 
@@ -283,15 +283,17 @@ public class HeatmapDiagram extends Diagram {
 
 		// TODO: If max!=-(min), the filling won't be the middle color for
 		// average values.
-		
-		//en función del tipo de escala seleccionado se entrará por un camino u otro
-		if(sesion.getScaleMode() == Session.quantile){
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+
+		// en función del tipo de escala seleccionado se entrará por un camino u
+		// otro
+		if (sesion.getScaleMode() == Session.quantile) {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		} else {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
-		else{
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-		}
-		
+
 		// exprColor.setMaxScale(md.max);
 		// exprColor.setMinScale(md.min);
 
@@ -365,7 +367,10 @@ public class HeatmapDiagram extends Diagram {
 				"conditionLabels", nc, 1.5);
 		xlabels.setLayoutBounds(rc);
 
-		gl = new MicroGridLayout("matrix", ng, ngtot,
+		gl = new MicroGridLayout(
+				"matrix",
+				ng,
+				ngtot,
 				nc,
 				// alto-conditionMargin, ancho-geneMargin, "actualRowId",
 				// "colId",geneMargin, conditionMargin, m_scale/3, m_scale,
@@ -510,7 +515,8 @@ public class HeatmapDiagram extends Diagram {
 				{
 
 				}
-			} else // SELECTION
+			} 
+			else // SELECTION
 			{
 				if (sesion.getSelectedBicluster() != null
 						&& sesion.getSelectedBicluster() != bicAnt
@@ -524,8 +530,7 @@ public class HeatmapDiagram extends Diagram {
 							md.getConditionLabels());
 
 					LinkedList<Integer> lg = sesion.getSelectedGenesBicluster();
-					LinkedList<Integer> lc = sesion
-							.getSelectedConditionsBicluster();
+					LinkedList<Integer> lc = sesion.getSelectedConditionsBicluster();
 					currentLevels.addItems(lg, lc);
 					resort = false;
 				} else if (resort) {
@@ -552,7 +557,7 @@ public class HeatmapDiagram extends Diagram {
 		paleta[HeatmapDiagram.hoverColor] = sesion.getHoverColor();
 
 		scaleModeHeatMap = sesion.getScaleMode();
-		
+
 		int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
 				paleta[HeatmapDiagram.lowColor].getRGB(),
 				paleta[HeatmapDiagram.zeroColor].getRGB());
@@ -564,15 +569,17 @@ public class HeatmapDiagram extends Diagram {
 			palette[i] = paletteTemp[i];
 		for (int i = paletteTemp.length; i < palette.length; i++)
 			palette[i] = paletteTemp2[i - paletteTemp.length];
-		
-		//en función del tipo de escala seleccionado se entrará por un camino u otro
-		if(sesion.getScaleMode() == Session.quantile){
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+
+		// en función del tipo de escala seleccionado se entrará por un camino u
+		// otro
+		if (sesion.getScaleMode() == Session.quantile) {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		} else {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
-		else{
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
-		}
-		
+
 		// exprColor=new ExpressionColorAction("matrix", "level",
 		// Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		// exprColor.setMaxScale(md.max);
@@ -621,7 +628,7 @@ public class HeatmapDiagram extends Diagram {
 		color.add(new RepaintAction());
 
 		v.putAction("color", color);
-		
+
 		run();
 		this.repaint();
 		this.configurando = false;
@@ -1165,12 +1172,14 @@ public class HeatmapDiagram extends Diagram {
 			JPanel panelParametros = new HeatmapParameterConfigurationPanel();
 			this.setPanelParametros(panelParametros);
 			JPanel panelEscala = new KeggParameterConfigurationPanel(sesion);
-			this.setPanelEscala(panelEscala);			
+			this.setPanelEscala(panelEscala);
 			JPanel panelBotones = this.getPanelBotones(gestor);
 
 			// Configuramos la ventana de configuracion
-			//this.initPanelConfig(panelColor, null, panelParametros, panelBotones);
-			this.initPanelConfig(panelColor, null, panelParametros, panelBotones, panelEscala);
+			// this.initPanelConfig(panelColor, null, panelParametros,
+			// panelBotones);
+			this.initPanelConfig(panelColor, null, panelParametros,
+					panelBotones, panelEscala);
 
 			// Mostramos la ventana de configuracion
 			ventanaConfig.setLocation(getPosition());
@@ -1210,31 +1219,32 @@ public class HeatmapDiagram extends Diagram {
 		for (int i = paletteTemp.length; i < palette.length; i++)
 			palette[i] = paletteTemp2[i - paletteTemp.length];
 
-		//si el tipo de escala actual es diferente al que ha seleccionado el usuario...
-		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this.getPanelEscala()).getScaleModeSelected();
-		if(scaleModeHeatMap != scaleModeSelectedByUser){
-			//se establece ese tipo de escala en la sesión
+		// si el tipo de escala actual es diferente al que ha seleccionado el
+		// usuario...
+		int scaleModeSelectedByUser = ((KeggParameterConfigurationPanel) this
+				.getPanelEscala()).getScaleModeSelected();
+		if (scaleModeHeatMap != scaleModeSelectedByUser) {
+			// se establece ese tipo de escala en la sesión
 			sesion.setScaleMode(scaleModeSelectedByUser);
 			scaleModeHeatMap = scaleModeSelectedByUser;
 
 			/*
-			if(null != botonObtenerImagen){
-				botonObtenerImagen.doClick();
-			}
-			*/
-		}		
-		
-		//en función del tipo de escala seleccionado se entrará por un camino u otro
-		if(sesion.getScaleMode() == Session.quantile){
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+			 * if(null != botonObtenerImagen){ botonObtenerImagen.doClick(); }
+			 */
 		}
-		else{
-			exprColor = new ExpressionColorAction("matrix", "level", Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
+
+		// en función del tipo de escala seleccionado se entrará por un camino u
+		// otro
+		if (sesion.getScaleMode() == Session.quantile) {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.ORDINAL, VisualItem.FILLCOLOR, palette);
+		} else {
+			exprColor = new ExpressionColorAction("matrix", "level",
+					Constants.NUMERICAL, VisualItem.FILLCOLOR, palette);
 		}
-		
-		
-		//exprColor.setMaxScale(md.max);
-		//exprColor.setMinScale(md.min);
+
+		// exprColor.setMaxScale(md.max);
+		// exprColor.setMinScale(md.min);
 
 		ActionList color = (ActionList) v.getAction("color");
 		color.remove(exprColor);
