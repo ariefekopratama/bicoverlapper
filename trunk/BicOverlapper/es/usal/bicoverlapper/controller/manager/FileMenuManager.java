@@ -34,6 +34,8 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.rosuda.JRI.REXP;
+import org.rosuda.JRI.Rengine;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentType;
@@ -1221,8 +1223,20 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		ventana.getViewMenu().setEnabled(false);
 	}
 
-	public void readMicroarray() {
+	public void readMicroarray() {	
 		prepareDesktop();
+		
+		// hay que comprobar que bioConductor está instalado
+		REXP exp = sesion.getAnalysis().r.eval("library(Biobase)");
+		if(exp == null){
+			JOptionPane.showMessageDialog(null,
+					"Bioconductor is not installed in R.\n Please install Bioconductor core manually through the R console (check http://www.bioconductor.org/install).",
+					"Missing R package",
+					JOptionPane.WARNING_MESSAGE);
+			
+			return;
+		}
+		
 		System.out.println("---desktop ready, session started");
 		try {
 			sesion.getReader().readMicroarray(path, sesion, this);
