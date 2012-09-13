@@ -229,19 +229,17 @@ public class Analysis {
 
 				System.out.println("loading matrix into R");
 				long t0 = System.currentTimeMillis();
-
+				
 				// modificación para que funcione en windows
 				String os = System.getProperty("os.name").toLowerCase();
 				if (os.indexOf("win") >= 0) {
 					// si estamos en windows
 					exp = r.eval("source(\"es\\\\usal\\\\bicoverlapper\\\\source\\\\codeR\\\\loadMatrix.R\")");
-					System.out.println("En r.eval source de windows y exp = "
-							+ exp);
+					System.out.println("En r.eval source de windows y exp = "+ exp);
 				} else {
 					// si estamos en unix
 					exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
-					System.out.println("En r.eval source de linux y exp = "
-							+ exp);
+					System.out.println("En r.eval source de linux y exp = "+ exp);
 				}
 
 				// R necesita las barras de dirección duplicadas, y la forma de
@@ -249,8 +247,6 @@ public class Analysis {
 				String rutaWindowsParaR = microarrayData.filePath.replaceAll(
 						"\\\\", "\\\\\\\\");
 
-				// modificado por Carlos para Windows, antes sólo estaba sin el
-				// replaceAll
 				loadRLibrary("stringr");
 				exp = r.eval(label + "=loadMatrix(filePath=\""
 						+ rutaWindowsParaR + "\", numEFs="
@@ -280,8 +276,7 @@ public class Analysis {
 				for (int i = 0; i < microarrayData.getNumConditions(); i++)
 					microarrayData.outliers.put(new Integer(i), outliers.at(i)
 							.asIntArray());
-				// SyntrenEcoli=loadMatrix(filePath="C:\\Users\\Charly\\Desktop\\SyntrenEcoli.txt",
-				// numEFs=0)
+
 				r.eval("rm(iqr)");
 				r.eval("rm(q25)");
 				r.eval("rm(q75)");

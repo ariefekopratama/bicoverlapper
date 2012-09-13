@@ -302,8 +302,8 @@ public class MicroarrayData {
 		loadTask.nd = nd;
 		experimentFactors = new ArrayList<String>();
 		experimentFactorValues = new HashMap<String, String[]>();
-		this.filePath = this.path; // CUIDADO CON ESTE THIS.PATH PORQUE VALE
-									// NULL
+		this.filePath = this.path; 
+		
 		this.ventana = sesion.getMainWindow();
 
 		// añadido para que funcione en windows (en principio en unix no dará
@@ -3309,8 +3309,7 @@ public class MicroarrayData {
 				columnLabels = conditionNames.clone();
 
 			} catch (Exception e) {
-				System.err
-						.println("doInBackground: Error reading file " + path);
+				System.err.println("doInBackground: Error reading file " + path);
 				e.printStackTrace();
 				return 1;
 			}
