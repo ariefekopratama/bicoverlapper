@@ -252,6 +252,7 @@ public class Analysis {
 						+ rutaWindowsParaR + "\", numEFs="
 						+ microarrayData.experimentFactors.size() + ")");
 				
+				
 				System.out.println("En el exp de loadMatrix y exp = "+exp);
 				
 				// hasta aquí la modificación para que funcione en windows
