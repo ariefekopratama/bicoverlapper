@@ -251,12 +251,21 @@ public class Analysis {
 				exp = r.eval(label + "=loadMatrix(filePath=\""
 						+ rutaWindowsParaR + "\", numEFs="
 						+ microarrayData.experimentFactors.size() + ")");
+				
+				System.out.println("En el exp de loadMatrix y exp = "+exp);
+				
 				// hasta aquí la modificación para que funcione en windows
 
 				System.out.println("matrix loaded, computing some statistics");
 				// compute median by column and quantiles
 				exp = r.eval("m=exprs(" + label + ")");
+				
+				System.out.println("m=exprs(" + label + ") y exp = "+exp);
+				
 				exp = r.eval("med=apply(m, 2, median)");
+				
+				System.out.println("med=apply(m, 2, median) y exp = "+exp);
+				
 				microarrayData.median = r.eval("med").asDoubleArray();
 				exp = r.eval("q25=apply(m, 2, quantile)[2,]");
 				microarrayData.q25 = r.eval("q25").asDoubleArray();
