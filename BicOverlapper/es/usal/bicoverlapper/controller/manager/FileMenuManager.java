@@ -339,7 +339,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 						}
 
 						else {
-							sesion.getReader().readMicroarray(fileName, sesion,
+							sesion.getReader().readMicroarray(fichero, sesion,
 									receiver);
 							sesion.microarrayPath = fichero.getAbsolutePath();
 						}
@@ -1239,7 +1239,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		
 		System.out.println("---desktop ready, session started");
 		try {
-			sesion.getReader().readMicroarray(path, sesion, this);
+			sesion.getReader().readMicroarray(fichero, sesion, this);
 			sesion.microarrayPath = fichero.getAbsolutePath();
 
 		} catch (FileNotFoundException e1) {
@@ -1267,7 +1267,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 		prepareDesktop();
 		try {
 			sesion.getAnalysis().loadRscripts();
-			sesion.getReader().readMicroarray(path, sesion, this);
+			sesion.getReader().readMicroarray(fichero, sesion, this);
 			sesion.microarrayPath = fichero.getAbsolutePath();
 		} catch (FileNotFoundException e1) {
 			JOptionPane.showMessageDialog(null,

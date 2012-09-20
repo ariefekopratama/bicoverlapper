@@ -3,6 +3,7 @@ package es.usal.bicoverlapper.model.microarray;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -290,18 +291,19 @@ public class MicroarrayData {
 	 *            Number of decimals to be shown if numerically showing
 	 *            expression levels
 	 */
-	public MicroarrayData(String path, boolean invert, int rowHeader,
+	public MicroarrayData(File file, boolean invert, int rowHeader,
 			int colHeader, int nd, MicroarrayRequester mr, Analysis a, Session sesion)
 			throws Exception {
 		MicroarrayLoadProgressMonitor pmd = new MicroarrayLoadProgressMonitor();
 		loadTask = new LoadTask();
-		loadTask.path = path;
+		loadTask.setFile(file);
 		loadTask.invert = invert;
 		loadTask.rowHeader = rowHeader;
 		loadTask.colHeader = colHeader;
 		loadTask.nd = nd;
 		experimentFactors = new ArrayList<String>();
 		experimentFactorValues = new HashMap<String, String[]>();
+		this.path=file.getAbsolutePath();
 		this.filePath = this.path; 
 		
 		this.ventana = sesion.getMainWindow();
@@ -2953,7 +2955,7 @@ public class MicroarrayData {
 	public class LoadTask extends SwingWorker<Integer, Void> {
 		private final static int FILE = 0;
 		private int type = FILE;
-
+		public File file;
 		public String path;
 		public boolean invert;
 		public int nd;
@@ -2982,6 +2984,12 @@ public class MicroarrayData {
 			}
 		}
 
+		public void setFile(File f)
+			{
+			file=f;
+			path=file.getAbsolutePath();
+			}
+		
 		public int loadFromArrayExpress() {
 			// 1) download and normalize
 
@@ -2998,12 +3006,16 @@ public class MicroarrayData {
 			 */
 			// modificado para que funcione en Windows (en principio en unix no
 			// dará problemas)
-			String name = path.replace("\\", "/");
+			String name = file.getName();
+			//String name=path.replace("\\", "/");
 			filePath = path;
 
+			//message = "Reading matrix "
+			//		+ name.substring(name.lastIndexOf("/") + 1,
+			//				name.indexOf("."));
 			message = "Reading matrix "
-					+ name.substring(name.lastIndexOf("/") + 1,
-							name.indexOf("."));
+					+ name;
+			
 			progress += 10;
 			//System.err.println("MicroArrayData va a hacer en el primer setProgress(progress)="+progress+" y message="+message);
 			setProgress(progress);
