@@ -49,13 +49,13 @@ public class DataReader {
 	 * organism/chip col1 col2 ... colN row1 exp11 exp12 ... exp1N ... rowM
 	 * expM1 expM2 ... expMN
 	 */
-	public void readMicroarray(String path, Session sesion,
+	public void readMicroarray(File file, Session sesion,
 			MicroarrayRequester mr) throws Exception {
 		int skipColumns = 1;
 		int skipRows = 1;
 		double t1 = System.currentTimeMillis();
 		double t2 = System.currentTimeMillis();
-		MicroarrayData md = new MicroarrayData(path, false, skipRows,
+		MicroarrayData md = new MicroarrayData(file, false, skipRows,
 				skipColumns, 1, mr, sesion.getAnalysis(), sesion);
 		sesion.setMicroarrayData(md);
 		t1 = System.currentTimeMillis();

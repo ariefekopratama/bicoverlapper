@@ -116,7 +116,7 @@ public class MergeRowsPanel extends javax.swing.JFrame {
 							fmm.setFichero(new File(p));
 							fmm.prepareDesktop();
 							try{
-								fmm.getSesion().getReader().readMicroarray(p, fmm.getSesion(), session.getMicroarrayData().microarrayRequester);
+								fmm.getSesion().getReader().readMicroarray(fmm.getFichero(), fmm.getSesion(), session.getMicroarrayData().microarrayRequester);
 							}catch(Exception ex){ex.printStackTrace();}
 							setVisible(false);
 							}
