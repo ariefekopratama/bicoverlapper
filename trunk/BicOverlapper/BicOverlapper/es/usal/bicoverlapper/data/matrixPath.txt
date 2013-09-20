@@ -1,1 +1,1 @@
-/Users/rodri/Documents/investigacion/distros/bicoverlapper1-4/data/hsapiens/esclerosis/GSE23205post.txt
+/Users/rodri/Documents/investigacion/distros/bicoverlapper1-4/data/scerevisiae/GSE3431/GSE3431.txt
