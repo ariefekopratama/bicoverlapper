@@ -126,8 +126,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 		progress.setFont(new Font("Arial", Font.PLAIN, 10));
 		progress.setBounds(this.getWidth() - 32, this.getHeight() - 12, 30, 10);
 
-		paleta[WordCloudDiagram.colorEtiquetaVar] = sesion.getSelectionColor();//.darker();
-		paleta[WordCloudDiagram.colorVarSelec] = sesion.getSelectionColor();//.darker();
+		paleta[WordCloudDiagram.colorEtiquetaVar] = sesion.getSelectionColor().darker();
+		paleta[WordCloudDiagram.colorVarSelec] = sesion.getSelectionColor().darker();
 		paleta[WordCloudDiagram.colorFondo] = sesion.getBackgroundColor();
 		this.colorSeleccion = paleta[colorEtiquetaVar];
 		this.setBackground(paleta[colorFondo]);
@@ -147,19 +147,6 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 	public void setMenuCloud(WordCloudParameterConfigurationPanel menuCloud) {
 		this.menuCloud = menuCloud;
-	}
-
-	private Color getColorW(String w) {
-		Color colorW = (Color) this.colorSeleccion;
-		if (nameSelected.size() > 0) {
-			for (int j = 0; j < nameSelected.size(); j++) {
-				if (nameSelected.get(j).equalsIgnoreCase(w)) {
-					colorW = paleta[colorVarSelec];
-				}
-			}
-		}
-
-		return colorW;
 	}
 
 	public synchronized void update() {
