@@ -7,7 +7,7 @@
 #Returns a ExpressionSet from a BicOverlapper format matrix
 #duplicates determines the procedure in case of finding duplicated rows. Either average their expression profiles ("average"),
 #take the expression of the first one ("first") or rename adding (a), (b), etc. ("rename")
-loadMatrix=function(filePath=NULL, numEFs=0, duplicates="average")
+loadMatrix=function(filePath=NULL, numEFs=0, duplicates="first")
 	{
 	require(Biobase)
 	require(utils)
@@ -29,7 +29,7 @@ loadMatrix=function(filePath=NULL, numEFs=0, duplicates="average")
 			efs=c(efs,row[1])
 			m=m[-1,]
 		}
-		
+	
 	#Parse gene names and expression values
 	geneNames=gsub("[ ]+", "", as.character(m[,1]))
 	ann=gsub("^.*/", "", colnames(m)[1])
@@ -40,14 +40,15 @@ loadMatrix=function(filePath=NULL, numEFs=0, duplicates="average")
 	rownames(m)=geneNames
 	
 	#NEW: produce average on unique rows?
+	dup=which(duplicated(geneNames))
 	if(duplicates=="average")
 		m=t(sapply(unique(geneNames), function(x)
 				{
 				colMeans(m[which(rownames(m)==x),,drop=F])	
 				}))
-	else if(duplicates=="remove")
+	else if(duplicates=="remove" & length(dup)>0)
 		{
-		m=m[-which(geneNames %in% geneNames[which(duplicated(geneNames))]),]	
+		m=m[-which(geneNames %in% geneNames[dup]),]	
 		}
 	else if(duplicates=="rename")
 		{
@@ -61,11 +62,11 @@ loadMatrix=function(filePath=NULL, numEFs=0, duplicates="average")
 						}))
 		rownames(m)=geneNames2
 		}
-	else if(duplicates=="first")
+	else if(duplicates=="first" & length(dup)>0)
 		{
-		m=m[-which(duplicated(geneNames)),]	
+		m=m[-dup,]	
 		}
-			
+		
 	#Build ExpressionSet
 	if(is.null(efs)==FALSE)	
 		{
@@ -81,12 +82,11 @@ loadMatrix=function(filePath=NULL, numEFs=0, duplicates="average")
 	es
 	}
 
-	
-#	saveMatrix=function(es=NA, fileName=NA, efs=NA)
-#		{
-#		require(MASS)
-#		towrite=cbind(featureNames(es), exprs(es))
-#		towrite=rbind(c("Time", as.character(pData(es)[, "FactorValue.Time"])), towrite)towrite=rbind(c("Experiment", exps), towrite)
-#		write.matrix(towrite, file=fileName, sep="\t")
-#		}
-	
+	#Saves ExpressionSet to a BicOverlapper expression format. Expression set must have annotation, sampleNames and (optionally) pData.
+	saveMatrix=function(es=NA, organism=NA, fileName=NA)
+		{
+		header=c(paste(organism, paste(annotation(es), "db", sep="."),sep="/"), make.names(sampleNames(es)))
+		write(header,file=fileName, ncolumns=length(header), append=FALSE,sep="\t")
+		write(rbind(names(pData(es)),as.matrix(pData(es))), file=fileName, ncolumns=length(header), append=TRUE, sep="\t")
+		write(t(cbind(featureNames(es), round(exprs(es), digits=2))), file=fileName, ncolumns=length(header), append=TRUE, sep="\t")
+		}

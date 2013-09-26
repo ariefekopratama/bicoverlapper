@@ -198,7 +198,7 @@ public class ISAPanel extends javax.swing.JFrame {
 			}
 			{
 				jTextField2 = new JTextField();
-				jTextField2.setText("0.5");
+				jTextField2.setText("0.9");
 			}
 			{
 				jTextField3 = new JTextField();
@@ -354,7 +354,7 @@ public class ISAPanel extends javax.swing.JFrame {
 			}
 			{
 				jTextField1 = new JTextField();
-				jTextField1.setText("0.5");
+				jTextField1.setText("0.9");
 			}
 			{
 				jLabel1 = new JLabel();

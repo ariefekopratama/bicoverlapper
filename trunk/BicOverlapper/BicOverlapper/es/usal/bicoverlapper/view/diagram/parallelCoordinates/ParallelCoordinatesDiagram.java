@@ -77,7 +77,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			diagramaPintado = false;
 
 	// definicion de margenes del diagrama
-	private final int margenDer = 30;
+	private final int margenDer = 20;
 	private final int margenIzq = 80;
 	private final int margenSup = 20;
 	private final int margenInf = 100;
@@ -2067,9 +2067,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						nuevaCota = cotaSup[k];
 						posY = scrollSup[k].getY();
 						
-						//Carlos
-						//System.out.println("\n\n\nEl punto está en rs y e.getPoint() vale "+e.getPoint()+" y rs vale "+rs+" y nuevaCota vale "+nuevaCota+"\n\n\n");						
-						
 						break;
 					} else if (inScroll(e.getPoint(), ri, 5, false)) {
 						scrollSeleccionado = scrollInf[k];
@@ -2209,7 +2206,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				// genes were added in the above loop, then we select all the
 				// conditions
 				for (int j = 0; j < (numConditions); j++)
-					//conditions.add(Integer.valueOf(j));
 					conditions.add(Integer.valueOf(ordenVars[j]));
 
 				System.out.println("Time to set selected bicluster "

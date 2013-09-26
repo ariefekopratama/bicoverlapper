@@ -1,5 +1,6 @@
 package es.usal.bicoverlapper.view.diagram.bubbles;
 
+import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -13,6 +14,7 @@ import prefuse.Visualization;
 import prefuse.controls.FocusControl;
 import prefuse.data.Node;
 import prefuse.data.tuple.TupleSet;
+import prefuse.util.ui.JFastLabel;
 import prefuse.util.ui.UILib;
 import prefuse.visual.VisualItem;
 
@@ -30,7 +32,8 @@ class BubbleFocusControl extends FocusControl {
 	private String activity;
 	private LinkedList nodosSeleccionados;
 	private Visualization visualization;
-
+	private JFastLabel label;
+	
 	/**
 	 * Session constructor
 	 * 
@@ -54,6 +57,7 @@ class BubbleFocusControl extends FocusControl {
 		this.sesion = session;
 		nodosSeleccionados = new LinkedList();
 		visualization = v;
+		
 	}
 
 	/**
@@ -185,6 +189,22 @@ class BubbleFocusControl extends FocusControl {
 		System.out.println("End of Computing intersection");
 		}
 	}
+	
+/*	public void itemEntered(VisualItem item, MouseEvent e)
+		{
+		label.setText(item.getString("name"));
+		label.setAlignmentX(item.getInt("x"));
+		label.setAlignmentY(item.getInt("y"));
+		label.setForeground(Color.black);
+		}
+	
+	public void itemExited(VisualItem item, MouseEvent e)
+		{
+		label.setText("");
+		label.setAlignmentX(0);
+		label.setAlignmentX(0);
+		label.setForeground(Color.white);
+		}*/
 
 	/**
 	 * Checks for mouse events, changing Session status if necessary
@@ -267,8 +287,8 @@ class BubbleFocusControl extends FocusControl {
 			// si se ha cargado un microarray se podrán vincular vistas, si no,
 			// no
 			if (null != this.sesion.getMicroarrayData()) {
-				names = this.sesion.getMicroarrayData().columnLabels;
-				for (int i = 0; i < l.size(); i++) {
+				names = this.sesion.getMicroarrayData().getConditionNames();
+					for (int i = 0; i < l.size(); i++) {
 					int pos = 0;
 					String name = (String) l.get(i);
 

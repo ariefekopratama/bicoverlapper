@@ -3,55 +3,22 @@ package es.usal.bicoverlapper.view.diagram.heatmap2;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.ScrollPane;
-import java.awt.event.MouseEvent;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.beans.PropertyVetoException;
-import java.util.Iterator;
-import java.util.LinkedList;
 
-import javax.swing.BoxLayout;
-import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.plaf.basic.BasicInternalFrameUI;
 
-import prefuse.Constants;
-import prefuse.Display;
-import prefuse.Visualization;
-import prefuse.action.ActionList;
-import prefuse.action.RepaintAction;
-import prefuse.action.assignment.ColorAction;
-import prefuse.action.assignment.DataColorAction;
-import prefuse.action.layout.Layout;
-import prefuse.controls.ControlAdapter;
-import prefuse.controls.PanControl;
-import prefuse.controls.WheelZoomControl;
-import prefuse.controls.ZoomControl;
-import prefuse.data.Table;
-import prefuse.data.tuple.TupleSet;
-import prefuse.data.util.Sort;
-import prefuse.render.AbstractShapeRenderer;
-import prefuse.render.LabelRenderer;
-import prefuse.render.Renderer;
-import prefuse.render.RendererFactory;
+//import prefuse.Display;
 import prefuse.util.ColorLib;
-import prefuse.util.ui.UILib;
-import prefuse.visual.VisualItem;
 
 import es.usal.bicoverlapper.controller.kernel.Selection;
 import es.usal.bicoverlapper.controller.kernel.Session;
 import es.usal.bicoverlapper.controller.manager.configurationManager.ConfigurationMenuManager;
 import es.usal.bicoverlapper.controller.util.Translator;
 import es.usal.bicoverlapper.model.microarray.ExpressionData;
-import es.usal.bicoverlapper.utils.Sizeof;
 import es.usal.bicoverlapper.view.configuration.panel.HeatmapParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.configuration.panel.KeggParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
@@ -107,8 +74,6 @@ public class HeatmapDiagram2 extends Diagram {
 	ExpressionData md;
 	CellHeatmap v; // Visualization
 	
-	Display d; // Display (equivalente al frame en otros casos)
-
 	int contName = 0;
 	int geneMargin = 100;
 	int conditionMargin = 100;

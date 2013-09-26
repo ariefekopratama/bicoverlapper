@@ -89,7 +89,7 @@ public class AnalysisMenuManager implements ActionListener {
 					Translator.instance.menuLabels.getString("bimax"))) {
 				if (bimaxPanel == null)
 					bimaxPanel = new BimaxPanel(sesion);
-
+				
 				// Mostramos la ventana de configuracion
 				JFrame window = new JFrame();
 				window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

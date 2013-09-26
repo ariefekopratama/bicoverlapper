@@ -22,6 +22,7 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -35,6 +36,7 @@ import javax.xml.transform.TransformerFactoryConfigurationError;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.Rengine;
 import org.w3c.dom.DOMImplementation;
@@ -45,6 +47,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+
+import prefuse.Display;
 
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
@@ -1192,7 +1196,7 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 			ventana.getAnalysisMenu().setEnabled(true);
 			
 		
-					ventana.getViewMenuManager().viewNetwork(sesion);
+			ventana.getViewMenuManager().viewNetwork(sesion);
 		}
 	}
 
@@ -1280,19 +1284,25 @@ public class FileMenuManager implements ActionListener, MicroarrayRequester {
 	}
 
 	public void readGroups(String path, File fichero, Session sesion) {
-		desktop = new JDesktopPane();
-		desktop.setName(fichero.getName());
 		if (this.ventana.getActiveWorkDesktop() != null)
 			sesion = this.ventana.getActiveWorkDesktop().getSession();
 		else {
-			System.out.println("En el Session de readBiclustering\n");
+			desktop = new JDesktopPane();
+			desktop.setName(fichero.getName());
+			System.out.println("En el Session de readGroups\n");
 			sesion = new Session(desktop, ventana);
 		}
+
 		sesion.getReader().readBiclusterResults(path, fichero.getName(), sesion);
 		sesion.biclusteringPath = fichero.getAbsolutePath();
 		
-		if(sesion.getBubbleData()!=null)
+		 if(sesion.getBubbleData()!=null)
 			{
+			/* java.awt.EventQueue.invokeLater(new Runnable(){
+				   public void run(){
+				   		}
+			   });*/
+			
 			if(!sesion.isTooManyGenes())	ventana.getViewMenuManager().viewOverlapper(sesion);
 			else							ventana.getViewMenuManager().viewBubbles(sesion);
 			}

@@ -3,8 +3,10 @@ package es.usal.bicoverlapper.view.diagram.bubbles;
 import java.awt.geom.Point2D;
 
 import javax.swing.JInternalFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import prefuse.Constants;
 import prefuse.Display;
@@ -24,7 +26,9 @@ import prefuse.controls.ZoomControl;
 import prefuse.controls.ZoomToFitControl;
 import prefuse.controls.WheelZoomControl;
 import prefuse.controls.HoverActionControl;
+import prefuse.render.AbstractShapeRenderer;
 import prefuse.render.DefaultRendererFactory;
+import prefuse.render.LabelRenderer;
 import prefuse.render.ShapeRenderer;
 import prefuse.util.ColorLib;
 import prefuse.visual.VisualItem;
@@ -44,8 +48,10 @@ import javax.swing.Box;
 import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Shape;
 import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -131,8 +137,11 @@ public class BubblesDiagram extends Diagram {
 	private GroupsData bd;
 	private BubbleFocusControl currentBiclusters;
 	private ItemAction nodeColor, nodeStroke;
+	private JSearchPanel search;
 
 	private ZoomToFitControl zfc;
+
+	private JFastLabel label;
 
 	/**
 	 * Default constructor
@@ -171,6 +180,8 @@ public class BubblesDiagram extends Diagram {
 		// cargados
 		if (session.dataLoaded())
 			this.iniciarAtributos();
+		
+		
 	}
 
 	private void iniciarAtributos() {
@@ -227,18 +238,24 @@ public class BubblesDiagram extends Diagram {
 		bd.buildGraphFromProjection();
 		v.add("graph", bd.getGraph()); // Le añadimos el grafo
 
-		// Renderer con etiquetas y aristas
 		v.setRendererFactory(new DefaultRendererFactory(new ShapeRenderer()));
-
+		//LabelRenderer lr=new LabelRenderer("name");
+		//lr.setRoundedCorner(100, 100);
+		//v.setRendererFactory(new DefaultRendererFactory(lr));
+		/*DefaultRendererFactory rf=new DefaultRendererFactory();
+		rf.setDefaultRenderer(new ShapeRenderer());
+		
+		LabelRenderer lr=new LabelRenderer("name");
+		//lr.setRenderType(AbstractShapeRenderer.RENDER_TYPE_DRAW);
+		rf.add("graph.nodes", lr);
+	
+		v.setRendererFactory(rf);
+		*/
 		int[] paletaTipos = new int[] { sesion.getBicSet1().getRGB(),
 				sesion.getBicSet2().getRGB(), sesion.getBicSet3().getRGB() };
 
-		// nodeColor=new DataColorAction("graph.nodes", "resultType",
-		// Constants.NOMINAL, VisualItem.FILLCOLOR,paletaTipos);//Pasarle
-		// homogeneidad
 		nodeColor = new NodeColorAction("graph.nodes", "resultType",
 				"homogeneity", paletaTipos, v);// Pasarle homogeneidad
-
 		ItemAction nodeShape = new NodeShapeAction("graph.nodes",
 				Constants.SHAPE_ELLIPSE);
 		ItemAction nodeSize = new NodeSizeAction("graph.nodes", "size", 100,
@@ -274,7 +291,7 @@ public class BubblesDiagram extends Diagram {
 		color.add(nodeShape);
 		color.add(nodeStroke);
 		color.add(strokeWidth);
-		color.add(textColor);
+		//color.add(textColor);
 		color.add(new RepaintAction());
 		v.putAction("color", color);
 
@@ -294,7 +311,7 @@ public class BubblesDiagram extends Diagram {
 
 		// filtering
 		ActionList filter = new ActionList();
-		filter.add(textColor);
+		//filter.add(textColor);
 		filter.add(nodeColor);
 		filter.add(new RepaintAction());
 		v.putAction("filter", filter);
@@ -332,7 +349,15 @@ public class BubblesDiagram extends Diagram {
 
 		// ----- display
 		// create a new Display that pull from our Visualization
-		d = new Display(v);
+		//try{
+		 //java.awt.EventQueue.invokeAndWait(new Runnable(){
+		//	   public void run(){
+				   d = new Display(v);
+		//		 }
+		//   });
+		//}catch(Exception e){e.printStackTrace();}
+		
+		//d = new Display(v);
 		d.setHighQuality(true);
 
 		d.addControlListener(new DragControl()); // drag items around
@@ -343,27 +368,31 @@ public class BubblesDiagram extends Diagram {
 		zfc=new ZoomToFitControl();
 		d.addControlListener(new WheelZoomControl()); // zoom to fit screen
 		d.addControlListener(zfc); // zoom to fit screen
-		d.addControlListener(new HoverActionControl("color")); // changes color
-																// of passing by
-																// biclusters
+		d.addControlListener(new HoverActionControl("color")); // changes color of passing by biclusters
 		currentBiclusters = new BubbleFocusControl(sesion, "filter",
 				Visualization.FOCUS_ITEMS, v);
 		d.addControlListener(currentBiclusters);
 
-		// Caja de búsqueda:
-		SearchQueryBinding sq = new SearchQueryBinding(
-				(Table) v.getGroup("graph.nodes"), "genes", // TODO: Parece que
-															// no me encuentra
-															// el primero!
-				(SearchTupleSet) v.getGroup(Visualization.SEARCH_ITEMS));
-		JSearchPanel search = sq.createSearchPanel();
-		search.setShowResultCount(true);
-		search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
-		search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-
+	/*
+		//try{
+		//SwingUtilities.invokeLater(new Runnable(){
+		//SwingUtilities.invokeAndWait(new Runnable(){
+						
+		//	public void run(){
+				// Caja de búsqueda:
+				SearchQueryBinding sq = new SearchQueryBinding(
+						(Table) v.getGroup("graph.nodes"), "genes", // TODO: Parece que no me encuentra el primero!
+						(SearchTupleSet) v.getGroup(Visualization.SEARCH_ITEMS));
+				search = sq.createSearchPanel();
+				search.setShowResultCount(true);
+				search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
+				search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
+		//	}});
+		//}catch(Exception e){e.printStackTrace();}
+		*/
 		final JFastLabel title = new JFastLabel("                 ");
-		title.setPreferredSize(new Dimension(250, 20));
-		title.setSize(250, 20);
+		title.setPreferredSize(new Dimension(500, 20));
+		title.setSize(500, 20);
 		title.setVerticalAlignment(SwingConstants.BOTTOM);
 		title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
 		title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
@@ -384,14 +413,14 @@ public class BubblesDiagram extends Diagram {
 		Box box = new Box(BoxLayout.X_AXIS);
 		box.add(Box.createHorizontalStrut(10));
 		box.add(title);
-		box.add(Box.createHorizontalGlue());
-		box.add(search);
-		box.add(Box.createHorizontalStrut(3));
-
+	//	box.add(Box.createHorizontalGlue());
+	//	box.add(search);
+	//	box.add(Box.createHorizontalStrut(3));
+	
 		this.add(d, BorderLayout.CENTER); // El display con el grafo
 		this.add(box, BorderLayout.SOUTH); // La caja de búsqueda
 											// Se podrían add otras historias
-
+		
 		Color BACKGROUND = Color.WHITE;
 		Color FOREGROUND = Color.DARK_GRAY;
 		
@@ -519,11 +548,19 @@ public class BubblesDiagram extends Diagram {
 				.getRed(), paleta[BubblesDiagram.bicColor3].getGreen(),
 				paleta[BubblesDiagram.bicColor3].getBlue(), 100));
 
+		
+		LabelRenderer r = new LabelRenderer("name");
+		//r.setRoundedCorner(8, 8); // round the corners
+		v.setRendererFactory(new DefaultRendererFactory(r, null));
+
 		int[] paletaTipos = new int[] { sesion.getBicSet2().getRGB(),
 				sesion.getBicSet3().getRGB(), sesion.getBicSet1().getRGB() };
 		nodeColor = new DataColorAction("graph.nodes", "resultType",
 				Constants.NOMINAL, VisualItem.FILLCOLOR, paletaTipos);// Pasarle
 																		// homogeneidad
+		ColorAction text = new ColorAction("graph.nodes",
+				// VisualItem.TEXTCOLOR, ColorLib.gray(200));
+						VisualItem.TEXTCOLOR, ColorLib.blue(50));
 
 		nodeStroke = new NodeStrokeAction("graph.nodes",
 				sesion.getHoverColor(), sesion.getSelectionColor(),
@@ -537,6 +574,7 @@ public class BubblesDiagram extends Diagram {
 		color.remove(nodeStroke);
 		color.add(nodeColor);
 		color.add(nodeStroke);
+		color.add(text);
 		v.putAction("color", color);
 
 		// filtering
@@ -578,6 +616,7 @@ public class BubblesDiagram extends Diagram {
 		color.remove(nodeStroke);
 		color.add(nodeColor);
 		color.add(nodeStroke);
+		//color.add(text);
 		v.putAction("color", color);
 
 		// filtering
@@ -718,12 +757,13 @@ public class BubblesDiagram extends Diagram {
 		}
 	} // end of inner class NodeColorAction
 
+	
 	/**
 	 * Set node label colors
 	 */
 	static class TextColorAction extends ColorAction {
 		TextColorAction(String group) {
-			super(group, VisualItem.TEXTCOLOR, ColorLib.gray(0, 0));
+			super(group, VisualItem.TEXTCOLOR, ColorLib.gray(255, 255));
 			add("_hover", ColorLib.gray(255));
 			add("ingroup('_search_')", ColorLib.gray(0));
 		}

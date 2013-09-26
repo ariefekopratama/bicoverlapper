@@ -15,6 +15,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 
 import es.usal.bicoverlapper.controller.analysis.Analysis;
@@ -22,6 +23,7 @@ import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor;
 import es.usal.bicoverlapper.controller.analysis.AnalysisProgressMonitor.AnalysisTask;
 import es.usal.bicoverlapper.controller.data.filter.GMLFilter;
 import es.usal.bicoverlapper.controller.kernel.Session;
+import java.awt.Dimension;
 
 
 /**
@@ -77,8 +79,8 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			getContentPane().setLayout(null);
-			this.setPreferredSize(new java.awt.Dimension(417, 222));
-			this.setSize(445, 222);
+			this.setPreferredSize(new Dimension(450, 222));
+			this.setSize(470, 222);
 			
 			{
 				JLabel1 = new JLabel();
@@ -91,7 +93,7 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				sdThreshold = new JTextField();
 				getContentPane().add(sdThreshold);
 				sdThreshold.setText("0.5");
-				sdThreshold.setBounds(337, 38, 40, 21);
+				sdThreshold.setBounds(347, 38, 40, 21);
 			}
 			{
 				jLabel2 = new JLabel();
@@ -108,20 +110,20 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				distanceMethod = new JComboBox();
 				getContentPane().add(distanceMethod);
 				distanceMethod.setModel(distanceMethodModel);
-				distanceMethod.setBounds(119, 68, 112, 23);
+				distanceMethod.setBounds(126, 68, 112, 23);
 				distanceMethod.setSelectedIndex(0);
 			}
 			{
 				jLabel3 = new JLabel();
 				getContentPane().add(jLabel3);
 				jLabel3.setText("distance below");
-				jLabel3.setBounds(230, 71, 105, 14);
+				jLabel3.setBounds(241, 71, 105, 14);
 			}
 			{
 				distanceThreshold = new JTextField();
 				getContentPane().add(distanceThreshold);
 				distanceThreshold.setText("1.0");
-				distanceThreshold.setBounds(337, 67, 40, 21);
+				distanceThreshold.setBounds(347, 67, 40, 21);
 			}
 			{
 				build = new JButton();
@@ -163,9 +165,12 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 									try{
 										String fileName=t.get();
 										if(fileName==null)	
-											JOptionPane.showMessageDialog(null,
+											SwingUtilities.invokeLater(new Runnable(){
+												public void run(){
+													JOptionPane.showMessageDialog(null,
 								                    "Network not generated",
 								                    "Error",JOptionPane.ERROR_MESSAGE);
+												}});
 										
 										else
 											{
@@ -231,13 +236,13 @@ public class BuildNetworkPanel extends javax.swing.JFrame {
 				jLabel1 = new JLabel();
 				getContentPane().add(jLabel1);
 				jLabel1.setText("s dev");
-				jLabel1.setBounds(379, 41, 57, 17);
+				jLabel1.setBounds(397, 41, 57, 17);
 			}
 			{
 				jLabel4 = new JLabel();
 				getContentPane().add(jLabel4);
 				jLabel4.setText("s dev");
-				jLabel4.setBounds(382, 71, 50, 15);
+				jLabel4.setBounds(399, 71, 50, 15);
 			}
 			pack();
 			this.setSize(417, 222);

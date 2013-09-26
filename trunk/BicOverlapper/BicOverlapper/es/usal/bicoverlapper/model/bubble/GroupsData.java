@@ -124,31 +124,25 @@ public class GroupsData {
 						//antes estaba así
 						StringTokenizer stAux = new StringTokenizer(cad, ":");
 						b.setName(stAux.nextToken());
-						System.out.println(b.getName());
+					//	System.out.println(b.getName());
 					}
 					else{
 						b.setName("" + cont);
-						/*JOptionPane.showMessageDialog(
-								null,
-								"Group file  format without group names deprecated, please refer to format section on the help",
-								"Group file format error", JOptionPane.ERROR_MESSAGE);
-						
-						System.err.println("Biclustering format without bicluster names deprecated, please refer to format section on the help");*/
-					}
+						}
 					cont++;
 				} else {
 					if (areGenes) {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
 							b.getGenes().add(c);
-							System.out.println(c);
+						//	System.out.println(c);
 							//se controla el número de genes leídos
 							genesLeidos.add(c);
 							//en caso de superar una determinada cifra y de no estar notificado, se notificará en la sesión
 							//pero se seguirá leyendo
 							if(!sesion.isTooManyGenes() && genesLeidos.size() > Session.MAX_GENES){
 								sesion.setTooManyGenes(true);
-								System.out.println("\n\nsesion.setTooManyGenes(true)\n\n");
+								System.out.println("\n\nToo many genes for some visualizations\n\n");
 							}
 							
 							if (!genes.containsKey(c))
@@ -158,7 +152,7 @@ public class GroupsData {
 						while (st.hasMoreTokens()) {
 							String c = st.nextToken();
 							b.getConditions().add(c);		
-							System.out.println(c);
+							//System.out.println(c);
 							if (!conditions.containsKey(c))
 								conditions.put(c, contc++);
 						}
@@ -204,7 +198,7 @@ public class GroupsData {
 			doProjection();
 			buildGraphFromProjection();
 		} else
-			throw new IOException("No groups found, check if group elements are correctly separated by tabs.");
+			throw new IOException("No groups found");
 	}
 
 	/**
@@ -277,7 +271,7 @@ public class GroupsData {
 		nodes.addColumn("x", float.class);
 		nodes.addColumn("y", float.class);
 		nodes.addColumn("goodness", float.class);// De momento paso de esto un
-													// poco
+												// poco
 		nodes.addColumn("homogeneity", float.class);// De momento paso de esto
 													// un poco
 		nodes.addColumn("resultType", String.class);
