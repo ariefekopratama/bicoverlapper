@@ -93,12 +93,12 @@ public class GSEAPanel extends javax.swing.JFrame {
 				this.setSize(286, 225);
 			}
 			this.setPreferredSize(new java.awt.Dimension(521, 490));
-			this.setLayout(null);
+			getContentPane().setLayout(null);
 			this.setSize(521, 490);
 			// this.setToolTipText("Limma differential expression analysis between groups 1 and 2.\r\nThe genes above the thresholds are selected.");
 			{
 				OK = new JButton();
-				this.add(OK);
+				getContentPane().add(OK);
 				OK.setText("Gene Set Enrichment Analysis");
 				OK.setBounds(120, 425, 230, 21);
 				OK.addActionListener(new java.awt.event.ActionListener() {
@@ -263,22 +263,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 													JOptionPane.ERROR_MESSAGE);
 
 										else {
-											if (fileName.indexOf("/") > -1)
-												session.getReader()
-														.readBiclusterResults(
-																fileName.substring(
-																		0,
-																		fileName.lastIndexOf("/")),
-																fileName.substring(fileName
-																		.lastIndexOf("/") + 1),
-																fileName,
-																session);
-											else
-												session.getReader()
-														.readBiclusterResults(
-																"", fileName,
-																fileName,
-																session);
+											session.getMainWindow().getFileMenuManager().readGroups(new File(fileName).getAbsolutePath(), new File(fileName), session);
 										}
 									} catch (Exception e) {
 										e.printStackTrace();
@@ -326,22 +311,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 													JOptionPane.ERROR_MESSAGE);
 
 										else {
-											if (fileName.indexOf("/") > -1)
-												session.getReader()
-														.readBiclusterResults(
-																fileName.substring(
-																		0,
-																		fileName.lastIndexOf("/")),
-																fileName.substring(fileName
-																		.lastIndexOf("/") + 1),
-																fileName,
-																session);
-											else
-												session.getReader()
-														.readBiclusterResults(
-																"", fileName,
-																fileName,
-																session);
+											session.getMainWindow().getFileMenuManager().readGroups(new File(fileName).getAbsolutePath(), new File(fileName), session);
 										}
 									} catch (Exception e) {
 										e.printStackTrace();
@@ -397,22 +367,7 @@ public class GSEAPanel extends javax.swing.JFrame {
 													JOptionPane.ERROR_MESSAGE);
 
 										else {
-											if (fileName.indexOf("/") > -1)
-												session.getReader()
-														.readBiclusterResults(
-																fileName.substring(
-																		0,
-																		fileName.lastIndexOf("/")),
-																fileName.substring(fileName
-																		.lastIndexOf("/") + 1),
-																fileName,
-																session);
-											else
-												session.getReader()
-														.readBiclusterResults(
-																"", fileName,
-																fileName,
-																session);
+											session.getMainWindow().getFileMenuManager().readGroups(new File(fileName).getAbsolutePath(), new File(fileName), session);
 										}
 									} catch (Exception e) {
 										e.printStackTrace();
@@ -427,28 +382,28 @@ public class GSEAPanel extends javax.swing.JFrame {
 			}
 			{
 				pvalue = new JLabel();
-				this.add(pvalue);
+				getContentPane().add(pvalue);
 				pvalue.setText("Filter out the lowest ");
 				pvalue.setBounds(17, 12, 148, 14);
 				// pvalue.setToolTipText("-log10 scale means that a p-value of 10e-6 must be specified as 6");
 			}
 			{
 				filterCutoff = new JTextField();
-				this.add(filterCutoff);
+				getContentPane().add(filterCutoff);
 				filterCutoff.setText("60");
-				filterCutoff.setBounds(146, 9, 29, 21);
+				filterCutoff.setBounds(167, 8, 41, 21);
 			}
 			{
 				differentialExpression = new JLabel();
-				this.add(differentialExpression);
+				getContentPane().add(differentialExpression);
 				differentialExpression.setText("Select as gene sets");
 				differentialExpression.setBounds(16, 39, 161, 14);
 			}
 			{
 				minGenesInGS = new JTextField();
-				this.add(minGenesInGS);
+				getContentPane().add(minGenesInGS);
 				minGenesInGS.setText("5");
-				minGenesInGS.setBounds(344, 36, 23, 21);
+				minGenesInGS.setBounds(367, 35, 40, 21);
 			}
 
 			ExpressionData md = session.getMicroarrayData();
@@ -487,13 +442,13 @@ public class GSEAPanel extends javax.swing.JFrame {
 
 			{
 				jLabel1 = new JLabel();
-				this.add(jLabel1);
+				getContentPane().add(jLabel1);
 				jLabel1.setText("Group 1");
 				jLabel1.setBounds(15, 116, 79, 14);
 			}
 			{
 				jLabel2 = new JLabel();
-				this.add(jLabel2);
+				getContentPane().add(jLabel2);
 				jLabel2.setText("Group 2");
 				jLabel2.setBounds(267, 116, 81, 14);
 			}
@@ -567,8 +522,8 @@ public class GSEAPanel extends javax.swing.JFrame {
 			{
 				jLabel3 = new JLabel();
 				getContentPane().add(jLabel3);
-				jLabel3.setText("% of differentially expressed genes");
-				jLabel3.setBounds(181, 12, 256, 15);
+				jLabel3.setText("% of genes (by overall variation)");
+				jLabel3.setBounds(220, 12, 256, 15);
 			}
 			{
 				ComboBoxModel geneSetTypeModel = new DefaultComboBoxModel(
@@ -576,44 +531,44 @@ public class GSEAPanel extends javax.swing.JFrame {
 				geneSetType = new JComboBox();
 				getContentPane().add(geneSetType);
 				geneSetType.setModel(geneSetTypeModel);
-				geneSetType.setBounds(138, 35, 117, 22);
+				geneSetType.setBounds(142, 36, 129, 22);
 			}
 			{
 				jLabel4 = new JLabel();
 				getContentPane().add(jLabel4);
 				jLabel4.setText("with at least ");
-				jLabel4.setBounds(260, 36, 84, 21);
+				jLabel4.setBounds(283, 37, 84, 21);
 			}
 			{
 				jLabel5 = new JLabel();
 				getContentPane().add(jLabel5);
 				jLabel5.setText("genes");
-				jLabel5.setBounds(374, 39, 57, 15);
+				jLabel5.setBounds(419, 39, 57, 15);
 				jLabel5.setToolTipText("in our expression matrix");
 			}
 			{
 				jLabel6 = new JLabel();
 				getContentPane().add(jLabel6);
-				jLabel6.setText("Select only gene sets with p-value differences above");
+				jLabel6.setText("Select only gene sets with p-value differences >");
 				jLabel6.setBounds(15, 66, 350, 15);
 			}
 			{
 				sd = new JTextField();
 				getContentPane().add(sd);
 				sd.setText("2.0");
-				sd.setBounds(353, 63, 26, 22);
+				sd.setBounds(331, 62, 34, 22);
 			}
 			{
 				jLabel7 = new JLabel();
 				getContentPane().add(jLabel7);
 				jLabel7.setText("standard deviations");
-				jLabel7.setBounds(383, 66, 138, 15);
+				jLabel7.setBounds(377, 66, 138, 15);
 			}
 			{
 				jLabel8 = new JLabel();
 				getContentPane().add(jLabel8);
 				jLabel8.setText("Select the two groups to compare in the Gene Set Enrichment Analysis:");
-				jLabel8.setBounds(16, 97, 460, 15);
+				jLabel8.setBounds(16, 97, 487, 15);
 			}
 			{
 				jScrollPane2 = new JScrollPane();

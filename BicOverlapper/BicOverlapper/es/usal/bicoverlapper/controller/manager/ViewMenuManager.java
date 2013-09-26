@@ -130,18 +130,27 @@ public class ViewMenuManager implements ActionListener {
 		
 		}
 	
-	public void viewBubbles(Session sesion)
+	public void viewBubbles(final Session sesion)
 		{
-		Dimension dim = config.getDimPanelBubbles();
-		BubblesDiagram panel = new BubblesDiagram(sesion, dim);
-		DiagramWindow ventana = new DiagramWindow(sesion,
+		
+		SwingUtilities.invokeLater(new Runnable(){
+			public void run(){
+	
+				Dimension dim = config.getDimPanelBubbles();
+				BubblesDiagram panel = new BubblesDiagram(sesion, dim);
+
+				DiagramWindow ventana = new DiagramWindow(sesion,
 				sesion.getDesktop(), panel);
-		panel.setWindow(ventana);
-		ventana.setLocation(config.getInitBM().x, config.getInitBM().y);
-		sesion.setBubbles(ventana);
-		panel.createAxisLayout();
-		panel.run();
+				panel.setWindow(ventana);
+				ventana.setLocation(config.getInitBM().x, config.getInitBM().y);
+				sesion.setBubbles(ventana);
+				panel.createAxisLayout();
+				panel.run();
+			}});
+		
+		
 		}
+	
 	public void viewOverlapper(final Session sesion)
 		{
 		SwingUtilities.invokeLater(new Runnable(){

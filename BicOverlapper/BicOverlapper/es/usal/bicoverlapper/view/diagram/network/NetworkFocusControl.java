@@ -171,7 +171,7 @@ class NetworkFocusControl extends FocusControl {
 	}
 
 	void clear() {
-		System.out.println("TRN: Vamos a borrar");
+		//System.out.println("TRN: Vamos a borrar");
 		if (nodosSeleccionados.size() > 0) {
 			TupleSet ts = visualization.getFocusGroup(group);
 			ts.clear();

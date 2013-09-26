@@ -88,6 +88,7 @@ public class CellHeatmap extends JProcessingPanel
 	HeatmapDiagram2 vv=null;
 	String hoveredGene=null;
 	ArrayList<String> selectedGenes=new ArrayList<String>();//For the selection box
+	LinkedList<Integer> selectedConditions=new LinkedList<Integer>();//For the selection box
 	HashMap<String, ArrayList<Color>> colors=new HashMap<String, ArrayList<Color>>();
 	
 	PFont pfont;
@@ -112,6 +113,7 @@ public class CellHeatmap extends JProcessingPanel
 	private int cursorY0=-1;
 	private boolean externalHovering=false;
 	private boolean configurando;
+	private int hoveredCondition;
 	
 	public Selection getSelection()
 		{
@@ -138,7 +140,6 @@ public class CellHeatmap extends JProcessingPanel
 		for(Integer i:cell.getGenes())
 			{
 			String g=vv.md.getGeneName(i);
-			//marginRows=Math.min(Math.max((int)textWidth(g),marginRows), 200);
 			marginRows=Math.max((int)textWidth(g),marginRows);
 			}
 			
@@ -161,12 +162,6 @@ public class CellHeatmap extends JProcessingPanel
 			
 			if(width>Toolkit.getDefaultToolkit().getScreenSize().width)
 				{
-				/*this.setSize(vv.getWidth()-margin, vv.getHeight()-margin);
-				this.setPreferredSize(new Dimension(vv.getWidth()-margin, vv.getHeight()-margin));
-				width=vv.getWidth()-margin;
-				height=vv.getHeight()-margin;*/
-				
-				
 				computeOrder();
 				computeColors();
 				update=true;
@@ -397,13 +392,26 @@ public class CellHeatmap extends JProcessingPanel
 			vv.session.setSelectionAndUpdate(new Selection(genes, conditions), null);
 			return;
 			}
+		else if(!selectedConditions.isEmpty())
+			{
+			LinkedList<Integer> conditions=new LinkedList<Integer>();
+			for (int j = 0; j < selectedConditions.size(); j++)
+				conditions.add(selectedConditions.get(j));
+			LinkedList<Integer> genes=new LinkedList<Integer>();
+			for (int j = 0; j < cell.getGenes().size(); j++)
+				genes.add(cell.getGenes().get(j));
+			
+			vv.session.setSelectionAndUpdate(new Selection(genes, conditions), null);
+			selectedGenes.clear();
+			selectedConditions.clear();
+			return;
+			}
 		
-		if(hoveredGene!=null && keyPressed==true && keyCode==18)
-		//	if(mouseClicks==2 && hoveredGene!=null)	//Search on NCBI
+		if(hoveredGene!=null && keyPressed==true && keyCode==18) //alt+click: Search on NCBI
 			{
 			vv.session.getMicroarrayData().browseEntrezGene(vv.session.getMicroarrayData().getGeneId(hoveredGene));
 			}
-		else if(hoveredGene!=null && keyPressed==true && keyCode==17)
+		else if(hoveredGene!=null && keyPressed==true && keyCode==17)//alt+ctrl: get similar profiles
 			{
 			vv.session.getMicroarrayData().getSimilarPatterns(vv.session.getMicroarrayData().getGeneId(hoveredGene));
 			}
@@ -414,6 +422,17 @@ public class CellHeatmap extends JProcessingPanel
 			genes.add(vv.session.getMicroarrayData().getGeneId(hoveredGene));
 			for (int j = 0; j < vv.session.getMicroarrayData().getNumConditions(); j++)
 				conditions.add(Integer.valueOf(j));
+			vv.session.setSelectionAndUpdate(new Selection(genes, conditions), null);
+			repaint();
+			}
+		else if(mouseClicks==1 && hoveredCondition!=-1)
+			{
+			LinkedList<Integer> conditions=new LinkedList<Integer>();
+			conditions.add(hoveredCondition);
+			LinkedList<Integer> genes=new LinkedList<Integer>();
+			for (int j = 0; j < cell.getGenes().size(); j++)
+				genes.add(cell.getGenes().get(j));
+			
 			vv.session.setSelectionAndUpdate(new Selection(genes, conditions), null);
 			repaint();
 			}
@@ -490,13 +509,16 @@ public class CellHeatmap extends JProcessingPanel
 				{
 				if(cont>0)	xDisplacement+=basicWidth;
 				
-				//draw column labels
+				//------------------------------------------------draw column labels
 				fill(5);
 				textAlign(LEFT, CENTER);
 				for(int i=0;i<this.numCols;i++)
 					{
 					if(mouseX>(margin+marginRows+xDisplacement+i*size) && mouseX<(margin+marginRows+xDisplacement+(i+1)*size))
+						{
 						fill(vv.session.getHoverColor());
+						hoveredCondition=columnOrder[i];
+						}
 					else
 						fill(vv.session.getForegroundColor());
 					
@@ -506,8 +528,18 @@ public class CellHeatmap extends JProcessingPanel
 						translate((float)(margin+marginRows+xDisplacement+(i+0.5)*size), marginCols);
 						rotate((float)(1.5*PI));
 						text(vv.md.columnLabels[columnOrder[i]],0, 0);
-						
 						popMatrix();
+						
+						if(cursorY0!=-1)
+							{
+							Rectangle2D.Double selRect=new Rectangle2D.Double(cursorX0,cursorY0, mouseX-cursorX0,mouseY-cursorY0);
+							
+							//if(selRect.intersects(margin+marginRows+xDisplacement+(i+0.5)*size, 0, 1.5*size, marginCols))
+							if(selRect.intersects(margin+marginRows+xDisplacement+i*size, 0, size, marginCols))
+									if(!selectedConditions.contains(columnOrder[i]))
+									selectedConditions.add(columnOrder[i]);
+							}
+						
 						}
 					}
 				}
@@ -517,7 +549,7 @@ public class CellHeatmap extends JProcessingPanel
 			
 			textAlign(RIGHT, CENTER);
 			
-			//draw gene labels and expression levels
+			//-----------------------------------draw gene labels and expression levels
 			int i=0;
 			for(i=0;i<Math.min(names.size(), maxItemsHeight) && i+cont<names.size();i++)//for each gene
 				{
@@ -542,6 +574,7 @@ public class CellHeatmap extends JProcessingPanel
 						if(selectedGenes.contains(gene))	selectedGenes.remove(gene);
 						fill(vv.session.getForegroundColor());
 						}
+					
 					}
 				else 
 					{
@@ -738,7 +771,7 @@ public class CellHeatmap extends JProcessingPanel
 		if(vv!=null && vv.session!=null && vv.session.getSelectedConditionsBicluster()!=null)
 			{
 			LinkedList<Integer> sc=vv.session.getSelectedConditionsBicluster();
-			if(sc.size()==0)// || sc.size()==this.numCols)
+			if(sc==null || sc.size()==0)// || sc.size()==this.numCols)
 				return vv.session.getMicroarrayData().getColumnOrder();
 			else
 				{

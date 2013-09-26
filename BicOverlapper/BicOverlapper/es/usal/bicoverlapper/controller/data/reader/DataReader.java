@@ -13,6 +13,9 @@ import java.util.Vector;
 import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
+
+import org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel;
 
 import prefuse.data.Node;
 
@@ -35,6 +38,7 @@ public class DataReader {
 	private final int WINDOWS = 0;
 	private final int LINUX = 1;
 	private int OS;
+	private String errorMessage;
 
 	public DataReader() {
 		if (System.getProperty("os.name").contains("indows"))
@@ -204,17 +208,31 @@ public class DataReader {
 			sesion.setGroupsDataFile(file);
 			sesion.setBiclusterDataStatus(true);
 		} catch (FileNotFoundException e1) {
-			JOptionPane.showMessageDialog(null, "File not found: " + file,
-					"Error", JOptionPane.ERROR_MESSAGE);
+			errorMessage=e1.getMessage();
+			 java.awt.EventQueue.invokeLater(new Runnable(){
+				   public void run(){
+					   JOptionPane.showMessageDialog(null, "File not fund " + errorMessage,
+								"Error", JOptionPane.ERROR_MESSAGE);   
+				   }
+			   });
 			error = true;
 		} catch (IOException e2) {
-			JOptionPane.showMessageDialog(null, "I/O Error " + e2.getMessage(),
-					"Error", JOptionPane.ERROR_MESSAGE);
+			 errorMessage=e2.getMessage();
+			 java.awt.EventQueue.invokeLater(new Runnable(){
+				   public void run(){
+					   JOptionPane.showMessageDialog(null, "I/O Error " + errorMessage,
+								"Error", JOptionPane.ERROR_MESSAGE);   
+				   }
+			   });
 			error = true;
 		} catch (Exception e3) {
-			JOptionPane.showMessageDialog(null,
-					"Format error " + e3.getMessage(), "Error",
-					JOptionPane.ERROR_MESSAGE);
+			errorMessage=e3.getMessage();
+			 java.awt.EventQueue.invokeLater(new Runnable(){
+				   public void run(){
+					   JOptionPane.showMessageDialog(null, "Format Error " + errorMessage,
+								"Error", JOptionPane.ERROR_MESSAGE);   
+				   }
+			   });
 			error = true;
 		}
 		if (!error) {

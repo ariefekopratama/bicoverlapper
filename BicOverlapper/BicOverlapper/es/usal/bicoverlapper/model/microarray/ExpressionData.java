@@ -649,11 +649,16 @@ public class ExpressionData {
 			String entrezLabel=null;
 			if(getEntrezIds()!=null && getEntrezIds().length>0)
 				entrezLabel=getEntrezIds()[geneId];
-			
-			if(entrezLabel!=null)
+			//getGeneAnnotation(geneId);
+			if(entrezLabel!=null && entrezLabel.length()>0)
 				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene?term="+entrezLabel));
 			else
-				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene?term="+getGeneName(geneId)+"%20AND%20"+getOrganism().replace(" ", "%20")+"%5BOrganism%5D"));
+				{
+				GeneAnnotation ga=getGeneAnnotation(geneId);
+				if(ga!=null && ga.getName()!=null)
+						java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene?term="+ga.getName()+"%20AND%20"+getOrganism().replace(" ", "%20")+"%5BOrganism%5D"));
+				else	java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://www.ncbi.nlm.nih.gov/gene?term="+getGeneName(geneId)+"%20AND%20"+getOrganism().replace(" ", "%20")+"%5BOrganism%5D"));
+				}
 			}catch(IOException e){System.out.println("Error: cannot show webpage: "+e.getMessage()); e.printStackTrace();}
 			
 		}
@@ -1663,6 +1668,10 @@ public class ExpressionData {
 		}
 		return ret;
 	}
+
+	public GeneAnnotation getGeneAnnotation(int gene) {
+		return geneAnnotations.get(gene);
+		}
 
 	/**
 	 * Returns a list of GOTerms that appear in the list of genes passed as

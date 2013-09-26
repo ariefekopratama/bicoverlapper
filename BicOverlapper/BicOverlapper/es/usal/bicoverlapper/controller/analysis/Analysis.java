@@ -85,7 +85,6 @@ public class Analysis {
 	 */
 	public double[][] getPrincipalComponents(String groupFile, ArrayList<Integer> comps)
 		{
-		float[][] coords=null;
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/helpers.R\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.R\")");
 		
@@ -227,6 +226,7 @@ public class Analysis {
 					"Required package "+ library + " is not installed in R\n Please install the package through the R console.",
 					"Missing R package",
 					JOptionPane.WARNING_MESSAGE);
+			
 			return -1;
 		}
 		return 0;
@@ -263,7 +263,7 @@ public class Analysis {
 					"Required package "
 							+ lib
 							+ " is not installed in R\n Please install the package through the R console",
-					"Missing R package",
+					"Missing Biocondctor package",
 					JOptionPane.WARNING_MESSAGE);
 			return -1;
 			}
@@ -297,7 +297,7 @@ public class Analysis {
 				} else {
 					// si estamos en unix
 					exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/loadMatrix.R\")");
-					System.out.println("En r.eval source de linux y exp = "+ exp);
+					System.out.println("En r.eval source de unix y exp = "+ exp);
 				}
 
 				// R necesita las barras de dirección duplicadas, y la forma de
@@ -1497,7 +1497,8 @@ public class Analysis {
 			loadMatrix(m);
 		
 		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-
+		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+			
 		if(getMicroarrayData().isBioMaRt)
 			{
 			System.err.println("GSEA Error: biomart ids not supported");
@@ -1570,7 +1571,7 @@ public class Analysis {
 				+ outFile
 				+ "\", ret, NA, bicNames=names(ret), biclusteringDescription=\""
 				+ desc + "\")");
-
+		
 		return outFile;
 	}
 
@@ -1607,7 +1608,8 @@ public class Analysis {
 		if (!matrixLoaded)
 			loadMatrix(m);
 		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-
+		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+		
 		if(getMicroarrayData().isBioMaRt)
 			{
 			System.err.println("GSEA Error: biomart ids not supported");
@@ -1672,7 +1674,6 @@ public class Analysis {
 		exp = r.eval("writeBiclusterResultsFromListArray(fileName=\""
 				+ outFile
 				+ "\", listArrayRows=ret$degs, listArrayNames=ln, descriptions=labels)");
-
 		return outFile;
 	}
 
@@ -1707,7 +1708,8 @@ public class Analysis {
 		if (!matrixLoaded)
 			loadMatrix(m);
 		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-
+		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+		
 
 		if(getMicroarrayData().isBioMaRt)
 			{

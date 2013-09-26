@@ -155,15 +155,30 @@ writeBiclusterResultsFromList=function(fileName, listRows, listColumns=NA, bicNa
 ######################################
 #Reads a biclustering file into a list 
 ######################################
+#readGroups=function(file=NA)
+#  	{
+#	  if(is.na(file))
+#		  stop("Error: a file name should be provided")
+#	  text=scan(file, what="character", sep="\t")
+#	  names=gsub(" ?: ?.*$", "", text[grep(" ?: ?", text)])
+#	  starts=grep(" ?: ?", text)+2
+#	  groups=sapply(1:(length(starts)-1), function(x){text[starts[x]:(starts[x+1]-3)]})
+#	  groups=c(groups,list(text[starts[length(starts)]:length(text)]))
+#	  names(groups)=names
+#	  groups
+ # 	}
+	
 readGroups=function(file=NA)
-  	{
-	  if(is.na(file))
-		  stop("Error: a file name should be provided")
-	  text=scan(file, what="character", sep="\t")
-	  names=gsub(" ?: ?.*$", "", text[grep(" ?: ?", text)])
-	  starts=grep(" ?: ?", text)+2
-	  groups=sapply(1:(length(starts)-1), function(x){text[starts[x]:(starts[x+1]-3)]})
-	  groups=c(groups,list(text[starts[length(starts)]:length(text)]))
-	  names(groups)=names
-	  groups
-  	}
+	{
+		if(is.na(file))
+			stop("Error: a file name should be provided")
+		text=scan(file, what="character", sep="\n")
+		locs=grep(" ?: ?", text)
+		names=gsub(" ?: ?.*$", "", text[locs])
+		starts=locs+1
+		groups=strsplit(text[starts], "\t")
+		starts=locs+2
+		groups=c(groups,strsplit(text[starts], "\t"))
+		names(groups)=names
+		groups
+	}

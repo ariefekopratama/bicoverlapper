@@ -206,6 +206,9 @@ public class NetworkDiagram extends Diagram {
 		paleta[NetworkDiagram.lowExpColor] = sesion.getLowExpColor();
 		paleta[NetworkDiagram.avgExpColor] = sesion.getAvgExpColor();
 		paleta[NetworkDiagram.highExpColor] = sesion.getHiExpColor();
+		
+		this.addKeyListener(sesion);	
+		
 	}
 
 	/**
@@ -418,6 +421,7 @@ public class NetworkDiagram extends Diagram {
 		} else
 			d.setVisualization(v);
 
+		/*
 		// Caja de búsqueda:
 		sq = new SearchQueryBinding((Table) v.getGroup("graph.nodes"), "name",
 				(SearchTupleSet) v.getGroup(Visualization.SEARCH_ITEMS));
@@ -425,14 +429,14 @@ public class NetworkDiagram extends Diagram {
 		search.setShowResultCount(true);
 		search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
 		search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-
+*/
 		// final JFastLabel title = new JFastLabel("                 ");
 		title = new JFastLabel("                 ");
 		title.setPreferredSize(new Dimension(350, 20));
 		title.setVerticalAlignment(SwingConstants.BOTTOM);
 		title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
 		title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
-
+/*
 		d.addControlListener(new ControlAdapter() {
 			public void itemEntered(VisualItem item, MouseEvent e) {
 				if (item.canGetString("name"))
@@ -443,21 +447,13 @@ public class NetworkDiagram extends Diagram {
 				title.setText(null);
 			}
 		});
-
+*/
 		Box box = new Box(BoxLayout.X_AXIS);
 		box.add(Box.createHorizontalStrut(10));
 		box.add(title);
 		box.add(Box.createHorizontalGlue());
-		box.add(search);
-		box.add(Box.createHorizontalStrut(3));
-
-		/*
-		 * Box box2 = new Box(BoxLayout.X_AXIS); ForceConfigAction fca=new
-		 * ForceConfigAction(null, fdl.getForceSimulator()); JPanel search =
-		 * sq.createSearchPanel(); box2.add(Box.createHorizontalStrut(10));
-		 * box2.add(title); box2.add(Box.createHorizontalGlue()); box2.add(fca);
-		 * box2.add(Box.createHorizontalStrut(3));
-		 */
+	//	box.add(search);
+	//	box.add(Box.createHorizontalStrut(3));
 
 		this.add(d, BorderLayout.CENTER); // El display con el grafo
 		this.add(box, BorderLayout.SOUTH); // La caja de búsqueda
@@ -488,8 +484,8 @@ public class NetworkDiagram extends Diagram {
 	 */
 	public void repaint() {
 		// Miramos qué tenemos que hacer con posibles selecciones de biclusters
-		if (v != null && sesion != null
-				&& sesion.getSelectedBicluster() != null) {
+		if (v != null && sesion != null){
+			//	&& sesion.getSelectedBicluster() != null) {
 			// LinkedList l=sesion.getSelectedGenesBicluster();
 			// Quitamos todos los que estuvieran antes en el bicluster			
 			//if (selg == null || !selg.equals(sesion.getSelectedGenesBicluster())) {
@@ -523,15 +519,14 @@ public class NetworkDiagram extends Diagram {
 					}
 				}
 			//}
-			if (selc != null && selc.size() >= 1) {
+			if (selc != null && selc.size() >= 1 && selc.size()<sesion.getMicroarrayData().getNumConditions()) {
 				Iterator it = v.items("graph.nodes");
 
 				while (it.hasNext()) {
 					VisualItem item = (VisualItem) it.next();
 					double exp = 0;
 					for (Object i : selc)
-						// Compute average of expression levels for the
-						// condition
+						// Compute average of expression levels for the condition
 						exp += sesion.getMicroarrayData().getExpressionAt(
 								item.getInt("id"), (Integer) i);
 					exp /= selc.size();
@@ -599,6 +594,12 @@ public class NetworkDiagram extends Diagram {
 			selg = sesion.getSelectedGenesBicluster();
 			selc = sesion.getSelectedConditionsBicluster();
 		}
+		else if(sesion.getSelectedBicluster()==null)
+			{
+			selg.clear();
+			selc.clear();
+			}
+		
 		synchronized (this) {
 			this.repaint();
 		}
@@ -670,24 +671,7 @@ public class NetworkDiagram extends Diagram {
 		}
 	}
 
-	/*
-	 * private void crearPanelParametros(){ JPanel panel = new JPanel();
-	 * panel.setLayout(new GridBagLayout());
-	 * 
-	 * GridBagConstraints constraints = new GridBagConstraints();
-	 * 
-	 * constraints.gridx = 0; constraints.gridy = 0; constraints.weightx = 0.0;
-	 * constraints.weighty = 0.0; constraints.anchor = GridBagConstraints.WEST;
-	 * panel.add(new JLabel("Parameters",constraints); JRadioButton boton = new
-	 * JRadioButton();
-	 * boton.setSelected((Boolean)this.parametros[isEjesRelativos]);
-	 * constraints.gridx = 1; constraints.weightx = 1.0; constraints.anchor =
-	 * GridBagConstraints.WEST; panel.add(boton,constraints);
-	 * 
-	 * this.setPanelParametros(panel); }
-	 */
-
-	public int getId() {
+		public int getId() {
 		return es.usal.bicoverlapper.controller.kernel.Configuration.TRN_ID;
 	}
 
@@ -953,6 +937,7 @@ public class NetworkDiagram extends Diagram {
 				if (sesion != null && sesion.getSelectedBicluster() != null)
 					selg = sesion.getSelectedGenesBicluster();
 				selc = new LinkedList<Integer>();
+				
 				// TODO: smooth transitions? -> use of end/start color in 3s.
 				while (!stop) {
 					System.out.println("running the animation");

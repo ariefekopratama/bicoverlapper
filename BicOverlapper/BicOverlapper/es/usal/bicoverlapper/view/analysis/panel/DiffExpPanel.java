@@ -82,14 +82,14 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				this.setSize(286, 225);
 			}
 			this.setPreferredSize(new java.awt.Dimension(497, 490));
-			this.setLayout(null);
+			getContentPane().setLayout(null);
 			this.setSize(497, 490);
 			// this.setToolTipText("Limma differential expression analysis between groups 1 and 2.\r\nThe genes above the thresholds are selected.");
 			{
 				OK = new JButton();
-				this.add(OK);
+				getContentPane().add(OK);
 				OK.setText("Differential Expression Analysis");
-				OK.setBounds(120, 425, 230, 21);
+				OK.setBounds(120, 425, 241, 21);
 				OK.addActionListener(new java.awt.event.ActionListener() {
 					private AnalysisTask t;
 
@@ -455,41 +455,41 @@ public class DiffExpPanel extends javax.swing.JFrame {
 			}
 			{
 				pvalue = new JLabel();
-				this.add(pvalue);
-				pvalue.setText("BH corrected p-value        <");
-				pvalue.setBounds(13, 14, 184, 14);
+				getContentPane().add(pvalue);
+				pvalue.setText("BH corrected p-value          <");
+				pvalue.setBounds(13, 15, 207, 14);
 				pvalue.setToolTipText("-log10 scale means that a p-value of 10e-6 must be specified as 6");
 			}
 			{
 				pvalueValue = new JTextField();
-				this.add(pvalueValue);
+				getContentPane().add(pvalueValue);
 				pvalueValue.setText("0.01");
-				pvalueValue.setBounds(195, 11, 43, 21);
+				pvalueValue.setBounds(205, 11, 43, 21);
 			}
 			{
 				differentialExpression = new JLabel();
-				this.add(differentialExpression);
+				getContentPane().add(differentialExpression);
 				differentialExpression
 						.setText("Differential expression       >");
-				differentialExpression.setBounds(13, 57, 182, 14);
+				differentialExpression.setBounds(13, 58, 207, 14);
 				differentialExpression
 						.setToolTipText("Genes with differential expression lower than this threshold will be filtered out");
 			}
 			{
 				expressionValue = new JTextField();
-				this.add(expressionValue);
+				getContentPane().add(expressionValue);
 				expressionValue.setText("2.0");
-				expressionValue.setBounds(195, 54, 43, 21);
+				expressionValue.setBounds(205, 54, 43, 21);
 			}
 			{
 				ComboBoxModel regulationModel = new DefaultComboBoxModel(
 						new String[] { "up regulated in group 1",
 								"down regulated in group 1" });
 				regulation = new JComboBox();
-				this.add(regulation);
+				getContentPane().add(regulation);
 				regulation.setModel(regulationModel);
 				regulation.setSelectedIndex(0);
-				regulation.setBounds(39, 83, 192, 21);
+				regulation.setBounds(48, 84, 230, 21);
 			}
 
 			ExpressionData md = session.getMicroarrayData();
@@ -533,13 +533,13 @@ public class DiffExpPanel extends javax.swing.JFrame {
 
 			{
 				jLabel1 = new JLabel();
-				this.add(jLabel1);
+				getContentPane().add(jLabel1);
 				jLabel1.setText("Group 1");
 				jLabel1.setBounds(15, 116, 79, 14);
 			}
 			{
 				jLabel2 = new JLabel();
-				this.add(jLabel2);
+				getContentPane().add(jLabel2);
 				jLabel2.setText("Group 2");
 				jLabel2.setBounds(267, 116, 81, 14);
 			}
@@ -579,7 +579,7 @@ public class DiffExpPanel extends javax.swing.JFrame {
 				select = new JButton();
 				getContentPane().add(select);
 				select.setText("Select");
-				select.setBounds(188, 331, 72, 21);
+				select.setBounds(188, 331, 79, 21);
 				select.setEnabled(false);
 				select.addActionListener(new java.awt.event.ActionListener() {
 

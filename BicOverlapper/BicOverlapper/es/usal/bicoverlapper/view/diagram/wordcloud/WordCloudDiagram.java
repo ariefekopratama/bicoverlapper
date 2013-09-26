@@ -108,6 +108,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 
 	private JLabel progress;
 
+	private boolean waitingEnrichment;
+
 	public WordCloudDiagram(Session sesion, Dimension dim) {
 		super(new BorderLayout());//
 		int num = sesion.getNumWordClouds();
@@ -252,6 +254,8 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 								sesion.getMicroarrayData()
 										.getAnnotationPackage());
 					}
+				
+				waitingEnrichment=true;
 				//----- VIA GOSTATS
 				//this.sesion.getMicroarrayData().getGOTermsHypergeometric(sesion.getSelectedGenesBicluster(), this, p, ont);
 				
@@ -464,6 +468,16 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	public synchronized void receiveGOTerms(ArrayList<GOTerm> goterms) {
 		System.out.println("receiveGOTerms");
 		this.got = goterms;
+		waitingEnrichment=false;
+		
+		if (got == null)
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+			
+				JOptionPane.showMessageDialog(null,
+						"ERROR: enrichemnt test could not be completed",
+						"Error", JOptionPane.ERROR_MESSAGE);
+				}});
 		
 		if (got.size() == 0)
 			SwingUtilities.invokeLater(new Runnable() {
@@ -475,23 +489,13 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 						"Warning", JOptionPane.WARNING_MESSAGE);
 				}});
 		
-		if (got == null)
-			SwingUtilities.invokeLater(new Runnable() {
-				public void run() {
-			
-				JOptionPane.showMessageDialog(null,
-						"ERROR: enrichemnt test could not be completed",
-						"Error", JOptionPane.ERROR_MESSAGE);
-				}});
-		
 		addWords();
 	}
 
 	public synchronized void receiveGeneAnnotations(
 			ArrayList<GeneAnnotation> annot) {
 		System.out.println("\n\nen el geneRequester.receiveGeneAnnotations de WORD CLOUD\n\n");
-		
-
+		waitingEnrichment=false;
 		if (doNOTupdate) {
 			doNOTupdate = false;
 			try {
@@ -989,16 +993,18 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 	}
 
 	public synchronized void paintComponent(Graphics g) {
+		
 		drawFondo((Graphics2D)g);
 		if(sesion.getSelectedBicluster()==null || sesion.getSelectedGenesBicluster()==null || sesion.getSelectedGenesBicluster().size()==0)
 			drawText((Graphics2D) g, "No selection, please select some elements");
 		else if (sesion.isTooManyGenes()) 
 			drawText((Graphics2D) g, "Too many elements selected for this view");
+		else if(waitingEnrichment)
+			drawText((Graphics2D) g, "Performing statistical enrichment (it might take a while)...");
 		else if(words==null || words.size()==0)
 			drawText((Graphics2D) g, "No annotations found for the selected elements");
 		else
 			{
-			//if (textChanged || (innerCall && !configurando))		setWords((Graphics2D) g);
 			if(textChanged)											setWords((Graphics2D) g);
 			else													drawWords((Graphics2D) g);
 			}
