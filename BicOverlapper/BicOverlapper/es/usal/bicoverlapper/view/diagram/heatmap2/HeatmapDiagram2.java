@@ -91,6 +91,8 @@ public class HeatmapDiagram2 extends Diagram {
 
 	public JScrollPane sp;
 
+	private KeggParameterConfigurationPanel panelEscala;
+
 	/**
 	 * Default constructor
 	 */
@@ -151,10 +153,6 @@ public class HeatmapDiagram2 extends Diagram {
 		return es.usal.bicoverlapper.controller.kernel.Configuration.HEATMAP_ID;
 	}
 
-	public void setOrder(int [] columnOrder)
-		{
-	
-		}
 	 
 	public void update() 
 		{
@@ -165,7 +163,7 @@ public class HeatmapDiagram2 extends Diagram {
 				if(session.getHoveredBicluster()!=null && session.getHoveredBicluster().getGenes().size()==1  && !session.isTooManyGenes())
 					v.setHoveredGene(session.getMicroarrayData().getGeneName(session.getHoveredBicluster().getGenes().get(0)));
 				} 
-			else // SELECTION*/
+			else // SELECTION
 				{
 				if (session.getSelectedBicluster() != null) 
 					{
@@ -177,6 +175,8 @@ public class HeatmapDiagram2 extends Diagram {
 					else
 						v.setUpdate(true);
 					}
+				else
+					v.setSelection(null);
 				
 				}
 			v.repaint();
@@ -242,7 +242,8 @@ public class HeatmapDiagram2 extends Diagram {
 					muestraColor);
 			JPanel panelParametros = new HeatmapParameterConfigurationPanel();
 			this.setPanelParametros(panelParametros);
-			JPanel panelEscala = new KeggParameterConfigurationPanel(session);
+			
+			panelEscala = new KeggParameterConfigurationPanel(session);
 			this.setPanelEscala(panelEscala);
 			JPanel panelBotones = this.getPanelBotones(gestor);
 
@@ -282,36 +283,17 @@ public class HeatmapDiagram2 extends Diagram {
 		session.setSelectionColor(paleta[HeatmapDiagram2.selectionColor]);
 		session.setHoverColor(paleta[HeatmapDiagram2.hoverColor]);
 		
-		if(paleta[HeatmapDiagram2.lowColor].getRGB()!=paleta[HeatmapDiagram2.zeroColor].getRGB() && paleta[HeatmapDiagram2.zeroColor].getRGB()!=paleta[HeatmapDiagram2.highColor].getRGB())
-			{
-			int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
-					paleta[HeatmapDiagram2.lowColor].getRGB(),
-					paleta[HeatmapDiagram2.zeroColor].getRGB());
-			int paletteTemp2[] = ColorLib.getInterpolatedPalette(255,
-					paleta[HeatmapDiagram2.zeroColor].getRGB(),
-					paleta[HeatmapDiagram2.highColor].getRGB());
-			palette = new int[paletteTemp.length + paletteTemp2.length];
+		session.setAvgExpColor(paleta[HeatmapDiagram2.zeroColor]);
+		session.setLowExpColor(paleta[HeatmapDiagram2.lowColor]);
+		session.setHiExpColor(paleta[HeatmapDiagram2.highColor]);
+		session.buildPalette();
 		
-			for (int i = 0; i < paletteTemp.length; i++)
-				palette[i] = paletteTemp[i];
-			for (int i = paletteTemp.length; i < palette.length; i++)
-				palette[i] = paletteTemp2[i - paletteTemp.length];
-			}
-		else
-			{
-			if(paleta[HeatmapDiagram2.lowColor].getRGB()==paleta[HeatmapDiagram2.zeroColor].getRGB())
-				{
-				palette = ColorLib.getInterpolatedPalette(510,
-						paleta[HeatmapDiagram2.zeroColor].getRGB(),
-						paleta[HeatmapDiagram2.highColor].getRGB());
-				}
-			else
-				palette = ColorLib.getInterpolatedPalette(510,
-						paleta[HeatmapDiagram2.lowColor].getRGB(),
-						paleta[HeatmapDiagram2.zeroColor].getRGB());
-			}
-
 			//TODO: scales....
+		if(panelEscala!=null)
+			session.setScaleMode(panelEscala.getScaleModeSelected());
+		this.scaleModeHeatMap=session.getScaleMode();
+		
+		
 		session.updateConfigExcept(this.getName());
 		if(v!=null)
 			{

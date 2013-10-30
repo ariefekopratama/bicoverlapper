@@ -157,6 +157,7 @@ public class Analysis {
 			defaultPath = pathReader.readLine();
 			if (r != null)
 				this.r = r;
+
 			else
 				startR();
 		} catch (Exception e) {
@@ -173,7 +174,7 @@ public class Analysis {
 			r = Rengine.getMainEngine();
 		else if (r == null || !r.isAlive()) {
 			r = new Rengine(
-					new String[] { "--vanilla", "--max-mem-size=1024M" },
+					new String[] { "--vanilla"},
 					false, null);
 			System.out.println("Rengine created, waiting for R");
 			// the engine creates R in a new thread, so we should wait until
@@ -223,7 +224,7 @@ public class Analysis {
 			JOptionPane
 			.showMessageDialog(
 					null,
-					"Required package "+ library + " is not installed in R\n Please install the package through the R console.",
+					"Package '"+ library + "' is not installed in R\n\nWithout this library some options may malfuction or remain inactive.\nYou may install the package at the R console with:\n\tinstallPackages(\""+library+"\")",
 					"Missing R package",
 					JOptionPane.WARNING_MESSAGE);
 			
@@ -232,41 +233,54 @@ public class Analysis {
 		return 0;
 	}
 	
-	public int loadBioconductorLibrary(String lib)
+	public int loadBioconductorLibrary(String library)
 		{
-		exp = r.eval("library(" + lib + ")");
-		if(exp==null)
+		exp = r.eval("library(" + library + ")");
+		System.out.println("loadRLibrary de " + library + " = " + exp);
+		if (exp == null) {
+			JOptionPane
+			.showMessageDialog(
+					null,
+					"Package '"+ library + "' is not installed or cannot be loaded in R\n\nWithout this library some options may malfuction or remain inactive.\nYou may install the package at the R console with:\n    source(\"http://bioconductor.org/biocLite.R\")\n    biocLite(\""+library+"\")",
+					"Missing BioConductor package",
+					JOptionPane.WARNING_MESSAGE);
+			
+			return -1;
+		}
+		return 0;
+		}
+	
+	
+	public int loadBioconductorLibraries(String[] libraries)
+		{
+		ArrayList<String> libErr=new ArrayList<String>();
+		for(String library : libraries)
 			{
-			/*System.out.println("Installing package " + lib);
-			exp = r.eval("source(\"http://bioconductor.org/biocLite.R\")");
-			if (exp == null)
-				System.out.println("sourcing bioconductor returns null");
-			exp = r.eval("biocLite(\"" + lib + "\")");
-			if (exp == null)
-				System.out.println("installing " + lib + " returns null");
-			exp = r.eval("library(" + lib + ")");
+			exp = r.eval("library(" + library + ")");
+			System.out.println("loadRLibrary de " + library + " = " + exp);
 			if (exp == null) 
 				{
-				JOptionPane
-						.showMessageDialog(
-								null,
-								"Package "
-										+ lib
-										+ " is not installed in R and could not be installed automatically\n Please install the package manually through the R console \nIn the meantime, annotations and Tag clouds won't be available",
-								"Missing R package",
-								JOptionPane.WARNING_MESSAGE);
-				return -1;
+				libErr.add(library);
 				}
-				*/
-			JOptionPane.showMessageDialog(
-					null,
-					"Required package "
-							+ lib
-							+ " is not installed in R\n Please install the package through the R console",
-					"Missing Biocondctor package",
-					JOptionPane.WARNING_MESSAGE);
+			}
+		
+		if(libErr.size()>0)
+			{
+			if(libErr.size()==1)
+				JOptionPane.showMessageDialog(null, "Package '"+ libErr.get(0) + "' is not installed or cannot be loaded in R\n\nWithout this library some options may malfuction or remain inactive.\nYou may install the package at the R console with:\n    source(\"http://bioconductor.org/biocLite.R\")\n    biocLite(\""+libErr.get(0)+"\")",
+													"Missing BioConductor package", JOptionPane.WARNING_MESSAGE);
+			else
+				{
+				String message="";
+				for(String lib:libErr)		message+=lib+", ";
+				message=message.substring(0, message.length()-2);
+				JOptionPane.showMessageDialog(null, "Packages "+ message + " are not installed or cannot be loaded in R\n\nWithout these libraries, some options may malfuction or remain inactive.\nYou may install the packages at the R console with:\n    source(\"http://bioconductor.org/biocLite.R\")\n    biocLite(\"packageName\")",
+						"Missing BioConductor package", JOptionPane.WARNING_MESSAGE);
+				
+				}
 			return -1;
 			}
+		
 		return 0;
 		}
 
@@ -963,8 +977,8 @@ public class Analysis {
 	 *            BicOverlapper format) is to be stored
 	 */
 	public String downloadArrayExpressExperiment(String id, String path) {
-		loadRLibrary("ArrayExpress");
-		loadRLibrary("affy");
+		loadBioconductorLibrary("ArrayExpress");
+		loadBioconductorLibrary("affy");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/downloadAndNormalize.R\")");
 		System.out.println("Calling download and normalize");
 				
@@ -1008,7 +1022,7 @@ public class Analysis {
 	 *            BicOverlapper format) is to be stored
 	 */
 	public String downloadGEOExperiment(String id, String path, boolean logTransform) {
-		loadRLibrary("GEOquery");
+		loadBioconductorLibrary("GEOquery");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/downloadAndNormalize.R\")");
 		System.out.println("Calling download");
 				
@@ -1062,7 +1076,7 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		loadRLibrary("limma");
+		loadBioconductorLibrary("limma");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
 		//TODO: if nameGroup1 or 2 is rest, perform the proper condition identification.
 		//if(nameGroup1.equals("rest"))
@@ -1158,7 +1172,7 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		loadRLibrary("limma");
+		loadBioconductorLibrary("limma");
 
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
@@ -1236,7 +1250,7 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		loadRLibrary("limma");
+		loadBioconductorLibrary("limma");
 
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
@@ -1329,7 +1343,7 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		loadRLibrary("limma");
+		loadBioconductorLibrary("limma");
 
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/writeBiclusterResults.r\")");
 		exp = r.eval("source(\"es/usal/bicoverlapper/source/codeR/difAnalysis.R\")");
@@ -1496,8 +1510,8 @@ public class Analysis {
 		if (!matrixLoaded)
 			loadMatrix(m);
 		
-		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+		if(loadBioconductorLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
+		if(type.equals("PATH"))		if(loadBioconductorLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
 			
 		if(getMicroarrayData().isBioMaRt)
 			{
@@ -1607,8 +1621,8 @@ public class Analysis {
 		String m = this.microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+		if(loadBioconductorLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
+		if(type.equals("PATH"))		if(loadBioconductorLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
 		
 		if(getMicroarrayData().isBioMaRt)
 			{
@@ -1707,8 +1721,8 @@ public class Analysis {
 		String m = microarrayData.rMatrixName;
 		if (!matrixLoaded)
 			loadMatrix(m);
-		if(loadRLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
-		if(type.equals("PATH"))		if(loadRLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
+		if(loadBioconductorLibrary("GSEAlm")==-1)	{System.err.println("package GSEAlm not installed in R"); return "";}
+		if(type.equals("PATH"))		if(loadBioconductorLibrary("KEGG.db")==-1)	{System.err.println("required package KEGG.db not installed in R"); return "";}
 		
 
 		if(getMicroarrayData().isBioMaRt)

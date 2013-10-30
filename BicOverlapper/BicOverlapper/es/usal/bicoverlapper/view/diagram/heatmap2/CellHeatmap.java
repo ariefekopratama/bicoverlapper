@@ -136,6 +136,7 @@ public class CellHeatmap extends JProcessingPanel
 			}
 		numRows=cell.getGenes().size();
 		
+		while(gr==null)	System.out.println("es");
 		marginRows=100;
 		for(Integer i:cell.getGenes())
 			{
@@ -211,7 +212,7 @@ public class CellHeatmap extends JProcessingPanel
 			for(int j=0;j<numCols;j++)
 				{
 				this.setScale(vv.session.getMicroarrayData(), j);
-				geneCols.add(this.getColor(this.vv.session.getMicroarrayData().getExpressionAt(this.vv.session.getMicroarrayData().getGeneId(gene), j)));
+				geneCols.add(this.getColor(this.vv.session.getMicroarrayData().getExpressionAt(this.vv.session.getMicroarrayData().getGeneId(gene), j),j));
 				}
 			colors.put(gene, geneCols);
 			}
@@ -528,6 +529,7 @@ public class CellHeatmap extends JProcessingPanel
 						translate((float)(margin+marginRows+xDisplacement+(i+0.5)*size), marginCols);
 						rotate((float)(1.5*PI));
 						text(vv.md.columnLabels[columnOrder[i]],0, 0);
+					//	text(vv.md.columnLabels[i],0, 0);
 						popMatrix();
 						
 						if(cursorY0!=-1)
@@ -759,6 +761,7 @@ public class CellHeatmap extends JProcessingPanel
 		return new Color(vv.getPalette()[(int)((ex-minExp)/((maxExp-minExp))*l)]);
 		}
 	
+	
 	public void setHoveredGene(String gene)
 		{
 		this.hoveredGene=gene;
@@ -797,43 +800,26 @@ public class CellHeatmap extends JProcessingPanel
  * @param col
  * @return
  */
-public Color getColor(float ex, int col)
+public Color getColor(double ex, int col)
 	{
 	setScale(vv.md, col);
 	int h=-1;
+	int size=vv.session.getExpPalette().length-1;
+	
+	Color c=null;
 	if(vv.scaleModeHeatMap==Session.numerical)	//raw coloring
+		h=(int)Math.round(((ex-minExp)/(maxExp-minExp)*size));
+	else										//quantile
 		{
-		if(ex>avgExp)
-			{
-			h=(int)Math.round(255-((ex-avgExp)/(maxExp-avgExp)*255));
-			return new Color(255,h,h);
-			}
-		else
-			{
-			h=(int)Math.round(255-(Math.abs(ex-avgExp)/Math.abs(minExp-avgExp))*255);
-			return new Color(h,h,255);
-				}
+		int q=vv.md.getQuantile((float)ex);
+		h=(int)Math.round(((q)/(100.0)*size));
 		}
-	else	//quantile coloring --> note: color scaling 
-		{
-			int q=vv.md.getQuantile(ex);
-			if(q>=50)
-				{
-				h=(int)Math.round(255-((q-50.0)/50)*255);
-				return new Color(255,h,h);
-				}
-			else
-				{
-				h=(int)Math.round(255-((50.0-q)/50)*255);
-				return new Color(h,h,255);
-				}
-		}
-	//return null;
+	c=new Color(vv.session.getExpPalette()[h]);
+	return c;
 	}
 
 public Color getColor(ArrayList<Float> exs, int col)
 	{
-	//setScale(expData, col);
 	if(exs==null)	return null;
 	return getColor(exs.get(col), col);
 	}

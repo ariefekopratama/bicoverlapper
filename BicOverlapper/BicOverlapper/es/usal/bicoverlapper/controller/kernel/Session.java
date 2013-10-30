@@ -22,6 +22,8 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import prefuse.util.ColorLib;
+
 import es.usal.bicoverlapper.controller.analysis.Analysis;
 import es.usal.bicoverlapper.controller.data.reader.DataReader;
 import es.usal.bicoverlapper.controller.util.ArrayUtils;
@@ -130,6 +132,15 @@ public class Session implements KeyListener{//, FocusListener {
 	private Color lowExpColor;
 	private Color avgExpColor;
 	private Color hiExpColor;
+	private int[] expPalette;
+
+	public int[] getExpPalette() {
+		return expPalette;
+	}
+
+	public void setExpPalette(int[] expPalette) {
+		this.expPalette = expPalette;
+	}
 
 	public String microarrayPath = null;
 	public String biclusteringPath = null;
@@ -158,7 +169,8 @@ public class Session implements KeyListener{//, FocusListener {
 	// numérica
 	public static final int numerical = 0;
 	public static final int quantile = 1;
-	private int scaleMode = quantile;
+	//private int scaleMode = quantile;
+	private int scaleMode = numerical;
 
 	/**
 	 * Constructor of the <code>Session</code> layer, linked to a
@@ -215,14 +227,34 @@ public class Session implements KeyListener{//, FocusListener {
 		this.lowExpColor = Color.BLUE;
 		this.hiExpColor = Color.RED;
 		this.avgExpColor = Color.WHITE;
-
-		/*
-		 * this.tooManyGenes = false; this.numNodes = 0;
-		 */
+		buildPalette();
 
 		reader = new DataReader();
 		return;
 	}
+
+	public void setLowExpColor(Color lowExpColor) {
+		this.lowExpColor = lowExpColor;
+	}
+
+	public void setAvgExpColor(Color avgExpColor) {
+		this.avgExpColor = avgExpColor;
+	}
+
+	public void setHiExpColor(Color hiExpColor) {
+		this.hiExpColor = hiExpColor;
+	}
+
+	public void buildPalette() {
+		int paletteTemp[]=ColorLib.getInterpolatedPalette(510, lowExpColor.getRGB(), avgExpColor.getRGB());
+		int paletteTemp2[]=ColorLib.getInterpolatedPalette(510, avgExpColor.getRGB(), hiExpColor.getRGB());
+		expPalette= new int[paletteTemp.length + paletteTemp2.length];
+		
+		for (int i = 0; i < paletteTemp.length; i++)
+			expPalette[i] = paletteTemp[i];
+		for (int i = paletteTemp.length; i < expPalette.length; i++)
+			expPalette[i] = paletteTemp2[i - paletteTemp.length];
+		}
 
 	public Color getBackgroundColor() {
 		return backgroundColor;
@@ -306,7 +338,6 @@ public class Session implements KeyListener{//, FocusListener {
 			this.datosBubble = null;
 			this.desktop = null;
 			this.expresionesCondicion = null;
-
 		}
 
 		this.grupoVentanasDefecto.clear();
@@ -643,15 +674,17 @@ public class Session implements KeyListener{//, FocusListener {
 	 * Sends a signal to sort columns on PC and heatmaps
 	 */
 	public void sortColumns(String name) {
-		int[] columnOrder = this.getMicroarrayData().sortColumnsBy(name);
+		getMicroarrayData().sortColumnsBy(name);
 
 		for (int i = 0; i < this.grupoVentanasDefecto.size(); i++) {
 			DiagramWindow ventana = this.grupoVentanasDefecto.elementAt(i);
 			if (ventana.getTitle().contains("arallel"))
-				((ParallelCoordinatesDiagram) ventana.getDiagram())
-						.sortColumns(columnOrder);
+				{
+				((ParallelCoordinatesDiagram) ventana.getDiagram()).sortColumns();
+				((ParallelCoordinatesDiagram) ventana.getDiagram()).update();
+				}
 			if (ventana.getTitle().contains("eatmap")) {
-				((HeatmapDiagram2) ventana.getDiagram()).setOrder(columnOrder);
+			//	((HeatmapDiagram2) ventana.getDiagram()).setOrder(columnOrder);
 				((HeatmapDiagram2) ventana.getDiagram()).update();
 			}
 		}
@@ -1102,6 +1135,11 @@ public class Session implements KeyListener{//, FocusListener {
 	 * For Ctrl-0
 	 */
 	public void clear() {
+		//Reset column order
+		int[] co=new int[getMicroarrayData().columnOrder.length];
+		for(int i=0;i<co.length;i++)	co[i]=i;
+		getMicroarrayData().columnOrder=co;
+		
 		setSelectedBiclustersExcept(null, "");
 	}
 

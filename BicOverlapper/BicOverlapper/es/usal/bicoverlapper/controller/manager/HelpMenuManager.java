@@ -31,14 +31,16 @@ public class HelpMenuManager implements ActionListener{
 		if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s24")))
 			{
 			try{
-				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper/contact.htm"));
-			}catch(Exception ex){ex.printStackTrace();}
+//				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper/contact.htm"));
+				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper2/"));
+						}catch(Exception ex){ex.printStackTrace();}
 			}
 		if(e.getActionCommand().equals(Translator.instance.menuLabels.getString("s25")))
 			{
 			try{
-				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper/documents/userGuide.pdf"));
-			}catch(Exception ex){ex.printStackTrace();}
+			//	java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper/documents/userGuide.pdf"));
+				java.awt.Desktop.getDesktop().browse(java.net.URI.create("http://vis.usal.es/bicoverlapper2/bicoverlapper/Help.html"));
+				}catch(Exception ex){ex.printStackTrace();}
 			
 			}
 		}
