@@ -90,3 +90,13 @@ loadMatrix=function(filePath=NULL, numEFs=0, duplicates="first")
 		write(rbind(names(pData(es)),as.matrix(pData(es))), file=fileName, ncolumns=length(header), append=TRUE, sep="\t")
 		write(t(cbind(featureNames(es), round(exprs(es), digits=2))), file=fileName, ncolumns=length(header), append=TRUE, sep="\t")
 		}
+		
+	
+	#Merges a expression set columns by averaging all the samples with the same efv
+	merge=function(es=NA, efv=NA)
+		{
+		aess=sapply(unique(efv), function(x) {  rowMeans(exprs(es)[,which(efv==x),drop=F])  })
+		colnames(aess)=unique(efv)
+		es=new("ExpressionSet", exprs=aess, annotation=annotation(es))
+		es
+		}

@@ -1588,10 +1588,16 @@ public class ExpressionData {
 				wt.start();
 			} else {
 				// GO specific
-				//installPackage(exp, "GO.db");
-				rManager.loadBioconductorLibrary("GO.db");
-				rManager.loadBioconductorLibrary("GOstats");
-				rManager.loadBioconductorLibrary("annotate");
+				//rManager.loadBioconductorLibrary("GO.db");
+				//rManager.loadBioconductorLibrary("GOstats");
+				//rManager.loadBioconductorLibrary("annotate");
+				
+				int ret=rManager.loadBioconductorLibraries(new String[]{"GO.db", "GOstats", "annotate"});
+				if(ret!=0)
+					{
+					System.err.println("Error: bioconductor libraries not available, annotation retrieval will stop");
+					return;
+					}
 				//exp = re.eval("library(GOstats)");
 				//if (exp == null)
 					//installPackage(exp, "GOstats");
@@ -1604,7 +1610,7 @@ public class ExpressionData {
 
 				long t = System.currentTimeMillis();
 
-				int ret=rManager.loadBioconductorLibrary(chip);
+				ret=rManager.loadBioconductorLibrary(chip);
 				/*exp = re.eval("library(" + chip + ")");
 				System.out.println("It takes "
 						+ (System.currentTimeMillis() - t)
@@ -2549,7 +2555,8 @@ public class ExpressionData {
 					try{
 					SwingUtilities.invokeAndWait(new Runnable(){
 						public void run(){
-							res =JOptionPane.showConfirmDialog(null,"Would you like to search for names? (It could take several minutes)", "Search for names", JOptionPane.YES_NO_OPTION);
+							//res =JOptionPane.showConfirmDialog(null,"Would you like to search for names? (It could take several minutes)", "Search for names", JOptionPane.YES_NO_OPTION);
+							res =JOptionPane.showConfirmDialog(null,"Would you like 'biomaRt' bioConductor package to search for annotations? (It could take several minutes)", "Search for annotations", JOptionPane.YES_NO_OPTION);
 						}});}catch(Exception e){e.printStackTrace();}
 					 
 					//si el usuario no desea buscar los nombres en este momento...
@@ -2579,8 +2586,8 @@ public class ExpressionData {
 							SwingUtilities.invokeLater(new Runnable(){
 								public void run(){
 							
-							try{JOptionPane.showMessageDialog(null, "No Ensembl Mart for organism '"+organism+"\nCheck that the organism name is properly written (e.g. 'Homo sapiens')"
-									,"Eror retrieving annotations",
+							try{JOptionPane.showMessageDialog(null, "No Ensembl Mart for organism '"+organism+"'\nCheck that the organism name is properly written (e.g. 'Homo sapiens')"
+									,"Error retrieving annotations",
 									JOptionPane.ERROR_MESSAGE);}catch(Exception e){}
 								}});
 							message = "Error retrieving anotations: no Ensembl Mart for organism "+organism;
@@ -2598,6 +2605,11 @@ public class ExpressionData {
 						if(exp.asInt()==0)
 							{
 							symbol="symbol";
+							exp=re.eval("length(grep(\""+symbol+"\", listAttributes(martEnsembl)[,1]))");
+							}
+						if(exp.asInt()==0)
+							{
+							symbol="external_gene_id";
 							exp=re.eval("length(grep(\""+symbol+"\", listAttributes(martEnsembl)[,1]))");
 							}
 						

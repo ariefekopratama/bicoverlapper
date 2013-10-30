@@ -150,7 +150,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private double anchoTextoCuota;
 
 	// atributos usados para la gestion del intercambio de variables
-	private int[] ordenVars;
+	//private int[] ordenVars;
 	private Line2D.Double[] ejesVars;
 	private int varSeleccionada = -1, posSeleccionada;
 	private Line2D.Double ejeSeleccionado, ejeReferencia = null;
@@ -276,11 +276,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 	}
 
-	public void sortColumns(int[] columnOrder) {
+	//public void sortColumns(int[] columnOrder) {
+	public void sortColumns() {
 
 		// To be modified by child classes
-		this.ordenVars = columnOrder.clone();
-		this.computeLinePositions = true;
+		//this.ordenVars = columnOrder.clone();
+		//this.computeLinePositions = true;
 		actualizarTuplas = true;
 		ejeReferencia = null;
 		varSeleccionada = -1;
@@ -407,13 +408,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 		// iniciamos los atributos del cambio de variables
 		this.ejesVars = new Line2D.Double[numConditions];
-		this.ordenVars = new int[numConditions];
+		//this.ordenVars = new int[numConditions];
 
-		if (sesion.getMicroarrayData() != null)
-			ordenVars = sesion.getMicroarrayData().columnOrder;
-		else
-			for (int i = 0; i < ordenVars.length; i++)
-				ordenVars[i] = i;
+		//if (sesion.getMicroarrayData() != null)
+		//	ordenVars = sesion.getMicroarrayData().columnOrder;
+		//else
+		//	for (int i = 0; i < ordenVars.length; i++)
+		//		ordenVars[i] = i;
 
 		// iniciamos los atributos de la seleccion de tuplas
 		tuplas = new Point2D.Double[numGenes][numConditions];
@@ -493,11 +494,13 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				LinkedList<Integer> lg = sesion.getSelectedGenesBicluster();
 				for (int i = 0; i < numConditions; i++) {
 					maxLineas[i] = datos.getExpressionAt(lg.get(0),
-							ordenVars[i]);
+							//ordenVars[i]);
+							sesion.getMicroarrayData().getColumnOrder()[i]);
 					minLineas[i] = maxLineas[i];
 					for (int j = 1; j < lg.size(); j++) {
 						double exp = datos.getExpressionAt(lg.get(j),
-								ordenVars[i]);
+								//ordenVars[i]);
+								sesion.getMicroarrayData().getColumnOrder()[i]);
 						if (exp < minLineas[i])
 							minLineas[i] = exp;
 						if (exp > maxLineas[i])
@@ -593,7 +596,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 	private void computeLinePositions() {
 		for (int j = 0; j < numConditions; j++) {
-			int o = ordenVars[j];
+		//	int o = ordenVars[j];
+			int o = sesion.getMicroarrayData().getColumnOrder()[j];
 			// double mv=sesion.getMicroarrayData().maxCols[j];
 			double mv = max[j];
 			double r = ratio[j];
@@ -637,12 +641,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 	private void drawScrolls(Graphics2D g2) {
 		System.currentTimeMillis();
 		for (int i = 0; i < numConditions; i++) {
-			int k = ordenVars[i];
-
-			// Rectangle2D.Double r=(Rectangle2D.Double)scrollSup[i].clone();
-			// r.y=scrollSup[k].y;
-			// g2.draw(r);
-			// g2.draw(scrollSup[k]);
+			//int k = ordenVars[i];
+			int k = sesion.getMicroarrayData().getColumnOrder()[i];
+			//int k=i;
+			
 			if ((varScroll == i) && (scrollPos == Sup)){
 				g2.drawImage(scrollSelecDown, (int) scrollSup[i].getX(),
 						(int) scrollSup[k].getY(), null);
@@ -669,7 +671,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		
 		// representamos la cota asociada con el scroll fijado
 		if (scrollFijado && (varScroll != -1)) {
-			int k = ordenVars[varScroll];
+			//int k = ordenVars[varScroll];
+			int k = sesion.getMicroarrayData().getColumnOrder()[varScroll];
 			double posX = 0, posY = 0, valor = 0.0;
 			if (scrollPos == Sup) {
 				posX = scrollSup[varScroll].getX();
@@ -783,7 +786,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		Font f = g2.getFont();
 		FontRenderContext frc = g2.getFontRenderContext();
 		for (int i = 1; i < numConditions; i++) {
-			int k = ordenVars[i];
+			//int k = ordenVars[i];
+			int k = sesion.getMicroarrayData().getColumnOrder()[i];
+			
 			valor = currentTextSup[k];
 			cad = datos.format(valor, i);
 			
@@ -812,7 +817,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		g2.setPaint(paleta[colorEtiquetaVar]);
 
 		for (int i = 0; i < numConditions; i++) {
-			int k = ordenVars[i];
+			//int k = ordenVars[i];
+			int k = sesion.getMicroarrayData().getColumnOrder()[i];
+			
 			TextLayout texto = new TextLayout(datos.getColumnLabel(k),
 					g2.getFont(), g2.getFontRenderContext());
 			altoTexto = texto.getBounds().getHeight();
@@ -848,10 +855,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					.draw(g2,
 							(float) (margenIzq - 20 - etiqValor.getBounds()
 									.getWidth()),
-							(float) ((max[ordenVars[0]] - datos
+							//(float) ((max[ordenVars[0]] - datos
+							(float) ((max[sesion.getMicroarrayData().getColumnOrder()[0]] - datos
+												
 									.getExpressionAt(tuplaSeleccionada,
-											ordenVars[0]))
-									* ratio[ordenVars[0]] + margenSup));
+						//					ordenVars[0]))
+											sesion.getMicroarrayData().getColumnOrder()[0]))
+											//			* ratio[ordenVars[0]] + margenSup));
+											* ratio[sesion.getMicroarrayData().getColumnOrder()[0]] + margenSup));
 
 			g2.setFont(oldFont);
 		}		
@@ -906,7 +917,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					for (int i : selecBic.getGenes()) {
 						for (int j = 0; j < numConditions; j++) {
 							float x1 = (float) tuplas[i][j].getX();
-							float y1 = (float) tuplas[i][ordenVars[j]].getY();
+							float y1 = (float) tuplas[i][sesion.getMicroarrayData().getColumnOrder()[j]].getY();
 
 							if (j == 0)
 								gpLineasSelecBic.moveTo(x1, y1);
@@ -997,7 +1008,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				int[] py = new int[numConditions * 2];
 				for (int i = 0; i < numConditions; i++) // upper points
 				{
-					int k = ordenVars[i];
+					//int k = ordenVars[i];
+					int k = sesion.getMicroarrayData().getColumnOrder()[i];
+					
 
 					py[i] = (int) maxSelecY[k];
 					px[i] = (int) (margenIzq + intervaloVar * i);
@@ -1005,7 +1018,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				for (int i = 0; i < numConditions; i++) // lower points
 				{
 					int c = numConditions - i - 1;
-					int k = ordenVars[c];
+					//int k = ordenVars[c];
+					int k = sesion.getMicroarrayData().getColumnOrder()[c];
 					py[i + numConditions] = (int) minSelecY[k];
 					px[i + numConditions] = (int) (margenIzq + intervaloVar * (c));
 				}
@@ -1021,10 +1035,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			g2.setStroke(new BasicStroke(3f));
 			for (int j = 0; j < (numConditions - 1); j++) {
 				g2.drawLine((int) tuplas[tuplaSeleccionada][j].x,
-						(int) tuplas[tuplaSeleccionada][ordenVars[j]].y,
+						//(int) tuplas[tuplaSeleccionada][ordenVars[j]].y,
+						(int) tuplas[tuplaSeleccionada][sesion.getMicroarrayData().getColumnOrder()[j]].y,
 						(int) tuplas[tuplaSeleccionada][j + 1].x,
-						(int) tuplas[tuplaSeleccionada][ordenVars[j + 1]].y);
-			}
+						//(int) tuplas[tuplaSeleccionada][ordenVars[j + 1]].y);
+						(int) tuplas[tuplaSeleccionada][sesion.getMicroarrayData().getColumnOrder()[j + 1]].y);
+				}
 			g2.setStroke(new BasicStroke(1f));
 		}
 	}
@@ -1038,8 +1054,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			System.err.println("Line out of bounds");
 		for (int j = beginVar; j <= endVar; j++) {
 			double x = tuplas[i][j].x;
-			double y = tuplas[i][ordenVars[j]].y;
-			if (j == beginVar)
+		//	double y = tuplas[i][ordenVars[j]].y;
+			double y = tuplas[i][sesion.getMicroarrayData().getColumnOrder()[j]].y;
+				if (j == beginVar)
 				gp.moveTo((float) x, (float) y);
 			else
 				gp.lineTo((float) x, (float) y);
@@ -1106,7 +1123,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			double w = Math.min(intervaloVar * 0.5, 30);
 
-			int k = ordenVars[i];
+			int k = sesion.getMicroarrayData().getColumnOrder()[i];
 			upy[i] = (int) (Math.max(
 					margenSup
 							+ (max[k] - sesion.getMicroarrayData().maxCols[k])
@@ -1133,11 +1150,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 			// with median and quantiles
 			if (sesion.getMicroarrayData().median == null) {
-				// new Thread(){
-				// public void run()
-				// {
-				// }
-				// };
 				ArrayList<Object> params = new ArrayList<Object>();
 				params.add(sesion.getMicroarrayData().rMatrixName);
 				AnalysisProgressMonitor apm = new AnalysisProgressMonitor(
@@ -1179,24 +1191,24 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			// Drawing whiskers
 			g2.setStroke(dashed);
 			
-			//Carlos
-			//se va a modificar la longitud y posición de las líneas
 			
 			//línea discontinua superior
-			Line2D.Double l = new Line2D.Double(x + w / 2, posicionesY[i], x + w / 2, margenSup	+ (max[k] - top) * ratio[k]);
+			Line2D.Double l = new Line2D.Double(x + w / 2, posicionesY[k], x + w / 2, margenSup	+ (max[k] - top) * ratio[k]);
 			g2.draw(l);
 			g2.setStroke(stant);
 			//línea horizontal de tope superior
-			l = new Line2D.Double(x + w * 0.3, posicionesY[i], x + w * 0.7,posicionesY[i]);
+			//l = new Line2D.Double(x + w * 0.3, posicionesY[i], x + w * 0.7,posicionesY[i]);
+			l = new Line2D.Double(x + w * 0.3, posicionesY[k], x + w * 0.7,posicionesY[k]);
 			g2.draw(l);
 
 			g2.setStroke(dashed);
 			//línea discontinua inferior
-			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom) * ratio[k], x + w * 0.5, posicionesY[i+numConditions]);
+			l = new Line2D.Double(x + w * 0.5, margenSup + (max[k] - bottom) * ratio[k], x + w * 0.5, posicionesY[k+numConditions]);
 			g2.draw(l);
 			g2.setStroke(stant);
 			//línea horizontal tope inferior
-			l = new Line2D.Double(x + w * 0.3, posicionesY[i+numConditions], x + w * 0.7, posicionesY[i+numConditions]);
+			//l = new Line2D.Double(x + w * 0.3, posicionesY[i+numConditions], x + w * 0.7, posicionesY[i+numConditions]);
+			l = new Line2D.Double(x + w * 0.3, posicionesY[k+numConditions], x + w * 0.7, posicionesY[k+numConditions]);
 			g2.draw(l);
 
 			// Drawing the box
@@ -1216,7 +1228,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			int er = 1;// ellipse radius
 			for (int d : ou) {
 				Ellipse2D.Double e;
-				e = new Ellipse2D.Double(x + w * 0.5 - er * 0.5,
+			//	e = new Ellipse2D.Double(x + w * 0.5 - er * 0.5,
+				e = new Ellipse2D.Double(tuplas[d-1][i].x,
 						tuplas[d - 1][k].y - er * 0.5, er, er);
 				g2.draw(e);
 			}
@@ -1231,7 +1244,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			int[] py = new int[numConditions * 2];
 			for (int i = 0; i < numConditions; i++) // upper points
 			{
-				int k = ordenVars[i];
+				//int k = ordenVars[i];
+				int k = sesion.getMicroarrayData().getColumnOrder()[i];
+				
 				double val = Math.min(sesion.getMicroarrayData().averageCols[k]
 						+ sesion.getMicroarrayData().sdCols[k] * (s + 1),
 						max[k]);
@@ -1242,8 +1257,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			for (int i = 0; i < numConditions; i++) // lower points
 			{
 				int c = numConditions - i - 1;
-				int k = ordenVars[c];
-				double val = Math.max(sesion.getMicroarrayData().averageCols[k]
+			//	int k = ordenVars[c];
+				int k = sesion.getMicroarrayData().getColumnOrder()[c];
+					double val = Math.max(sesion.getMicroarrayData().averageCols[k]
 						- sesion.getMicroarrayData().sdCols[k] * (s + 1),
 						min[k]);
 				py[i + numConditions] = (int) (Math.min(margenSup + (max[k] - val)
@@ -1264,7 +1280,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			int[] meany = new int[numConditions];
 			int grey = 170;
 			for (int i = 0; i < numConditions; i++) {
-				int k = ordenVars[i];
+				//int k = ordenVars[i];
+				int k = sesion.getMicroarrayData().getColumnOrder()[i];
+				
 				upy[i] = (int) (Math
 						.max(margenSup
 								+ (max[k] - sesion.getMicroarrayData().maxCols[k])
@@ -1333,15 +1351,14 @@ public class ParallelCoordinatesDiagram extends Diagram {
 		atributosIniciados = false;
 		atributosIniciados = true;
 
-		if (sesion.getSelectedConditionsBicluster() == null
-				|| sesion.getSelectedConditionsBicluster().size() == 0
-				|| sesion.getSelectedConditionsBicluster().size() == sesion
-						.getMicroarrayData().getNumConditions())
-			this.explicitDenyOfTupleUpdate = true;// We don't need to resort
-													// samples, which is very
-													// time consuming (about 5s
-													// for a 5000genes x 70
-													// samples)
+		if(sesion.getSelectedConditionsBicluster()==null)
+			//for(int i=0;i<ordenVars.length;i++)	ordenVars[i]=i;
+			for(int i=0;i<sesion.getMicroarrayData().getColumnOrder().length;i++)	sesion.getMicroarrayData().getColumnOrder()[i]=i;
+		//if (sesion.getSelectedConditionsBicluster() == null ||
+		//		 sesion.getSelectedConditionsBicluster().size() == 0
+		//		|| sesion.getSelectedConditionsBicluster().size() == sesion
+		//				.getMicroarrayData().getNumConditions())
+		//	this.explicitDenyOfTupleUpdate = true;// We don't need to resort samples, which is very time consuming (about 5s for a 5000genes x 70 samples)
 		repaint();
 	}
 
@@ -1354,24 +1371,30 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				|| sesion.getSelectedBicluster().getConditions().size() >= sesion.getMicroarrayData().getNumConditions())
 			return;
 
-		sortColumns(sesion.getMicroarrayData().getColumnOrder());
-		for (int i = 0; i < sesion.getSelectedBicluster().getConditions().size(); i++) {
+		//sortColumns(sesion.getMicroarrayData().getColumnOrder());
+		sortColumns();
+		/*for (int i = 0; i < sesion.getSelectedBicluster().getConditions().size(); i++) {
 			int cib = ((Integer) sesion.getSelectedBicluster().getConditions().get(i)).intValue();
 			// Buscamos donde estaba antes cib
 			int posCib = -1;
 
-			for (int j = 0; j < ordenVars.length; j++)
-				if (ordenVars[j] == cib) {
+			//for (int j = 0; j < ordenVars.length; j++)
+			//	if (ordenVars[j] == cib) {
+			for (int j = 0; j < sesion.getMicroarrayData().getColumnOrder().length; j++)
+				if (sesion.getMicroarrayData().getColumnOrder()[j] == cib) {
 					posCib = j;
 					break;
 				}
 
+			//TODO: change in session.getMicroarray
 			// y cambiamos las posiciones
 			// ordenVars[posCib]=ordenVars[i];
 			for (int j = posCib; j > i; j--)
-				ordenVars[j] = ordenVars[j - 1];
-			ordenVars[i] = cib;
-		}		
+				sesion.getMicroarrayData().getColumnOrder()[j] = sesion.getMicroarrayData().getColumnOrder()[j - 1];
+				sesion.getMicroarrayData().getColumnOrder()[i] = cib;
+				//	ordenVars[j] = ordenVars[j - 1];
+				//ordenVars[i] = cib;
+		}	*/	
 		return;
 	}
 
@@ -1436,7 +1459,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
         for (int i = 0; i < samples.length; i++) {
         	//se le pone 1 - el valor calculado porque los valores más altos están más arriba, o sea, con una coordenada Y más pequeña
-            ranks[i] = 1 - ((samples[i] - min) / (max - min));
+            //int k=i;
+        	//int k=sesion.getMicroarrayData().getColumnOrder()[i];
+        	ranks[i] = 1 - ((samples[i] - min) / (max - min));
             ranks[i] = ranks[i]*factor+(margenSup - altoScroll - margenScroll);
         }
 
@@ -1491,7 +1516,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					for (int numC = 0; numC < numConditions; numC++) {
 						double y = 0;
 	
-						int k = ordenVars[numC];
+						//int k = ordenVars[numC];
+						int k = sesion.getMicroarrayData().getColumnOrder()[numC];
 						y = tuplas[pos][k].getY();
 						if (maxLineas[k] == -111)
 							maxLineas[k] = minLineas[k] = y;
@@ -1523,7 +1549,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			
 			// 2) Set labels and scroll positions
 			for (int i = 0; i < numConditions; i++) {
-				int k = ordenVars[i];
+				//int k = ordenVars[i];
+				int k = sesion.getMicroarrayData().getColumnOrder()[i];
+				
 				scrollSup[k].y = minLineas[k] - this.altoScroll;
 				scrollInf[k].y = maxLineas[k];
 				cotaSup[k] = scrollSup[k].y + altoScroll;
@@ -1706,8 +1734,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					for (int i = 0; i < (sesion.getMicroarrayData()
 							.getNumConditions() - 1); i++) // for each sample
 					{
-						int k = ordenVars[i];
-						int k2 = ordenVars[i + 1];
+						//int k = ordenVars[i];
+						int k = sesion.getMicroarrayData().getColumnOrder()[i];
+						
+						//int k2 = ordenVars[i + 1];
+						int k2 = sesion.getMicroarrayData().getColumnOrder()[i+1];
+						
 						Line2D.Double l = new Line2D.Double(tuplas[j][i].x,
 								tuplas[j][k].y, tuplas[j][i + 1].x,
 								tuplas[j][k2].y);
@@ -1736,7 +1768,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							LinkedList<Integer> conditions = new LinkedList<Integer>();
 							genes.add(tuplaSeleccionada);
 							for (int k = 0; k < numConditions; k++)
-								conditions.add(Integer.valueOf(ordenVars[k]));
+								//conditions.add(Integer.valueOf(ordenVars[k]));
+								conditions.add(Integer.valueOf(sesion.getMicroarrayData().getColumnOrder()[k]));
 							sesion.setSelectedBiclustersExcept(new Selection(
 									genes, conditions), "arallel");
 							tuplaSeleccionada = -1;
@@ -1762,8 +1795,12 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						for (int i = 0; i < (sesion.getMicroarrayData()
 								.getNumConditions() - 1); i++) // for each sample
 						{
-							int k = ordenVars[i];
-							int k2 = ordenVars[i + 1];
+							//int k = ordenVars[i];
+							int k = sesion.getMicroarrayData().getColumnOrder()[i];
+							
+							//int k2 = ordenVars[i + 1];
+							int k2 = sesion.getMicroarrayData().getColumnOrder()[i+1];
+							
 							Line2D.Double l = new Line2D.Double(tuplas[j][i].x,
 									tuplas[j][k].y, tuplas[j][i + 1].x,
 									tuplas[j][k2].y);
@@ -1828,8 +1865,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			int interval = -1;
 			settingSlope = false;
 			for (int i = 0; i < sesion.getMicroarrayData().getNumConditions() - 1; i++) {
-				int k = ordenVars[i];
-				int k2 = ordenVars[i + 1];
+				//int k = ordenVars[i];
+				//int k2 = ordenVars[i + 1];
+				int k = sesion.getMicroarrayData().getColumnOrder()[i];
+				int k2 = sesion.getMicroarrayData().getColumnOrder()[i+1];
+				
 				if (p1.x >= scrollSup[k].x && p2.x <= scrollSup[k2].x) {
 					interval = i;
 					break;
@@ -1843,8 +1883,10 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			LinkedList<Integer> genes = new LinkedList<Integer>();
 			LinkedList<Integer> conditions = new LinkedList<Integer>();
 
-			int k = ordenVars[interval];
-			int k2 = ordenVars[interval + 1];
+			//int k = ordenVars[interval];
+			//int k2 = ordenVars[interval + 1];
+			int k = sesion.getMicroarrayData().getColumnOrder()[interval];
+			int k2 = sesion.getMicroarrayData().getColumnOrder()[interval + 1];
 			if (sesion.getSelectedBicluster() != null
 					&& sesion.getSelectedGenesBicluster() != null
 					&& sesion.getSelectedGenesBicluster().size() > 0) {// In
@@ -1919,7 +1961,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							&& !inScroll(e.getPoint(), scrollSup[i], 5, true)
 							&& !inScroll(e.getPoint(), scrollInf[i], 5, false)) {
 						posSeleccionada = i;
-						varSeleccionada = ordenVars[i];
+						//varSeleccionada = ordenVars[i];
+						varSeleccionada = sesion.getMicroarrayData().getColumnOrder()[i];
+						
 						ejeSeleccionado = ejesVars[i];
 						ejeReferencia = new Line2D.Double(
 								ejeSeleccionado.getP1(),
@@ -1947,6 +1991,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				else
 					nuevaPosicion = (int) ((e.getX() - margenIzq) / intervaloVar);
 
+				//TODO: change in session
 				if (posSeleccionada != nuevaPosicion) {
 					{
 						int[] aux = new int[numConditions];
@@ -1955,20 +2000,24 @@ public class ParallelCoordinatesDiagram extends Diagram {
 						if (nuevaPosicion < posSeleccionada) {
 
 							for (int i = nuevaPosicion + 1; i < (posSeleccionada + 1); i++) {
-								aux[i] = ordenVars[i - 1];
+								//aux[i] = ordenVars[i - 1];
+								aux[i] = sesion.getMicroarrayData().getColumnOrder()[i-1];
 							}
 
 							for (int i = nuevaPosicion; i < (posSeleccionada + 1); i++) {
-								ordenVars[i] = aux[i];
+								//ordenVars[i] = aux[i];
+								sesion.getMicroarrayData().getColumnOrder()[i]=aux[i];
 							}
 						} else {
 
 							for (int i = posSeleccionada; i < nuevaPosicion; i++) {
-								aux[i] = ordenVars[i + 1];
+								aux[i] = sesion.getMicroarrayData().getColumnOrder()[i+1];
+								//aux[i] = ordenVars[i + 1];
 							}
 
 							for (int i = posSeleccionada; i < (nuevaPosicion + 1); i++) {
-								ordenVars[i] = aux[i];
+								//ordenVars[i] = aux[i];
+								sesion.getMicroarrayData().getColumnOrder()[i]=aux[i];
 							}
 						}
 					}
@@ -2053,7 +2102,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				scrollSeleccionado = null;
 
 				for (int i = 0; i < numConditions; i++) {
-					int k = ordenVars[i];
+					//int k = ordenVars[i];
+					int k = sesion.getMicroarrayData().getColumnOrder()[i];
+					
 					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[k].clone();
 					rs.x = scrollSup[i].x;
 
@@ -2092,7 +2143,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			long t0=System.currentTimeMillis();
 			if (sesion.areMicroarrayDataLoaded()) {
 				if (varScroll > -1) {
-					int k = ordenVars[varScroll];
+					int k=sesion.getMicroarrayData().getColumnOrder()[varScroll];
 					if (scrollPos == Sup) {
 						cotaSup[k] = nuevaCota;
 						
@@ -2139,7 +2190,7 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							int j;
 							for (j = 0; j < numConditions; j++)
 								{
-								int k = ordenVars[j];
+								int k = sesion.getMicroarrayData().getColumnOrder()[j];
 								double y1 = tuplas[i][k].y;
 								if (y1 < cotaSup[k] || y1 > cotaInf[k])
 									break;// not this gene, try the next (break conditions loop)
@@ -2155,17 +2206,11 @@ public class ParallelCoordinatesDiagram extends Diagram {
 					{// TODO: it can be done quicker if we start by the selected
 						// scroll, which will be the one removing a larger
 						// number of things
-						long t1 = System.currentTimeMillis();
-					/*	System.out.println("selection");
-						int[] sel=sesion.getAnalysis().select(cotaInf, cotaSup);
-						for(int i:sel) genes.add(i);
-						System.out.println("Time in selecting with R "+(System.currentTimeMillis()-t1)/1000.0);
-						t1=System.currentTimeMillis();*/
 						
 						for (int i = 0; i < numGenes; i++) {
 							int j;
 							for (j = 0; j < numConditions; j++) {
-								int k = ordenVars[j];
+								int k=sesion.getMicroarrayData().getColumnOrder()[j];
 								double y1 = tuplas[i][k].y;
 								if (y1 < cotaSup[k] || y1 > cotaInf[k])
 									break;// not this gene, try the next (break
@@ -2174,7 +2219,6 @@ public class ParallelCoordinatesDiagram extends Diagram {
 							if (j == numConditions)
 								genes.add(Integer.valueOf(i));
 						}
-						//System.out.println("Time in selecting with Java: "+(System.currentTimeMillis()-t1)/1000.0);
 					}
 				}
 				// Si está pulsado Control, las restricciones en otras
@@ -2206,7 +2250,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 				// genes were added in the above loop, then we select all the
 				// conditions
 				for (int j = 0; j < (numConditions); j++)
-					conditions.add(Integer.valueOf(ordenVars[j]));
+					//conditions.add(Integer.valueOf(ordenVars[j]));
+					conditions.add(Integer.valueOf(sesion.getMicroarrayData().getColumnOrder()[j]));
 
 				System.out.println("Time to set selected bicluster "
 						+ (System.currentTimeMillis() - t0) / 1000.0);
@@ -2228,7 +2273,8 @@ public class ParallelCoordinatesDiagram extends Diagram {
 			if (sesion.areMicroarrayDataLoaded()) {
 				if (varScroll > -1) {
 
-					int k = ordenVars[varScroll];
+					//int k = ordenVars[varScroll];
+					int k = sesion.getMicroarrayData().getColumnOrder()[varScroll];
 					
 					//posRef es la posición de partida
 					offset = e.getY() - posRef;
@@ -2316,7 +2362,9 @@ public class ParallelCoordinatesDiagram extends Diagram {
 
 				boolean zonaScroll = false;
 				for (int i = 0; i < numConditions; i++) {
-					int k = ordenVars[i];
+					//int k = ordenVars[i];
+					int k = sesion.getMicroarrayData().getColumnOrder()[i];
+					
 					Rectangle2D.Double rs = (Rectangle2D.Double) scrollSup[i].clone();
 					rs.y = scrollSup[k].y;
 

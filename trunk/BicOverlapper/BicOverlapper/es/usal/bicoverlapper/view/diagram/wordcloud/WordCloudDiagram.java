@@ -250,7 +250,7 @@ public class WordCloudDiagram extends Diagram implements ChangeListener,
 								.println("No annotation package especified, trying with "
 										+ sesion.getMicroarrayData()
 												.getAnnotationPackage());
-					sesion.getAnalysis().loadRLibrary(
+					sesion.getAnalysis().loadBioconductorLibrary(
 								sesion.getMicroarrayData()
 										.getAnnotationPackage());
 					}

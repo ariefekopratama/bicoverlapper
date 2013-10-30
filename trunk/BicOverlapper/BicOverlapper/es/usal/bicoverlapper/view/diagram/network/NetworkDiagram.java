@@ -66,6 +66,7 @@ import es.usal.bicoverlapper.model.network.NetworkData;
 import es.usal.bicoverlapper.view.configuration.panel.NetworkParameterConfigurationPanel;
 import es.usal.bicoverlapper.view.diagram.Diagram;
 import es.usal.bicoverlapper.view.diagram.heatmap.ExpressionColorAction;
+import es.usal.bicoverlapper.view.diagram.heatmap2.HeatmapDiagram2;
 
 import prefuse.controls.ControlAdapter;
 import prefuse.data.search.PrefixSearchTupleSet;//Search
@@ -308,30 +309,12 @@ public class NetworkDiagram extends Diagram {
 		eFill = new DataColorAction("graph.edges", "type", Constants.NOMINAL,
 				VisualItem.FILLCOLOR, ePalette);
 
-		int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.lowExpColor].getRGB(),
-				paleta[NetworkDiagram.avgExpColor].getRGB());
-		int paletteTemp2[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.avgExpColor].getRGB(),
-				paleta[NetworkDiagram.highExpColor].getRGB());
-		palette = new int[paletteTemp.length + paletteTemp2.length];
-		for (int i = 0; i < paletteTemp.length; i++)
-			palette[i] = paletteTemp[i];
-		for (int i = paletteTemp.length; i < palette.length; i++)
-			palette[i] = paletteTemp2[i - paletteTemp.length];
+		palette=sesion.getExpPalette();
 
-		// expressionColor=new ExpressionColorAction("graph.nodes",
-		// "expressionLevel", Constants.NUMERICAL, VisualItem.FILLCOLOR,
-		// palette);
 		expressionColor = new ExpressionColorAction("graph.nodes",
 				"expressionLevel", Constants.ORDINAL, VisualItem.FILLCOLOR,
 				palette);
-		/*
-		 * if(sesion.getMicroarrayData()!=null) {
-		 * expressionColor.setMaxScale(sesion.getMicroarrayData().max);
-		 * expressionColor.setMinScale(sesion.getMicroarrayData().min); }
-		 */
-
+		
 		noFillColor = new ColorAction("graph.nodes", VisualItem.FILLCOLOR,
 				ColorLib.rgba(255, 255, 255, 200));
 		// create an action list containing all color assignments
@@ -421,39 +404,16 @@ public class NetworkDiagram extends Diagram {
 		} else
 			d.setVisualization(v);
 
-		/*
-		// Caja de búsqueda:
-		sq = new SearchQueryBinding((Table) v.getGroup("graph.nodes"), "name",
-				(SearchTupleSet) v.getGroup(Visualization.SEARCH_ITEMS));
-		JSearchPanel search = sq.createSearchPanel();
-		search.setShowResultCount(true);
-		search.setBorder(BorderFactory.createEmptyBorder(5, 5, 4, 0));
-		search.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 11));
-*/
-		// final JFastLabel title = new JFastLabel("                 ");
-		title = new JFastLabel("                 ");
+			title = new JFastLabel("                 ");
 		title.setPreferredSize(new Dimension(350, 20));
 		title.setVerticalAlignment(SwingConstants.BOTTOM);
 		title.setBorder(BorderFactory.createEmptyBorder(3, 0, 0, 0));
 		title.setFont(FontLib.getFont("Tahoma", Font.PLAIN, 16));
-/*
-		d.addControlListener(new ControlAdapter() {
-			public void itemEntered(VisualItem item, MouseEvent e) {
-				if (item.canGetString("name"))
-					title.setText(item.getString("name"));
-			}
 
-			public void itemExited(VisualItem item, MouseEvent e) {
-				title.setText(null);
-			}
-		});
-*/
 		Box box = new Box(BoxLayout.X_AXIS);
 		box.add(Box.createHorizontalStrut(10));
 		box.add(title);
 		box.add(Box.createHorizontalGlue());
-	//	box.add(search);
-	//	box.add(Box.createHorizontalStrut(3));
 
 		this.add(d, BorderLayout.CENTER); // El display con el grafo
 		this.add(box, BorderLayout.SOUTH); // La caja de búsqueda
@@ -594,7 +554,7 @@ public class NetworkDiagram extends Diagram {
 			selg = sesion.getSelectedGenesBicluster();
 			selc = sesion.getSelectedConditionsBicluster();
 		}
-		else if(sesion.getSelectedBicluster()==null)
+		else if(sesion.getSelectedBicluster()==null && selg!=null && selc!=null)
 			{
 			selg.clear();
 			selc.clear();
@@ -646,21 +606,10 @@ public class NetworkDiagram extends Diagram {
 		animate.setDuration(0);
 
 		// Color
-		int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.lowExpColor].getRGB(),
-				paleta[NetworkDiagram.avgExpColor].getRGB());
-		int paletteTemp2[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.avgExpColor].getRGB(),
-				paleta[NetworkDiagram.highExpColor].getRGB());
-		palette = new int[paletteTemp.length + paletteTemp2.length];
-		for (int i = 0; i < paletteTemp.length; i++)
-			palette[i] = paletteTemp[i];
-		for (int i = paletteTemp.length; i < palette.length; i++)
-			palette[i] = paletteTemp2[i - paletteTemp.length];
-
 		expressionColor = new ExpressionColorAction("graph.nodes",
 				"expressionLevel", Constants.NUMERICAL, VisualItem.FILLCOLOR,
-				palette);
+				//palette);
+				sesion.getExpPalette());
 		expressionColor.setMaxScale(sesion.getMicroarrayData().max);
 		expressionColor.setMinScale(sesion.getMicroarrayData().min);
 
@@ -797,27 +746,16 @@ public class NetworkDiagram extends Diagram {
 		eFill = new DataColorAction("graph.edges", "type", Constants.NOMINAL,
 				VisualItem.FILLCOLOR, ePalette);
 
-		int paletteTemp[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.lowExpColor].getRGB(),
-				paleta[NetworkDiagram.avgExpColor].getRGB());
-		int paletteTemp2[] = ColorLib.getInterpolatedPalette(255,
-				paleta[NetworkDiagram.avgExpColor].getRGB(),
-				paleta[NetworkDiagram.highExpColor].getRGB());
-		palette = new int[paletteTemp.length + paletteTemp2.length];
-		for (int i = 0; i < paletteTemp.length; i++)
-			palette[i] = paletteTemp[i];
-		for (int i = paletteTemp.length; i < palette.length; i++)
-			palette[i] = paletteTemp2[i - paletteTemp.length];
-
+		sesion.setAvgExpColor(paleta[NetworkDiagram.avgExpColor]);
+		sesion.setLowExpColor(paleta[NetworkDiagram.lowExpColor]);
+		sesion.setHiExpColor(paleta[NetworkDiagram.highExpColor]);
+		sesion.buildPalette();
+		
 		expressionColor = new ExpressionColorAction("graph.nodes",
 				"expressionLevel", Constants.ORDINAL, VisualItem.FILLCOLOR,
-				palette);
-		/*
-		 * if(sesion.getMicroarrayData()!=null) {
-		 * expressionColor.setMaxScale(sesion.getMicroarrayData().max);
-		 * expressionColor.setMinScale(sesion.getMicroarrayData().min); }
-		 */
-
+//				palette);
+				sesion.getExpPalette());
+		
 		// create an action list containing all color assignments
 		ActionList color = (ActionList) v.getAction("color");
 		color.remove(nodeColor);
@@ -888,13 +826,7 @@ public class NetworkDiagram extends Diagram {
 					selectionColor.getGreen(), selectionColor.getBlue(),
 					selectionColor.getAlpha()));
 
-			add("ingroup('_bicluster_')", ColorLib.rgba(255, 255, 0, 229));// Pinta
-																			// morado
-																			// si
-																			// pinchamos
-																			// en
-																			// un
-																			// nodo
+			add("ingroup('_bicluster_')", ColorLib.rgba(255, 255, 0, 229));
 		}
 	} // end of inner class NodeColorAction
 
@@ -940,7 +872,7 @@ public class NetworkDiagram extends Diagram {
 				
 				// TODO: smooth transitions? -> use of end/start color in 3s.
 				while (!stop) {
-					System.out.println("running the animation");
+					//System.out.println("running the animation");
 					for (int i = 0; i < sesion.getMicroarrayData()
 							.getNumConditions(); i++) {
 						title.setText(sesion.getMicroarrayData()
